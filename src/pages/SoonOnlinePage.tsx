@@ -1,69 +1,7 @@
-import { Bitcoin, Clock, Shield, Users, Mail, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react';
+import { Bitcoin, Clock, Shield, Users, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
 
 export default function SoonOnlinePage() {
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [message, setMessage] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitStatus('idle');
-
-    // Client-side validation
-    if (!email || !email.includes('@')) {
-      setSubmitStatus('error');
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Rate limiting (prevent spam) - more lenient
-    const lastSubmission = localStorage.getItem('lastEmailSubmission');
-    const now = Date.now();
-    if (lastSubmission && (now - parseInt(lastSubmission)) < 10000) { // 10 seconds cooldown
-      setSubmitStatus('error');
-      setIsSubmitting(false);
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/send-notification', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest', // CSRF protection
-        },
-        body: JSON.stringify({
-          email: email.trim(),
-          name: name?.trim() || undefined,
-          message: message?.trim() || undefined,
-          timestamp: now,
-          userAgent: navigator.userAgent
-        })
-      });
-
-      if (response.ok) {
-        setSubmitStatus('success');
-        setEmail('');
-        setName('');
-        setMessage('');
-        localStorage.setItem('lastEmailSubmission', now.toString());
-      } else {
-        const errorData = await response.json();
-        console.error('Server error:', errorData);
-        setSubmitStatus('error');
-      }
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      setSubmitStatus('error');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -163,76 +101,41 @@ export default function SoonOnlinePage() {
                 We sturen je een e-mail zodra BitBeheer live gaat en je kunt beginnen met je Bitcoin begeleiding.
               </p>
               
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Status Messages */}
-                {submitStatus === 'success' && (
-                  <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5" />
-                    <span>Bedankt! Je notificatie aanvraag is ontvangen.</span>
+              <div className="text-center">
+                <div className="bg-orange-100 border border-orange-200 rounded-lg p-6 mb-6">
+                  <Mail className="w-12 h-12 text-orange-600 mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    Notificatie Formulier Tijdelijk Uitgeschakeld
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    Het notificatie formulier is tijdelijk uitgeschakeld voor onderhoud. 
+                    We werken aan een betere oplossing.
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Neem contact op via <strong>update@bitbeheer.nl</strong> voor updates.
+                  </p>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-blue-900 mb-2">Wat Komt Er Aan:</h4>
+                    <ul className="text-sm text-blue-800 space-y-1">
+                      <li>• Persoonlijke Bitcoin begeleiding</li>
+                      <li>• 1-op-1 sessies op afspraak</li>
+                      <li>• Veilig Bitcoin kopen en bewaren</li>
+                      <li>• Eigen beheer van je Bitcoin</li>
+                    </ul>
                   </div>
-                )}
-                
-                {submitStatus === 'error' && (
-                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5" />
-                    <span>Er is een fout opgetreden. Probeer het over 10 seconden opnieuw.</span>
+                  
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-green-900 mb-2">Contact:</h4>
+                    <p className="text-sm text-green-800">
+                      Stuur een e-mail naar <strong>update@bitbeheer.nl</strong> 
+                      om op de hoogte te blijven van wanneer BitBeheer live gaat.
+                    </p>
                   </div>
-                )}
-
-                <div>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Je naam (optioneel)"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  />
                 </div>
-                
-                <div>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Je e-mailadres *"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Extra bericht (optioneel)"
-                    rows={3}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  />
-                </div>
-                
-                <button
-                  type="submit"
-                  disabled={isSubmitting || !email}
-                  className="w-full bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Versturen...
-                    </>
-                  ) : (
-                    <>
-                      <Mail className="w-5 h-5" />
-                      Notificatie Aanvragen
-                      <ArrowRight className="w-5 h-5" />
-                    </>
-                  )}
-                </button>
-                
-                <p className="text-sm text-gray-500 text-center">
-                  Je gegevens worden veilig verwerkt en niet gedeeld met derden.
-                </p>
-              </form>
+              </div>
             </div>
           </div>
         </div>
