@@ -34,45 +34,76 @@ export default function FrontPage() {
         </div>
       </section>
 
-      {/* Our Story Section */}
+      {/* My Story Section */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                Ons Verhaal
+                Mijn Verhaal
               </h2>
               <p className="text-xl text-gray-600 leading-relaxed">
-                Waarom we dit platform hebben gemaakt en hoe we jou kunnen helpen
+                Waarom ik dit platform heb gemaakt en hoe ik jou kan helpen
               </p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
               <div>
                 <h3 className="text-3xl font-bold text-gray-900 mb-6">
-                  Persoonlijke Begeleiding voor Bitcoin Investeren
+                  Hey! Mijn naam is Giovanni
                 </h3>
-                <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-                  Wij helpen mensen die willen investeren in Bitcoin om dit veilig en verstandig te doen. 
-                  Geen groepslessen of online cursussen, maar persoonlijke 1-op-1 begeleiding 
-                  op jouw tempo en niveau, op afspraak.
-                </p>
-                <p className="text-lg text-gray-600 leading-relaxed">
-                  We leren je alles met voorbeelden en echte data, zodat je volledig begrijpt wat je doet 
-                  voordat je daadwerkelijk investeert. Stap voor stap, zonder haast.
-                </p>
+                <div className="space-y-6 text-lg text-gray-600 leading-relaxed">
+                  <p>
+                    Ik ben sinds 2017 actief in de wereld van crypto. In de afgelopen jaren heb ik van alles voorbij zien komen: 
+                    Bitcoin, altcoins, NFT's, memecoins – noem het maar op. Ik heb meegemaakt hoe de markt piekte, 
+                    instortte en weer opkrabbelde. En ja… ook de scams, de hypes en de fabels zijn me niet bespaard gebleven.
+                  </p>
+                  <p>
+                    Wat me de laatste tijd opvalt, is dat steeds meer mensen bij het woord "crypto" meteen aan oplichting denken. 
+                    Dat vind ik jammer, want echte crypto heeft daar vaak niets mee te maken. In veel gevallen draait het om 
+                    gewone oplichting met fiat geld, waarbij crypto alleen als excuus wordt gebruikt.
+                  </p>
+                  <p>
+                    <strong>Daarom ben ik deze website gestart.</strong> Ik wil mensen helpen die interesse hebben in crypto, 
+                    maar niet goed weten waar te beginnen of waar ze op moeten letten. Met de juiste kennis kun je jezelf 
+                    beschermen, slimme keuzes maken en met vertrouwen de cryptowereld instappen.
+                  </p>
+                  <p className="text-orange-600 font-semibold">
+                    Mijn doel is simpel: anderen helpen begrijpen wat crypto écht is – zonder poespas, zonder hype, 
+                    gewoon eerlijk en duidelijk.
+                  </p>
+                </div>
               </div>
               <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8">
                 <div className="flex items-center gap-4 mb-6">
                   <div className="bg-orange-500 p-3 rounded-xl">
                     <Shield className="w-8 h-8 text-white" />
                   </div>
-                  <h4 className="text-2xl font-bold text-gray-900">Met Echte Data & Voorbeelden</h4>
+                  <h4 className="text-2xl font-bold text-gray-900">Sinds 2017 in Crypto</h4>
                 </div>
-                <p className="text-gray-600 leading-relaxed">
-                  We leggen alles uit met voorbeelden en echte data. Geen theorie, 
-                  maar praktische kennis die je direct kunt toepassen.
-                </p>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    <span className="text-gray-700">Bitcoin, altcoins, NFT's, memecoins</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    <span className="text-gray-700">Markt pieken, crashes en herstel</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    <span className="text-gray-700">Scams, hypes en fabels meegemaakt</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    <span className="text-gray-700">Eerlijke kennis zonder poespas</span>
+                  </div>
+                </div>
+                <div className="mt-6 p-4 bg-white rounded-lg">
+                  <p className="text-sm text-gray-600 italic">
+                    "Met de juiste kennis kun je jezelf beschermen, slimme keuzes maken en met vertrouwen de cryptowereld instappen."
+                  </p>
+                </div>
               </div>
             </div>
           </div>
