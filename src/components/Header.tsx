@@ -23,30 +23,9 @@ export default function Header() {
           
           {/* Navigation Menu */}
           <nav className="hidden md:flex items-center gap-4">
-            {/* Public Menu */}
-            <div className="flex items-center gap-3">
-              <Link 
-                to="/" 
-                className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
-                  location.pathname === '/' 
-                    ? 'bg-white bg-opacity-30 shadow-lg' 
-                    : 'hover:bg-white hover:bg-opacity-20 hover:shadow-md'
-                }`}
-              >
-                <div className={`p-2 rounded-lg transition-all duration-300 ${
-                  location.pathname === '/' 
-                    ? 'bg-white bg-opacity-20' 
-                    : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'
-                }`}>
-                  <TrendingUp className="w-5 h-5" />
-                </div>
-                <span className="text-sm font-medium">Begeleiding</span>
-              </Link>
-            </div>
-
-            {/* Admin Menu */}
+            {/* Admin Menu - Only visible when authenticated */}
             {isAuthenticated && (
-              <div className="flex items-center gap-3 ml-4 pl-4 border-l border-white border-opacity-30">
+              <div className="flex items-center gap-3">
                 <Link 
                   to="/admin" 
                   className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
