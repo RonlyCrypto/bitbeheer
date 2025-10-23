@@ -90,6 +90,44 @@ export default async function handler(req, res) {
       `
     };
 
+    // Check if TransIP credentials are configured, otherwise use Gmail fallback
+    if (!process.env.TRANSIP_EMAIL || !process.env.TRANSIP_PASSWORD) {
+      console.log('TransIP credentials not configured, using Gmail fallback');
+      
+      // Fallback: Use Gmail SMTP if available
+      if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+        const nodemailer = require('nodemailer');
+        
+        const transporter = nodemailer.createTransporter({
+          service: 'gmail',
+          auth: {
+            user: process.env.GMAIL_USER,
+            pass: process.env.GMAIL_APP_PASSWORD
+          }
+        });
+
+        await transporter.sendMail({
+          from: process.env.GMAIL_USER,
+          to: 'update@bitbeheer.nl',
+          subject: emailData.subject,
+          text: emailData.text,
+          html: emailData.html
+        });
+        
+        return res.status(200).json({ 
+          success: true, 
+          message: 'Notificatie aanvraag ontvangen (via Gmail)' 
+        });
+      }
+      
+      // If no email service configured, just log and return success
+      console.log('Email data to send:', emailData);
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Notificatie aanvraag ontvangen (e-mail service nog niet geconfigureerd)' 
+      });
+    }
+
     // Send email using TransIP SMTP (FREE with TransIP hosting!)
     const nodemailer = require('nodemailer');
     
