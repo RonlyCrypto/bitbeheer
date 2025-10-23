@@ -1,4 +1,4 @@
-import { Bitcoin, Clock, Shield, Users, Mail } from 'lucide-react';
+import { Bitcoin, Clock, Shield, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function SoonOnlinePage() {
@@ -81,65 +81,6 @@ export default function SoonOnlinePage() {
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              Blijf Op De Hoogte
-            </h2>
-            <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
-              Wil je op de hoogte blijven van wanneer we live gaan? Laat je gegevens achter en we sturen je een bericht zodra we klaar zijn.
-            </p>
-
-            <div className="bg-white rounded-2xl p-8 shadow-lg max-w-2xl mx-auto">
-              <div className="flex items-center justify-center gap-3 mb-6">
-                <Mail className="w-8 h-8 text-orange-600" />
-                <h3 className="text-2xl font-bold text-gray-900">Notificatie Ontvangen</h3>
-              </div>
-              <p className="text-gray-600 mb-8">
-                We sturen je een e-mail zodra BitBeheer live gaat en je kunt beginnen met je Bitcoin begeleiding.
-              </p>
-              
-              <div className="text-center">
-                <div className="bg-orange-100 border border-orange-200 rounded-lg p-6 mb-6">
-                  <Mail className="w-12 h-12 text-orange-600 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
-                    Notificatie Formulier Tijdelijk Uitgeschakeld
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    Het notificatie formulier is tijdelijk uitgeschakeld voor onderhoud. 
-                    We werken aan een betere oplossing.
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Neem contact op via <strong>update@bitbeheer.nl</strong> voor updates.
-                  </p>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h4 className="font-semibold text-blue-900 mb-2">Wat Komt Er Aan:</h4>
-                    <ul className="text-sm text-blue-800 space-y-1">
-                      <li>• Persoonlijke Bitcoin begeleiding</li>
-                      <li>• 1-op-1 sessies op afspraak</li>
-                      <li>• Veilig Bitcoin kopen en bewaren</li>
-                      <li>• Eigen beheer van je Bitcoin</li>
-                    </ul>
-                  </div>
-                  
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <h4 className="font-semibold text-green-900 mb-2">Contact:</h4>
-                    <p className="text-sm text-green-800">
-                      Stuur een e-mail naar <strong>update@bitbeheer.nl</strong> 
-                      om op de hoogte te blijven van wanneer BitBeheer live gaat.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-300 py-12">
