@@ -90,10 +90,10 @@ export default async function handler(req, res) {
     };
 
     // Send email using TransIP SMTP (FREE with TransIP hosting!)
-    const nodemailer = require('nodemailer');
+    const nodemailer = await import('nodemailer');
     
     // Create transporter using TransIP SMTP
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.default.createTransporter({
       host: 'smtp.transip.nl',
       port: 587,
       secure: false, // true for 465, false for other ports
