@@ -2,6 +2,7 @@ import { Bitcoin, Clock, Shield, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function SoonOnlinePage() {
+  // Clean page without form - deployed to production
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
