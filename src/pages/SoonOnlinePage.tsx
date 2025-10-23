@@ -21,10 +21,10 @@ export default function SoonOnlinePage() {
       return;
     }
 
-    // Rate limiting (prevent spam)
+    // Rate limiting (prevent spam) - more lenient
     const lastSubmission = localStorage.getItem('lastEmailSubmission');
     const now = Date.now();
-    if (lastSubmission && (now - parseInt(lastSubmission)) < 60000) { // 1 minute cooldown
+    if (lastSubmission && (now - parseInt(lastSubmission)) < 10000) { // 10 seconds cooldown
       setSubmitStatus('error');
       setIsSubmitting(false);
       return;
@@ -175,7 +175,7 @@ export default function SoonOnlinePage() {
                 {submitStatus === 'error' && (
                   <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
                     <AlertCircle className="w-5 h-5" />
-                    <span>Er is een fout opgetreden. Probeer het later opnieuw.</span>
+                    <span>Er is een fout opgetreden. Probeer het over 10 seconden opnieuw.</span>
                   </div>
                 )}
 

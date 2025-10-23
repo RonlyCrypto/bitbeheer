@@ -18,13 +18,14 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'CSRF protection: Invalid request' });
     }
 
-    // Rate limiting check
+    // Rate limiting check (more lenient for normal usage)
     const clientIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     const rateLimitKey = `rate_limit_${clientIP}`;
     const lastRequest = global.rateLimitStore?.[rateLimitKey];
     const now = Date.now();
     
-    if (lastRequest && (now - lastRequest) < 60000) { // 1 minute cooldown per IP
+    // Only rate limit if multiple requests within 10 seconds (prevent spam)
+    if (lastRequest && (now - lastRequest) < 10000) { // 10 seconds cooldown per IP
       return res.status(429).json({ error: 'Rate limit exceeded. Please wait before submitting again.' });
     }
 
@@ -90,10 +91,10 @@ export default async function handler(req, res) {
     };
 
     // Send email using TransIP SMTP (FREE with TransIP hosting!)
-    const nodemailer = await import('nodemailer');
+    const nodemailer = require('nodemailer');
     
     // Create transporter using TransIP SMTP
-    const transporter = nodemailer.default.createTransporter({
+    const transporter = nodemailer.createTransporter({
       host: 'smtp.transip.nl',
       port: 587,
       secure: false, // true for 465, false for other ports
