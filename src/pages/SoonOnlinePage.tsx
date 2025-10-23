@@ -100,10 +100,16 @@ export default function SoonOnlinePage() {
                 We sturen je een e-mail zodra BitBeheer live gaat en je kunt beginnen met je Bitcoin begeleiding.
               </p>
               
-              <form className="space-y-4">
+              <form 
+                action="mailto:update@bitbeheer.nl?subject=Notificatie Aanvraag - BitBeheer&body=Ik wil graag op de hoogte blijven van wanneer BitBeheer live gaat.%0D%0A%0D%0AE-mailadres: " 
+                method="post" 
+                encType="text/plain"
+                className="space-y-4"
+              >
                 <div>
                   <input
                     type="email"
+                    name="email"
                     placeholder="Je e-mailadres"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     required
