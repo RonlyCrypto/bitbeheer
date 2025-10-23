@@ -1,7 +1,48 @@
-import { Bitcoin, Clock, Shield, Users, Mail, ArrowRight } from 'lucide-react';
+import { Bitcoin, Clock, Shield, Users, Mail, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 
 export default function SoonOnlinePage() {
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [message, setMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus('idle');
+
+    try {
+      const response = await fetch('/api/send-notification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          name: name || undefined,
+          message: message || undefined
+        })
+      });
+
+      if (response.ok) {
+        setSubmitStatus('success');
+        setEmail('');
+        setName('');
+        setMessage('');
+      } else {
+        setSubmitStatus('error');
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Hero Section */}
@@ -100,29 +141,75 @@ export default function SoonOnlinePage() {
                 We sturen je een e-mail zodra BitBeheer live gaat en je kunt beginnen met je Bitcoin begeleiding.
               </p>
               
-              <form 
-                action="mailto:update@bitbeheer.nl?subject=Notificatie Aanvraag - BitBeheer&body=Ik wil graag op de hoogte blijven van wanneer BitBeheer live gaat.%0D%0A%0D%0AE-mailadres: " 
-                method="post" 
-                encType="text/plain"
-                className="space-y-4"
-              >
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Status Messages */}
+                {submitStatus === 'success' && (
+                  <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5" />
+                    <span>Bedankt! Je notificatie aanvraag is ontvangen.</span>
+                  </div>
+                )}
+                
+                {submitStatus === 'error' && (
+                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5" />
+                    <span>Er is een fout opgetreden. Probeer het later opnieuw.</span>
+                  </div>
+                )}
+
+                <div>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Je naam (optioneel)"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  />
+                </div>
+                
                 <div>
                   <input
                     type="email"
-                    name="email"
-                    placeholder="Je e-mailadres"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Je e-mailadres *"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     required
                   />
                 </div>
+                
+                <div>
+                  <textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Extra bericht (optioneel)"
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  />
+                </div>
+                
                 <button
                   type="submit"
-                  className="w-full bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
+                  disabled={isSubmitting || !email}
+                  className="w-full bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Mail className="w-5 h-5" />
-                  Notificatie Aanvragen
-                  <ArrowRight className="w-5 h-5" />
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Versturen...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-5 h-5" />
+                      Notificatie Aanvragen
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
                 </button>
+                
+                <p className="text-sm text-gray-500 text-center">
+                  Je gegevens worden veilig verwerkt en niet gedeeld met derden.
+                </p>
               </form>
             </div>
           </div>
