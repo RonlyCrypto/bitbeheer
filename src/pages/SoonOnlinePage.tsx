@@ -14,16 +14,35 @@ export default function SoonOnlinePage() {
     setIsSubmitting(true);
     setSubmitStatus('idle');
 
+    // Client-side validation
+    if (!email || !email.includes('@')) {
+      setSubmitStatus('error');
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Rate limiting (prevent spam)
+    const lastSubmission = localStorage.getItem('lastEmailSubmission');
+    const now = Date.now();
+    if (lastSubmission && (now - parseInt(lastSubmission)) < 60000) { // 1 minute cooldown
+      setSubmitStatus('error');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/send-notification', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest', // CSRF protection
         },
         body: JSON.stringify({
-          email,
-          name: name || undefined,
-          message: message || undefined
+          email: email.trim(),
+          name: name?.trim() || undefined,
+          message: message?.trim() || undefined,
+          timestamp: now,
+          userAgent: navigator.userAgent
         })
       });
 
@@ -32,7 +51,10 @@ export default function SoonOnlinePage() {
         setEmail('');
         setName('');
         setMessage('');
+        localStorage.setItem('lastEmailSubmission', now.toString());
       } else {
+        const errorData = await response.json();
+        console.error('Server error:', errorData);
         setSubmitStatus('error');
       }
     } catch (error) {
