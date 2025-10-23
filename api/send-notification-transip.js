@@ -1,4 +1,4 @@
-// Vercel Serverless Function for handling notification requests
+// TransIP SMTP Implementation (GRATIS als je TransIP hosting hebt)
 export default async function handler(req, res) {
   // Only allow POST requests
   if (req.method !== 'POST') {
@@ -24,11 +24,22 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid email format' });
     }
 
-    // Here you would integrate with your email service
-    // For now, we'll use a simple approach with Nodemailer or similar
+    // TransIP SMTP Configuration
+    const nodemailer = require('nodemailer');
+    
+    const transporter = nodemailer.createTransporter({
+      host: 'smtp.transip.nl',
+      port: 587,
+      secure: false, // true for 465, false for other ports
+      auth: {
+        user: process.env.TRANSIP_EMAIL, // jouw-email@jouw-domein.nl
+        pass: process.env.TRANSIP_PASSWORD // jouw TransIP wachtwoord
+      }
+    });
+
     const emailData = {
+      from: process.env.TRANSIP_EMAIL,
       to: 'update@bitbeheer.nl',
-      from: email,
       subject: 'Notificatie Aanvraag - BitBeheer',
       text: `
         Nieuwe notificatie aanvraag:
@@ -48,26 +59,8 @@ export default async function handler(req, res) {
       `
     };
 
-    // Send email using Gmail SMTP (FREE!)
-    const nodemailer = require('nodemailer');
-    
-    // Create transporter using Gmail SMTP
-    const transporter = nodemailer.createTransporter({
-      service: 'gmail',
-      auth: {
-        user: process.env.GMAIL_USER, // Your Gmail address
-        pass: process.env.GMAIL_APP_PASSWORD // Gmail App Password (not regular password)
-      }
-    });
-
-    // Send email
-    await transporter.sendMail({
-      from: process.env.GMAIL_USER,
-      to: 'update@bitbeheer.nl',
-      subject: emailData.subject,
-      text: emailData.text,
-      html: emailData.html
-    });
+    // Send email via TransIP SMTP
+    await transporter.sendMail(emailData);
 
     return res.status(200).json({ 
       success: true, 
