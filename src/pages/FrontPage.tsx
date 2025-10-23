@@ -54,23 +54,23 @@ export default function FrontPage() {
                 </h3>
                 <div className="space-y-6 text-lg text-gray-600 leading-relaxed">
                   <p>
-                    Ik ben sinds 2017 actief in de wereld van crypto. In de afgelopen jaren heb ik van alles voorbij zien komen: 
-                    Bitcoin, altcoins, NFT's, memecoins – noem het maar op. Ik heb meegemaakt hoe de markt piekte, 
-                    instortte en weer opkrabbelde. En ja… ook de scams, de hypes en de fabels zijn me niet bespaard gebleven.
+                    Ik ben sinds 2017 actief in de wereld van cryptocurrency. In de afgelopen jaren heb ik van alles voorbij zien komen: 
+                    Bitcoin, altcoins, NFT's, memecoins, noem het maar op. Ik heb meegemaakt hoe de markt piekte, 
+                    instortte en weer opkrabbelde. En ja… ook de scams, hypes en fabels zijn me niet bespaard gebleven.
                   </p>
                   <p>
-                    Wat me de laatste tijd opvalt, is dat steeds meer mensen bij het woord "crypto" meteen aan oplichting denken. 
-                    Dat vind ik jammer, want echte crypto heeft daar vaak niets mee te maken. In veel gevallen draait het om 
-                    gewone oplichting met fiat geld, waarbij crypto alleen als excuus wordt gebruikt.
+                    Wat me al een hele tijd opvalt, is dat steeds meer mensen bij het horen van "Bitcoin" of "crypto" meteen aan oplichting denken. 
+                    Dat vind ik jammer, want cryptocurrency heeft daar vaak helemaal niets mee te maken. In veel gevallen gaat het om 
+                    gewone oplichting met fiatgeld, waarbij crypto alleen als excuus wordt gebruikt.
                   </p>
                   <p>
-                    <strong>Daarom ben ik deze website gestart.</strong> Ik wil mensen helpen die interesse hebben in crypto, 
-                    maar niet goed weten waar te beginnen of waar ze op moeten letten. Met de juiste kennis kun je jezelf 
+                    <strong>Daarom ben ik deze website gestart.</strong> Ik wil mensen helpen die interesse hebben in het investeren in Bitcoin, 
+                    maar niet goed weten waar ze moeten beginnen of waar ze op moeten letten. Met de juiste kennis kun je jezelf 
                     beschermen, slimme keuzes maken en met vertrouwen de cryptowereld instappen.
                   </p>
                   <p className="text-orange-600 font-semibold">
-                    Mijn doel is simpel: anderen helpen begrijpen wat crypto écht is – zonder poespas, zonder hype, 
-                    gewoon eerlijk en duidelijk.
+                    Mijn doel is simpel: anderen helpen begrijpen hoe je veilig Bitcoin aankoopt en in eigen beheer bewaart, 
+                    zonder poespas, zonder hype, gewoon eerlijk en duidelijk.
                   </p>
                 </div>
               </div>
