@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   BarChart3, 
@@ -10,12 +10,37 @@ import {
   Plus,
   Edit3,
   Eye,
-  Wallet
+  Wallet,
+  Globe,
+  Lock,
+  ToggleLeft,
+  ToggleRight
 } from 'lucide-react';
 // import PageManagement from './PageManagement';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
+  const [isSoonOnlineMode, setIsSoonOnlineMode] = useState(true);
+
+  useEffect(() => {
+    // Check current soon online mode status
+    const soonOnlineMode = localStorage.getItem('soon_online_mode');
+    setIsSoonOnlineMode(soonOnlineMode !== 'false');
+  }, []);
+
+  const toggleSoonOnlineMode = () => {
+    const newMode = !isSoonOnlineMode;
+    setIsSoonOnlineMode(newMode);
+    localStorage.setItem('soon_online_mode', String(newMode));
+    
+    if (!newMode) {
+      // Site is now live
+      alert('Website is nu live! Alle bezoekers kunnen de site zien.');
+    } else {
+      // Site is back to "soon online" mode
+      alert('Website is terug in "Soon Online" modus. Alleen admin en test gebruikers kunnen de site zien.');
+    }
+  };
 
   const adminPages = [
     {
@@ -130,6 +155,48 @@ export default function AdminDashboard() {
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <div className="space-y-8">
+              {/* Site Status Toggle */}
+              <div className="bg-white rounded-xl p-6 shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className={`p-3 rounded-xl ${isSoonOnlineMode ? 'bg-orange-100' : 'bg-green-100'}`}>
+                      {isSoonOnlineMode ? <Lock className="w-8 h-8 text-orange-600" /> : <Globe className="w-8 h-8 text-green-600" />}
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">
+                        {isSoonOnlineMode ? 'Website in "Soon Online" Modus' : 'Website Live'}
+                      </h3>
+                      <p className="text-gray-600">
+                        {isSoonOnlineMode 
+                          ? 'Alleen admin en test gebruikers kunnen de site zien' 
+                          : 'Alle bezoekers kunnen de site zien'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={toggleSoonOnlineMode}
+                    className={`flex items-center gap-3 px-6 py-3 rounded-lg font-semibold transition-all ${
+                      isSoonOnlineMode
+                        ? 'bg-orange-600 text-white hover:bg-orange-700'
+                        : 'bg-green-600 text-white hover:bg-green-700'
+                    }`}
+                  >
+                    {isSoonOnlineMode ? (
+                      <>
+                        <ToggleRight className="w-5 h-5" />
+                        Site Live Maken
+                      </>
+                    ) : (
+                      <>
+                        <ToggleLeft className="w-5 h-5" />
+                        Terug naar Soon Online
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
               <div className="grid md:grid-cols-3 gap-6">
                 <div className="bg-white rounded-xl p-6 shadow-lg">
                   <div className="flex items-center gap-4">

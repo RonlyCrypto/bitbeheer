@@ -2,12 +2,14 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import FrontPage from './pages/FrontPage';
+import SoonOnlinePage from './pages/SoonOnlinePage';
 import HomePage from './pages/HomePage';
 import MarketCapComparerPage from './pages/MarketCapComparerPage';
 import AanmeldenPage from './pages/AanmeldenPage';
 import PortfolioPage from './pages/PortfolioPage';
 import AdminDashboard from './components/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
+import SiteAccessControl from './components/SiteAccessControl';
 import { CurrencyProvider } from './contexts/CurrencyContext';
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -16,8 +18,9 @@ function App() {
     <AuthProvider>
       <CurrencyProvider>
         <Router>
-          <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-            <Header />
+          <SiteAccessControl>
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+              <Header />
 
               <Routes>
                 <Route path="/" element={<FrontPage />} />
@@ -56,8 +59,9 @@ function App() {
                 />
               </Routes>
 
-            <Footer />
-          </div>
+              <Footer />
+            </div>
+          </SiteAccessControl>
         </Router>
       </CurrencyProvider>
     </AuthProvider>

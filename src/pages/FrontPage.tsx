@@ -79,24 +79,24 @@ export default function FrontPage() {
                   <div className="bg-orange-500 p-3 rounded-xl">
                     <Shield className="w-8 h-8 text-white" />
                   </div>
-                  <h4 className="text-2xl font-bold text-gray-900">Sinds 2017 in Crypto</h4>
+                  <h4 className="text-2xl font-bold text-gray-900">Waar We Je Mee Helpen</h4>
                 </div>
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                    <span className="text-gray-700">Bitcoin, altcoins, NFT's, memecoins</span>
+                    <span className="text-gray-700">Veilig Bitcoin aankopen en bewaren in eigen beheer</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                    <span className="text-gray-700">Markt pieken, crashes en herstel</span>
+                    <span className="text-gray-700">Altijd toegang tot je portfolio en waarde</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                    <span className="text-gray-700">Scams, hypes en fabels meegemaakt</span>
+                    <span className="text-gray-700">100% eigen beheer - not your keys, not your crypto</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                    <span className="text-gray-700">Eerlijke kennis zonder poespas</span>
+                    <span className="text-gray-700">Wanneer het slim is om te kopen en waarom</span>
                   </div>
                 </div>
                 <div className="mt-6 p-4 bg-white rounded-lg">
