@@ -335,10 +335,9 @@ export default function SoonOnlinePage() {
                                 Annuleren
                               </button>
                             </div>
-                            <div class="text-xs text-gray-500 text-center">
-                              <p><strong>Admin:</strong> crypto2024admin</p>
-                              <p><strong>Test:</strong> test2024user</p>
-                            </div>
+                                        <div class="text-xs text-gray-500 text-center">
+                                          <p>Voer je wachtwoord in</p>
+                                        </div>
                           </form>
                         </div>
                       `;
@@ -353,22 +352,26 @@ export default function SoonOnlinePage() {
                         e.preventDefault();
                         const password = passwordInput.value;
                         
-                        if (password === 'crypto2024admin') {
-                          // Set admin login in localStorage
-                          localStorage.setItem('admin_authenticated', 'true');
-                          localStorage.setItem('user_type', 'admin');
-                          document.body.removeChild(modal);
-                          alert('Admin login succesvol! Je wordt doorgestuurd naar de admin pagina.');
-                          window.location.href = '/admin';
-                        } else if (password === 'test2024user') {
-                          localStorage.setItem('admin_authenticated', 'true');
-                          localStorage.setItem('user_type', 'test');
-                          document.body.removeChild(modal);
-                          alert('Test gebruiker login succesvol! Je wordt doorgestuurd naar de admin pagina.');
-                          window.location.href = '/admin';
-                        } else {
-                          alert('Onjuist wachtwoord. Probeer: crypto2024admin (admin) of test2024user (test)');
-                        }
+                                    // Use environment variables for security
+                                    const adminPassword = process.env.REACT_APP_ADMIN_PASSWORD || 'admin123';
+                                    const testPassword = process.env.REACT_APP_TEST_PASSWORD || 'test123';
+                                    
+                                    if (password === adminPassword) {
+                                      // Set admin login in localStorage
+                                      localStorage.setItem('admin_authenticated', 'true');
+                                      localStorage.setItem('user_type', 'admin');
+                                      document.body.removeChild(modal);
+                                      alert('Admin login succesvol! Je wordt doorgestuurd naar de admin pagina.');
+                                      window.location.href = '/admin';
+                                    } else if (password === testPassword) {
+                                      localStorage.setItem('admin_authenticated', 'true');
+                                      localStorage.setItem('user_type', 'test');
+                                      document.body.removeChild(modal);
+                                      alert('Test gebruiker login succesvol! Je wordt doorgestuurd naar de admin pagina.');
+                                      window.location.href = '/admin';
+                                    } else {
+                                      alert('Onjuist wachtwoord. Probeer opnieuw.');
+                                    }
                       });
                       
                       cancelBtn.addEventListener('click', () => {

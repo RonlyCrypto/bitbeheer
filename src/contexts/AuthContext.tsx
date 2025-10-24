@@ -10,9 +10,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Passwords - in production, these should be stored securely
-const ADMIN_PASSWORD = 'crypto2024admin';
-const TEST_PASSWORD = 'test2024user';
+// Passwords - using environment variables for security
+const ADMIN_PASSWORD = process.env.REACT_APP_ADMIN_PASSWORD || 'admin123';
+const TEST_PASSWORD = process.env.REACT_APP_TEST_PASSWORD || 'test123';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
