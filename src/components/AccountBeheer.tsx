@@ -27,17 +27,29 @@ export default function AccountBeheer() {
   useEffect(() => {
     const loadAccounts = async () => {
       try {
-        const response = await fetch('/api/accounts');
-        if (response.ok) {
-          const data = await response.json();
-          setUsers(data.accounts || []);
-        } else {
-          console.error('Failed to load accounts:', response.statusText);
-          // Fallback to localStorage for development
-          const storedAccounts = localStorage.getItem('bitbeheer_accounts');
-          if (storedAccounts) {
-            setUsers(JSON.parse(storedAccounts));
-          }
+        // Try accounts API first
+        const accountsResponse = await fetch('/api/accounts');
+        if (accountsResponse.ok) {
+          const accountsData = await accountsResponse.json();
+          setUsers(accountsData.accounts || []);
+          return;
+        }
+        
+        // Fallback to users API
+        const usersResponse = await fetch('/api/users');
+        if (usersResponse.ok) {
+          const usersData = await usersResponse.json();
+          // Filter for account_aanmelden category
+          const accountUsers = usersData.users?.filter((user: any) => user.category === 'account_aanmelden') || [];
+          setUsers(accountUsers);
+          return;
+        }
+        
+        console.error('Failed to load accounts from both APIs');
+        // Fallback to localStorage for development
+        const storedAccounts = localStorage.getItem('bitbeheer_accounts');
+        if (storedAccounts) {
+          setUsers(JSON.parse(storedAccounts));
         }
       } catch (error) {
         console.error('Error loading accounts:', error);

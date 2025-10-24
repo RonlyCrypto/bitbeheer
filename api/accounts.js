@@ -285,6 +285,21 @@ Het BitBeheer Team`,
 
       case 'GET':
         // Get all accounts (admin only)
+        // If no accounts in accounts storage, try to get from users API
+        if (accounts.length === 0) {
+          try {
+            const users = JSON.parse(process.env.STORED_USERS || '[]');
+            const accountUsers = users.filter(user => user.category === 'account_aanmelden');
+            return res.status(200).json({ 
+              success: true, 
+              accounts: accountUsers,
+              count: accountUsers.length 
+            });
+          } catch (error) {
+            console.error('Error loading from users API:', error);
+          }
+        }
+        
         return res.status(200).json({ 
           success: true, 
           accounts: accounts,
