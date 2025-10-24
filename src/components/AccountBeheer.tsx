@@ -13,6 +13,9 @@ interface UserAccount {
   emailSentDate?: string;
   lastLogin?: string;
   loginCount?: number;
+  isAdmin?: boolean;
+  isTest?: boolean;
+  registrationDate?: string;
 }
 
 export default function AccountBeheer() {
@@ -270,16 +273,30 @@ export default function AccountBeheer() {
                             <span className="font-medium text-gray-900">{user.email}</span>
                             <span className="text-sm text-gray-500">•</span>
                             <span className="text-sm text-gray-600">{user.name}</span>
-                            <span className="text-sm text-gray-500">•</span>
-                            <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
-                              {user.category}
-                            </span>
+                            {user.isAdmin && (
+                              <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full font-semibold">
+                                ADMIN
+                              </span>
+                            )}
+                            {user.isTest && (
+                              <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-semibold">
+                                TEST
+                              </span>
+                            )}
+                            {user.category && !user.isAdmin && !user.isTest && (
+                              <>
+                                <span className="text-sm text-gray-500">•</span>
+                                <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
+                                  {user.category}
+                                </span>
+                              </>
+                            )}
                           </div>
                           {user.message && user.message !== 'Geen bericht' && (
                             <p className="text-sm text-gray-600 mb-2">{user.message}</p>
                           )}
                           <div className="flex items-center gap-4 text-xs text-gray-400">
-                            <span>Aangemeld: {user.date}</span>
+                            <span>Aangemeld: {user.registrationDate || user.date}</span>
                             {user.lastLogin && (
                               <span>Laatste login: {user.lastLogin}</span>
                             )}

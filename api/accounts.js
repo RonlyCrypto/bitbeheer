@@ -285,16 +285,41 @@ Het BitBeheer Team`,
 
       case 'GET':
         // Get all accounts (admin only)
+        // Always include admin and test accounts
+        const adminAccount = {
+          id: 'admin',
+          email: 'admin@bitbeheer.nl',
+          name: 'Admin Account',
+          category: 'admin',
+          registrationDate: '2024-01-01',
+          lastLogin: new Date().toLocaleString('nl-NL'),
+          loginCount: 1,
+          isAdmin: true
+        };
+        
+        const testAccount = {
+          id: 'test',
+          email: 'test@bitbeheer.nl', 
+          name: 'Test Account',
+          category: 'test',
+          registrationDate: '2024-01-01',
+          lastLogin: new Date().toLocaleString('nl-NL'),
+          loginCount: 1,
+          isTest: true
+        };
+        
+        // Start with admin and test accounts
+        let allAccounts = [adminAccount, testAccount];
+        
+        // Add accounts from storage
+        allAccounts = allAccounts.concat(accounts);
+        
         // If no accounts in accounts storage, try to get from users API
         if (accounts.length === 0) {
           try {
             const users = JSON.parse(process.env.STORED_USERS || '[]');
             const accountUsers = users.filter(user => user.category === 'account_aanmelden');
-            return res.status(200).json({ 
-              success: true, 
-              accounts: accountUsers,
-              count: accountUsers.length 
-            });
+            allAccounts = allAccounts.concat(accountUsers);
           } catch (error) {
             console.error('Error loading from users API:', error);
           }
@@ -302,8 +327,8 @@ Het BitBeheer Team`,
         
         return res.status(200).json({ 
           success: true, 
-          accounts: accounts,
-          count: accounts.length 
+          accounts: allAccounts,
+          count: allAccounts.length 
         });
 
       default:
