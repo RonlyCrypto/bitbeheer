@@ -237,9 +237,9 @@ Datum: ${new Date().toLocaleString('nl-NL')}`;
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
                 Wat Komt Er Aan?
               </h2>
-              <p className="text-xl text-gray-600 leading-relaxed">
-                Persoonlijke 1-op-1 begeleiding voor Bitcoin investeren
-              </p>
+                          <p className="text-xl text-gray-600 leading-relaxed">
+                            Persoonlijke 1-op-1 begeleiding bij het investeren in Bitcoin.
+                          </p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-8 mb-16">
