@@ -100,40 +100,91 @@ export default function SoonOnlinePage() {
               
               if (userError) {
                 console.error('Failed to save user to Supabase:', userError);
-                setSubmitStatus('error');
-                setIsSubmitting(false);
-                return;
+                // Check if it's a duplicate email error
+                if (userError.message && userError.message.includes('duplicate')) {
+                  setSubmitStatus('error');
+                  setIsSubmitting(false);
+                  return;
+                }
+                // For other errors, try localStorage fallback
+                console.log('Using localStorage fallback...');
+                try {
+                  const emailData = {
+                    id: Date.now().toString(),
+                    email: email.trim().toLowerCase(),
+                    name: name?.trim() || 'Niet opgegeven',
+                    message: message?.trim() || 'Geen bericht',
+                    category: 'livegang',
+                    timestamp: new Date().toISOString(),
+                    date: new Date().toLocaleString('nl-NL')
+                  };
+
+                  const existingEmails = JSON.parse(localStorage.getItem('bitbeheer_emails') || '[]');
+                  existingEmails.push(emailData);
+                  localStorage.setItem('bitbeheer_emails', JSON.stringify(existingEmails));
+                  console.log('User saved to localStorage fallback');
+                } catch (fallbackError) {
+                  console.error('Fallback save failed:', fallbackError);
+                }
               }
 
               console.log('User saved to Supabase:', user);
 
-              // Log form submission
-              const formSubmissionData = {
-                form_type: 'notification-form',
-                ip_address: 'unknown', // Will be filled by server
-                user_agent: navigator.userAgent,
-                fingerprint: generateFingerprint(),
-                data: userData,
-                is_spam: false,
-                spam_score: 0.0
-              };
+              // Log form submission (optional, don't block user)
+              try {
+                const formSubmissionData = {
+                  form_type: 'notification-form',
+                  ip_address: 'unknown', // Will be filled by server
+                  user_agent: navigator.userAgent,
+                  fingerprint: generateFingerprint(),
+                  data: userData,
+                  is_spam: false,
+                  spam_score: 0.0
+                };
 
-              const { data: submission, error: submissionError } = await createFormSubmission(formSubmissionData);
-              
-              if (submissionError) {
-                console.error('Failed to log form submission:', submissionError);
-              } else {
-                console.log('Form submission logged:', submission);
+                const { data: submission, error: submissionError } = await createFormSubmission(formSubmissionData);
+                
+                if (submissionError) {
+                  console.error('Failed to log form submission:', submissionError);
+                } else {
+                  console.log('Form submission logged:', submission);
+                }
+              } catch (submissionError) {
+                console.error('Form submission logging error:', submissionError);
+                // Continue anyway, don't block the user
               }
 
-              // Send notification email to admin
-              const emailResult = await sendNotificationEmail(userData);
-              
-              if (emailResult.success) {
-                console.log('Admin notification email sent successfully');
-              } else {
-                console.error('Failed to send admin notification email:', emailResult.error);
-                // Continue anyway, don't block the user
+              // Send notification email to admin (optional, don't block user)
+              try {
+                const emailResult = await sendNotificationEmail(userData);
+                
+                if (emailResult.success) {
+                  console.log('Admin notification email sent successfully');
+                } else {
+                  console.error('Failed to send admin notification email:', emailResult.error);
+                  // Try mailto fallback
+                  const mailtoSubject = `Nieuwe ${userData.category} Notificatie Aanvraag - BitBeheer`;
+                  const mailtoBody = `Nieuwe notificatie aanvraag:
+Naam: ${userData.name}
+E-mail: ${userData.email}
+Bericht: ${userData.message}
+Datum: ${new Date().toLocaleString('nl-NL')}`;
+                  
+                  window.open(`mailto:update@bitbeheer.nl?subject=${encodeURIComponent(mailtoSubject)}&body=${encodeURIComponent(mailtoBody)}`, '_blank');
+                  console.log('Mailto fallback triggered');
+                }
+              } catch (emailError) {
+                console.error('Email sending error:', emailError);
+                // Try mailto fallback
+                const mailtoSubject = `Nieuwe ${userData.category} Notificatie Aanvraag - BitBeheer`;
+                const mailtoBody = `Nieuwe notificatie aanvraag:
+Naam: ${userData.name}
+E-mail: ${userData.email}
+Bericht: ${userData.message}
+Datum: ${new Date().toLocaleString('nl-NL')}`;
+                
+                window.open(`mailto:update@bitbeheer.nl?subject=${encodeURIComponent(mailtoSubject)}&body=${encodeURIComponent(mailtoBody)}`, '_blank');
+                console.log('Mailto fallback triggered');
               }
 
               setSubmitStatus('success');
