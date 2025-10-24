@@ -7,6 +7,7 @@ import HomePage from './pages/HomePage';
 import MarketCapComparerPage from './pages/MarketCapComparerPage';
 import AanmeldenPage from './pages/AanmeldenPage';
 import PortfolioPage from './pages/PortfolioPage';
+import EmailManagement from './pages/EmailManagement';
 import AdminDashboard from './components/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import SiteAccessControl from './components/SiteAccessControl';
@@ -49,14 +50,22 @@ function App() {
                     </ProtectedRoute>
                   } 
                 />
-                <Route 
-                  path="/admin/portfolio" 
-                  element={
-                    <ProtectedRoute>
-                      <PortfolioPage />
-                    </ProtectedRoute>
-                  } 
-                />
+                        <Route 
+                          path="/admin/portfolio" 
+                          element={
+                            <ProtectedRoute>
+                              <PortfolioPage />
+                            </ProtectedRoute>
+                          } 
+                        />
+                        <Route 
+                          path="/admin/emails" 
+                          element={
+                            <ProtectedRoute>
+                              <EmailManagement />
+                            </ProtectedRoute>
+                          } 
+                        />
               </Routes>
 
               <Footer />

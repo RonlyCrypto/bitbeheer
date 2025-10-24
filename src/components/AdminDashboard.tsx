@@ -11,6 +11,8 @@ import {
   Edit3,
   Eye,
   Wallet,
+  Mail, // Added for email management
+  Send, // Added for bulk email
   Globe,
   Lock,
   ToggleLeft,
@@ -230,6 +232,47 @@ export default function AdminDashboard() {
                     <div>
                       <h3 className="text-2xl font-bold text-gray-900">24</h3>
                       <p className="text-gray-600">Totaal Bezoekers</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Email Management Section */}
+              <div className="bg-white rounded-xl p-6 shadow-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-purple-100 p-3 rounded-xl">
+                      <Mail className="w-8 h-8 text-purple-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">E-mail Beheer</h3>
+                      <p className="text-gray-600">Beheer notificatie e-mails en verstuur bulk berichten</p>
+                    </div>
+                  </div>
+                  <Link
+                    to="/admin/emails"
+                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    <Mail className="w-4 h-4" />
+                    E-mail Beheer
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="font-semibold text-gray-900 mb-2">Notificatie E-mails</h4>
+                    <p className="text-sm text-gray-600 mb-3">Beheer alle e-mail adressen die notificaties willen ontvangen</p>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <Users className="w-4 h-4" />
+                      <span>0 e-mails opgeslagen</span>
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="font-semibold text-gray-900 mb-2">Bulk E-mail</h4>
+                    <p className="text-sm text-gray-600 mb-3">Verstuur berichten naar alle of geselecteerde e-mails</p>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <Send className="w-4 h-4" />
+                      <span>Klaar voor bulk verzending</span>
                     </div>
                   </div>
                 </div>

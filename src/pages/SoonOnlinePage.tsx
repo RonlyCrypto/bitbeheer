@@ -22,21 +22,29 @@ export default function SoonOnlinePage() {
     }
 
     try {
-      // Use mailto as fallback - simple and reliable
-      const subject = 'Notificatie Aanvraag - BitBeheer';
-      const body = `Naam: ${name || 'Niet opgegeven'}
-E-mail: ${email}
-Bericht: ${message || 'Ik wil graag op de hoogte blijven van wanneer BitBeheer live gaat.'}
+      // Send to API for processing and storage
+      const response = await fetch('/api/save-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          name: name?.trim() || undefined,
+          message: message?.trim() || undefined
+        })
+      });
 
-Datum: ${new Date().toLocaleString('nl-NL')}`;
-
-      // Open mailto link
-      window.location.href = `mailto:update@bitbeheer.nl?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      
-      setSubmitStatus('success');
-      setEmail('');
-      setName('');
-      setMessage('');
+      if (response.ok) {
+        setSubmitStatus('success');
+        setEmail('');
+        setName('');
+        setMessage('');
+      } else {
+        const errorData = await response.json();
+        console.error('Server error:', errorData);
+        setSubmitStatus('error');
+      }
     } catch (error) {
       console.error('Error submitting form:', error);
       setSubmitStatus('error');
@@ -145,7 +153,7 @@ Datum: ${new Date().toLocaleString('nl-NL')}`;
                 {submitStatus === 'success' && (
                   <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
                     <CheckCircle className="w-5 h-5" />
-                    <span>Bedankt! Je e-mail client wordt geopend om de notificatie te versturen.</span>
+                    <span>Bedankt! Je bent toegevoegd aan onze notificatie lijst. We sturen je een e-mail zodra we live gaan.</span>
                   </div>
                 )}
                 
@@ -207,7 +215,7 @@ Datum: ${new Date().toLocaleString('nl-NL')}`;
                 </button>
                 
                 <p className="text-sm text-gray-500 text-center">
-                  Je e-mail client wordt geopend om de notificatie naar update@bitbeheer.nl te versturen.
+                  Je e-mail wordt automatisch opgeslagen en we sturen je een notificatie zodra we live gaan.
                 </p>
               </form>
             </div>
