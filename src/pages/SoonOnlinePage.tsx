@@ -1,6 +1,7 @@
 import { Bitcoin, Clock, Shield, Users, Mail, ArrowRight, CheckCircle, AlertCircle, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { protectFormSubmission, createHoneypotField, checkHoneypot, checkFormTiming, generateMathChallenge, verifyMathChallenge } from '../utils/botProtection';
 
 export default function SoonOnlinePage() {
   const [email, setEmail] = useState('');
@@ -8,6 +9,20 @@ export default function SoonOnlinePage() {
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  
+  // Bot protection state
+  const [mathChallenge, setMathChallenge] = useState<{ question: string; answer: number } | null>(null);
+  const [mathAnswer, setMathAnswer] = useState('');
+  const [formStartTime] = useState(Date.now());
+  const honeypotRef = useRef<HTMLInputElement | null>(null);
+
+  // Generate math challenge on component mount
+  useEffect(() => {
+    // Only show math challenge for suspicious behavior (random 10% chance)
+    if (Math.random() < 0.1) {
+      setMathChallenge(generateMathChallenge());
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,6 +34,56 @@ export default function SoonOnlinePage() {
       setSubmitStatus('error');
       setIsSubmitting(false);
       return;
+    }
+
+    // Bot protection checks
+    try {
+      // Check honeypot
+      if (honeypotRef.current && checkHoneypot({ website: honeypotRef.current.value })) {
+        console.log('Bot detected: honeypot filled');
+        setSubmitStatus('error');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Check form timing (must be filled in at least 3 seconds)
+      if (!checkFormTiming(formStartTime, 3000)) {
+        console.log('Bot detected: form filled too quickly');
+        setSubmitStatus('error');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Check math challenge if present
+      if (mathChallenge && !verifyMathChallenge(mathAnswer, mathChallenge.answer)) {
+        console.log('Bot detected: math challenge failed');
+        setSubmitStatus('error');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Comprehensive bot protection
+      const protectionResult = await protectFormSubmission(
+        { email, name, message },
+        'notification-form'
+      );
+
+      if (!protectionResult.allowed) {
+        console.log('Bot protection blocked submission:', protectionResult.reason);
+        setSubmitStatus('error');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (protectionResult.spamScore && protectionResult.spamScore > 0.7) {
+        console.log('Spam detected, score:', protectionResult.spamScore);
+        setSubmitStatus('error');
+        setIsSubmitting(false);
+        return;
+      }
+    } catch (error) {
+      console.error('Bot protection check failed:', error);
+      // Continue with submission if protection fails
     }
 
             try {
@@ -199,14 +264,25 @@ export default function SoonOnlinePage() {
                         </div>
                       ) : (
                         // Show form only if not successful
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                          {/* Error Messages */}
-                          {submitStatus === 'error' && (
-                            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
-                              <AlertCircle className="w-5 h-5" />
-                              <span>Er is een fout opgetreden. Controleer je e-mail adres.</span>
-                            </div>
-                          )}
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                              {/* Error Messages */}
+                              {submitStatus === 'error' && (
+                                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
+                                  <AlertCircle className="w-5 h-5" />
+                                  <span>Er is een fout opgetreden. Controleer je e-mail adres.</span>
+                                </div>
+                              )}
+
+                              {/* Honeypot field (hidden) */}
+                              <input
+                                ref={honeypotRef}
+                                type="text"
+                                name="website"
+                                style={{ display: 'none' }}
+                                tabIndex={-1}
+                                autoComplete="off"
+                                aria-hidden="true"
+                              />
 
                           <div>
                             <input
@@ -229,15 +305,32 @@ export default function SoonOnlinePage() {
                             />
                           </div>
                           
-                          <div>
-                            <textarea
-                              value={message}
-                              onChange={(e) => setMessage(e.target.value)}
-                              placeholder="Extra bericht (optioneel)"
-                              rows={3}
-                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                            />
-                          </div>
+                              <div>
+                                <textarea
+                                  value={message}
+                                  onChange={(e) => setMessage(e.target.value)}
+                                  placeholder="Extra bericht (optioneel)"
+                                  rows={3}
+                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                />
+                              </div>
+
+                              {/* Math Challenge (only show if needed) */}
+                              {mathChallenge && (
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Beveiligingsvraag: {mathChallenge.question}
+                                  </label>
+                                  <input
+                                    type="number"
+                                    value={mathAnswer}
+                                    onChange={(e) => setMathAnswer(e.target.value)}
+                                    placeholder="Je antwoord"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                    required
+                                  />
+                                </div>
+                              )}
                           
                           <button
                             type="submit"
