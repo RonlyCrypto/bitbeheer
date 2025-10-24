@@ -23,35 +23,35 @@ export default function AccountBeheer() {
   const [selectedUser, setSelectedUser] = useState<UserAccount | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
 
-  // Load users from backend API
+  // Load accounts from backend API
   useEffect(() => {
-    const loadUsers = async () => {
+    const loadAccounts = async () => {
       try {
-        const response = await fetch('/api/users');
+        const response = await fetch('/api/accounts');
         if (response.ok) {
           const data = await response.json();
-          setUsers(data.users || []);
+          setUsers(data.accounts || []);
         } else {
-          console.error('Failed to load users:', response.statusText);
+          console.error('Failed to load accounts:', response.statusText);
           // Fallback to localStorage for development
-          const storedUsers = localStorage.getItem('bitbeheer_emails');
-          if (storedUsers) {
-            setUsers(JSON.parse(storedUsers));
+          const storedAccounts = localStorage.getItem('bitbeheer_accounts');
+          if (storedAccounts) {
+            setUsers(JSON.parse(storedAccounts));
           }
         }
       } catch (error) {
-        console.error('Error loading users:', error);
+        console.error('Error loading accounts:', error);
         // Fallback to localStorage for development
-        const storedUsers = localStorage.getItem('bitbeheer_emails');
-        if (storedUsers) {
-          setUsers(JSON.parse(storedUsers));
+        const storedAccounts = localStorage.getItem('bitbeheer_accounts');
+        if (storedAccounts) {
+          setUsers(JSON.parse(storedAccounts));
         }
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadUsers();
+    loadAccounts();
   }, []);
 
   // Filter users by search term and category

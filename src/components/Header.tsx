@@ -2,6 +2,7 @@ import { Bitcoin, TrendingUp, BarChart3, Shield, Wallet } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import BitcoinLivePrice from './BitcoinLivePrice';
+import LoginRegister from './LoginRegister';
 
 export default function Header() {
   const location = useLocation();
@@ -106,6 +107,54 @@ export default function Header() {
             <div className="hidden md:block">
               <BitcoinLivePrice />
             </div>
+            
+            {/* Login/Register */}
+            <LoginRegister 
+              onLogin={async (email, password) => {
+                try {
+                  const response = await fetch('/api/accounts/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                  });
+                  if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('user_account', JSON.stringify(data.account));
+                    return true;
+                  }
+                  return false;
+                } catch (error) {
+                  console.error('Login error:', error);
+                  return false;
+                }
+              }}
+              onRegister={async (email, password, name) => {
+                try {
+                  const response = await fetch('/api/accounts/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, name })
+                  });
+                  return response.ok;
+                } catch (error) {
+                  console.error('Register error:', error);
+                  return false;
+                }
+              }}
+              onPasswordReset={async (email) => {
+                try {
+                  const response = await fetch('/api/accounts/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                  });
+                  return response.ok;
+                } catch (error) {
+                  console.error('Password reset error:', error);
+                  return false;
+                }
+              }}
+            />
             
             <div className="hidden lg:flex items-center gap-3 bg-white bg-opacity-20 px-5 py-3 rounded-xl backdrop-blur-sm">
               <TrendingUp className="w-5 h-5" />
