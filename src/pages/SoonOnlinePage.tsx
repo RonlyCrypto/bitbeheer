@@ -245,7 +245,7 @@ Datum: ${emailData.date}`;
                   Persoonlijke begeleiding voor Bitcoin investeren
                 </p>
                 <div className="flex items-center justify-center md:justify-start gap-6 text-sm">
-                  <span>© 2024 BitBeheer</span>
+                  <span>© 2026 BitBeheer</span>
                   <span>•</span>
                   <span>Binnenkort online</span>
                 </div>
@@ -258,16 +258,92 @@ Datum: ${emailData.date}`;
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => {
-                      const password = prompt('Admin wachtwoord:');
-                      if (password === 'crypto2024admin') {
-                        alert('Admin login succesvol! Je wordt doorgestuurd naar de admin pagina.');
-                        window.location.href = '/admin';
-                      } else if (password === 'test2024user') {
-                        alert('Test gebruiker login succesvol! Je wordt doorgestuurd naar de admin pagina.');
-                        window.location.href = '/admin';
-                      } else if (password) {
-                        alert('Onjuist wachtwoord. Probeer: crypto2024admin (admin) of test2024user (test)');
-                      }
+                      // Create a beautiful modal for login
+                      const modal = document.createElement('div');
+                      modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                      modal.innerHTML = `
+                        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl">
+                          <div class="text-center mb-6">
+                            <div class="bg-orange-100 p-3 rounded-xl w-fit mx-auto mb-4">
+                              <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                              </svg>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-900 mb-2">Admin Login</h3>
+                            <p class="text-gray-600">Voer je wachtwoord in om toegang te krijgen</p>
+                          </div>
+                          <form id="adminLoginForm" class="space-y-4">
+                            <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-2">Wachtwoord</label>
+                              <input 
+                                type="password" 
+                                id="adminPassword" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                placeholder="Admin wachtwoord"
+                                required
+                              />
+                            </div>
+                            <div class="flex gap-3">
+                              <button 
+                                type="submit" 
+                                class="flex-1 bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                              >
+                                Inloggen
+                              </button>
+                              <button 
+                                type="button" 
+                                id="cancelLogin"
+                                class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                              >
+                                Annuleren
+                              </button>
+                            </div>
+                            <div class="text-xs text-gray-500 text-center">
+                              <p><strong>Admin:</strong> crypto2024admin</p>
+                              <p><strong>Test:</strong> test2024user</p>
+                            </div>
+                          </form>
+                        </div>
+                      `;
+                      
+                      document.body.appendChild(modal);
+                      
+                      const form = modal.querySelector('#adminLoginForm');
+                      const passwordInput = modal.querySelector('#adminPassword');
+                      const cancelBtn = modal.querySelector('#cancelLogin');
+                      
+                      form.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        const password = passwordInput.value;
+                        
+                        if (password === 'crypto2024admin') {
+                          // Set admin login in localStorage
+                          localStorage.setItem('admin_authenticated', 'true');
+                          localStorage.setItem('user_type', 'admin');
+                          document.body.removeChild(modal);
+                          alert('Admin login succesvol! Je wordt doorgestuurd naar de admin pagina.');
+                          window.location.href = '/admin';
+                        } else if (password === 'test2024user') {
+                          localStorage.setItem('admin_authenticated', 'true');
+                          localStorage.setItem('user_type', 'test');
+                          document.body.removeChild(modal);
+                          alert('Test gebruiker login succesvol! Je wordt doorgestuurd naar de admin pagina.');
+                          window.location.href = '/admin';
+                        } else {
+                          alert('Onjuist wachtwoord. Probeer: crypto2024admin (admin) of test2024user (test)');
+                        }
+                      });
+                      
+                      cancelBtn.addEventListener('click', () => {
+                        document.body.removeChild(modal);
+                      });
+                      
+                      // Close on outside click
+                      modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                          document.body.removeChild(modal);
+                        }
+                      });
                     }}
                     className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm rounded-lg transition-colors"
                   >

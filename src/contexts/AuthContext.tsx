@@ -61,8 +61,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return true;
     }
     
-    // Site is in "soon online" mode, only admin and test users can access
-    return isAuthenticated && (userType === 'admin' || userType === 'test');
+    // If admin is logged in, they can see the full site (not SoonOnlinePage)
+    if (isAuthenticated && (userType === 'admin' || userType === 'test')) {
+      return true;
+    }
+    
+    // Non-authenticated users see SoonOnlinePage
+    return false;
   };
 
   return (
