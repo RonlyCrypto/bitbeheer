@@ -34,16 +34,18 @@ module.exports = async (req, res) => {
 
       case 'POST':
         // Create new user
-        const { email, name, message } = req.body;
+        const { email, name, message, category = 'livegang' } = req.body;
         
         if (!email) {
           return res.status(400).json({ error: 'Email is required' });
         }
 
-        // Check if user already exists
-        const existingUser = users.find(user => user.email === email.toLowerCase());
+        // Check if user already exists for this category
+        const existingUser = users.find(user => 
+          user.email === email.toLowerCase() && user.category === category
+        );
         if (existingUser) {
-          return res.status(400).json({ error: 'User already exists' });
+          return res.status(400).json({ error: 'User already exists for this category' });
         }
 
         const newUser = {
@@ -51,6 +53,7 @@ module.exports = async (req, res) => {
           email: email.toLowerCase().trim(),
           name: name?.trim() || 'Niet opgegeven',
           message: message?.trim() || 'Geen bericht',
+          category: category,
           timestamp: new Date().toISOString(),
           date: new Date().toLocaleString('nl-NL'),
           emailSent: false,

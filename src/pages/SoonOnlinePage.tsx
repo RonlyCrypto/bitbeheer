@@ -31,7 +31,8 @@ export default function SoonOnlinePage() {
                 body: JSON.stringify({
                   email: email.trim().toLowerCase(),
                   name: name?.trim() || 'Niet opgegeven',
-                  message: message?.trim() || 'Geen bericht'
+                  message: message?.trim() || 'Geen bericht',
+                  category: 'livegang'
                 })
               });
 
@@ -55,22 +56,25 @@ export default function SoonOnlinePage() {
                 localStorage.setItem('bitbeheer_emails', JSON.stringify(existingEmails));
               }
 
-              // Send email notification to admin via API
+              // Send email notification to admin via test-email API
               try {
-                const emailResponse = await fetch('/api/send-notification', {
+                const emailResponse = await fetch('/api/test-email', {
                   method: 'POST',
                   headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'Content-Type': 'application/json'
                   },
                   body: JSON.stringify({
                     email: email.trim().toLowerCase(),
                     name: name?.trim() || 'Niet opgegeven',
-                    message: message?.trim() || 'Geen bericht'
+                    message: message?.trim() || 'Geen bericht',
+                    category: 'livegang'
                   })
                 });
 
-                if (!emailResponse.ok) {
+                if (emailResponse.ok) {
+                  const emailData = await emailResponse.json();
+                  console.log('Email sent successfully:', emailData);
+                } else {
                   console.error('Failed to send admin notification email');
                 }
               } catch (emailError) {

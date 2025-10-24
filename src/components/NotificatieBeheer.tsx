@@ -6,6 +6,7 @@ interface NotificationUser {
   email: string;
   name: string;
   message: string;
+  category: string;
   date: string;
   timestamp: string;
   emailSent?: boolean;
@@ -19,6 +20,7 @@ export default function NotificatieBeheer() {
   const [sendStatus, setSendStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [customMessage, setCustomMessage] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   // Load users from backend API
   useEffect(() => {
@@ -201,8 +203,16 @@ Giovanni - BitBeheer`;
     window.URL.revokeObjectURL(url);
   };
 
-  const sentCount = users.filter(user => user.emailSent).length;
-  const pendingCount = users.filter(user => !user.emailSent).length;
+  // Filter users by category
+  const filteredUsers = selectedCategory === 'all' 
+    ? users 
+    : users.filter(user => user.category === selectedCategory);
+
+  // Get unique categories
+  const categories = ['all', ...Array.from(new Set(users.map(user => user.category)))];
+
+  const sentCount = filteredUsers.filter(user => user.emailSent).length;
+  const pendingCount = filteredUsers.filter(user => !user.emailSent).length;
 
   if (isLoading) {
     return (
@@ -342,11 +352,24 @@ Giovanni - BitBeheer`;
           <div className="bg-white rounded-lg shadow-lg">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">Aangemelde Gebruikers</h2>
+                <div className="flex items-center gap-4">
+                  <h2 className="text-xl font-bold text-gray-900">Aangemelde Gebruikers ({filteredUsers.length})</h2>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm"
+                  >
+                    {categories.map(category => (
+                      <option key={category} value={category}>
+                        {category === 'all' ? 'Alle Categorieën' : category}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
-                    checked={selectedUsers.length === users.length && users.length > 0}
+                    checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
                     onChange={handleSelectAll}
                     className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
                   />
@@ -356,13 +379,13 @@ Giovanni - BitBeheer`;
             </div>
 
             <div className="divide-y divide-gray-200">
-              {users.length === 0 ? (
+              {filteredUsers.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
                   <Mail className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p>Nog geen gebruikers aangemeld</p>
+                  <p>Nog geen gebruikers aangemeld voor deze categorie</p>
                 </div>
               ) : (
-                users.map((user) => (
+                filteredUsers.map((user) => (
                   <div key={user.id} className="p-6 hover:bg-gray-50">
                     <div className="flex items-center gap-4">
                       <input
@@ -376,6 +399,10 @@ Giovanni - BitBeheer`;
                           <span className="font-medium text-gray-900">{user.email}</span>
                           <span className="text-sm text-gray-500">•</span>
                           <span className="text-sm text-gray-600">{user.name}</span>
+                          <span className="text-sm text-gray-500">•</span>
+                          <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
+                            {user.category}
+                          </span>
                           {user.emailSent && (
                             <div className="flex items-center gap-1 text-green-600">
                               <CheckCircle className="w-4 h-4" />
