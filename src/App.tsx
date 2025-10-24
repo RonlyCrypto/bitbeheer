@@ -9,6 +9,7 @@ import AanmeldenPage from './pages/AanmeldenPage';
 import PortfolioPage from './pages/PortfolioPage';
 import EmailManagement from './pages/EmailManagement';
 import AdminDashboard from './components/AdminDashboard';
+import UserDashboard from './components/UserDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import SiteAccessControl from './components/SiteAccessControl';
 import { CurrencyProvider } from './contexts/CurrencyContext';
@@ -65,6 +66,10 @@ function App() {
                               <EmailManagement />
                             </ProtectedRoute>
                           } 
+                        />
+                        <Route 
+                          path="/user-dashboard" 
+                          element={<UserDashboard />} 
                         />
               </Routes>
 
