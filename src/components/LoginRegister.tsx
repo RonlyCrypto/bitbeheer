@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { User, LogIn, UserPlus, Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react';
+import { createAccount, sendWelcomeEmail } from '../lib/supabase';
 
 interface LoginRegisterProps {
   onLogin: (email: string, password: string) => boolean;
@@ -37,8 +38,38 @@ export default function LoginRegister({ onLogin, onRegister, onPasswordReset }: 
           setMessage({ type: 'error', text: 'Onjuiste e-mail of wachtwoord' });
         }
       } else if (mode === 'register') {
-        const success = await onRegister(email, password, name);
-        if (success) {
+        try {
+          // Create account in Supabase
+          const accountData = {
+            email: email.toLowerCase().trim(),
+            name: name.trim(),
+            password_hash: password, // In production, hash this password
+            category: 'account_aanmelden'
+          };
+
+          const { data: account, error: accountError } = await createAccount(accountData);
+          
+          if (accountError) {
+            console.error('Failed to create account:', accountError);
+            setMessage({ type: 'error', text: 'E-mail al in gebruik of fout bij aanmaken' });
+            return;
+          }
+
+          console.log('Account created in Supabase:', account);
+
+          // Send welcome email
+          const emailResult = await sendWelcomeEmail({
+            email: account.email,
+            name: account.name
+          });
+
+          if (emailResult.success) {
+            console.log('Welcome email sent successfully');
+          } else {
+            console.error('Failed to send welcome email:', emailResult.error);
+            // Continue anyway, don't block the user
+          }
+
           setMessage({ type: 'success', text: 'Account aangemaakt! Check je e-mail voor je inloggegevens.' });
           setTimeout(() => {
             setIsOpen(false);
@@ -47,7 +78,8 @@ export default function LoginRegister({ onLogin, onRegister, onPasswordReset }: 
             setName('');
             setMessage(null);
           }, 2000);
-        } else {
+        } catch (error) {
+          console.error('Registration error:', error);
           setMessage({ type: 'error', text: 'E-mail al in gebruik of fout bij aanmaken' });
         }
       } else if (mode === 'reset') {

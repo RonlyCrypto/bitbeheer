@@ -2,6 +2,7 @@ import { Bitcoin, Clock, Shield, Users, Mail, ArrowRight, CheckCircle, AlertCirc
 import { Link } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import { protectFormSubmission, createHoneypotField, checkHoneypot, checkFormTiming, generateMathChallenge, verifyMathChallenge } from '../utils/botProtection';
+import { createUser, sendNotificationEmail, createFormSubmission } from '../lib/supabase';
 
 export default function SoonOnlinePage() {
   const [email, setEmail] = useState('');
@@ -87,63 +88,52 @@ export default function SoonOnlinePage() {
     }
 
             try {
-              // Try to save to backend API first
-              const response = await fetch('/api/users', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                  email: email.trim().toLowerCase(),
-                  name: name?.trim() || 'Niet opgegeven',
-                  message: message?.trim() || 'Geen bericht',
-                  category: 'livegang'
-                })
-              });
+              // Save user to Supabase
+              const userData = {
+                email: email.trim().toLowerCase(),
+                name: name?.trim() || 'Niet opgegeven',
+                message: message?.trim() || 'Geen bericht',
+                category: 'livegang'
+              };
 
-              if (response.ok) {
-                const data = await response.json();
-                console.log('User saved to backend:', data);
-              } else {
-                console.error('Failed to save to backend, using localStorage fallback');
-                // Fallback to localStorage for development
-                const emailData = {
-                  id: Date.now().toString(),
-                  email: email.trim().toLowerCase(),
-                  name: name?.trim() || 'Niet opgegeven',
-                  message: message?.trim() || 'Geen bericht',
-                  timestamp: new Date().toISOString(),
-                  date: new Date().toLocaleString('nl-NL')
-                };
-
-                const existingEmails = JSON.parse(localStorage.getItem('bitbeheer_emails') || '[]');
-                existingEmails.push(emailData);
-                localStorage.setItem('bitbeheer_emails', JSON.stringify(existingEmails));
+              const { data: user, error: userError } = await createUser(userData);
+              
+              if (userError) {
+                console.error('Failed to save user to Supabase:', userError);
+                setSubmitStatus('error');
+                setIsSubmitting(false);
+                return;
               }
 
-              // Send email notification to admin via test-email API
-              try {
-                const emailResponse = await fetch('/api/test-email', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    email: email.trim().toLowerCase(),
-                    name: name?.trim() || 'Niet opgegeven',
-                    message: message?.trim() || 'Geen bericht',
-                    category: 'livegang'
-                  })
-                });
+              console.log('User saved to Supabase:', user);
 
-                if (emailResponse.ok) {
-                  const emailData = await emailResponse.json();
-                  console.log('Email sent successfully:', emailData);
-                } else {
-                  console.error('Failed to send admin notification email');
-                }
-              } catch (emailError) {
-                console.error('Error sending admin notification:', emailError);
+              // Log form submission
+              const formSubmissionData = {
+                form_type: 'notification-form',
+                ip_address: 'unknown', // Will be filled by server
+                user_agent: navigator.userAgent,
+                fingerprint: generateFingerprint(),
+                data: userData,
+                is_spam: false,
+                spam_score: 0.0
+              };
+
+              const { data: submission, error: submissionError } = await createFormSubmission(formSubmissionData);
+              
+              if (submissionError) {
+                console.error('Failed to log form submission:', submissionError);
+              } else {
+                console.log('Form submission logged:', submission);
+              }
+
+              // Send notification email to admin
+              const emailResult = await sendNotificationEmail(userData);
+              
+              if (emailResult.success) {
+                console.log('Admin notification email sent successfully');
+              } else {
+                console.error('Failed to send admin notification email:', emailResult.error);
+                // Continue anyway, don't block the user
               }
 
               setSubmitStatus('success');
