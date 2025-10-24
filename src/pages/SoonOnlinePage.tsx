@@ -55,17 +55,27 @@ export default function SoonOnlinePage() {
                 localStorage.setItem('bitbeheer_emails', JSON.stringify(existingEmails));
               }
 
-              // Send email notification to admin
-              const subject = 'Nieuwe Notificatie Aanvraag - BitBeheer';
-              const body = `Nieuwe notificatie aanvraag:
-              
-        Naam: ${name?.trim() || 'Niet opgegeven'}
-        E-mail: ${email.trim().toLowerCase()}
-        Bericht: ${message?.trim() || 'Geen bericht'}
-        Datum: ${new Date().toLocaleString('nl-NL')}`;
+              // Send email notification to admin via API
+              try {
+                const emailResponse = await fetch('/api/send-notification', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                  },
+                  body: JSON.stringify({
+                    email: email.trim().toLowerCase(),
+                    name: name?.trim() || 'Niet opgegeven',
+                    message: message?.trim() || 'Geen bericht'
+                  })
+                });
 
-              // Open mailto for admin notification
-              window.open(`mailto:update@bitbeheer.nl?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+                if (!emailResponse.ok) {
+                  console.error('Failed to send admin notification email');
+                }
+              } catch (emailError) {
+                console.error('Error sending admin notification:', emailError);
+              }
 
               setSubmitStatus('success');
               setEmail('');
@@ -173,78 +183,83 @@ export default function SoonOnlinePage() {
               Wil je op de hoogte blijven van wanneer we live gaan? Laat je gegevens achter en we sturen je een bericht zodra we klaar zijn.
             </p>
 
-            <div className="bg-white rounded-2xl p-8 shadow-lg">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Status Messages */}
-                {submitStatus === 'success' && (
-                  <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5" />
-                    <span>Bedankt! Je bent toegevoegd aan onze notificatie lijst. We sturen je een e-mail zodra we live gaan.</span>
-                  </div>
-                )}
-                
-                {submitStatus === 'error' && (
-                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5" />
-                    <span>Er is een fout opgetreden. Controleer je e-mail adres.</span>
-                  </div>
-                )}
+                    <div className="bg-white rounded-2xl p-8 shadow-lg">
+                      {submitStatus === 'success' ? (
+                        // Show only success message after successful submission
+                        <div className="text-center">
+                          <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-lg flex items-center justify-center gap-3 mb-4">
+                            <CheckCircle className="w-6 h-6" />
+                            <span className="text-lg font-medium">Bedankt! Je bent toegevoegd aan onze notificatie lijst.</span>
+                          </div>
+                          <p className="text-gray-600">We sturen je een e-mail zodra we live gaan.</p>
+                        </div>
+                      ) : (
+                        // Show form only if not successful
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                          {/* Error Messages */}
+                          {submitStatus === 'error' && (
+                            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
+                              <AlertCircle className="w-5 h-5" />
+                              <span>Er is een fout opgetreden. Controleer je e-mail adres.</span>
+                            </div>
+                          )}
 
-                <div>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Je naam (optioneel)"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  />
-                </div>
-                
-                <div>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Je e-mailadres *"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Extra bericht (optioneel)"
-                    rows={3}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  />
-                </div>
-                
-                <button
-                  type="submit"
-                  disabled={isSubmitting || !email}
-                  className="w-full bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Versturen...
-                    </>
-                  ) : (
-                    <>
-                      <Mail className="w-5 h-5" />
-                      Notificatie Aanvragen
-                      <ArrowRight className="w-5 h-5" />
-                    </>
-                  )}
-                </button>
-                
-                <p className="text-sm text-gray-500 text-center">
-                  Je e-mail wordt automatisch opgeslagen en we sturen je een notificatie zodra we live gaan.
-                </p>
-              </form>
-            </div>
+                          <div>
+                            <input
+                              type="text"
+                              value={name}
+                              onChange={(e) => setName(e.target.value)}
+                              placeholder="Je naam (optioneel)"
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            />
+                          </div>
+                          
+                          <div>
+                            <input
+                              type="email"
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                              placeholder="Je e-mailadres *"
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                              required
+                            />
+                          </div>
+                          
+                          <div>
+                            <textarea
+                              value={message}
+                              onChange={(e) => setMessage(e.target.value)}
+                              placeholder="Extra bericht (optioneel)"
+                              rows={3}
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            />
+                          </div>
+                          
+                          <button
+                            type="submit"
+                            disabled={isSubmitting || !email}
+                            className="w-full bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isSubmitting ? (
+                              <>
+                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                Versturen...
+                              </>
+                            ) : (
+                              <>
+                                <Mail className="w-5 h-5" />
+                                Notificatie Aanvragen
+                                <ArrowRight className="w-5 h-5" />
+                              </>
+                            )}
+                          </button>
+                          
+                          <p className="text-sm text-gray-500 text-center">
+                            Je e-mail wordt automatisch opgeslagen en we sturen je een notificatie zodra we live gaan.
+                          </p>
+                        </form>
+                      )}
+                    </div>
           </div>
         </div>
       </section>
