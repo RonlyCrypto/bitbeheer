@@ -1,7 +1,7 @@
 import { Bitcoin, Clock, Shield, Users, Mail, ArrowRight, CheckCircle, AlertCircle, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
-import { protectFormSubmission, createHoneypotField, checkHoneypot, checkFormTiming, generateMathChallenge, verifyMathChallenge } from '../utils/botProtection';
+import { protectFormSubmission, createHoneypotField, checkHoneypot, checkFormTiming, generateMathChallenge, verifyMathChallenge, generateFingerprint } from '../utils/botProtection';
 import { createUser, sendNotificationEmail, createFormSubmission } from '../lib/supabase';
 
 export default function SoonOnlinePage() {
@@ -293,111 +293,111 @@ Datum: ${new Date().toLocaleString('nl-NL')}`;
               Wil je op de hoogte blijven van wanneer we live gaan? Laat je gegevens achter en we sturen je een bericht zodra we klaar zijn.
             </p>
 
-                        <div className="bg-white rounded-2xl p-8 shadow-lg">
-                          {/* Temporarily disabled form */}
-                          <div className="text-center">
-                            <div className="bg-blue-100 border border-blue-400 text-blue-700 px-6 py-4 rounded-lg flex items-center justify-center gap-3 mb-4">
-                              <Clock className="w-6 h-6" />
-                              <span className="text-lg font-medium">Notificatie formulier tijdelijk uitgeschakeld</span>
-                            </div>
-                            <p className="text-gray-600">Het formulier wordt binnenkort weer geactiveerd.</p>
-                          </div>
-                          
-                          {/* Hidden form for future use */}
-                          <div style={{ display: 'none' }}>
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                              {/* Error Messages */}
-                              {submitStatus === 'error' && (
-                                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
-                                  <AlertCircle className="w-5 h-5" />
-                                  <span>Er is een fout opgetreden. Controleer je e-mail adres.</span>
-                                </div>
-                              )}
-
-                              {/* Honeypot field (hidden) */}
-                              <input
-                                ref={honeypotRef}
-                                type="text"
-                                name="website"
-                                style={{ display: 'none' }}
-                                tabIndex={-1}
-                                autoComplete="off"
-                                aria-hidden="true"
-                              />
-
-                          <div>
-                            <input
-                              type="text"
-                              value={name}
-                              onChange={(e) => setName(e.target.value)}
-                              placeholder="Je naam (optioneel)"
-                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                            />
-                          </div>
-                          
-                          <div>
-                            <input
-                              type="email"
-                              value={email}
-                              onChange={(e) => setEmail(e.target.value)}
-                              placeholder="Je e-mailadres *"
-                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                              required
-                            />
-                          </div>
-                          
-                              <div>
-                                <textarea
-                                  value={message}
-                                  onChange={(e) => setMessage(e.target.value)}
-                                  placeholder="Extra bericht (optioneel)"
-                                  rows={3}
-                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                                />
-                              </div>
-
-                              {/* Math Challenge (only show if needed) */}
-                              {mathChallenge && (
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Beveiligingsvraag: {mathChallenge.question}
-                                  </label>
-                                  <input
-                                    type="number"
-                                    value={mathAnswer}
-                                    onChange={(e) => setMathAnswer(e.target.value)}
-                                    placeholder="Je antwoord"
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                                    required
-                                  />
-                                </div>
-                              )}
-                          
-                          <button
-                            type="submit"
-                            disabled={isSubmitting || !email}
-                            className="w-full bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {isSubmitting ? (
-                              <>
-                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                Versturen...
-                              </>
-                            ) : (
-                              <>
-                                <Mail className="w-5 h-5" />
-                                Notificatie Aanvragen
-                                <ArrowRight className="w-5 h-5" />
-                              </>
-                            )}
-                          </button>
-                          
-                          <p className="text-sm text-gray-500 text-center">
-                            Je e-mail wordt automatisch opgeslagen en we sturen je een notificatie zodra we live gaan.
-                          </p>
-                        </form>
-                      )}
+            <div className="bg-white rounded-2xl p-8 shadow-lg">
+              {/* Temporarily disabled form */}
+              <div className="text-center">
+                <div className="bg-blue-100 border border-blue-400 text-blue-700 px-6 py-4 rounded-lg flex items-center justify-center gap-3 mb-4">
+                  <Clock className="w-6 h-6" />
+                  <span className="text-lg font-medium">Notificatie formulier tijdelijk uitgeschakeld</span>
+                </div>
+                <p className="text-gray-600">Het formulier wordt binnenkort weer geactiveerd.</p>
+              </div>
+              
+              {/* Hidden form for future use */}
+              <div style={{ display: 'none' }}>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Error Messages */}
+                  {submitStatus === 'error' && (
+                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
+                      <AlertCircle className="w-5 h-5" />
+                      <span>Er is een fout opgetreden. Controleer je e-mail adres.</span>
                     </div>
+                  )}
+
+                  {/* Honeypot field (hidden) */}
+                  <input
+                    ref={honeypotRef}
+                    type="text"
+                    name="website"
+                    style={{ display: 'none' }}
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                  />
+
+                  <div>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Je naam (optioneel)"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Je e-mailadres *"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <textarea
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder="Extra bericht (optioneel)"
+                      rows={3}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                  </div>
+
+                  {/* Math Challenge (only show if needed) */}
+                  {mathChallenge && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Beveiligingsvraag: {mathChallenge.question}
+                      </label>
+                      <input
+                        type="number"
+                        value={mathAnswer}
+                        onChange={(e) => setMathAnswer(e.target.value)}
+                        placeholder="Je antwoord"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        required
+                      />
+                    </div>
+                  )}
+                
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || !email}
+                    className="w-full bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Versturen...
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="w-5 h-5" />
+                        Notificatie Aanvragen
+                        <ArrowRight className="w-5 h-5" />
+                      </>
+                    )}
+                  </button>
+                  
+                  <p className="text-sm text-gray-500 text-center">
+                    Je e-mail wordt automatisch opgeslagen en we sturen je een notificatie zodra we live gaan.
+                  </p>
+                </form>
+              </div>
+            </div>
           </div>
         </div>
       </section>
