@@ -1,6 +1,9 @@
 # 🔒 Security Guide - BitBeheer
 
-## ⚠️ Belangrijke Veiligheidsmaatregelen
+## 🚨 URGENT: WACHTWOORDEN GEWIJZIGD!
+
+### ⚠️ KRITIEKE BEVEILIGINGSUPDATE
+**ALLE WACHTWOORDEN ZIJN GEWIJZIGD VANWEGE BEVEILIGINGSLEKKAGE!**
 
 ### 1. Environment Variables
 **ALTIJD** gebruik environment variables voor gevoelige informatie:
@@ -9,10 +12,16 @@
 # Kopieer env.example naar .env
 cp env.example .env
 
-# Vul de juiste waarden in
+# WIJZIG DEZE WACHTWOORDEN ONMIDDELLIJK!
 REACT_APP_ADMIN_PASSWORD=je_veilige_admin_wachtwoord
 REACT_APP_TEST_PASSWORD=je_veilige_test_wachtwoord
 ```
+
+### 🚨 URGENTE ACTIES NODIG:
+1. **Wijzig alle wachtwoorden** onmiddellijk
+2. **Update Supabase credentials** als ze gecompromitteerd zijn
+3. **Controleer alle deployments** voor blootgestelde credentials
+4. **Monitor voor verdachte activiteit**
 
 ### 2. Wachtwoorden
 - **Gebruik sterke wachtwoorden** (minimaal 12 karakters)
