@@ -88,7 +88,7 @@ export default function LoginRegister({ onLogin, onRegister, onPasswordReset }: 
       </button>
 
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-6 w-96 z-50">
+        <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-6 w-96 z-50 text-gray-900">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">
               {mode === 'login' && 'Inloggen'}
@@ -155,8 +155,9 @@ export default function LoginRegister({ onLogin, onRegister, onPasswordReset }: 
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900"
                     placeholder="Je volledige naam"
+                    style={{ color: '#374151' }}
                     required
                   />
                 </div>
@@ -173,8 +174,9 @@ export default function LoginRegister({ onLogin, onRegister, onPasswordReset }: 
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900"
                   placeholder="je@email.com"
+                  style={{ color: '#374151' }}
                   required
                 />
               </div>
@@ -191,8 +193,9 @@ export default function LoginRegister({ onLogin, onRegister, onPasswordReset }: 
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900"
                     placeholder="Je wachtwoord"
+                    style={{ color: '#374151' }}
                     required
                     minLength={6}
                   />
