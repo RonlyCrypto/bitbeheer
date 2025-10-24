@@ -22,29 +22,37 @@ export default function SoonOnlinePage() {
     }
 
     try {
-      // Send to API for processing and storage
-      const response = await fetch('/api/save-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email.trim(),
-          name: name?.trim() || undefined,
-          message: message?.trim() || undefined
-        })
-      });
+      // For local development, use localStorage and mailto
+      const emailData = {
+        id: Date.now().toString(),
+        email: email.trim().toLowerCase(),
+        name: name?.trim() || 'Niet opgegeven',
+        message: message?.trim() || 'Geen bericht',
+        timestamp: new Date().toISOString(),
+        date: new Date().toLocaleString('nl-NL')
+      };
 
-      if (response.ok) {
-        setSubmitStatus('success');
-        setEmail('');
-        setName('');
-        setMessage('');
-      } else {
-        const errorData = await response.json();
-        console.error('Server error:', errorData);
-        setSubmitStatus('error');
-      }
+      // Store in localStorage for local testing
+      const existingEmails = JSON.parse(localStorage.getItem('bitbeheer_emails') || '[]');
+      existingEmails.push(emailData);
+      localStorage.setItem('bitbeheer_emails', JSON.stringify(existingEmails));
+
+      // Send email notification to admin
+      const subject = 'Nieuwe Notificatie Aanvraag - BitBeheer';
+      const body = `Nieuwe notificatie aanvraag:
+      
+Naam: ${emailData.name}
+E-mail: ${emailData.email}
+Bericht: ${emailData.message}
+Datum: ${emailData.date}`;
+
+      // Open mailto for admin notification
+      window.open(`mailto:update@bitbeheer.nl?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+
+      setSubmitStatus('success');
+      setEmail('');
+      setName('');
+      setMessage('');
     } catch (error) {
       console.error('Error submitting form:', error);
       setSubmitStatus('error');
