@@ -20,16 +20,29 @@ export default function NotificatieBeheer() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [customMessage, setCustomMessage] = useState('');
 
-  // Load users from localStorage
+  // Load users from backend API
   useEffect(() => {
-    const loadUsers = () => {
+    const loadUsers = async () => {
       try {
+        const response = await fetch('/api/users');
+        if (response.ok) {
+          const data = await response.json();
+          setUsers(data.users || []);
+        } else {
+          console.error('Failed to load users:', response.statusText);
+          // Fallback to localStorage for development
+          const storedUsers = localStorage.getItem('bitbeheer_emails');
+          if (storedUsers) {
+            setUsers(JSON.parse(storedUsers));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading users:', error);
+        // Fallback to localStorage for development
         const storedUsers = localStorage.getItem('bitbeheer_emails');
         if (storedUsers) {
           setUsers(JSON.parse(storedUsers));
         }
-      } catch (error) {
-        console.error('Error loading users:', error);
       } finally {
         setIsLoading(false);
       }
@@ -90,19 +103,42 @@ Giovanni - BitBeheer`;
       // Open mailto for bulk sending
       window.open(`mailto:?bcc=${encodeURIComponent(bcc)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
 
-      // Update users as email sent
+      // Update users as email sent via backend API
+      const emailSentDate = new Date().toLocaleString('nl-NL');
+      
+      // Update each selected user via API
+      for (const userId of selectedUsers) {
+        try {
+          await fetch(`/api/users/${userId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              emailSent: true,
+              emailSentDate: emailSentDate
+            })
+          });
+        } catch (error) {
+          console.error('Error updating user email status:', error);
+        }
+      }
+
+      // Update local state
       const updatedUsers = users.map(user => {
         if (selectedUsers.includes(user.id)) {
           return {
             ...user,
             emailSent: true,
-            emailSentDate: new Date().toLocaleString('nl-NL')
+            emailSentDate: emailSentDate
           };
         }
         return user;
       });
 
       setUsers(updatedUsers);
+      
+      // Also update localStorage as fallback
       localStorage.setItem('bitbeheer_emails', JSON.stringify(updatedUsers));
       
       setSendStatus('sent');
@@ -120,12 +156,33 @@ Giovanni - BitBeheer`;
     }
   };
 
-  const handleDeleteUser = (userId: string) => {
+  const handleDeleteUser = async (userId: string) => {
     if (confirm('Weet je zeker dat je deze gebruiker wilt verwijderen?')) {
-      const updatedUsers = users.filter(user => user.id !== userId);
-      setUsers(updatedUsers);
-      localStorage.setItem('bitbeheer_emails', JSON.stringify(updatedUsers));
-      setSelectedUsers(prev => prev.filter(id => id !== userId));
+      try {
+        const response = await fetch(`/api/users/${userId}`, {
+          method: 'DELETE'
+        });
+        
+        if (response.ok) {
+          const updatedUsers = users.filter(user => user.id !== userId);
+          setUsers(updatedUsers);
+          setSelectedUsers(prev => prev.filter(id => id !== userId));
+        } else {
+          console.error('Failed to delete user:', response.statusText);
+          // Fallback to localStorage for development
+          const updatedUsers = users.filter(user => user.id !== userId);
+          setUsers(updatedUsers);
+          localStorage.setItem('bitbeheer_emails', JSON.stringify(updatedUsers));
+          setSelectedUsers(prev => prev.filter(id => id !== userId));
+        }
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        // Fallback to localStorage for development
+        const updatedUsers = users.filter(user => user.id !== userId);
+        setUsers(updatedUsers);
+        localStorage.setItem('bitbeheer_emails', JSON.stringify(updatedUsers));
+        setSelectedUsers(prev => prev.filter(id => id !== userId));
+      }
     }
   };
 

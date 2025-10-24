@@ -21,44 +21,62 @@ export default function SoonOnlinePage() {
       return;
     }
 
-    try {
-      // For local development, use localStorage and mailto
-      const emailData = {
-        id: Date.now().toString(),
-        email: email.trim().toLowerCase(),
-        name: name?.trim() || 'Niet opgegeven',
-        message: message?.trim() || 'Geen bericht',
-        timestamp: new Date().toISOString(),
-        date: new Date().toLocaleString('nl-NL')
-      };
+            try {
+              // Try to save to backend API first
+              const response = await fetch('/api/users', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  email: email.trim().toLowerCase(),
+                  name: name?.trim() || 'Niet opgegeven',
+                  message: message?.trim() || 'Geen bericht'
+                })
+              });
 
-      // Store in localStorage for local testing
-      const existingEmails = JSON.parse(localStorage.getItem('bitbeheer_emails') || '[]');
-      existingEmails.push(emailData);
-      localStorage.setItem('bitbeheer_emails', JSON.stringify(existingEmails));
+              if (response.ok) {
+                const data = await response.json();
+                console.log('User saved to backend:', data);
+              } else {
+                console.error('Failed to save to backend, using localStorage fallback');
+                // Fallback to localStorage for development
+                const emailData = {
+                  id: Date.now().toString(),
+                  email: email.trim().toLowerCase(),
+                  name: name?.trim() || 'Niet opgegeven',
+                  message: message?.trim() || 'Geen bericht',
+                  timestamp: new Date().toISOString(),
+                  date: new Date().toLocaleString('nl-NL')
+                };
 
-      // Send email notification to admin
-      const subject = 'Nieuwe Notificatie Aanvraag - BitBeheer';
-      const body = `Nieuwe notificatie aanvraag:
-      
-Naam: ${emailData.name}
-E-mail: ${emailData.email}
-Bericht: ${emailData.message}
-Datum: ${emailData.date}`;
+                const existingEmails = JSON.parse(localStorage.getItem('bitbeheer_emails') || '[]');
+                existingEmails.push(emailData);
+                localStorage.setItem('bitbeheer_emails', JSON.stringify(existingEmails));
+              }
 
-      // Open mailto for admin notification
-      window.open(`mailto:update@bitbeheer.nl?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+              // Send email notification to admin
+              const subject = 'Nieuwe Notificatie Aanvraag - BitBeheer';
+              const body = `Nieuwe notificatie aanvraag:
+              
+        Naam: ${name?.trim() || 'Niet opgegeven'}
+        E-mail: ${email.trim().toLowerCase()}
+        Bericht: ${message?.trim() || 'Geen bericht'}
+        Datum: ${new Date().toLocaleString('nl-NL')}`;
 
-      setSubmitStatus('success');
-      setEmail('');
-      setName('');
-      setMessage('');
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      setSubmitStatus('error');
-    } finally {
-      setIsSubmitting(false);
-    }
+              // Open mailto for admin notification
+              window.open(`mailto:update@bitbeheer.nl?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+
+              setSubmitStatus('success');
+              setEmail('');
+              setName('');
+              setMessage('');
+            } catch (error) {
+              console.error('Error submitting form:', error);
+              setSubmitStatus('error');
+            } finally {
+              setIsSubmitting(false);
+            }
   };
 
   return (

@@ -211,43 +211,43 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-3 gap-6">
-                <div className="bg-white rounded-xl p-6 shadow-lg">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-blue-100 p-3 rounded-xl">
-                      <Users className="w-8 h-8 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-bold text-gray-900">12</h3>
-                      <p className="text-gray-600">Nieuwe Aanmeldingen</p>
-                    </div>
-                  </div>
-                </div>
+                    <div className="grid md:grid-cols-3 gap-6">
+                      <div className="bg-white rounded-xl p-6 shadow-lg">
+                        <div className="flex items-center gap-4">
+                          <div className="bg-blue-100 p-3 rounded-xl">
+                            <Users className="w-8 h-8 text-blue-600" />
+                          </div>
+                          <div>
+                            <h3 className="text-2xl font-bold text-gray-900">0</h3>
+                            <p className="text-gray-600">Nieuwe Aanmeldingen</p>
+                          </div>
+                        </div>
+                      </div>
 
-                <div className="bg-white rounded-xl p-6 shadow-lg">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-green-100 p-3 rounded-xl">
-                      <TrendingUp className="w-8 h-8 text-green-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-bold text-gray-900">8</h3>
-                      <p className="text-gray-600">Actieve Begeleidingen</p>
-                    </div>
-                  </div>
-                </div>
+                      <div className="bg-white rounded-xl p-6 shadow-lg">
+                        <div className="flex items-center gap-4">
+                          <div className="bg-green-100 p-3 rounded-xl">
+                            <TrendingUp className="w-8 h-8 text-green-600" />
+                          </div>
+                          <div>
+                            <h3 className="text-2xl font-bold text-gray-900">0</h3>
+                            <p className="text-gray-600">Actieve Begeleidingen</p>
+                          </div>
+                        </div>
+                      </div>
 
-                <div className="bg-white rounded-xl p-6 shadow-lg">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-orange-100 p-3 rounded-xl">
-                      <BarChart3 className="w-8 h-8 text-orange-600" />
+                      <div className="bg-white rounded-xl p-6 shadow-lg">
+                        <div className="flex items-center gap-4">
+                          <div className="bg-orange-100 p-3 rounded-xl">
+                            <BarChart3 className="w-8 h-8 text-orange-600" />
+                          </div>
+                          <div>
+                            <h3 className="text-2xl font-bold text-gray-900">0</h3>
+                            <p className="text-gray-600">Totaal Bezoekers</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-2xl font-bold text-gray-900">24</h3>
-                      <p className="text-gray-600">Totaal Bezoekers</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               {/* Email Management Section */}
               <div className="bg-white rounded-xl p-6 shadow-lg">
@@ -293,20 +293,12 @@ export default function AdminDashboard() {
               <div className="bg-white rounded-xl p-6 shadow-lg">
                 <h3 className="text-xl font-bold text-gray-900 mb-4">Recente Activiteit</h3>
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-gray-700">Nieuwe aanmelding van Jan de Vries</span>
-                    <span className="text-gray-500 text-sm ml-auto">2 uur geleden</span>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span className="text-gray-700">Bitcoin Geschiedenis pagina bekeken</span>
-                    <span className="text-gray-500 text-sm ml-auto">4 uur geleden</span>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                    <span className="text-gray-700">Market Cap Vergelijker gebruikt</span>
-                    <span className="text-gray-500 text-sm ml-auto">6 uur geleden</span>
+                  <div className="text-center py-8 text-gray-500">
+                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <BarChart3 className="w-6 h-6 text-gray-400" />
+                    </div>
+                    <p>Nog geen activiteit geregistreerd</p>
+                    <p className="text-sm">Activiteit wordt hier getoond zodra er data is</p>
                   </div>
                 </div>
               </div>
