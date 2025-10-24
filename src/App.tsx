@@ -10,6 +10,7 @@ import PortfolioPage from './pages/PortfolioPage';
 import EmailManagement from './pages/EmailManagement';
 import AdminDashboard from './components/AdminDashboard';
 import UserDashboard from './components/UserDashboard';
+import DatabaseTest from './components/DatabaseTest';
 import ProtectedRoute from './components/ProtectedRoute';
 import SiteAccessControl from './components/SiteAccessControl';
 import { CurrencyProvider } from './contexts/CurrencyContext';
@@ -69,7 +70,11 @@ function App() {
                         />
                         <Route 
                           path="/user-dashboard" 
-                          element={<UserDashboard />} 
+                          element={<UserDashboard />}
+                        />
+                        <Route 
+                          path="/database-test" 
+                          element={<DatabaseTest />}
                         />
               </Routes>
 
