@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Eye, LogIn, Mail, Calendar, MessageSquare, Tag, Search, Filter } from 'lucide-react';
+import { Users, Eye, LogIn, Mail, Calendar, MessageSquare, Tag, Search, Filter, RefreshCw } from 'lucide-react';
 
 interface UserAccount {
   id: string;
@@ -25,11 +25,19 @@ export default function AccountBeheer() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedUser, setSelectedUser] = useState<UserAccount | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Load accounts from backend API
   useEffect(() => {
     const loadAccounts = async () => {
       try {
+        // First sync users from Supabase Auth
+        try {
+          await fetch('/api/sync-users');
+        } catch (syncError) {
+          console.log('Sync users failed, continuing with existing data:', syncError);
+        }
+
         // Try accounts API first
         const accountsResponse = await fetch('/api/accounts');
         if (accountsResponse.ok) {
@@ -68,6 +76,38 @@ export default function AccountBeheer() {
 
     loadAccounts();
   }, []);
+
+  // Refresh accounts function
+  const refreshAccounts = async () => {
+    setIsRefreshing(true);
+    try {
+      // First sync users from Supabase Auth
+      try {
+        await fetch('/api/sync-users');
+      } catch (syncError) {
+        console.log('Sync users failed, continuing with existing data:', syncError);
+      }
+
+      // Reload accounts
+      const accountsResponse = await fetch('/api/accounts');
+      if (accountsResponse.ok) {
+        const accountsData = await accountsResponse.json();
+        setUsers(accountsData.accounts || []);
+      } else {
+        // Fallback to users API
+        const usersResponse = await fetch('/api/users');
+        if (usersResponse.ok) {
+          const usersData = await usersResponse.json();
+          const accountUsers = usersData.users?.filter((user: any) => user.category === 'account_aanmelden') || [];
+          setUsers(accountUsers);
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing accounts:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Filter users by search term and category
   const filteredUsers = users.filter(user => {
@@ -157,8 +197,18 @@ export default function AccountBeheer() {
                   <p className="text-gray-600">Beheer alle aangemelde accounts en bekijk gebruikersdata</p>
                 </div>
               </div>
-              <div className="text-sm text-gray-500">
-                {users.length} accounts totaal
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={refreshAccounts}
+                  disabled={isRefreshing}
+                  className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  {isRefreshing ? 'Synchroniseren...' : 'Synchroniseren'}
+                </button>
+                <div className="text-sm text-gray-500">
+                  {users.length} accounts totaal
+                </div>
               </div>
             </div>
           </div>
