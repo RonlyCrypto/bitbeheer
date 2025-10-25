@@ -35,20 +35,6 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Check Supabase credentials first
-    if (!supabase || !supabaseUrl || !supabaseKey) {
-      console.error('Supabase not configured properly');
-      return res.status(500).json({
-        success: false,
-        error: 'Supabase credentials not configured',
-        details: {
-          supabaseUrl: !!supabaseUrl,
-          supabaseKey: !!supabaseKey,
-          supabaseClient: !!supabase
-        }
-      });
-    }
-
     const { method } = req;
     const url = new URL(req.url, `http://${req.headers.host}`);
     const token = url.searchParams.get('token');
