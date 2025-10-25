@@ -4,8 +4,14 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://your-project.supabase.co'
 const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY || 'your-anon-key'
 
-// Create Supabase client
-export const supabase = createClient(supabaseUrl, supabaseKey)
+// Create Supabase client with auth
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+})
 
 // Database functions for users
 export const getUsers = async () => {
@@ -374,6 +380,116 @@ export const deleteCategory = async (id) => {
   } catch (error) {
     console.error('Error in deleteCategory:', error)
     return { error }
+  }
+}
+
+// Supabase Auth functions
+export const signUpUser = async (email, password, userData = {}) => {
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: userData
+      }
+    })
+    
+    if (error) {
+      console.error('Sign up error:', error)
+      return { success: false, error: error.message }
+    }
+    
+    return { success: true, data }
+  } catch (error) {
+    console.error('Sign up error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+export const signInUser = async (email, password) => {
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    })
+    
+    if (error) {
+      console.error('Sign in error:', error)
+      return { success: false, error: error.message }
+    }
+    
+    return { success: true, data }
+  } catch (error) {
+    console.error('Sign in error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+export const signOutUser = async () => {
+  try {
+    const { error } = await supabase.auth.signOut()
+    
+    if (error) {
+      console.error('Sign out error:', error)
+      return { success: false, error: error.message }
+    }
+    
+    return { success: true }
+  } catch (error) {
+    console.error('Sign out error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+export const getCurrentUser = async () => {
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser()
+    
+    if (error) {
+      console.error('Get user error:', error)
+      return { success: false, error: error.message }
+    }
+    
+    return { success: true, user }
+  } catch (error) {
+    console.error('Get user error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+export const resetPassword = async (email) => {
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`
+    })
+    
+    if (error) {
+      console.error('Reset password error:', error)
+      return { success: false, error: error.message }
+    }
+    
+    return { success: true }
+  } catch (error) {
+    console.error('Reset password error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+export const updateUserProfile = async (updates) => {
+  try {
+    const { data, error } = await supabase.auth.updateUser({
+      data: updates
+    })
+    
+    if (error) {
+      console.error('Update profile error:', error)
+      return { success: false, error: error.message }
+    }
+    
+    return { success: true, data }
+  } catch (error) {
+    console.error('Update profile error:', error)
+    return { success: false, error: error.message }
   }
 }
 

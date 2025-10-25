@@ -15,17 +15,19 @@ import ProtectedRoute from './components/ProtectedRoute';
 import SiteAccessControl from './components/SiteAccessControl';
 import { CurrencyProvider } from './contexts/CurrencyContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { SupabaseAuthProvider } from './contexts/SupabaseAuthContext';
 
 function App() {
   return (
-    <AuthProvider>
-      <CurrencyProvider>
-        <Router>
-          <SiteAccessControl>
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-              <Header />
+    <SupabaseAuthProvider>
+      <AuthProvider>
+        <CurrencyProvider>
+          <Router>
+            <SiteAccessControl>
+              <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+                <Header />
 
-              <Routes>
+                <Routes>
                 <Route path="/" element={<FrontPage />} />
                 <Route path="/aanmelden" element={<AanmeldenPage />} />
                 <Route 
@@ -78,12 +80,13 @@ function App() {
                         />
               </Routes>
 
-              <Footer />
-            </div>
-          </SiteAccessControl>
-        </Router>
-      </CurrencyProvider>
-    </AuthProvider>
+                <Footer />
+              </div>
+            </SiteAccessControl>
+          </Router>
+        </CurrencyProvider>
+      </AuthProvider>
+    </SupabaseAuthProvider>
   );
 }
 
