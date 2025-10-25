@@ -1,14 +1,30 @@
 const nodemailer = require('nodemailer');
 
-// TransIP SMTP configuration
-const createTransporter = () => {
+// TransIP SMTP configuration for update@bitbeheer.nl
+const createUpdateTransporter = () => {
   return nodemailer.createTransporter({
     host: 'smtp.transip.nl',
     port: 587,
     secure: false, // true for 465, false for other ports
     auth: {
-      user: process.env.TRANSIP_EMAIL || 'update@bitbeheer.nl',
-      pass: process.env.TRANSIP_PASSWORD || 'your_transip_password'
+      user: process.env.TRANSIP_EMAIL_UPDATE || 'update@bitbeheer.nl',
+      pass: process.env.TRANSIP_PASSWORD_UPDATE || 'your_transip_password'
+    },
+    tls: {
+      rejectUnauthorized: false
+    }
+  });
+};
+
+// TransIP SMTP configuration for info@bitbeheer.nl
+const createInfoTransporter = () => {
+  return nodemailer.createTransporter({
+    host: 'smtp.transip.nl',
+    port: 587,
+    secure: false, // true for 465, false for other ports
+    auth: {
+      user: process.env.TRANSIP_EMAIL_INFO || 'info@bitbeheer.nl',
+      pass: process.env.TRANSIP_PASSWORD_INFO || 'your_transip_password'
     },
     tls: {
       rejectUnauthorized: false
@@ -53,12 +69,19 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Message and subject are required' });
     }
 
-    // Try TransIP first, fallback to Gmail
+    // Determine which email address to use
+    const fromEmail = req.body.fromEmail || 'update@bitbeheer.nl';
     let transporter;
+    
+    // Try TransIP first, fallback to Gmail
     try {
-      transporter = createTransporter();
+      if (fromEmail === 'info@bitbeheer.nl') {
+        transporter = createInfoTransporter();
+      } else {
+        transporter = createUpdateTransporter();
+      }
       await transporter.verify();
-      console.log('TransIP SMTP connection verified');
+      console.log(`TransIP SMTP connection verified for ${fromEmail}`);
     } catch (transipError) {
       console.log('TransIP SMTP failed, trying Gmail:', transipError.message);
       try {
