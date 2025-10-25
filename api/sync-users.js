@@ -24,48 +24,51 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Get all users from Supabase Auth
-    const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+    // Get all users from Supabase users table
+    const { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('*')
+      .order('created_at', { ascending: false });
     
-    if (authError) {
-      console.error('Error fetching Supabase users:', authError);
+    if (usersError) {
+      console.error('Error fetching users from Supabase:', usersError);
       return res.status(500).json({ error: 'Failed to fetch users from Supabase' });
     }
 
     // Get existing users from local storage
     let localUsers = JSON.parse(process.env.STORED_USERS || '[]');
     
-    // Sync Supabase Auth users to local storage
+    // Sync Supabase users to local storage
     const syncedUsers = [];
     
-    for (const authUser of authUsers.users) {
+    for (const user of users || []) {
       // Check if user already exists in local storage
-      const existingUser = localUsers.find(user => user.email === authUser.email);
+      const existingUser = localUsers.find(localUser => localUser.email === user.email);
       
       if (!existingUser) {
         // Create new user entry
         const newUser = {
-          id: authUser.id,
-          email: authUser.email,
-          name: authUser.user_metadata?.name || authUser.email.split('@')[0],
-          message: 'Account aangemeld via Supabase Auth',
-          category: 'account_aanmelden',
-          date: new Date(authUser.created_at).toLocaleString('nl-NL'),
-          timestamp: authUser.created_at,
-          emailSent: false,
-          lastLogin: authUser.last_sign_in_at ? new Date(authUser.last_sign_in_at).toLocaleString('nl-NL') : null,
-          loginCount: 0,
-          isAdmin: false,
-          isTest: false,
-          registrationDate: new Date(authUser.created_at).toISOString().split('T')[0]
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          message: user.message || 'Account aangemeld via Supabase',
+          category: user.category || 'account_aanmelden',
+          date: user.date || new Date(user.created_at).toLocaleString('nl-NL'),
+          timestamp: user.timestamp || user.created_at,
+          emailSent: user.emailSent || false,
+          lastLogin: user.lastLogin || null,
+          loginCount: user.loginCount || 0,
+          isAdmin: user.isAdmin || false,
+          isTest: user.isTest || false,
+          registrationDate: user.registrationDate || new Date(user.created_at).toISOString().split('T')[0]
         };
         
         syncedUsers.push(newUser);
         localUsers.push(newUser);
       } else {
         // Update existing user with latest info
-        existingUser.lastLogin = authUser.last_sign_in_at ? new Date(authUser.last_sign_in_at).toLocaleString('nl-NL') : existingUser.lastLogin;
-        existingUser.loginCount = (existingUser.loginCount || 0) + 1;
+        existingUser.lastLogin = user.lastLogin || existingUser.lastLogin;
+        existingUser.loginCount = user.loginCount || existingUser.loginCount || 0;
         syncedUsers.push(existingUser);
       }
     }

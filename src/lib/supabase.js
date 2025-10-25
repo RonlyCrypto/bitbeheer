@@ -399,6 +399,37 @@ export const signUpUser = async (email, password, userData = {}) => {
       return { success: false, error: error.message }
     }
     
+    // Also save user data to users table for admin dashboard
+    if (data.user) {
+      try {
+        const userRecord = {
+          id: data.user.id,
+          email: email.toLowerCase().trim(),
+          name: userData.name || email.split('@')[0],
+          message: 'Account aangemeld via registratie formulier',
+          category: 'account_aanmelden',
+          date: new Date().toLocaleString('nl-NL'),
+          timestamp: new Date().toISOString(),
+          emailSent: false,
+          isAdmin: false,
+          isTest: false,
+          registrationDate: new Date().toISOString().split('T')[0]
+        }
+        
+        const { error: userError } = await supabase
+          .from('users')
+          .insert([userRecord])
+        
+        if (userError) {
+          console.error('Error saving user to users table:', userError)
+          // Don't fail the signup if this fails
+        }
+      } catch (userError) {
+        console.error('Error saving user data:', userError)
+        // Don't fail the signup if this fails
+      }
+    }
+    
     return { success: true, data }
   } catch (error) {
     console.error('Sign up error:', error)

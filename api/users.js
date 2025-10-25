@@ -19,9 +19,31 @@ module.exports = async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const userId = url.pathname.split('/').pop();
 
-    // For now, we'll use a simple in-memory storage
-    // In production, you would use a database like PostgreSQL, MongoDB, etc.
-    let users = JSON.parse(process.env.STORED_USERS || '[]');
+    // Try to get users from Supabase first
+    let users = [];
+    try {
+      const { createClient } = require('@supabase/supabase-js');
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://otncto6lvt39cxz598rtoa.supabase.co';
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'sb_secret_uxyF_aTNtzEwEoRav6A2Ww_H4AP7I_Y';
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (!error && data) {
+        users = data;
+      } else {
+        console.error('Error fetching from Supabase:', error);
+        // Fallback to local storage
+        users = JSON.parse(process.env.STORED_USERS || '[]');
+      }
+    } catch (supabaseError) {
+      console.error('Supabase connection error:', supabaseError);
+      // Fallback to local storage
+      users = JSON.parse(process.env.STORED_USERS || '[]');
+    }
 
     switch (method) {
       case 'GET':
@@ -57,11 +79,38 @@ module.exports = async (req, res) => {
           timestamp: new Date().toISOString(),
           date: new Date().toLocaleString('nl-NL'),
           emailSent: false,
-          emailSentDate: null
+          emailSentDate: null,
+          isAdmin: false,
+          isTest: false,
+          registrationDate: new Date().toISOString().split('T')[0]
         };
 
-        users.push(newUser);
-        process.env.STORED_USERS = JSON.stringify(users);
+        // Try to save to Supabase first
+        try {
+          const { createClient } = require('@supabase/supabase-js');
+          const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://otncto6lvt39cxz598rtoa.supabase.co';
+          const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'sb_secret_uxyF_aTNtzEwEoRav6A2Ww_H4AP7I_Y';
+          const supabase = createClient(supabaseUrl, supabaseKey);
+          
+          const { data, error } = await supabase
+            .from('users')
+            .insert([newUser])
+            .select();
+          
+          if (error) {
+            console.error('Error saving to Supabase:', error);
+            // Fallback to local storage
+            users.push(newUser);
+            process.env.STORED_USERS = JSON.stringify(users);
+          } else {
+            console.log('User saved to Supabase:', data);
+          }
+        } catch (supabaseError) {
+          console.error('Supabase save error:', supabaseError);
+          // Fallback to local storage
+          users.push(newUser);
+          process.env.STORED_USERS = JSON.stringify(users);
+        }
 
         return res.status(201).json({ 
           success: true, 
