@@ -50,7 +50,7 @@ export default function AanmeldenPage() {
       if (result.success) {
         // Save additional user profile data
         try {
-          await fetch('/api/save-user-profile', {
+          const profileResponse = await fetch('/api/save-user-profile', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -66,6 +66,12 @@ export default function AanmeldenPage() {
               }
             }),
           });
+
+          if (profileResponse.ok) {
+            console.log('User profile saved successfully');
+          } else {
+            console.error('Profile save failed:', profileResponse.status);
+          }
         } catch (profileError) {
           console.error('Error saving user profile:', profileError);
           // Don't fail the signup if profile save fails

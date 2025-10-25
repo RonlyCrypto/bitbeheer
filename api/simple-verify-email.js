@@ -1,5 +1,7 @@
-// Simple verify-email API that always works
-// POST /api/simple-verify-email - Simple email verification
+// Simple verify-email API that always works and saves to backend
+// POST /api/simple-verify-email - Simple email verification with backend storage
+
+const { createClient } = require('@supabase/supabase-js');
 
 module.exports = async (req, res) => {
   // CORS headers
@@ -23,6 +25,38 @@ module.exports = async (req, res) => {
     }
 
     console.log('Simple verification email for:', email);
+
+    // Try to save to Supabase, but don't fail if it doesn't work
+    try {
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+      if (supabaseUrl && supabaseKey) {
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        
+        // Save user to database
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert([{
+            email: email.toLowerCase(),
+            name: name || email.split('@')[0],
+            category: 'nieuwe_gebruiker',
+            message: 'Account aangemeld via aanmeldformulier',
+            email_verified: false,
+            created_at: new Date().toISOString()
+          }]);
+
+        if (insertError) {
+          console.error('Supabase insert error:', insertError);
+          // Continue anyway, don't fail the request
+        } else {
+          console.log('User saved to Supabase successfully');
+        }
+      }
+    } catch (supabaseError) {
+      console.error('Supabase error:', supabaseError);
+      // Continue anyway, don't fail the request
+    }
 
     // Generate a simple verification URL
     const verificationUrl = `${req.headers.origin}/verify-email?token=simple_${Date.now()}`;
