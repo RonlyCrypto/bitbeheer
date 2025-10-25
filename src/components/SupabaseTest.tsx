@@ -110,16 +110,16 @@ export default function SupabaseTest() {
                 <h3 className="font-bold text-gray-900 mb-2">Environment Variables Status:</h3>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-sm text-gray-600">REACT_APP_SUPABASE_URL</p>
+                    <p className="text-sm text-gray-600">VITE_SUPABASE_URL / REACT_APP_SUPABASE_URL</p>
                     <p className="font-mono text-xs text-gray-800">
-                      {import.meta.env.VITE_SUPABASE_URL || 'Niet ingesteld'}
+                      {import.meta.env.VITE_SUPABASE_URL || import.meta.env.REACT_APP_SUPABASE_URL || 'Niet ingesteld'}
                     </p>
                   </div>
                   <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-sm text-gray-600">REACT_APP_SUPABASE_ANON_KEY</p>
+                    <p className="text-sm text-gray-600">VITE_SUPABASE_ANON_KEY / REACT_APP_SUPABASE_ANON_KEY</p>
                     <p className="font-mono text-xs text-gray-800">
-                      {import.meta.env.VITE_SUPABASE_ANON_KEY ? 
-                        import.meta.env.VITE_SUPABASE_ANON_KEY.substring(0, 10) + '...' : 
+                      {(import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.REACT_APP_SUPABASE_ANON_KEY) ? 
+                        (import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.REACT_APP_SUPABASE_ANON_KEY).substring(0, 10) + '...' : 
                         'Niet ingesteld'
                       }
                     </p>

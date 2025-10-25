@@ -1,11 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 
 // Supabase configuration - NO HARDCODED CREDENTIALS!
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL
-const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.REACT_APP_SUPABASE_URL
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.REACT_APP_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase credentials! Please set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY in your environment variables.')
+  throw new Error('Missing Supabase credentials! Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (or REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY) in your environment variables.')
 }
 
 // Create Supabase client with auth
