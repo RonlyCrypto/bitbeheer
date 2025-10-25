@@ -11,7 +11,6 @@ import EmailManagement from './pages/EmailManagement';
 import AdminDashboard from './components/AdminDashboard';
 import UserDashboard from './components/UserDashboard';
 import DatabaseTest from './components/DatabaseTest';
-import SupabaseTest from './components/SupabaseTest';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import SiteAccessControl from './components/SiteAccessControl';
@@ -79,10 +78,6 @@ function App() {
                         <Route 
                           path="/database-test" 
                           element={<DatabaseTest />}
-                        />
-                        <Route 
-                          path="/supabase-test" 
-                          element={<SupabaseTest />}
                         />
                         <Route 
                           path="/verify-email" 
