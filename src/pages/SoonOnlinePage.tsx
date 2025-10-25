@@ -357,7 +357,7 @@ export default function SoonOnlinePage() {
                   <h3 className="text-2xl font-bold text-white">BitBeheer</h3>
                 </div>
                 <p className="text-gray-400 mb-4">
-                  Persoonlijke begeleiding voor Bitcoin investeren
+                  Persoonlijke begeleiding bij het investeren in Bitcoin.
                 </p>
                 <div className="flex items-center justify-center md:justify-start gap-6 text-sm">
                   <span>© 2026 BitBeheer</span>

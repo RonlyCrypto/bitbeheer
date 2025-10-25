@@ -48,7 +48,7 @@ export default function Footer() {
 
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-gray-400">
-            © {new Date().getFullYear()} BitBeheer. Persoonlijke begeleiding voor Bitcoin investeren.
+            © {new Date().getFullYear()} BitBeheer. Persoonlijke begeleiding bij het investeren in Bitcoin.
           </p>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm text-gray-400">

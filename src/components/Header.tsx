@@ -18,7 +18,7 @@ export default function Header() {
             </div>
             <div>
               <h1 className="text-3xl font-bold tracking-tight">BitBeheer</h1>
-              <p className="text-orange-100 text-sm">Persoonlijke begeleiding voor Bitcoin investeren</p>
+              <p className="text-orange-100 text-sm">Persoonlijke begeleiding bij het investeren in Bitcoin.</p>
             </div>
           </Link>
           
