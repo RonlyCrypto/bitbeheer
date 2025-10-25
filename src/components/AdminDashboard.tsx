@@ -202,16 +202,6 @@ export default function AdminDashboard() {
         >
           Categorieën
         </button>
-        <button
-          onClick={() => setActiveTab('email-verification')}
-          className={`py-2 px-1 border-b-2 font-medium text-sm ${
-            activeTab === 'email-verification'
-              ? 'border-orange-500 text-orange-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-          }`}
-        >
-          Email Verificatie
-        </button>
                 <button
                   onClick={() => setActiveTab('controls')}
                   className={`py-2 px-1 border-b-2 font-medium text-sm ${
@@ -447,12 +437,6 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* Email Verification Tab */}
-          {activeTab === 'email-verification' && (
-            <div className="space-y-6">
-              <EmailVerificationStatus />
-            </div>
-          )}
 
           {/* Controls Tab */}
           {activeTab === 'controls' && (

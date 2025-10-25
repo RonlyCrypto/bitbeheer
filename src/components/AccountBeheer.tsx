@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Eye, LogIn, Mail, Calendar, MessageSquare, Tag, Search, Filter, RefreshCw } from 'lucide-react';
+import { Users, Eye, LogIn, Mail, Calendar, MessageSquare, Tag, Search, Filter, RefreshCw, Clock, CheckCircle, XCircle } from 'lucide-react';
 
 interface UserAccount {
   id: string;
@@ -16,6 +16,10 @@ interface UserAccount {
   isAdmin?: boolean;
   isTest?: boolean;
   registrationDate?: string;
+  email_verified?: boolean;
+  verification_token?: string;
+  verification_token_created?: string;
+  verified_at?: string;
 }
 
 export default function AccountBeheer() {
@@ -26,6 +30,7 @@ export default function AccountBeheer() {
   const [selectedUser, setSelectedUser] = useState<UserAccount | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [verificationFilter, setVerificationFilter] = useState<string>('all');
 
   // Load accounts from backend API
   useEffect(() => {
@@ -115,7 +120,13 @@ export default function AccountBeheer() {
                          user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.message.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || user.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+    
+    const matchesVerification = verificationFilter === 'all' || 
+      (verificationFilter === 'verified' && user.email_verified) ||
+      (verificationFilter === 'pending' && !user.email_verified && user.verification_token) ||
+      (verificationFilter === 'unverified' && !user.email_verified && !user.verification_token);
+    
+    return matchesSearch && matchesCategory && matchesVerification;
   });
 
   // Get unique categories
@@ -240,6 +251,67 @@ export default function AccountBeheer() {
                     </option>
                   ))}
                 </select>
+                <select
+                  value={verificationFilter}
+                  onChange={(e) => setVerificationFilter(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                >
+                  <option value="all">Alle Status</option>
+                  <option value="verified">Geverifieerd</option>
+                  <option value="pending">In Behandeling</option>
+                  <option value="unverified">Niet Geverifieerd</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Email Verification Status Summary */}
+          <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Email Verificatie Status</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-blue-100 p-2 rounded-lg">
+                    <Mail className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Totaal</p>
+                    <p className="text-2xl font-bold text-gray-900">{users.length}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-green-100 p-2 rounded-lg">
+                    <CheckCircle className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Geverifieerd</p>
+                    <p className="text-2xl font-bold text-green-600">{users.filter(u => u.email_verified).length}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-orange-100 p-2 rounded-lg">
+                    <Clock className="w-6 h-6 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">In Behandeling</p>
+                    <p className="text-2xl font-bold text-orange-600">{users.filter(u => !u.email_verified && u.verification_token).length}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-red-100 p-2 rounded-lg">
+                    <XCircle className="w-6 h-6 text-red-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Niet Geverifieerd</p>
+                    <p className="text-2xl font-bold text-red-600">{users.filter(u => !u.email_verified && !u.verification_token).length}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -352,6 +424,24 @@ export default function AccountBeheer() {
                             )}
                             {user.loginCount && (
                               <span>Logins: {user.loginCount}</span>
+                            )}
+                          </div>
+                          <div className="mt-2">
+                            {user.email_verified ? (
+                              <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                <CheckCircle className="w-3 h-3" />
+                                Geverifieerd
+                              </span>
+                            ) : user.verification_token ? (
+                              <span className="inline-flex items-center gap-1 text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
+                                <Clock className="w-3 h-3" />
+                                In Behandeling
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
+                                <XCircle className="w-3 h-3" />
+                                Niet Geverifieerd
+                              </span>
                             )}
                           </div>
                         </div>
