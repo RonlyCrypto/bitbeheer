@@ -11,6 +11,7 @@ import EmailManagement from './pages/EmailManagement';
 import AdminDashboard from './components/AdminDashboard';
 import UserDashboard from './components/UserDashboard';
 import DatabaseTest from './components/DatabaseTest';
+import SupabaseTest from './components/SupabaseTest';
 import ProtectedRoute from './components/ProtectedRoute';
 import SiteAccessControl from './components/SiteAccessControl';
 import { CurrencyProvider } from './contexts/CurrencyContext';
@@ -77,6 +78,10 @@ function App() {
                         <Route 
                           path="/database-test" 
                           element={<DatabaseTest />}
+                        />
+                        <Route 
+                          path="/supabase-test" 
+                          element={<SupabaseTest />}
                         />
               </Routes>
 
