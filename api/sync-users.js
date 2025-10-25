@@ -4,14 +4,20 @@
 const { createClient } = require('@supabase/supabase-js');
 
 // Supabase configuration - NO HARDCODED CREDENTIALS!
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+console.log('Sync users API - Supabase config:');
+console.log('REACT_APP_SUPABASE_URL:', !!process.env.REACT_APP_SUPABASE_URL);
+console.log('VITE_SUPABASE_URL:', !!process.env.VITE_SUPABASE_URL);
+console.log('SUPABASE_SERVICE_ROLE_KEY:', !!supabaseKey);
+console.log('Final supabaseUrl:', !!supabaseUrl);
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('Missing Supabase credentials! Please set REACT_APP_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in your environment variables.');
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 module.exports = async (req, res) => {
   // CORS headers
@@ -28,6 +34,15 @@ module.exports = async (req, res) => {
   }
 
   try {
+    // Check if Supabase is available
+    if (!supabase) {
+      console.error('Supabase not available for sync');
+      return res.status(500).json({
+        success: false,
+        error: 'Database not available'
+      });
+    }
+
     // Get all users from Supabase users table
     const { data: users, error: usersError } = await supabase
       .from('users')
@@ -38,6 +53,8 @@ module.exports = async (req, res) => {
       console.error('Error fetching users from Supabase:', usersError);
       return res.status(500).json({ error: 'Failed to fetch users from Supabase' });
     }
+
+    console.log('Users fetched from Supabase for sync:', users?.length || 0);
 
     // Get existing users from local storage
     let localUsers = JSON.parse(process.env.STORED_USERS || '[]');

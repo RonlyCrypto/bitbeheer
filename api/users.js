@@ -23,27 +23,35 @@ module.exports = async (req, res) => {
     let users = [];
     try {
       const { createClient } = require('@supabase/supabase-js');
-      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
       const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      
+      console.log('Users API - Supabase config:');
+      console.log('REACT_APP_SUPABASE_URL:', !!process.env.REACT_APP_SUPABASE_URL);
+      console.log('VITE_SUPABASE_URL:', !!process.env.VITE_SUPABASE_URL);
+      console.log('SUPABASE_SERVICE_ROLE_KEY:', !!supabaseKey);
+      console.log('Final supabaseUrl:', !!supabaseUrl);
       
       if (!supabaseUrl || !supabaseKey) {
         console.error('Missing Supabase credentials! Please set REACT_APP_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in your environment variables.');
         // Fallback to local storage
         users = JSON.parse(process.env.STORED_USERS || '[]');
       } else {
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (!error && data) {
-        users = data;
-      } else {
-        console.error('Error fetching from Supabase:', error);
-        // Fallback to local storage
-        users = JSON.parse(process.env.STORED_USERS || '[]');
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (!error && data) {
+          users = data;
+          console.log('Users fetched from Supabase:', users.length);
+        } else {
+          console.error('Error fetching from Supabase:', error);
+          // Fallback to local storage
+          users = JSON.parse(process.env.STORED_USERS || '[]');
+        }
       }
     } catch (supabaseError) {
       console.error('Supabase connection error:', supabaseError);
@@ -94,7 +102,7 @@ module.exports = async (req, res) => {
         // Try to save to Supabase first
         try {
           const { createClient } = require('@supabase/supabase-js');
-          const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+          const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
           const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
           
           if (!supabaseUrl || !supabaseKey) {
@@ -103,20 +111,23 @@ module.exports = async (req, res) => {
             users.push(newUser);
             process.env.STORED_USERS = JSON.stringify(users);
           } else {
-          const supabase = createClient(supabaseUrl, supabaseKey);
-          
-          const { data, error } = await supabase
-            .from('users')
-            .insert([newUser])
-            .select();
-          
-          if (error) {
-            console.error('Error saving to Supabase:', error);
-            // Fallback to local storage
-            users.push(newUser);
-            process.env.STORED_USERS = JSON.stringify(users);
-          } else {
-            console.log('User saved to Supabase:', data);
+            const supabase = createClient(supabaseUrl, supabaseKey);
+            
+            console.log('Saving user to Supabase:', newUser);
+            
+            const { data, error } = await supabase
+              .from('users')
+              .insert([newUser])
+              .select();
+            
+            if (error) {
+              console.error('Error saving to Supabase:', error);
+              // Fallback to local storage
+              users.push(newUser);
+              process.env.STORED_USERS = JSON.stringify(users);
+            } else {
+              console.log('User saved to Supabase successfully:', data);
+            }
           }
         } catch (supabaseError) {
           console.error('Supabase save error:', supabaseError);
