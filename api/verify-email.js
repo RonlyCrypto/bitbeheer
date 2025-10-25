@@ -175,11 +175,13 @@ async function sendVerificationEmail(req, res) {
         .update({
           verification_token: verificationToken,
           verification_token_created: tokenCreated,
-          name: name || existingUser.name
+          name: name || existingUser.name,
+          category: 'nieuwe_gebruiker'
         })
         .eq('id', existingUser.id);
 
       if (updateError) {
+        console.error('Error updating verification token:', updateError);
         return res.status(500).json({
           success: false,
           error: 'Failed to update verification token'

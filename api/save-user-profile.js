@@ -35,16 +35,20 @@ module.exports = async (req, res) => {
     }
 
     // Update user with additional profile data
+    const updateData = {
+      updated_at: new Date().toISOString()
+    };
+
+    // Only update fields that exist in the database
+    if (userData.phone) updateData.phone = userData.phone;
+    if (userData.investment_plans) updateData.investment_plans = userData.investment_plans;
+    if (userData.experience) updateData.experience = userData.experience;
+    if (userData.motivation) updateData.motivation = userData.motivation;
+    if (userData.expectations) updateData.expectations = userData.expectations;
+
     const { error: updateError } = await supabase
       .from('users')
-      .update({
-        phone: userData.phone || '',
-        investment_plans: userData.investment_plans || '',
-        experience: userData.experience || '',
-        motivation: userData.motivation || '',
-        expectations: userData.expectations || '',
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('email', email.toLowerCase());
 
     if (updateError) {

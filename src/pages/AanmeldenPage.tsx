@@ -67,6 +67,7 @@ export default function AanmeldenPage() {
         } catch (profileError) {
           console.error('Error saving user profile:', profileError);
           // Don't fail the signup if profile save fails
+          // The account is still created, just without the extra profile data
         }
 
         setMessage({ 
