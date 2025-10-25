@@ -93,7 +93,7 @@ export default function SoonOnlinePage() {
                 email: email.trim().toLowerCase(),
                 name: name?.trim() || 'Niet opgegeven',
                 message: message?.trim() || 'Geen bericht',
-                category: 'livegang'
+                category: 'opening_website'
               };
 
               const { data: user, error: userError } = await createUser(userData);
@@ -114,7 +114,7 @@ export default function SoonOnlinePage() {
                     email: email.trim().toLowerCase(),
                     name: name?.trim() || 'Niet opgegeven',
                     message: message?.trim() || 'Geen bericht',
-                    category: 'livegang',
+                    category: 'opening_website',
                     timestamp: new Date().toISOString(),
                     date: new Date().toLocaleString('nl-NL')
                   };
@@ -294,17 +294,16 @@ Datum: ${new Date().toLocaleString('nl-NL')}`;
             </p>
 
             <div className="bg-white rounded-2xl p-8 shadow-lg">
-              {/* Temporarily disabled form */}
-              <div className="text-center">
-                <div className="bg-blue-100 border border-blue-400 text-blue-700 px-6 py-4 rounded-lg flex items-center justify-center gap-3 mb-4">
-                  <Clock className="w-6 h-6" />
-                  <span className="text-lg font-medium">Notificatie formulier tijdelijk uitgeschakeld</span>
+              {/* Success Message */}
+              {submitStatus === 'success' && (
+                <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-lg flex items-center justify-center gap-3 mb-6">
+                  <CheckCircle className="w-6 h-6" />
+                  <span className="text-lg font-medium">Bedankt! We houden je op de hoogte.</span>
                 </div>
-                <p className="text-gray-600">Het formulier wordt binnenkort weer geactiveerd.</p>
-              </div>
+              )}
               
-              {/* Hidden form for future use */}
-              <div style={{ display: 'none' }}>
+              {/* Form */}
+              {submitStatus !== 'success' && (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {/* Error Messages */}
                   {submitStatus === 'error' && (
@@ -396,7 +395,7 @@ Datum: ${new Date().toLocaleString('nl-NL')}`;
                     Je e-mail wordt automatisch opgeslagen en we sturen je een notificatie zodra we live gaan.
                   </p>
                 </form>
-              </div>
+              )}
             </div>
           </div>
         </div>

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import NotificatieBeheer from './NotificatieBeheer';
 import AccountBeheer from './AccountBeheer';
+import CategorieBeheer from './CategorieBeheer';
 // import PageManagement from './PageManagement';
 
 export default function AdminDashboard() {
@@ -162,6 +163,16 @@ export default function AdminDashboard() {
                   }`}
                 >
                   Pagina's
+                </button>
+                <button
+                  onClick={() => setActiveTab('categories')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'categories'
+                      ? 'border-orange-500 text-orange-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Categorieën
                 </button>
                 <button
                   onClick={() => setActiveTab('controls')}
@@ -366,6 +377,13 @@ export default function AdminDashboard() {
           {activeTab === 'accounts' && (
             <div className="space-y-6">
               <AccountBeheer />
+            </div>
+          )}
+
+          {/* Categories Tab */}
+          {activeTab === 'categories' && (
+            <div className="space-y-6">
+              <CategorieBeheer />
             </div>
           )}
 

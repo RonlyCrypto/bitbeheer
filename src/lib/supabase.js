@@ -299,6 +299,84 @@ export const authenticateUser = async (email, password) => {
   }
 }
 
+// Category functions
+export const getCategories = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) {
+      console.error('Error fetching categories:', error)
+      return { data: [], error }
+    }
+    
+    return { data, error: null }
+  } catch (error) {
+    console.error('Error in getCategories:', error)
+    return { data: [], error }
+  }
+}
+
+export const createCategory = async (categoryData) => {
+  try {
+    const { data, error } = await supabase
+      .from('categories')
+      .insert([categoryData])
+      .select()
+    
+    if (error) {
+      console.error('Error creating category:', error)
+      return { data: null, error }
+    }
+    
+    return { data: data[0], error: null }
+  } catch (error) {
+    console.error('Error in createCategory:', error)
+    return { data: null, error }
+  }
+}
+
+export const updateCategory = async (id, updates) => {
+  try {
+    const { data, error } = await supabase
+      .from('categories')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+    
+    if (error) {
+      console.error('Error updating category:', error)
+      return { data: null, error }
+    }
+    
+    return { data: data[0], error: null }
+  } catch (error) {
+    console.error('Error in updateCategory:', error)
+    return { data: null, error }
+  }
+}
+
+export const deleteCategory = async (id) => {
+  try {
+    const { error } = await supabase
+      .from('categories')
+      .delete()
+      .eq('id', id)
+    
+    if (error) {
+      console.error('Error deleting category:', error)
+      return { error }
+    }
+    
+    return { error: null }
+  } catch (error) {
+    console.error('Error in deleteCategory:', error)
+    return { error }
+  }
+}
+
 // Admin functions
 export const getAdminStats = async () => {
   try {
