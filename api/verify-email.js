@@ -11,6 +11,8 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('Missing Supabase credentials for email verification');
+  console.error('REACT_APP_SUPABASE_URL:', !!supabaseUrl);
+  console.error('SUPABASE_SERVICE_ROLE_KEY:', !!supabaseKey);
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -26,6 +28,15 @@ module.exports = async (req, res) => {
   }
 
   try {
+    // Check Supabase credentials first
+    if (!supabaseUrl || !supabaseKey) {
+      return res.status(500).json({
+        success: false,
+        error: 'Supabase credentials not configured',
+        details: 'Missing REACT_APP_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY'
+      });
+    }
+
     const { method } = req;
     const url = new URL(req.url, `http://${req.headers.host}`);
     const token = url.searchParams.get('token');
@@ -149,6 +160,8 @@ async function sendVerificationEmail(req, res) {
     if (!email) {
       return res.status(400).json({ error: 'Email is required' });
     }
+
+    console.log('Sending verification email to:', email);
 
     // Generate verification token
     const verificationToken = crypto.randomBytes(32).toString('hex');
