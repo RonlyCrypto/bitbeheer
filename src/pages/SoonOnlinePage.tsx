@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import { protectFormSubmission, createHoneypotField, checkHoneypot, checkFormTiming, generateMathChallenge, verifyMathChallenge, generateFingerprint } from '../utils/botProtection';
 import { createUser, sendNotificationEmail, createFormSubmission } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function SoonOnlinePage() {
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
@@ -424,25 +426,24 @@ export default function SoonOnlinePage() {
                       const passwordInput = modal.querySelector('#adminPassword');
                       const cancelBtn = modal.querySelector('#cancelLogin');
                       
-                      form.addEventListener('submit', (e) => {
+                      form.addEventListener('submit', async (e) => {
                         e.preventDefault();
+                        const username = 'admin'; // Default to admin for now
                         const password = passwordInput.value;
                         
-                        // Simple password check
-                        if (password === 'admin123') {
-                          localStorage.setItem('admin_authenticated', 'true');
-                          localStorage.setItem('user_type', 'admin');
-                          document.body.removeChild(modal);
-                          alert('Admin login succesvol! Je wordt doorgestuurd naar de admin pagina.');
-                          window.location.href = '/admin';
-                        } else if (password === 'test123') {
-                          localStorage.setItem('admin_authenticated', 'true');
-                          localStorage.setItem('user_type', 'test');
-                          document.body.removeChild(modal);
-                          alert('Test gebruiker login succesvol! Je wordt doorgestuurd naar de admin pagina.');
-                          window.location.href = '/admin';
-                        } else {
-                          alert('Onjuist wachtwoord. Probeer opnieuw.');
+                        try {
+                          const success = await login(username, password);
+                          
+                          if (success) {
+                            document.body.removeChild(modal);
+                            alert('Login succesvol! Je wordt doorgestuurd naar de admin pagina.');
+                            window.location.href = '/admin';
+                          } else {
+                            alert('Onjuist wachtwoord. Probeer opnieuw.');
+                          }
+                        } catch (error) {
+                          console.error('Login error:', error);
+                          alert('Er is een fout opgetreden bij het inloggen.');
                         }
                       });
                       
