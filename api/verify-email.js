@@ -192,11 +192,11 @@ async function sendVerificationEmail(req, res) {
         .insert([{
           email: email.toLowerCase(),
           name: name || email.split('@')[0],
-          category: 'account_aanmelden',
+          category: 'nieuwe_gebruiker',
           verification_token: verificationToken,
           verification_token_created: tokenCreated,
           email_verified: false,
-          message: 'Account aangemeld via registratie formulier'
+          message: 'Account aangemeld via aanmeldformulier'
         }]);
 
       if (insertError) {

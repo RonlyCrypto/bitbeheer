@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { User, Mail, Phone, DollarSign, MessageSquare, ArrowLeft, CheckCircle } from 'lucide-react';
+import { User, Mail, Phone, DollarSign, MessageSquare, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { signUpUser } from '../lib/supabase';
 
 export default function AanmeldenPage() {
   const [formData, setFormData] = useState({
@@ -14,6 +15,8 @@ export default function AanmeldenPage() {
   });
 
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -22,11 +25,70 @@ export default function AanmeldenPage() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Hier zou je normaal gesproken de data naar een server sturen
-    console.log('Aanmeldingsformulier:', formData);
-    setIsSubmitted(true);
+    setIsLoading(true);
+    setMessage(null);
+
+    try {
+      // Generate a temporary password for the user
+      const tempPassword = Math.random().toString(36).slice(-12) + 'A1!';
+      
+      // Create user account with email verification
+      const result = await signUpUser(formData.email, tempPassword, {
+        name: formData.naam,
+        phone: formData.telefoon,
+        investment_plans: formData.spaargeld,
+        experience: formData.ervaring,
+        motivation: formData.motivatie,
+        expectations: formData.verwachtingen,
+        category: 'nieuwe_gebruiker'
+      });
+
+      if (result.success) {
+        // Save additional user profile data
+        try {
+          await fetch('/api/save-user-profile', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: formData.email,
+              userData: {
+                phone: formData.telefoon,
+                investment_plans: formData.spaargeld,
+                experience: formData.ervaring,
+                motivation: formData.motivatie,
+                expectations: formData.verwachtingen
+              }
+            }),
+          });
+        } catch (profileError) {
+          console.error('Error saving user profile:', profileError);
+          // Don't fail the signup if profile save fails
+        }
+
+        setMessage({ 
+          type: 'success', 
+          text: result.message || 'Account aangemaakt! Controleer je e-mail om je account te activeren.' 
+        });
+        setIsSubmitted(true);
+      } else {
+        setMessage({ 
+          type: 'error', 
+          text: result.error || 'Er is een fout opgetreden bij het aanmaken van je account.' 
+        });
+      }
+    } catch (error) {
+      console.error('Account creation error:', error);
+      setMessage({ 
+        type: 'error', 
+        text: 'Er is een onverwachte fout opgetreden. Probeer het opnieuw.' 
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (isSubmitted) {
@@ -37,26 +99,26 @@ export default function AanmeldenPage() {
             <div className="bg-green-100 p-8 rounded-2xl mb-8">
               <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
               <h1 className="text-3xl font-bold text-gray-900 mb-4">
-                Aanmelding Ontvangen!
+                Account Aangemaakt! 🎉
               </h1>
               <p className="text-lg text-gray-600 mb-6">
-                Bedankt voor je interesse. We nemen binnen 24 uur contact met je op 
-                om te bespreken hoe we je kunnen helpen.
+                Je account is succesvol aangemaakt. Controleer je e-mail en klik op de verificatie link 
+                om je account te activeren en toegang te krijgen tot je persoonlijke dashboard.
               </p>
               <div className="bg-white p-6 rounded-xl shadow-lg">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Wat gebeurt er nu?</h3>
                 <div className="space-y-3 text-left">
                   <div className="flex items-center gap-3">
                     <div className="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">1</div>
-                    <span className="text-gray-700">We bekijken je aanmelding en financiële situatie</span>
+                    <span className="text-gray-700">Controleer je e-mail en klik op de verificatie link</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">2</div>
-                    <span className="text-gray-700">We bellen je voor een kennismakingsgesprek</span>
+                    <span className="text-gray-700">Je account wordt geactiveerd en je krijgt toegang tot je dashboard</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">3</div>
-                    <span className="text-gray-700">Als we een match zijn, plannen we je eerste sessie</span>
+                    <span className="text-gray-700">We nemen contact met je op voor een kennismakingsgesprek</span>
                   </div>
                 </div>
               </div>
@@ -100,6 +162,21 @@ export default function AanmeldenPage() {
 
           {/* Form */}
           <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
+            {message && (
+              <div className={`mb-6 p-4 rounded-lg flex items-center gap-3 ${
+                message.type === 'success' 
+                  ? 'bg-green-100 text-green-700 border border-green-200' 
+                  : 'bg-red-100 text-red-700 border border-red-200'
+              }`}>
+                {message.type === 'success' ? (
+                  <CheckCircle className="w-5 h-5" />
+                ) : (
+                  <AlertCircle className="w-5 h-5" />
+                )}
+                <span className="font-medium">{message.text}</span>
+              </div>
+            )}
+            
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Persoonlijke Gegevens */}
               <div>
@@ -245,9 +322,17 @@ export default function AanmeldenPage() {
               <div className="pt-6 border-t border-gray-200">
                 <button
                   type="submit"
-                  className="w-full bg-orange-600 hover:bg-orange-700 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-colors shadow-lg hover:shadow-xl"
+                  disabled={isLoading}
+                  className="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 disabled:cursor-not-allowed text-white px-8 py-4 rounded-xl font-semibold text-lg transition-colors shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                 >
-                  Aanmelden voor Begeleiding
+                  {isLoading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Account Aanmaken...
+                    </>
+                  ) : (
+                    'Account Aanmaken & Aanmelden'
+                  )}
                 </button>
                 <p className="text-sm text-gray-500 text-center mt-4">
                   Door je aan te melden ga je akkoord dat we contact met je opnemen voor een kennismakingsgesprek.

@@ -27,7 +27,13 @@ CREATE TABLE users (
   email_verified BOOLEAN DEFAULT FALSE,
   verification_token VARCHAR(255),
   verification_token_created TIMESTAMP WITH TIME ZONE,
-  verified_at TIMESTAMP WITH TIME ZONE
+  verified_at TIMESTAMP WITH TIME ZONE,
+  -- User profile fields
+  phone VARCHAR(50),
+  investment_plans TEXT,
+  experience TEXT,
+  motivation TEXT,
+  expectations TEXT
 );
 
 -- Accounts table for registered users

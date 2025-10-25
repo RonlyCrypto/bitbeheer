@@ -290,7 +290,7 @@ export default function AdminDashboard() {
                                   <TrendingUp className="w-8 h-8 text-green-600" />
                                 </div>
                                 <div>
-                                  <h3 className="text-2xl font-bold text-gray-900">{users.filter(u => u.category === 'account_aanmelden').length}</h3>
+                                  <h3 className="text-2xl font-bold text-gray-900">{users.filter(u => u.category === 'account_aanmelden' || u.category === 'nieuwe_gebruiker').length}</h3>
                                   <p className="text-gray-600">Account Aanmeldingen</p>
                                 </div>
                               </div>
