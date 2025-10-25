@@ -20,6 +20,7 @@ interface UserAccount {
   verification_token?: string;
   verification_token_created?: string;
   verified_at?: string;
+  created_at?: string;
 }
 
 export default function AccountBeheer() {
@@ -31,6 +32,31 @@ export default function AccountBeheer() {
   const [showUserModal, setShowUserModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [verificationFilter, setVerificationFilter] = useState<string>('all');
+
+  // Calculate remaining time for verification
+  const getRemainingTime = (user: UserAccount) => {
+    if (user.email_verified) return null;
+    
+    const createdDate = new Date(user.created_at || user.timestamp || user.registrationDate || Date.now());
+    const now = new Date();
+    const daysSinceCreation = Math.floor((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+    const remainingDays = 5 - daysSinceCreation;
+    
+    return remainingDays > 0 ? remainingDays : 0;
+  };
+
+  // Check if account should be deleted
+  const isAccountExpired = (user: UserAccount) => {
+    if (user.email_verified) return false;
+    return getRemainingTime(user) <= 0;
+  };
+
+  // Check if account is in warning period (last 2 days)
+  const isInWarningPeriod = (user: UserAccount) => {
+    if (user.email_verified) return false;
+    const remaining = getRemainingTime(user);
+    return remaining > 0 && remaining <= 2;
+  };
 
   // Load accounts from backend API
   useEffect(() => {
@@ -123,8 +149,8 @@ export default function AccountBeheer() {
     
     const matchesVerification = verificationFilter === 'all' || 
       (verificationFilter === 'verified' && user.email_verified) ||
-      (verificationFilter === 'pending' && !user.email_verified && user.verification_token) ||
-      (verificationFilter === 'unverified' && !user.email_verified && !user.verification_token);
+      (verificationFilter === 'pending' && !user.email_verified && !isAccountExpired(user)) ||
+      (verificationFilter === 'expired' && isAccountExpired(user));
     
     return matchesSearch && matchesCategory && matchesVerification;
   });
@@ -178,6 +204,39 @@ export default function AccountBeheer() {
       }
     } catch (error) {
       console.error('Error updating user login:', error);
+    }
+  };
+
+  // Manually verify account as admin
+  const handleManualVerify = async (user: UserAccount) => {
+    try {
+      const response = await fetch('/api/save-user-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: user.email,
+          userData: {
+            email_verified: true,
+            verified_at: new Date().toISOString()
+          }
+        }),
+      });
+
+      if (response.ok) {
+        // Update local state
+        setUsers(users.map(u => 
+          u.id === user.id 
+            ? { ...u, email_verified: true, verified_at: new Date().toISOString() }
+            : u
+        ));
+        console.log('Account manually verified:', user.email);
+      } else {
+        console.error('Failed to verify account');
+      }
+    } catch (error) {
+      console.error('Error verifying account:', error);
     }
   };
 
@@ -259,7 +318,7 @@ export default function AccountBeheer() {
                   <option value="all">Alle Status</option>
                   <option value="verified">Geverifieerd</option>
                   <option value="pending">In Behandeling</option>
-                  <option value="unverified">Niet Geverifieerd</option>
+                  <option value="expired">Verlopen</option>
                 </select>
               </div>
             </div>
@@ -298,7 +357,7 @@ export default function AccountBeheer() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">In Behandeling</p>
-                    <p className="text-2xl font-bold text-orange-600">{users.filter(u => !u.email_verified && u.verification_token).length}</p>
+                    <p className="text-2xl font-bold text-orange-600">{users.filter(u => !u.email_verified && !isAccountExpired(u)).length}</p>
                   </div>
                 </div>
               </div>
@@ -308,8 +367,8 @@ export default function AccountBeheer() {
                     <XCircle className="w-6 h-6 text-red-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Niet Geverifieerd</p>
-                    <p className="text-2xl font-bold text-red-600">{users.filter(u => !u.email_verified && !u.verification_token).length}</p>
+                    <p className="text-sm text-gray-600">Verlopen</p>
+                    <p className="text-2xl font-bold text-red-600">{users.filter(u => isAccountExpired(u)).length}</p>
                   </div>
                 </div>
               </div>
@@ -387,7 +446,9 @@ export default function AccountBeheer() {
                 </div>
               ) : (
                 filteredUsers.map((user) => (
-                  <div key={user.id} className="p-6 hover:bg-gray-50">
+                  <div key={user.id} className={`p-6 hover:bg-gray-50 ${
+                    isAccountExpired(user) ? 'bg-gray-100 opacity-60' : ''
+                  }`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="flex-1">
@@ -426,22 +487,34 @@ export default function AccountBeheer() {
                               <span>Logins: {user.loginCount}</span>
                             )}
                           </div>
-                          <div className="mt-2">
+                          <div className="mt-2 flex items-center gap-2">
                             {user.email_verified ? (
                               <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                                 <CheckCircle className="w-3 h-3" />
                                 Geverifieerd
                               </span>
-                            ) : user.verification_token ? (
-                              <span className="inline-flex items-center gap-1 text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
-                                <Clock className="w-3 h-3" />
-                                In Behandeling
+                            ) : isAccountExpired(user) ? (
+                              <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
+                                <XCircle className="w-3 h-3" />
+                                Verlopen
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
-                                <XCircle className="w-3 h-3" />
-                                Niet Geverifieerd
+                              <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full ${
+                                isInWarningPeriod(user) 
+                                  ? 'bg-red-100 text-red-800' 
+                                  : 'bg-orange-100 text-orange-800'
+                              }`}>
+                                <Clock className="w-3 h-3" />
+                                {getRemainingTime(user)} dagen resterend
                               </span>
+                            )}
+                            {!user.email_verified && !isAccountExpired(user) && (
+                              <button
+                                onClick={() => handleManualVerify(user)}
+                                className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full hover:bg-blue-200 transition-colors"
+                              >
+                                Handmatig Bevestigen
+                              </button>
                             )}
                           </div>
                         </div>
