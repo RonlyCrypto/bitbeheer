@@ -390,74 +390,30 @@ export const deleteCategory = async (id) => {
 // Supabase Auth functions
 export const signUpUser = async (email, password, userData = {}) => {
   try {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: userData
-      }
-    })
-    
-    if (error) {
-      console.error('Sign up error:', error)
-      return { success: false, error: error.message }
-    }
-    
-    // Also save user data to users table for admin dashboard
-    if (data.user) {
-      try {
-        const userRecord = {
-          id: data.user.id,
-          email: email.toLowerCase().trim(),
-          name: userData.name || email.split('@')[0],
-          message: 'Account aangemeld via registratie formulier',
-          category: 'account_aanmelden',
-          date: new Date().toLocaleString('nl-NL'),
-          timestamp: new Date().toISOString(),
-          emailSent: false,
-          isAdmin: false,
-          isTest: false,
-          registrationDate: new Date().toISOString().split('T')[0]
-        }
-        
-        const { error: userError } = await supabase
-          .from('users')
-          .insert([userRecord])
-        
-        if (userError) {
-          console.error('Error saving user to users table:', userError)
-          // Don't fail the signup if this fails
-        }
+    // Send verification email instead of direct signup
+    const verificationResponse = await fetch('/api/verify-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: email.toLowerCase().trim(),
+        name: userData.name || email.split('@')[0]
+      }),
+    });
 
-        // Send welcome email from noreply@bitbeheer.nl
-        try {
-          const emailResponse = await fetch('/api/send-welcome-email', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              userEmail: email.toLowerCase().trim(),
-              userName: userData.name || email.split('@')[0]
-            }),
-          });
-
-          if (emailResponse.ok) {
-            console.log('Welcome email sent successfully');
-          } else {
-            console.error('Failed to send welcome email');
-          }
-        } catch (emailError) {
-          console.error('Error sending welcome email:', emailError);
-          // Don't fail the signup if email fails
-        }
-      } catch (userError) {
-        console.error('Error saving user data:', userError)
-        // Don't fail the signup if this fails
-      }
+    if (!verificationResponse.ok) {
+      const errorData = await verificationResponse.json();
+      return { success: false, error: errorData.error || 'Failed to send verification email' };
     }
+
+    const verificationData = await verificationResponse.json();
     
-    return { success: true, data }
+    return { 
+      success: true, 
+      message: 'Verificatie e-mail verzonden! Controleer je inbox en klik op de link om je account te activeren.',
+      verificationUrl: verificationData.verificationUrl // For testing
+    }
   } catch (error) {
     console.error('Sign up error:', error)
     return { success: false, error: error.message }

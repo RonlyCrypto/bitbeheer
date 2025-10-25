@@ -22,7 +22,12 @@ CREATE TABLE users (
   login_count INTEGER DEFAULT 0,
   is_admin BOOLEAN DEFAULT FALSE,
   is_test BOOLEAN DEFAULT FALSE,
-  registration_date VARCHAR(100)
+  registration_date VARCHAR(100),
+  -- Email verification fields
+  email_verified BOOLEAN DEFAULT FALSE,
+  verification_token VARCHAR(255),
+  verification_token_created TIMESTAMP WITH TIME ZONE,
+  verified_at TIMESTAMP WITH TIME ZONE
 );
 
 -- Accounts table for registered users
