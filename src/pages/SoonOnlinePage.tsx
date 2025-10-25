@@ -108,29 +108,40 @@ export default function SoonOnlinePage() {
                   existingEmails.push(emailData);
                   localStorage.setItem('bitbeheer_emails', JSON.stringify(existingEmails));
                   console.log('User saved to localStorage fallback');
-                  
-                  // Continue with success even if Supabase failed
-                  setSubmitStatus('success');
-                  setEmail('');
-                  setName('');
-                  setMessage('');
-                  setIsSubmitting(false);
-                  return;
                 } catch (fallbackError) {
                   console.error('Fallback save failed:', fallbackError);
                   setSubmitStatus('error');
                   setIsSubmitting(false);
                   return;
                 }
+              } else {
+                console.log('User saved to Supabase:', user);
               }
 
-              console.log('User saved to Supabase:', user);
+              // Send notification email to admin
+              try {
+                const emailResponse = await fetch('/api/send-notification-email', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    userEmail: email.trim().toLowerCase(),
+                    userName: name?.trim() || 'Niet opgegeven',
+                    userMessage: message?.trim() || 'Geen bericht',
+                    category: 'opening_website'
+                  }),
+                });
 
-              // Form submission logging simplified
-              console.log('Form submission completed successfully');
-
-              // Email sending temporarily disabled for testing
-              console.log('User data saved successfully, email sending disabled for now');
+                if (emailResponse.ok) {
+                  console.log('Notification email sent successfully');
+                } else {
+                  console.error('Failed to send notification email');
+                }
+              } catch (emailError) {
+                console.error('Error sending notification email:', emailError);
+                // Continue even if email fails
+              }
 
               setSubmitStatus('success');
               setEmail('');
