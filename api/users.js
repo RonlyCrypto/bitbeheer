@@ -34,8 +34,10 @@ module.exports = async (req, res) => {
       
       if (!supabaseUrl || !supabaseKey) {
         console.error('Missing Supabase credentials! Please set REACT_APP_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in your environment variables.');
-        // Fallback to local storage
-        users = JSON.parse(process.env.STORED_USERS || '[]');
+        return res.status(500).json({
+          success: false,
+          error: 'Database not configured'
+        });
       } else {
         const supabase = createClient(supabaseUrl, supabaseKey);
         
@@ -49,14 +51,18 @@ module.exports = async (req, res) => {
           console.log('Users fetched from Supabase:', users.length);
         } else {
           console.error('Error fetching from Supabase:', error);
-          // Fallback to local storage
-          users = JSON.parse(process.env.STORED_USERS || '[]');
+          return res.status(500).json({
+            success: false,
+            error: 'Failed to fetch users from database'
+          });
         }
       }
     } catch (supabaseError) {
       console.error('Supabase connection error:', supabaseError);
-      // Fallback to local storage
-      users = JSON.parse(process.env.STORED_USERS || '[]');
+      return res.status(500).json({
+        success: false,
+        error: 'Database connection failed'
+      });
     }
 
     switch (method) {
@@ -107,9 +113,10 @@ module.exports = async (req, res) => {
           
           if (!supabaseUrl || !supabaseKey) {
             console.error('Missing Supabase credentials for user creation!');
-            // Fallback to local storage
-            users.push(newUser);
-            process.env.STORED_USERS = JSON.stringify(users);
+            return res.status(500).json({
+              success: false,
+              error: 'Database not configured'
+            });
           } else {
             const supabase = createClient(supabaseUrl, supabaseKey);
             
@@ -122,18 +129,20 @@ module.exports = async (req, res) => {
             
             if (error) {
               console.error('Error saving to Supabase:', error);
-              // Fallback to local storage
-              users.push(newUser);
-              process.env.STORED_USERS = JSON.stringify(users);
+              return res.status(500).json({
+                success: false,
+                error: 'Failed to save user to database'
+              });
             } else {
               console.log('User saved to Supabase successfully:', data);
             }
           }
         } catch (supabaseError) {
           console.error('Supabase save error:', supabaseError);
-          // Fallback to local storage
-          users.push(newUser);
-          process.env.STORED_USERS = JSON.stringify(users);
+          return res.status(500).json({
+            success: false,
+            error: 'Database save failed'
+          });
         }
 
         return res.status(201).json({ 

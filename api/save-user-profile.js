@@ -47,7 +47,7 @@ module.exports = async (req, res) => {
       console.error('Supabase not available for user profile save');
       return res.status(500).json({
         success: false,
-        error: 'Database not available'
+        error: 'Database not configured'
       });
     }
 

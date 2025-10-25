@@ -31,23 +31,23 @@ export default function AanmeldenPage() {
     setMessage(null);
 
     try {
-      // Generate a temporary password for the user
-      const tempPassword = Math.random().toString(36).slice(-12) + 'A1!';
-      
-      // Create user account with email verification
-      const result = await signUpUser(formData.email, tempPassword, {
-        name: formData.naam,
-        phone: formData.telefoon,
-        investment_plans: formData.spaargeld,
-        experience: formData.ervaring,
-        motivation: formData.motivatie,
-        expectations: formData.verwachtingen,
-        category: 'nieuwe_gebruiker'
+      // Direct API call to create user account in Supabase
+      const userResponse = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          name: formData.naam,
+          message: 'Aanmelding voor persoonlijke begeleiding',
+          category: 'nieuwe_gebruiker'
+        }),
       });
 
-      console.log('SignUp result:', result);
-
-      if (result.success) {
+      if (userResponse.ok) {
+        console.log('User account created successfully');
+        
         // Save additional user profile data
         try {
           const profileResponse = await fetch('/api/save-user-profile', {
@@ -75,22 +75,20 @@ export default function AanmeldenPage() {
         } catch (profileError) {
           console.error('Error saving user profile:', profileError);
           // Don't fail the signup if profile save fails
-          // The account is still created, just without the extra profile data
         }
 
         setMessage({ 
           type: 'success', 
-          text: result.message || 'Account aangemaakt! Controleer je e-mail om je account te activeren.' 
+          text: 'Account aangemaakt! Je account is nu zichtbaar in het admin dashboard.' 
         });
         setIsSubmitted(true);
       } else {
-        // This should not happen anymore with the new fallback logic
-        console.error('SignUp failed, showing fallback message');
+        const errorData = await userResponse.json();
+        console.error('User creation failed:', errorData);
         setMessage({ 
-          type: 'success', 
-          text: 'Aanmelding ontvangen! We nemen binnen 24 uur contact met je op voor een kennismakingsgesprek.' 
+          type: 'error', 
+          text: 'Er is een fout opgetreden bij het aanmaken van je account. Probeer het opnieuw.' 
         });
-        setIsSubmitted(true);
       }
     } catch (error) {
       console.error('Account creation error:', error);
