@@ -3,16 +3,35 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 interface AuthContextType {
   isAuthenticated: boolean;
   userType: 'admin' | 'test' | null;
-  login: (password: string) => boolean;
+  login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   isSiteAccessible: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Passwords - using environment variables for security
-const ADMIN_PASSWORD = process.env.REACT_APP_ADMIN_PASSWORD || 'admin123';
-const TEST_PASSWORD = process.env.REACT_APP_TEST_PASSWORD || 'test123';
+// Admin authentication using Supabase
+const authenticateAdmin = async (username: string, password: string) => {
+  try {
+    const response = await fetch('/api/admin-auth', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username, password }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return { success: true, accountType: data.accountType };
+    } else {
+      return { success: false, error: 'Invalid credentials' };
+    }
+  } catch (error) {
+    console.error('Auth error:', error);
+    return { success: false, error: 'Authentication failed' };
+  }
+};
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -28,21 +47,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = (password: string): boolean => {
-    if (password === ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-      setUserType('admin');
-      localStorage.setItem('admin_authenticated', 'true');
-      localStorage.setItem('user_type', 'admin');
-      return true;
-    } else if (password === TEST_PASSWORD) {
-      setIsAuthenticated(true);
-      setUserType('test');
-      localStorage.setItem('admin_authenticated', 'true');
-      localStorage.setItem('user_type', 'test');
-      return true;
+  const login = async (username: string, password: string): Promise<boolean> => {
+    try {
+      const result = await authenticateAdmin(username, password);
+      
+      if (result.success) {
+        setIsAuthenticated(true);
+        setUserType(result.accountType as 'admin' | 'test');
+        localStorage.setItem('admin_authenticated', 'true');
+        localStorage.setItem('user_type', result.accountType);
+        localStorage.setItem('admin_username', username);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
     }
-    return false;
   };
 
   const logout = () => {
