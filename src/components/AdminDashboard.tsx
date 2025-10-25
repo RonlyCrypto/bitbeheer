@@ -27,11 +27,38 @@ import CategorieBeheer from './CategorieBeheer';
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [isSoonOnlineMode, setIsSoonOnlineMode] = useState(true);
+  const [users, setUsers] = useState([]);
 
   useEffect(() => {
     // Check current soon online mode status
     const soonOnlineMode = localStorage.getItem('soon_online_mode');
     setIsSoonOnlineMode(soonOnlineMode !== 'false');
+
+    // Load users for recent activity
+    const loadUsers = async () => {
+      try {
+        const response = await fetch('/api/users');
+        if (response.ok) {
+          const data = await response.json();
+          setUsers(data.users || []);
+        } else {
+          // Fallback to localStorage
+          const storedUsers = localStorage.getItem('bitbeheer_emails');
+          if (storedUsers) {
+            setUsers(JSON.parse(storedUsers));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading users:', error);
+        // Fallback to localStorage
+        const storedUsers = localStorage.getItem('bitbeheer_emails');
+        if (storedUsers) {
+          setUsers(JSON.parse(storedUsers));
+        }
+      }
+    };
+
+    loadUsers();
   }, []);
 
   const toggleSoonOnlineMode = () => {
@@ -233,43 +260,43 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-                    <div className="grid md:grid-cols-3 gap-6">
-                      <div className="bg-white rounded-xl p-6 shadow-lg">
-                        <div className="flex items-center gap-4">
-                          <div className="bg-blue-100 p-3 rounded-xl">
-                            <Users className="w-8 h-8 text-blue-600" />
-                          </div>
-                          <div>
-                            <h3 className="text-2xl font-bold text-gray-900">0</h3>
-                            <p className="text-gray-600">Nieuwe Aanmeldingen</p>
-                          </div>
-                        </div>
-                      </div>
+                          <div className="grid md:grid-cols-3 gap-6">
+                            <div className="bg-white rounded-xl p-6 shadow-lg">
+                              <div className="flex items-center gap-4">
+                                <div className="bg-blue-100 p-3 rounded-xl">
+                                  <Users className="w-8 h-8 text-blue-600" />
+                                </div>
+                                <div>
+                                  <h3 className="text-2xl font-bold text-gray-900">{users.length}</h3>
+                                  <p className="text-gray-600">Nieuwe Aanmeldingen</p>
+                                </div>
+                              </div>
+                            </div>
 
-                      <div className="bg-white rounded-xl p-6 shadow-lg">
-                        <div className="flex items-center gap-4">
-                          <div className="bg-green-100 p-3 rounded-xl">
-                            <TrendingUp className="w-8 h-8 text-green-600" />
-                          </div>
-                          <div>
-                            <h3 className="text-2xl font-bold text-gray-900">0</h3>
-                            <p className="text-gray-600">Actieve Begeleidingen</p>
-                          </div>
-                        </div>
-                      </div>
+                            <div className="bg-white rounded-xl p-6 shadow-lg">
+                              <div className="flex items-center gap-4">
+                                <div className="bg-green-100 p-3 rounded-xl">
+                                  <TrendingUp className="w-8 h-8 text-green-600" />
+                                </div>
+                                <div>
+                                  <h3 className="text-2xl font-bold text-gray-900">{users.filter(u => u.category === 'account_aanmelden').length}</h3>
+                                  <p className="text-gray-600">Account Aanmeldingen</p>
+                                </div>
+                              </div>
+                            </div>
 
-                      <div className="bg-white rounded-xl p-6 shadow-lg">
-                        <div className="flex items-center gap-4">
-                          <div className="bg-orange-100 p-3 rounded-xl">
-                            <BarChart3 className="w-8 h-8 text-orange-600" />
+                            <div className="bg-white rounded-xl p-6 shadow-lg">
+                              <div className="flex items-center gap-4">
+                                <div className="bg-orange-100 p-3 rounded-xl">
+                                  <BarChart3 className="w-8 h-8 text-orange-600" />
+                                </div>
+                                <div>
+                                  <h3 className="text-2xl font-bold text-gray-900">{users.filter(u => u.category === 'opening_website').length}</h3>
+                                  <p className="text-gray-600">Notificatie Aanmeldingen</p>
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                          <div>
-                            <h3 className="text-2xl font-bold text-gray-900">0</h3>
-                            <p className="text-gray-600">Totaal Bezoekers</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
 
               {/* Email Management Section */}
               <div className="bg-white rounded-xl p-6 shadow-lg">
@@ -312,18 +339,40 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Recente Activiteit</h3>
-                <div className="space-y-3">
-                  <div className="text-center py-8 text-gray-500">
-                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <BarChart3 className="w-6 h-6 text-gray-400" />
+                    <div className="bg-white rounded-xl p-6 shadow-lg">
+                      <h3 className="text-xl font-bold text-gray-900 mb-4">Recente Activiteit</h3>
+                      <div className="space-y-3">
+                        {users.length > 0 ? (
+                          users.slice(0, 5).map((user, index) => (
+                            <div key={user.id || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                                  <Users className="w-4 h-4 text-orange-600" />
+                                </div>
+                                <div>
+                                  <p className="font-medium text-gray-900">{user.name || 'Niet opgegeven'}</p>
+                                  <p className="text-sm text-gray-600">{user.email}</p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm text-gray-500">{user.date || 'Onbekend'}</p>
+                                <span className="inline-block px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded-full">
+                                  {user.category || 'Niet opgegeven'}
+                                </span>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center py-8 text-gray-500">
+                            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                              <BarChart3 className="w-6 h-6 text-gray-400" />
+                            </div>
+                            <p>Nog geen activiteit geregistreerd</p>
+                            <p className="text-sm">Activiteit wordt hier getoond zodra er data is</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <p>Nog geen activiteit geregistreerd</p>
-                    <p className="text-sm">Activiteit wordt hier getoond zodra er data is</p>
-                  </div>
-                </div>
-              </div>
             </div>
           )}
 
