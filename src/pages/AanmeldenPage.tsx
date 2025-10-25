@@ -78,7 +78,7 @@ export default function AanmeldenPage() {
         });
         setIsSubmitted(true);
       } else {
-        // Fallback: Show success message even if API fails
+        // This should not happen anymore with the new fallback logic
         console.error('SignUp failed, showing fallback message');
         setMessage({ 
           type: 'success', 
