@@ -14,7 +14,15 @@ CREATE TABLE users (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   email_sent BOOLEAN DEFAULT FALSE,
-  email_sent_date TIMESTAMP WITH TIME ZONE
+  email_sent_date TIMESTAMP WITH TIME ZONE,
+  -- Additional fields for compatibility
+  date VARCHAR(100),
+  timestamp VARCHAR(100),
+  last_login VARCHAR(100),
+  login_count INTEGER DEFAULT 0,
+  is_admin BOOLEAN DEFAULT FALSE,
+  is_test BOOLEAN DEFAULT FALSE,
+  registration_date VARCHAR(100)
 );
 
 -- Accounts table for registered users

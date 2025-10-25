@@ -73,17 +73,13 @@ module.exports = async (req, res) => {
     // Test 3: Try to insert a test user
     console.log('Test 3: Testing user insertion...');
     const testUser = {
-      id: 'test-' + Date.now(),
       email: 'test@example.com',
       name: 'Test User',
       message: 'Test message',
       category: 'test',
-      timestamp: new Date().toISOString(),
-      date: new Date().toLocaleString('nl-NL'),
-      emailSent: false,
-      isAdmin: false,
-      isTest: true,
-      registrationDate: new Date().toISOString().split('T')[0]
+      email_sent: false,
+      is_admin: false,
+      is_test: true
     };
 
     const { data: insertData, error: insertError } = await supabase
@@ -104,7 +100,7 @@ module.exports = async (req, res) => {
     await supabase
       .from('users')
       .delete()
-      .eq('id', testUser.id);
+      .eq('email', testUser.email);
 
     return res.status(200).json({
       success: true,

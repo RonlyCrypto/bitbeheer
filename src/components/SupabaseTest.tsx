@@ -112,14 +112,14 @@ export default function SupabaseTest() {
                   <div className="bg-gray-50 p-3 rounded-lg">
                     <p className="text-sm text-gray-600">REACT_APP_SUPABASE_URL</p>
                     <p className="font-mono text-xs text-gray-800">
-                      {process.env.REACT_APP_SUPABASE_URL || 'Niet ingesteld'}
+                      {import.meta.env.VITE_SUPABASE_URL || 'Niet ingesteld'}
                     </p>
                   </div>
                   <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-sm text-gray-600">SUPABASE_SERVICE_ROLE_KEY</p>
+                    <p className="text-sm text-gray-600">REACT_APP_SUPABASE_ANON_KEY</p>
                     <p className="font-mono text-xs text-gray-800">
-                      {process.env.SUPABASE_SERVICE_ROLE_KEY ? 
-                        process.env.SUPABASE_SERVICE_ROLE_KEY.substring(0, 10) + '...' : 
+                      {import.meta.env.VITE_SUPABASE_ANON_KEY ? 
+                        import.meta.env.VITE_SUPABASE_ANON_KEY.substring(0, 10) + '...' : 
                         'Niet ingesteld'
                       }
                     </p>
