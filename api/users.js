@@ -23,8 +23,14 @@ module.exports = async (req, res) => {
     let users = [];
     try {
       const { createClient } = require('@supabase/supabase-js');
-      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://otncto6lvt39cxz598rtoa.supabase.co';
-      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'sb_secret_uxyF_aTNtzEwEoRav6A2Ww_H4AP7I_Y';
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      
+      if (!supabaseUrl || !supabaseKey) {
+        console.error('Missing Supabase credentials! Please set REACT_APP_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in your environment variables.');
+        // Fallback to local storage
+        users = JSON.parse(process.env.STORED_USERS || '[]');
+      } else {
       const supabase = createClient(supabaseUrl, supabaseKey);
       
       const { data, error } = await supabase
@@ -88,8 +94,15 @@ module.exports = async (req, res) => {
         // Try to save to Supabase first
         try {
           const { createClient } = require('@supabase/supabase-js');
-          const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://otncto6lvt39cxz598rtoa.supabase.co';
-          const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'sb_secret_uxyF_aTNtzEwEoRav6A2Ww_H4AP7I_Y';
+          const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+          const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+          
+          if (!supabaseUrl || !supabaseKey) {
+            console.error('Missing Supabase credentials for user creation!');
+            // Fallback to local storage
+            users.push(newUser);
+            process.env.STORED_USERS = JSON.stringify(users);
+          } else {
           const supabase = createClient(supabaseUrl, supabaseKey);
           
           const { data, error } = await supabase

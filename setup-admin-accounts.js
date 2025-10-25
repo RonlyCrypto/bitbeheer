@@ -65,8 +65,8 @@ async function setupAdminAccounts() {
 
     console.log('\n✅ Admin accounts setup complete!');
     console.log('📝 Login credentials:');
-    console.log('   Admin: username="admin", password="admin123"');
-    console.log('   Test:  username="test", password="test123"');
+    console.log('   Admin: username="admin", password="[SET_IN_ENV_VARS]"');
+    console.log('   Test:  username="test", password="[SET_IN_ENV_VARS]"');
 
   } catch (error) {
     console.error('Setup failed:', error);

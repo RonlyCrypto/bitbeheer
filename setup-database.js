@@ -1,8 +1,14 @@
 const { createClient } = require('@supabase/supabase-js');
 
 // Supabase configuration
-const supabaseUrl = 'https://clqbnkvnydlxtimiazqf.supabase.co';
-const supabaseKey = 'sb_secret_uxyF_aTNtzEwEoRav6A2Ww_H4AP7I_Y';
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Missing Supabase credentials!');
+  console.error('Please set REACT_APP_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in your environment variables.');
+  process.exit(1);
+}
 
 // Create Supabase client with service role key
 const supabase = createClient(supabaseUrl, supabaseKey);
