@@ -74,6 +74,14 @@ async function handleFallback(req, res) {
 
 async function verifyEmailToken(req, res, token) {
   try {
+    // Check if Supabase is available
+    if (!supabase) {
+      return res.status(500).json({
+        success: false,
+        error: 'Database not available'
+      });
+    }
+
     // Find user by verification token
     const { data: user, error } = await supabase
       .from('users')
@@ -177,6 +185,22 @@ async function sendVerificationEmail(req, res) {
     // Use fallback if Supabase is not available
     if (!supabase) {
       console.log('Supabase not available, using fallback');
+      return await handleFallback(req, res);
+    }
+
+    // Check if Supabase connection works
+    try {
+      const { data: testData, error: testError } = await supabase
+        .from('users')
+        .select('count')
+        .limit(1);
+
+      if (testError) {
+        console.error('Supabase connection test failed:', testError);
+        return await handleFallback(req, res);
+      }
+    } catch (connectionError) {
+      console.error('Supabase connection error:', connectionError);
       return await handleFallback(req, res);
     }
 

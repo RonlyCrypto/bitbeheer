@@ -392,7 +392,7 @@ export const signUpUser = async (email, password, userData = {}) => {
   try {
     // Try to send verification email
     try {
-      const verificationResponse = await fetch('/api/verify-email', {
+      const verificationResponse = await fetch('/api/simple-verify-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
