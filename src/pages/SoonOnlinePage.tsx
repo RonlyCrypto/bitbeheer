@@ -424,34 +424,25 @@ export default function SoonOnlinePage() {
                       const passwordInput = modal.querySelector('#adminPassword');
                       const cancelBtn = modal.querySelector('#cancelLogin');
                       
-                      form.addEventListener('submit', async (e) => {
+                      form.addEventListener('submit', (e) => {
                         e.preventDefault();
-                        const username = 'admin'; // Default to admin for now
                         const password = passwordInput.value;
                         
-                        try {
-                          const response = await fetch('/api/admin-auth', {
-                            method: 'POST',
-                            headers: {
-                              'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ username, password }),
-                          });
-
-                          if (response.ok) {
-                            const data = await response.json();
-                            localStorage.setItem('admin_authenticated', 'true');
-                            localStorage.setItem('user_type', data.accountType);
-                            localStorage.setItem('admin_username', username);
-                            document.body.removeChild(modal);
-                            alert(`${data.accountType.toUpperCase()} login succesvol! Je wordt doorgestuurd naar de admin pagina.`);
-                            window.location.href = '/admin';
-                          } else {
-                            alert('Onjuist wachtwoord. Probeer opnieuw.');
-                          }
-                        } catch (error) {
-                          console.error('Login error:', error);
-                          alert('Er is een fout opgetreden bij het inloggen.');
+                        // Simple password check
+                        if (password === 'admin123') {
+                          localStorage.setItem('admin_authenticated', 'true');
+                          localStorage.setItem('user_type', 'admin');
+                          document.body.removeChild(modal);
+                          alert('Admin login succesvol! Je wordt doorgestuurd naar de admin pagina.');
+                          window.location.href = '/admin';
+                        } else if (password === 'test123') {
+                          localStorage.setItem('admin_authenticated', 'true');
+                          localStorage.setItem('user_type', 'test');
+                          document.body.removeChild(modal);
+                          alert('Test gebruiker login succesvol! Je wordt doorgestuurd naar de admin pagina.');
+                          window.location.href = '/admin';
+                        } else {
+                          alert('Onjuist wachtwoord. Probeer opnieuw.');
                         }
                       });
                       
