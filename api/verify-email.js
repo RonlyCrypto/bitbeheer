@@ -6,16 +6,23 @@ const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
 
 // Supabase configuration
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+console.log('Supabase config check:');
+console.log('REACT_APP_SUPABASE_URL:', !!process.env.REACT_APP_SUPABASE_URL);
+console.log('VITE_SUPABASE_URL:', !!process.env.VITE_SUPABASE_URL);
+console.log('SUPABASE_SERVICE_ROLE_KEY:', !!supabaseKey);
+console.log('Final supabaseUrl:', !!supabaseUrl);
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('Missing Supabase credentials for email verification');
-  console.error('REACT_APP_SUPABASE_URL:', !!supabaseUrl);
+  console.error('REACT_APP_SUPABASE_URL:', !!process.env.REACT_APP_SUPABASE_URL);
+  console.error('VITE_SUPABASE_URL:', !!process.env.VITE_SUPABASE_URL);
   console.error('SUPABASE_SERVICE_ROLE_KEY:', !!supabaseKey);
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 module.exports = async (req, res) => {
   // CORS headers
@@ -29,11 +36,16 @@ module.exports = async (req, res) => {
 
   try {
     // Check Supabase credentials first
-    if (!supabaseUrl || !supabaseKey) {
+    if (!supabase || !supabaseUrl || !supabaseKey) {
+      console.error('Supabase not configured properly');
       return res.status(500).json({
         success: false,
         error: 'Supabase credentials not configured',
-        details: 'Missing REACT_APP_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY'
+        details: {
+          supabaseUrl: !!supabaseUrl,
+          supabaseKey: !!supabaseKey,
+          supabaseClient: !!supabase
+        }
       });
     }
 
@@ -50,7 +62,6 @@ module.exports = async (req, res) => {
     } else {
       return res.status(405).json({ error: 'Method Not Allowed' });
     }
-
   } catch (error) {
     console.error('Email verification error:', error);
     return res.status(500).json({
@@ -60,6 +71,20 @@ module.exports = async (req, res) => {
     });
   }
 };
+
+// Fallback function for when Supabase is not available
+async function handleFallback(req, res) {
+  const { email, name } = req.body;
+  
+  console.log('Using fallback mode for email verification');
+  
+  // Return success without actually sending email
+  return res.status(200).json({
+    success: true,
+    message: 'Verification email would be sent (fallback mode)',
+    fallback: true
+  });
+}
 
 async function verifyEmailToken(req, res, token) {
   try {
@@ -162,6 +187,12 @@ async function sendVerificationEmail(req, res) {
     }
 
     console.log('Sending verification email to:', email);
+
+    // Use fallback if Supabase is not available
+    if (!supabase) {
+      console.log('Supabase not available, using fallback');
+      return await handleFallback(req, res);
+    }
 
     // Generate verification token
     const verificationToken = crypto.randomBytes(32).toString('hex');
