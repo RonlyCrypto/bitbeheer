@@ -29,6 +29,8 @@ TRANSIP_EMAIL_UPDATE=update@bitbeheer.nl
 TRANSIP_PASSWORD_UPDATE=your_transip_password
 TRANSIP_EMAIL_INFO=info@bitbeheer.nl
 TRANSIP_PASSWORD_INFO=your_transip_password
+TRANSIP_EMAIL_NOREPLY=noreply@bitbeheer.nl
+TRANSIP_PASSWORD_NOREPLY=your_noreply_password
 ```
 
 ---
@@ -60,6 +62,8 @@ TRANSIP_PASSWORD_INFO=your_transip_password
 | `TRANSIP_PASSWORD_UPDATE` | `your_transip_password` | Production, Preview, Development |
 | `TRANSIP_EMAIL_INFO` | `info@bitbeheer.nl` | Production, Preview, Development |
 | `TRANSIP_PASSWORD_INFO` | `your_transip_password` | Production, Preview, Development |
+| `TRANSIP_EMAIL_NOREPLY` | `noreply@bitbeheer.nl` | Production, Preview, Development |
+| `TRANSIP_PASSWORD_NOREPLY` | `your_noreply_password` | Production, Preview, Development |
 
 ### **5. Deploy opnieuw**
 - Na het toevoegen van alle variables

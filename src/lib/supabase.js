@@ -428,6 +428,29 @@ export const signUpUser = async (email, password, userData = {}) => {
           console.error('Error saving user to users table:', userError)
           // Don't fail the signup if this fails
         }
+
+        // Send welcome email from noreply@bitbeheer.nl
+        try {
+          const emailResponse = await fetch('/api/send-welcome-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userEmail: email.toLowerCase().trim(),
+              userName: userData.name || email.split('@')[0]
+            }),
+          });
+
+          if (emailResponse.ok) {
+            console.log('Welcome email sent successfully');
+          } else {
+            console.error('Failed to send welcome email');
+          }
+        } catch (emailError) {
+          console.error('Error sending welcome email:', emailError);
+          // Don't fail the signup if email fails
+        }
       } catch (userError) {
         console.error('Error saving user data:', userError)
         // Don't fail the signup if this fails
