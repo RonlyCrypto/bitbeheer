@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Mail, User, Phone, MessageSquare, Send, CheckCircle, AlertCircle } from 'lucide-react';
+import { DirectEmailService } from '../services/directEmailService';
 
 export default function ContactForm() {
   const [formData, setFormData] = useState({
@@ -43,15 +44,15 @@ export default function ContactForm() {
     }
 
     try {
-      const response = await fetch('/api/send-contact-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      const success = await DirectEmailService.sendContactForm(
+        formData.name,
+        formData.email,
+        formData.subject,
+        formData.message,
+        formData.phone
+      );
 
-      if (response.ok) {
+      if (success) {
         setSubmitStatus('success');
         setFormData({
           name: '',
@@ -61,8 +62,7 @@ export default function ContactForm() {
           message: ''
         });
       } else {
-        const errorData = await response.json();
-        setErrorMessage(errorData.error || 'Er is een fout opgetreden bij het verzenden van je bericht.');
+        setErrorMessage('Er is een fout opgetreden bij het verzenden van je bericht.');
         setSubmitStatus('error');
       }
     } catch (error) {

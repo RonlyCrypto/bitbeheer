@@ -2,8 +2,9 @@ import { Bitcoin, Clock, Shield, Users, Mail, ArrowRight, CheckCircle, AlertCirc
 import { Link } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import { protectFormSubmission, createHoneypotField, checkHoneypot, checkFormTiming, generateMathChallenge, verifyMathChallenge, generateFingerprint } from '../utils/botProtection';
-import { createUser, sendNotificationEmail, createFormSubmission } from '../lib/supabase';
+import { createUser, createFormSubmission } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { DirectEmailService } from '../services/directEmailService';
 
 export default function SoonOnlinePage() {
   const { login } = useAuth();
@@ -118,22 +119,15 @@ export default function SoonOnlinePage() {
                 console.log('User saved to Supabase:', user);
               }
 
-              // Send notification email to admin
+              // Send notification email to admin using direct service
               try {
-                const emailResponse = await fetch('/api/send-notification-email', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    userEmail: email.trim().toLowerCase(),
-                    userName: name?.trim() || 'Niet opgegeven',
-                    userMessage: message?.trim() || 'Geen bericht',
-                    category: 'opening_website'
-                  }),
-                });
+                const emailSuccess = await DirectEmailService.sendNotificationRequest(
+                  email.trim().toLowerCase(),
+                  name?.trim() || 'Niet opgegeven',
+                  message?.trim() || 'Geen bericht'
+                );
 
-                if (emailResponse.ok) {
+                if (emailSuccess) {
                   console.log('Notification email sent successfully');
                 } else {
                   console.error('Failed to send notification email');

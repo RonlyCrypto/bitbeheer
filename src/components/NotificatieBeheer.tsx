@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Mail, Users, Send, CheckCircle, Clock, AlertCircle, Download, Trash2 } from 'lucide-react';
+import { DirectEmailService } from '../services/directEmailService';
 
 interface NotificationUser {
   id: string;
@@ -89,15 +90,15 @@ export default function NotificatieBeheer() {
         fromEmail: 'update@bitbeheer.nl'
       };
 
-      const response = await fetch('/api/send-bulk-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(emailData),
-      });
+      // Use direct email service
+      const result = await DirectEmailService.sendBulkEmail(
+        selectedUserData,
+        emailData.subject,
+        emailData.message,
+        emailData.fromEmail
+      );
 
-      if (response.ok) {
+      if (result.success) {
         setSendStatus('sent');
         // Update users as sent
         setUsers(prevUsers => 
@@ -110,6 +111,7 @@ export default function NotificatieBeheer() {
         setSelectedUsers([]);
         setCustomMessage('');
         setSelectedTemplate('');
+        console.log(`Bulk email sent: ${result.sent} successful, ${result.failed} failed`);
       } else {
         setSendStatus('error');
       }
