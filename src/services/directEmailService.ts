@@ -11,30 +11,28 @@ interface EmailData {
 export class DirectEmailService {
   static async sendEmail(data: EmailData): Promise<{ success: boolean; message: string; emailId?: string }> {
     try {
-      // Get current session for authentication
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        console.error('No valid session for email sending');
-        return { success: false, message: 'Authentication required' };
-      }
-
-      // Use Supabase Edge Function for email sending with proper auth
-      const { data: result, error } = await supabase.functions.invoke('send-email-direct', {
-        body: {
+      // Use direct fetch to Edge Function without Supabase Auth
+      const response = await fetch('https://clqbnkvnydlxtimiazqf.supabase.co/functions/v1/send-email-direct', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           to: data.to,
           subject: data.subject,
           htmlContent: data.htmlContent,
           textContent: data.textContent,
           type: data.type || 'notification'
-        }
+        })
       });
 
-      if (error) {
-        console.error('Supabase function error:', error);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Email sending failed:', errorData);
         return { success: false, message: 'Email service error' };
       }
 
+      const result = await response.json();
       return result;
     } catch (error) {
       console.error('Email sending error:', error);
