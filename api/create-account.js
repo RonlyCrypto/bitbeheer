@@ -107,7 +107,15 @@ module.exports = async (req, res) => {
       verification_token_created: new Date().toISOString(),
       verification_expires: verificationExpires.toISOString(),
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      // Add required fields for users table
+      date: new Date().toLocaleString('nl-NL'),
+      timestamp: new Date().toISOString(),
+      last_login: null,
+      login_count: 0,
+      is_admin: false,
+      is_test: false,
+      registration_date: new Date().toISOString()
     };
 
     const { data: user, error: userError } = await supabase
@@ -117,9 +125,11 @@ module.exports = async (req, res) => {
 
     if (userError) {
       console.error('Error creating user:', userError);
+      console.error('User data that failed:', userData);
       // Don't fail if user creation fails, account is already created
+      // But log the error for debugging
     } else {
-      console.log('User created:', user[0]);
+      console.log('User created successfully:', user[0]);
     }
 
     // Send verification email

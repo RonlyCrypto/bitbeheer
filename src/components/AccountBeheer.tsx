@@ -85,8 +85,10 @@ export default function AccountBeheer() {
         const usersResponse = await fetch('/api/users');
         if (usersResponse.ok) {
           const usersData = await usersResponse.json();
-          // Filter for account_aanmelden category
-          const accountUsers = usersData.users?.filter((user: any) => user.category === 'account_aanmelden') || [];
+          // Filter for nieuwe_gebruiker category (from login form) and account_aanmelden (from aanmeldformulier)
+          const accountUsers = usersData.users?.filter((user: any) => 
+            user.category === 'nieuwe_gebruiker' || user.category === 'account_aanmelden'
+          ) || [];
           setUsers(accountUsers);
           return;
         }
@@ -133,7 +135,9 @@ export default function AccountBeheer() {
         const usersResponse = await fetch('/api/users');
         if (usersResponse.ok) {
           const usersData = await usersResponse.json();
-          const accountUsers = usersData.users?.filter((user: any) => user.category === 'account_aanmelden') || [];
+          const accountUsers = usersData.users?.filter((user: any) => 
+            user.category === 'nieuwe_gebruiker' || user.category === 'account_aanmelden'
+          ) || [];
           setUsers(accountUsers);
         }
       }
