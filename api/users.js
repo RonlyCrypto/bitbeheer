@@ -34,10 +34,8 @@ module.exports = async (req, res) => {
       
       if (!supabaseUrl || !supabaseKey) {
         console.error('Missing Supabase credentials! Please set REACT_APP_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in your environment variables.');
-        return res.status(500).json({
-          success: false,
-          error: 'Database not configured'
-        });
+        // Return empty users array instead of error for now
+        users = [];
       } else {
         const supabase = createClient(supabaseUrl, supabaseKey);
         
