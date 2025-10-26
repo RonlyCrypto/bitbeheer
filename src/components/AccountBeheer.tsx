@@ -73,7 +73,16 @@ export default function AccountBeheer() {
           console.log('Sync users failed, continuing with existing data:', syncError);
         }
 
-        // Try users API first (renamed from accounts - these are actual user accounts)
+        // Try accounts API first (these are the actual user accounts in Supabase)
+        const accountsResponse = await fetch('/api/accounts');
+        if (accountsResponse.ok) {
+          const accountsData = await accountsResponse.json();
+          console.log('Accounts loaded from API:', accountsData.accounts);
+          setUsers(accountsData.accounts || []);
+          return;
+        }
+        
+        // Fallback to users API (for notification signups)
         const usersResponse = await fetch('/api/users');
         if (usersResponse.ok) {
           const usersData = await usersResponse.json();
@@ -81,15 +90,8 @@ export default function AccountBeheer() {
           const accountUsers = usersData.users?.filter((user: any) => 
             user.category === 'nieuwe_gebruiker' || user.category === 'account_aanmelden'
           ) || [];
+          console.log('Users loaded from API (fallback):', accountUsers);
           setUsers(accountUsers);
-          return;
-        }
-        
-        // Fallback to accounts API (basic account info)
-        const accountsResponse = await fetch('/api/accounts');
-        if (accountsResponse.ok) {
-          const accountsData = await accountsResponse.json();
-          setUsers(accountsData.accounts || []);
           return;
         }
         
@@ -125,20 +127,22 @@ export default function AccountBeheer() {
         console.log('Sync users failed, continuing with existing data:', syncError);
       }
 
-      // Reload users (actual user accounts)
-      const usersResponse = await fetch('/api/users');
-      if (usersResponse.ok) {
-        const usersData = await usersResponse.json();
-        const accountUsers = usersData.users?.filter((user: any) => 
-          user.category === 'nieuwe_gebruiker' || user.category === 'account_aanmelden'
-        ) || [];
-        setUsers(accountUsers);
+      // Reload accounts (actual user accounts from Supabase)
+      const accountsResponse = await fetch('/api/accounts');
+      if (accountsResponse.ok) {
+        const accountsData = await accountsResponse.json();
+        console.log('Accounts refreshed from API:', accountsData.accounts);
+        setUsers(accountsData.accounts || []);
       } else {
-        // Fallback to accounts API (basic account info)
-        const accountsResponse = await fetch('/api/accounts');
-        if (accountsResponse.ok) {
-          const accountsData = await accountsResponse.json();
-          setUsers(accountsData.accounts || []);
+        // Fallback to users API (for notification signups)
+        const usersResponse = await fetch('/api/users');
+        if (usersResponse.ok) {
+          const usersData = await usersResponse.json();
+          const accountUsers = usersData.users?.filter((user: any) => 
+            user.category === 'nieuwe_gebruiker' || user.category === 'account_aanmelden'
+          ) || [];
+          console.log('Users refreshed from API (fallback):', accountUsers);
+          setUsers(accountUsers);
         }
       }
     } catch (error) {
