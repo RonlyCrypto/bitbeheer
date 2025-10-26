@@ -12,6 +12,18 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  // Check for valid JWT token
+  const authHeader = req.headers.get('Authorization')
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return new Response(
+      JSON.stringify({ error: 'Missing or invalid authorization header' }),
+      { 
+        status: 401, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    )
+  }
+
   try {
     const { to, subject, htmlContent, textContent, type } = await req.json()
 
