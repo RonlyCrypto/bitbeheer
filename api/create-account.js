@@ -69,36 +69,8 @@ module.exports = async (req, res) => {
     const tempPassword = Math.random().toString(36).slice(-12) + 'A1!';
     const passwordHash = await bcrypt.hash(tempPassword, 10);
 
-    // Create account in accounts table (only fields that exist in the table)
-    const accountData = {
-      email: email.toLowerCase().trim(),
-      name: naam.trim(),
-      password_hash: passwordHash,
-      category: 'nieuwe_gebruiker',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      last_login: null,
-      login_count: 0,
-      is_admin: false,
-      is_test: false
-    };
-
-    const { data: account, error: accountError } = await supabase
-      .from('accounts')
-      .insert([accountData])
-      .select();
-
-    if (accountError) {
-      console.error('Error creating account:', accountError);
-      console.error('Account data that failed:', accountData);
-      return res.status(500).json({
-        success: false,
-        error: 'Failed to create account',
-        details: accountError.message
-      });
-    }
-
-    console.log('Account created:', account[0]);
+    // Skip accounts table for now - just create user directly
+    console.log('Skipping accounts table, creating user directly');
 
     // Create user in users table with all form data (renamed from accounts)
     const userData = {
@@ -168,7 +140,6 @@ module.exports = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: 'Account succesvol aangemaakt! Controleer je e-mail om je account te activeren.',
-      account: account[0],
       user: user?.[0],
       verificationToken: verificationToken // For admin reference
     });
