@@ -11,8 +11,8 @@ interface EmailData {
 export class DirectEmailService {
   static async sendEmail(data: EmailData): Promise<{ success: boolean; message: string; emailId?: string }> {
     try {
-      // Use direct fetch to Edge Function without Supabase Auth
-      const response = await fetch('https://clqbnkvnydlxtimiazqf.supabase.co/functions/v1/send-email-direct', {
+      // Use backend API for secure email sending
+      const response = await fetch('/api/send-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
