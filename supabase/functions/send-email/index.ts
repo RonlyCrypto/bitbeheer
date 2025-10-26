@@ -12,6 +12,8 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  console.log('Processing email request without authentication')
+
   try {
     const { to, subject, htmlContent, textContent, type } = await req.json()
 
