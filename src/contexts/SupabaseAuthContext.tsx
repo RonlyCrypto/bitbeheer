@@ -11,6 +11,8 @@ interface SupabaseAuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   isTest: boolean;
+  showWelcomePopup: boolean;
+  setShowWelcomePopup: (show: boolean) => void;
 }
 
 const SupabaseAuthContext = createContext<SupabaseAuthContextType | undefined>(undefined);
@@ -18,6 +20,7 @@ const SupabaseAuthContext = createContext<SupabaseAuthContextType | undefined>(u
 export function SupabaseAuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showWelcomePopup, setShowWelcomePopup] = useState(false);
 
   useEffect(() => {
     // Get initial session
@@ -39,6 +42,15 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       async (event, session) => {
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Show welcome popup for new users on first login
+        if (event === 'SIGNED_IN' && session?.user) {
+          const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
+          if (!hasSeenWelcome) {
+            setShowWelcomePopup(true);
+            localStorage.setItem('hasSeenWelcome', 'true');
+          }
+        }
       }
     );
 
@@ -96,7 +108,9 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     signOut,
     isAuthenticated,
     isAdmin,
-    isTest
+    isTest,
+    showWelcomePopup,
+    setShowWelcomePopup
   };
 
   return (

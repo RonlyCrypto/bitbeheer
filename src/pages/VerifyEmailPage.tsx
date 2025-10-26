@@ -1,190 +1,173 @@
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { CheckCircle, XCircle, Clock, Mail } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 
 export default function VerifyEmailPage() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'expired'>('loading');
   const [message, setMessage] = useState('');
-  const [user, setUser] = useState<any>(null);
-  const token = searchParams.get('token');
 
   useEffect(() => {
-    if (token) {
-      verifyEmail(token);
-    } else {
-      setStatus('error');
-      setMessage('Geen verificatie token gevonden');
-    }
-  }, [token]);
+    const verifyEmail = async () => {
+      const token = searchParams.get('token');
+      const email = searchParams.get('email');
 
-  const verifyEmail = async (verificationToken: string) => {
-    try {
-      const response = await fetch(`/api/verify-email?token=${verificationToken}`);
-      const data = await response.json();
-
-      if (data.success) {
-        setStatus('success');
-        setMessage(data.message);
-        setUser(data.user);
-      } else if (data.expired) {
-        setStatus('expired');
-        setMessage(data.error);
-      } else {
+      if (!token || !email) {
         setStatus('error');
-        setMessage(data.error);
+        setMessage('Ongeldige verificatie link');
+        return;
       }
-    } catch (error) {
-      setStatus('error');
-      setMessage('Er is een fout opgetreden bij het verifiëren van je e-mail');
-    }
-  };
+
+      try {
+        const response = await fetch('/api/verify-email-token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ token, email }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          setStatus('success');
+          setMessage('Je account is succesvol geactiveerd! Je kunt nu inloggen.');
+          
+          // Redirect to login after 3 seconds
+          setTimeout(() => {
+            navigate('/');
+          }, 3000);
+        } else if (result.expired) {
+          setStatus('expired');
+          setMessage('De verificatie link is verlopen. Neem contact op voor een nieuwe link.');
+        } else {
+          setStatus('error');
+          setMessage(result.error || 'Er is een fout opgetreden bij het verifiëren van je account.');
+        }
+      } catch (error) {
+        console.error('Verification error:', error);
+        setStatus('error');
+        setMessage('Er is een onverwachte fout opgetreden.');
+      }
+    };
+
+    verifyEmail();
+  }, [searchParams, navigate]);
 
   const getStatusIcon = () => {
     switch (status) {
+      case 'loading':
+        return '⏳';
       case 'success':
-        return <CheckCircle className="w-16 h-16 text-green-600" />;
+        return '✅';
       case 'error':
+        return '❌';
       case 'expired':
-        return <XCircle className="w-16 h-16 text-red-600" />;
+        return '⏰';
       default:
-        return <Clock className="w-16 h-16 text-orange-600 animate-pulse" />;
+        return '⏳';
     }
   };
 
   const getStatusColor = () => {
     switch (status) {
+      case 'loading':
+        return 'text-blue-600';
       case 'success':
-        return 'bg-green-50 border-green-200';
+        return 'text-green-600';
       case 'error':
+        return 'text-red-600';
       case 'expired':
-        return 'bg-red-50 border-red-200';
+        return 'text-orange-600';
       default:
-        return 'bg-orange-50 border-orange-200';
-    }
-  };
-
-  const getStatusTextColor = () => {
-    switch (status) {
-      case 'success':
-        return 'text-green-800';
-      case 'error':
-      case 'expired':
-        return 'text-red-800';
-      default:
-        return 'text-orange-800';
+        return 'text-blue-600';
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        <div className={`rounded-2xl border-2 p-8 text-center ${getStatusColor()}`}>
-          {/* Icon */}
-          <div className="flex justify-center mb-6">
-            {getStatusIcon()}
-          </div>
-
-          {/* Title */}
-          <h1 className="text-2xl font-bold mb-4">
-            {status === 'success' && 'E-mail Geverifieerd! 🎉'}
-            {status === 'error' && 'Verificatie Mislukt'}
-            {status === 'expired' && 'Verificatie Verlopen'}
-            {status === 'loading' && 'E-mail Verifiëren...'}
-          </h1>
-
-          {/* Message */}
-          <p className={`text-lg mb-6 ${getStatusTextColor()}`}>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div className="text-center">
+          <div className="text-6xl mb-4">{getStatusIcon()}</div>
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+            Email Verificatie
+          </h2>
+          <p className={`mt-2 text-lg ${getStatusColor()}`}>
             {message}
           </p>
-
-          {/* Success Actions */}
-          {status === 'success' && (
-            <div className="space-y-4">
-              <div className="bg-white rounded-lg p-4 border border-green-200">
-                <h3 className="font-semibold text-gray-900 mb-2">Welkom bij BitBeheer!</h3>
-                <p className="text-sm text-gray-600">
-                  Je account is succesvol geverifieerd. Je kunt nu inloggen en alle functies gebruiken.
-                </p>
-              </div>
-              
-              <div className="flex flex-col gap-3">
-                <a
-                  href="/"
-                  className="w-full bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors text-center"
-                >
-                  🚀 Ga naar BitBeheer
-                </a>
-                <a
-                  href="/#login"
-                  className="w-full bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-colors text-center"
-                >
-                  🔐 Inloggen
-                </a>
-              </div>
-            </div>
-          )}
-
-          {/* Error Actions */}
-          {(status === 'error' || status === 'expired') && (
-            <div className="space-y-4">
-              <div className="bg-white rounded-lg p-4 border border-red-200">
-                <h3 className="font-semibold text-gray-900 mb-2">
-                  {status === 'expired' ? 'Verificatie Verlopen' : 'Verificatie Mislukt'}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {status === 'expired' 
-                    ? 'Je verificatie link is verlopen. Registreer opnieuw om een nieuwe link te ontvangen.'
-                    : 'Er is een probleem opgetreden. Probeer opnieuw of neem contact met ons op.'
-                  }
-                </p>
-              </div>
-              
-              <div className="flex flex-col gap-3">
-                <a
-                  href="/"
-                  className="w-full bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors text-center"
-                >
-                  🔄 Opnieuw Registreren
-                </a>
-                <a
-                  href="mailto:update@bitbeheer.nl"
-                  className="w-full bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-colors text-center"
-                >
-                  📧 Contact Opnemen
-                </a>
-              </div>
-            </div>
-          )}
-
-          {/* Loading State */}
-          {status === 'loading' && (
-            <div className="space-y-4">
-              <div className="bg-white rounded-lg p-4 border border-orange-200">
-                <h3 className="font-semibold text-gray-900 mb-2">Verificatie in Uitvoering</h3>
-                <p className="text-sm text-gray-600">
-                  We controleren je verificatie link...
-                </p>
-              </div>
-              
-              <div className="flex items-center justify-center gap-2 text-orange-600">
-                <div className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-sm">Bezig met verifiëren...</span>
-              </div>
-            </div>
-          )}
-
-          {/* Footer */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <div className="flex items-center justify-center gap-2 text-gray-500 text-sm">
-              <Mail className="w-4 h-4" />
-              <span>BitBeheer Email Verificatie</span>
-            </div>
-            <p className="text-xs text-gray-400 mt-2">
-              Heb je vragen? Neem contact op via update@bitbeheer.nl
-            </p>
-          </div>
         </div>
+
+        {status === 'loading' && (
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
+            <p className="mt-2 text-sm text-gray-600">Je account wordt geactiveerd...</p>
+          </div>
+        )}
+
+        {status === 'success' && (
+          <div className="text-center space-y-4">
+            <div className="bg-green-50 border border-green-200 rounded-md p-4">
+              <h3 className="text-lg font-medium text-green-800 mb-2">
+                🎉 Welkom bij BitBeheer!
+              </h3>
+              <p className="text-sm text-green-700">
+                Je account is nu actief. Je wordt automatisch doorgestuurd naar de login pagina.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/')}
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+            >
+              Ga naar Login
+            </button>
+          </div>
+        )}
+
+        {status === 'error' && (
+          <div className="text-center space-y-4">
+            <div className="bg-red-50 border border-red-200 rounded-md p-4">
+              <h3 className="text-lg font-medium text-red-800 mb-2">
+                Verificatie Mislukt
+              </h3>
+              <p className="text-sm text-red-700">
+                Er is een probleem opgetreden. Controleer je link of neem contact op.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/')}
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+            >
+              Terug naar Home
+            </button>
+          </div>
+        )}
+
+        {status === 'expired' && (
+          <div className="text-center space-y-4">
+            <div className="bg-orange-50 border border-orange-200 rounded-md p-4">
+              <h3 className="text-lg font-medium text-orange-800 mb-2">
+                Link Verlopen
+              </h3>
+              <p className="text-sm text-orange-700">
+                Je verificatie link is verlopen. Neem contact op voor een nieuwe link.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <button
+                onClick={() => navigate('/contact')}
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+              >
+                Neem Contact Op
+              </button>
+              <button
+                onClick={() => navigate('/')}
+                className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+              >
+                Terug naar Home
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -51,6 +51,11 @@ module.exports = async (req, res) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationExpires = new Date();
+    verificationExpires.setDate(verificationExpires.getDate() + 5); // 5 days
+
     // Generate a temporary password
     const tempPassword = Math.random().toString(36).slice(-12) + 'A1!';
     const passwordHash = await bcrypt.hash(tempPassword, 10);
@@ -61,6 +66,10 @@ module.exports = async (req, res) => {
       name: naam.trim(),
       password_hash: passwordHash,
       category: 'nieuwe_gebruiker',
+      email_verified: false,
+      verification_token: verificationToken,
+      verification_token_created: new Date().toISOString(),
+      verification_expires: verificationExpires.toISOString(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -93,6 +102,9 @@ module.exports = async (req, res) => {
       motivation: motivatie?.trim() || null,
       expectations: verwachtingen?.trim() || null,
       email_verified: false,
+      verification_token: verificationToken,
+      verification_token_created: new Date().toISOString(),
+      verification_expires: verificationExpires.toISOString(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -109,12 +121,36 @@ module.exports = async (req, res) => {
       console.log('User created:', user[0]);
     }
 
+    // Send verification email
+    try {
+      const emailResponse = await fetch('https://clqbnkvnydlxtimiazqf.supabase.co/functions/v1/send-verification-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`,
+        },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          name: naam.trim(),
+          verificationToken: verificationToken
+        })
+      });
+
+      if (emailResponse.ok) {
+        console.log('Verification email sent successfully');
+      } else {
+        console.error('Failed to send verification email');
+      }
+    } catch (emailError) {
+      console.error('Error sending verification email:', emailError);
+    }
+
     return res.status(201).json({
       success: true,
-      message: 'Account succesvol aangemaakt',
+      message: 'Account succesvol aangemaakt! Controleer je e-mail om je account te activeren.',
       account: account[0],
       user: user?.[0],
-      tempPassword: tempPassword // For admin reference
+      verificationToken: verificationToken // For admin reference
     });
 
   } catch (error) {
