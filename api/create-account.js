@@ -30,7 +30,10 @@ module.exports = async (req, res) => {
       verwachtingen 
     } = req.body;
 
+    console.log('Create account request body:', req.body);
+
     if (!email || !naam) {
+      console.log('Missing required fields:', { email: !!email, naam: !!naam });
       return res.status(400).json({ error: 'Email en naam zijn verplicht' });
     }
 
@@ -41,7 +44,10 @@ module.exports = async (req, res) => {
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
-      console.error('Missing Supabase credentials');
+      console.error('Missing Supabase credentials:', { 
+        supabaseUrl: !!supabaseUrl, 
+        supabaseKey: !!supabaseKey 
+      });
       // Return success with fallback message
       return res.status(200).json({
         success: true,
@@ -49,6 +55,8 @@ module.exports = async (req, res) => {
         fallback: true
       });
     }
+
+    console.log('Supabase credentials found, proceeding with account creation');
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -82,6 +90,7 @@ module.exports = async (req, res) => {
 
     if (accountError) {
       console.error('Error creating account:', accountError);
+      console.error('Account data that failed:', accountData);
       return res.status(500).json({
         success: false,
         error: 'Failed to create account',
@@ -166,10 +175,12 @@ module.exports = async (req, res) => {
 
   } catch (error) {
     console.error('Create account error:', error);
+    console.error('Error stack:', error.stack);
     return res.status(500).json({
       success: false,
       error: 'Internal server error',
-      details: error.message
+      details: error.message,
+      stack: error.stack
     });
   }
 };
