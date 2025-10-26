@@ -61,18 +61,18 @@ module.exports = async (req, res) => {
     const tempPassword = Math.random().toString(36).slice(-12) + 'A1!';
     const passwordHash = await bcrypt.hash(tempPassword, 10);
 
-    // Create account in accounts table
+    // Create account in accounts table (only fields that exist in the table)
     const accountData = {
       email: email.toLowerCase().trim(),
       name: naam.trim(),
       password_hash: passwordHash,
       category: 'nieuwe_gebruiker',
-      email_verified: false,
-      verification_token: verificationToken,
-      verification_token_created: new Date().toISOString(),
-      verification_expires: verificationExpires.toISOString(),
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      last_login: null,
+      login_count: 0,
+      is_admin: false,
+      is_test: false
     };
 
     const { data: account, error: accountError } = await supabase
