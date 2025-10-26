@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Eye, LogIn, Mail, Calendar, MessageSquare, Tag, Search, Filter, RefreshCw, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Users, Eye, LogIn, Mail, Calendar, MessageSquare, Tag, Search, Filter, RefreshCw, Clock, CheckCircle, XCircle, Send, UserCheck, AlertTriangle } from 'lucide-react';
 
 interface UserAccount {
   id: string;
@@ -32,6 +32,8 @@ export default function AccountBeheer() {
   const [showUserModal, setShowUserModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [verificationFilter, setVerificationFilter] = useState<string>('all');
+  const [isSendingEmail, setIsSendingEmail] = useState<string | null>(null);
+  const [isActivating, setIsActivating] = useState<string | null>(null);
 
   // Calculate remaining time for verification
   const getRemainingTime = (user: UserAccount) => {
@@ -239,6 +241,69 @@ export default function AccountBeheer() {
       }
     } catch (error) {
       console.error('Error verifying account:', error);
+    }
+  };
+
+  // Resend verification email
+  const handleResendVerificationEmail = async (user: UserAccount) => {
+    if (!user.verification_token) {
+      console.error('No verification token found');
+      return;
+    }
+
+    setIsSendingEmail(user.id);
+    
+    try {
+      const response = await fetch('https://clqbnkvnydlxtimiazqf.supabase.co/functions/v1/send-verification-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          email: user.email,
+          name: user.name,
+          verificationToken: user.verification_token
+        })
+      });
+
+      if (response.ok) {
+        alert('Bevestigingsmail opnieuw verzonden!');
+      } else {
+        alert('Fout bij het verzenden van de bevestigingsmail');
+      }
+    } catch (error) {
+      console.error('Error sending verification email:', error);
+      alert('Fout bij het verzenden van de bevestigingsmail');
+    } finally {
+      setIsSendingEmail(null);
+    }
+  };
+
+  // Manual account activation
+  const handleManualActivate = async (userId: string) => {
+    setIsActivating(userId);
+    
+    try {
+      const response = await fetch('/api/manual-activate-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (response.ok) {
+        alert('Account succesvol geactiveerd!');
+        loadAccounts(); // Refresh the list
+      } else {
+        alert('Fout bij het activeren van het account');
+      }
+    } catch (error) {
+      console.error('Error activating account:', error);
+      alert('Fout bij het activeren van het account');
+    } finally {
+      setIsActivating(null);
     }
   };
 
@@ -516,12 +581,28 @@ export default function AccountBeheer() {
                               </span>
                             )}
                             {!user.email_verified && !isAccountExpired(user) && !user.isAdmin && !user.isTest && (
-                              <button
-                                onClick={() => handleManualVerify(user)}
-                                className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full hover:bg-blue-200 transition-colors"
-                              >
-                                Handmatig Bevestigen
-                              </button>
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => handleManualVerify(user)}
+                                  className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full hover:bg-blue-200 transition-colors"
+                                >
+                                  Handmatig Bevestigen
+                                </button>
+                                <button
+                                  onClick={() => handleResendVerificationEmail(user)}
+                                  disabled={isSendingEmail === user.id}
+                                  className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full hover:bg-orange-200 transition-colors disabled:opacity-50"
+                                >
+                                  {isSendingEmail === user.id ? 'Verzenden...' : 'Email Opnieuw'}
+                                </button>
+                                <button
+                                  onClick={() => handleManualActivate(user.id)}
+                                  disabled={isActivating === user.id}
+                                  className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full hover:bg-green-200 transition-colors disabled:opacity-50"
+                                >
+                                  {isActivating === user.id ? 'Activeren...' : 'Activeren'}
+                                </button>
+                              </div>
                             )}
                           </div>
                         </div>

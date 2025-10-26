@@ -3,6 +3,7 @@
 
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 module.exports = async (req, res) => {
   // CORS headers
