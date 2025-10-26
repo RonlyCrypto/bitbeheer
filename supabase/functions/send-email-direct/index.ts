@@ -1,5 +1,4 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,17 +11,7 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
-  // Check for valid JWT token
-  const authHeader = req.headers.get('Authorization')
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return new Response(
-      JSON.stringify({ error: 'Missing or invalid authorization header' }),
-      { 
-        status: 401, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    )
-  }
+  console.log('Processing email request without authentication')
 
   try {
     const { to, subject, htmlContent, textContent, type } = await req.json()
@@ -36,6 +25,8 @@ serve(async (req) => {
         }
       )
     }
+
+    console.log('Sending email to:', to, 'subject:', subject)
 
     // Send email using Resend
     const emailResponse = await fetch('https://api.resend.com/emails', {
@@ -53,35 +44,20 @@ serve(async (req) => {
       }),
     })
 
+    console.log('Resend response status:', emailResponse.status)
+
     if (!emailResponse.ok) {
       const errorData = await emailResponse.text()
       console.error('Email sending failed:', errorData)
       
-      // Fallback: Log to database for manual sending
-      const supabase = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      )
-
-      await supabase
-        .from('email_queue')
-        .insert({
-          to_email: to,
-          subject: subject,
-          html_content: htmlContent,
-          text_content: textContent,
-          status: 'pending',
-          created_at: new Date().toISOString()
-        })
-
       return new Response(
         JSON.stringify({ 
-          success: true, 
-          message: 'Email queued for manual sending',
-          queued: true 
+          success: false, 
+          error: 'Email sending failed',
+          details: errorData
         }),
         { 
-          status: 200, 
+          status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       )

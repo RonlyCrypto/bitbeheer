@@ -11,7 +11,15 @@ interface EmailData {
 export class DirectEmailService {
   static async sendEmail(data: EmailData): Promise<{ success: boolean; message: string; emailId?: string }> {
     try {
-      // Use Supabase Edge Function for email sending
+      // Get current session for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        console.error('No valid session for email sending');
+        return { success: false, message: 'Authentication required' };
+      }
+
+      // Use Supabase Edge Function for email sending with proper auth
       const { data: result, error } = await supabase.functions.invoke('send-email-direct', {
         body: {
           to: data.to,
