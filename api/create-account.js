@@ -1,0 +1,126 @@
+// API endpoint for creating complete accounts from Aanmelden form
+// POST /api/create-account - Create full account with all form data
+
+const { createClient } = require('@supabase/supabase-js');
+const bcrypt = require('bcryptjs');
+
+module.exports = async (req, res) => {
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  try {
+    const { 
+      email, 
+      naam, 
+      telefoon, 
+      spaargeld, 
+      ervaring, 
+      motivatie, 
+      verwachtingen 
+    } = req.body;
+
+    if (!email || !naam) {
+      return res.status(400).json({ error: 'Email en naam zijn verplicht' });
+    }
+
+    console.log('Creating account for:', email);
+
+    // Supabase configuration
+    const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing Supabase credentials');
+      return res.status(500).json({
+        success: false,
+        error: 'Database not configured'
+      });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Generate a temporary password
+    const tempPassword = Math.random().toString(36).slice(-12) + 'A1!';
+    const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+    // Create account in accounts table
+    const accountData = {
+      email: email.toLowerCase().trim(),
+      name: naam.trim(),
+      password_hash: passwordHash,
+      category: 'nieuwe_gebruiker',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    const { data: account, error: accountError } = await supabase
+      .from('accounts')
+      .insert([accountData])
+      .select();
+
+    if (accountError) {
+      console.error('Error creating account:', accountError);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to create account',
+        details: accountError.message
+      });
+    }
+
+    console.log('Account created:', account[0]);
+
+    // Create user in users table with all form data
+    const userData = {
+      email: email.toLowerCase().trim(),
+      name: naam.trim(),
+      message: 'Aanmelding voor persoonlijke begeleiding',
+      category: 'nieuwe_gebruiker',
+      phone: telefoon?.trim() || null,
+      investment_plans: spaargeld?.trim() || null,
+      experience: ervaring?.trim() || null,
+      motivation: motivatie?.trim() || null,
+      expectations: verwachtingen?.trim() || null,
+      email_verified: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .insert([userData])
+      .select();
+
+    if (userError) {
+      console.error('Error creating user:', userError);
+      // Don't fail if user creation fails, account is already created
+    } else {
+      console.log('User created:', user[0]);
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: 'Account succesvol aangemaakt',
+      account: account[0],
+      user: user?.[0],
+      tempPassword: tempPassword // For admin reference
+    });
+
+  } catch (error) {
+    console.error('Create account error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      details: error.message
+    });
+  }
+};

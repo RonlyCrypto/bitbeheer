@@ -31,60 +31,35 @@ export default function AanmeldenPage() {
     setMessage(null);
 
     try {
-      // Direct API call to create user account in Supabase
-      const userResponse = await fetch('/api/users', {
+      // Create complete account with all form data
+      const accountResponse = await fetch('/api/create-account', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           email: formData.email,
-          name: formData.naam,
-          message: 'Aanmelding voor persoonlijke begeleiding',
-          category: 'nieuwe_gebruiker'
+          naam: formData.naam,
+          telefoon: formData.telefoon,
+          spaargeld: formData.spaargeld,
+          ervaring: formData.ervaring,
+          motivatie: formData.motivatie,
+          verwachtingen: formData.verwachtingen
         }),
       });
 
-      if (userResponse.ok) {
-        console.log('User account created successfully');
+      if (accountResponse.ok) {
+        const result = await accountResponse.json();
+        console.log('Account created successfully:', result);
         
-        // Save additional user profile data
-        try {
-          const profileResponse = await fetch('/api/save-user-profile', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              email: formData.email,
-              userData: {
-                phone: formData.telefoon,
-                investment_plans: formData.spaargeld,
-                experience: formData.ervaring,
-                motivation: formData.motivatie,
-                expectations: formData.verwachtingen
-              }
-            }),
-          });
-
-          if (profileResponse.ok) {
-            console.log('User profile saved successfully');
-          } else {
-            console.error('Profile save failed:', profileResponse.status);
-          }
-        } catch (profileError) {
-          console.error('Error saving user profile:', profileError);
-          // Don't fail the signup if profile save fails
-        }
-
         setMessage({ 
           type: 'success', 
-          text: 'Account aangemaakt! Je account is nu zichtbaar in het admin dashboard.' 
+          text: 'Account succesvol aangemaakt! Je kunt nu inloggen met je e-mailadres. We nemen binnen 24 uur contact met je op.' 
         });
         setIsSubmitted(true);
       } else {
-        const errorData = await userResponse.json();
-        console.error('User creation failed:', errorData);
+        const errorData = await accountResponse.json();
+        console.error('Account creation failed:', errorData);
         setMessage({ 
           type: 'error', 
           text: 'Er is een fout opgetreden bij het aanmaken van je account. Probeer het opnieuw.' 

@@ -48,6 +48,8 @@ export default function AccountBeheer() {
   // Check if account should be deleted
   const isAccountExpired = (user: UserAccount) => {
     if (user.email_verified) return false;
+    // Admin and test accounts are always active
+    if (user.isAdmin || user.isTest) return false;
     return getRemainingTime(user) <= 0;
   };
 
@@ -447,7 +449,7 @@ export default function AccountBeheer() {
               ) : (
                 filteredUsers.map((user) => (
                   <div key={user.id} className={`p-6 hover:bg-gray-50 ${
-                    isAccountExpired(user) ? 'bg-gray-100 opacity-60' : ''
+                    isAccountExpired(user) && !user.isAdmin && !user.isTest ? 'bg-gray-100 opacity-60' : ''
                   }`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
@@ -488,7 +490,12 @@ export default function AccountBeheer() {
                             )}
                           </div>
                           <div className="mt-2 flex items-center gap-2">
-                            {user.email_verified ? (
+                            {user.isAdmin || user.isTest ? (
+                              <span className="inline-flex items-center gap-1 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                <CheckCircle className="w-3 h-3" />
+                                Altijd Actief
+                              </span>
+                            ) : user.email_verified ? (
                               <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                                 <CheckCircle className="w-3 h-3" />
                                 Geverifieerd
@@ -508,7 +515,7 @@ export default function AccountBeheer() {
                                 {getRemainingTime(user)} dagen resterend
                               </span>
                             )}
-                            {!user.email_verified && !isAccountExpired(user) && (
+                            {!user.email_verified && !isAccountExpired(user) && !user.isAdmin && !user.isTest && (
                               <button
                                 onClick={() => handleManualVerify(user)}
                                 className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full hover:bg-blue-200 transition-colors"
