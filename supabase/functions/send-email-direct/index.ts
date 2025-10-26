@@ -36,7 +36,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: type === 'contact' ? 'BitBeheer <info@bitbeheer.nl>' : 'BitBeheer <update@bitbeheer.nl>',
+        from: 'BitBeheer <onboarding@resend.dev>',
         to: [to],
         subject: subject,
         html: htmlContent,
