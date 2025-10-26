@@ -11,11 +11,12 @@ interface EmailData {
 export class DirectEmailService {
   static async sendEmail(data: EmailData): Promise<{ success: boolean; message: string; emailId?: string }> {
     try {
-      // Use backend API for secure email sending
-      const response = await fetch('/api/send-email', {
+      // Use Supabase Edge Function for secure email sending
+      const response = await fetch('https://clqbnkvnydlxtimiazqf.supabase.co/functions/v1/send-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
           to: data.to,
