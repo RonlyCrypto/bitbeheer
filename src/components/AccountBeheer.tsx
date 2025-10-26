@@ -73,15 +73,7 @@ export default function AccountBeheer() {
           console.log('Sync users failed, continuing with existing data:', syncError);
         }
 
-        // Try accounts API first
-        const accountsResponse = await fetch('/api/accounts');
-        if (accountsResponse.ok) {
-          const accountsData = await accountsResponse.json();
-          setUsers(accountsData.accounts || []);
-          return;
-        }
-        
-        // Fallback to users API
+        // Try users API first (renamed from accounts - these are actual user accounts)
         const usersResponse = await fetch('/api/users');
         if (usersResponse.ok) {
           const usersData = await usersResponse.json();
@@ -90,6 +82,14 @@ export default function AccountBeheer() {
             user.category === 'nieuwe_gebruiker' || user.category === 'account_aanmelden'
           ) || [];
           setUsers(accountUsers);
+          return;
+        }
+        
+        // Fallback to accounts API (basic account info)
+        const accountsResponse = await fetch('/api/accounts');
+        if (accountsResponse.ok) {
+          const accountsData = await accountsResponse.json();
+          setUsers(accountsData.accounts || []);
           return;
         }
         
@@ -125,20 +125,20 @@ export default function AccountBeheer() {
         console.log('Sync users failed, continuing with existing data:', syncError);
       }
 
-      // Reload accounts
-      const accountsResponse = await fetch('/api/accounts');
-      if (accountsResponse.ok) {
-        const accountsData = await accountsResponse.json();
-        setUsers(accountsData.accounts || []);
+      // Reload users (actual user accounts)
+      const usersResponse = await fetch('/api/users');
+      if (usersResponse.ok) {
+        const usersData = await usersResponse.json();
+        const accountUsers = usersData.users?.filter((user: any) => 
+          user.category === 'nieuwe_gebruiker' || user.category === 'account_aanmelden'
+        ) || [];
+        setUsers(accountUsers);
       } else {
-        // Fallback to users API
-        const usersResponse = await fetch('/api/users');
-        if (usersResponse.ok) {
-          const usersData = await usersResponse.json();
-          const accountUsers = usersData.users?.filter((user: any) => 
-            user.category === 'nieuwe_gebruiker' || user.category === 'account_aanmelden'
-          ) || [];
-          setUsers(accountUsers);
+        // Fallback to accounts API (basic account info)
+        const accountsResponse = await fetch('/api/accounts');
+        if (accountsResponse.ok) {
+          const accountsData = await accountsResponse.json();
+          setUsers(accountsData.accounts || []);
         }
       }
     } catch (error) {

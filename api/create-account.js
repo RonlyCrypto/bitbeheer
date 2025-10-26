@@ -91,7 +91,7 @@ module.exports = async (req, res) => {
 
     console.log('Account created:', account[0]);
 
-    // Create user in users table with all form data
+    // Create user in users table with all form data (renamed from accounts)
     const userData = {
       email: email.toLowerCase().trim(),
       name: naam.trim(),
