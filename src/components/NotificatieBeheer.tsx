@@ -22,6 +22,21 @@ export default function NotificatieBeheer() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [customMessage, setCustomMessage] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
+
+  // Email templates
+  const emailTemplates = [
+    {
+      id: 'live_announcement',
+      subject: 'BitBeheer is nu live! 🚀',
+      content: 'Beste Bitcoin investeerder,\n\nGeweldig nieuws! BitBeheer is nu live en klaar om je te helpen met je Bitcoin reis.\n\n🎯 Wat je nu kunt doen:\n• Persoonlijke 1-op-1 begeleiding boeken\n• Veilig Bitcoin kopen en bewaren leren\n• Eigen beheer van je Bitcoin opzetten\n• Alle tools en resources gebruiken\n\nGa naar: https://bitbeheer.nl\n\nMet vriendelijke groet,\nGiovanni - BitBeheer'
+    },
+    {
+      id: 'welcome',
+      subject: 'Welkom bij BitBeheer!',
+      content: 'Beste Bitcoin investeerder,\n\nWelkom bij BitBeheer! We zijn blij dat je je hebt aangemeld.\n\nWe nemen binnen 24 uur contact met je op voor een kennismakingsgesprek.\n\nMet vriendelijke groet,\nGiovanni - BitBeheer'
+    }
+  ];
 
   // Load users from backend API
   useEffect(() => {
@@ -264,6 +279,24 @@ export default function NotificatieBeheer() {
           <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Live Aankondiging Verzenden</h2>
             <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email Template
+                </label>
+                <select
+                  value={selectedTemplate}
+                  onChange={(e) => setSelectedTemplate(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                >
+                  <option value="">Selecteer een template</option>
+                  {emailTemplates.map(template => (
+                    <option key={template.id} value={template.id}>
+                      {template.subject}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Aangepast bericht (optioneel)
