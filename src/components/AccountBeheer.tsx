@@ -162,7 +162,10 @@ export default function AccountBeheer() {
     const matchesVerification = verificationFilter === 'all' || 
       (verificationFilter === 'verified' && user.email_verified) ||
       (verificationFilter === 'pending' && !user.email_verified && !isAccountExpired(user)) ||
-      (verificationFilter === 'expired' && isAccountExpired(user));
+      (verificationFilter === 'expired' && isAccountExpired(user)) ||
+      (verificationFilter === 'admin' && user.isAdmin) ||
+      (verificationFilter === 'test' && user.isTest) ||
+      (verificationFilter === 'no_email' && !user.emailSent);
     
     return matchesSearch && matchesCategory && matchesVerification;
   });
@@ -358,9 +361,9 @@ export default function AccountBeheer() {
             </div>
           </div>
 
-          {/* Search and Filter */}
+          {/* Enhanced Search and Filter */}
           <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col lg:flex-row gap-6">
               <div className="flex-1">
                 <div className="relative">
                   <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -369,139 +372,101 @@ export default function AccountBeheer() {
                     placeholder="Zoek op e-mail, naam of bericht..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                   />
                 </div>
               </div>
-              <div className="flex gap-4">
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                >
-                  {categories.map(category => (
-                    <option key={category} value={category}>
-                      {category === 'all' ? 'Alle Categorieën' : category}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={verificationFilter}
-                  onChange={(e) => setVerificationFilter(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                >
-                  <option value="all">Alle Status</option>
-                  <option value="verified">Geverifieerd</option>
-                  <option value="pending">In Behandeling</option>
-                  <option value="expired">Verlopen</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Email Verification Status Summary */}
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Email Verificatie Status</h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center gap-3">
-                  <div className="bg-blue-100 p-2 rounded-lg">
-                    <Mail className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Totaal</p>
-                    <p className="text-2xl font-bold text-gray-900">{users.length}</p>
-                  </div>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-5 h-5 text-gray-500" />
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all min-w-[180px]"
+                  >
+                    {categories.map(category => (
+                      <option key={category} value={category}>
+                        {category === 'all' ? 'Alle Categorieën' : category}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center gap-3">
-                  <div className="bg-green-100 p-2 rounded-lg">
-                    <CheckCircle className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Geverifieerd</p>
-                    <p className="text-2xl font-bold text-green-600">{users.filter(u => u.email_verified).length}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center gap-3">
-                  <div className="bg-orange-100 p-2 rounded-lg">
-                    <Clock className="w-6 h-6 text-orange-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">In Behandeling</p>
-                    <p className="text-2xl font-bold text-orange-600">{users.filter(u => !u.email_verified && !isAccountExpired(u)).length}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center gap-3">
-                  <div className="bg-red-100 p-2 rounded-lg">
-                    <XCircle className="w-6 h-6 text-red-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Verlopen</p>
-                    <p className="text-2xl font-bold text-red-600">{users.filter(u => isAccountExpired(u)).length}</p>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-gray-500" />
+                  <select
+                    value={verificationFilter}
+                    onChange={(e) => setVerificationFilter(e.target.value)}
+                    className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all min-w-[180px]"
+                  >
+                    <option value="all">Alle Status</option>
+                    <option value="verified">✅ Geverifieerd</option>
+                    <option value="pending">⏳ In Behandeling</option>
+                    <option value="expired">❌ Verlopen</option>
+                    <option value="admin">👑 Admin Accounts</option>
+                    <option value="test">🧪 Test Accounts</option>
+                    <option value="no_email">📧 Geen Email Verzonden</option>
+                  </select>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid md:grid-cols-4 gap-6 mb-6">
-            <div className="bg-white rounded-lg shadow-lg p-6">
+          {/* Enhanced Stats with Better Filters */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-lg p-6 border border-blue-200">
               <div className="flex items-center gap-4">
-                <div className="bg-blue-100 p-3 rounded-xl">
-                  <Users className="w-8 h-8 text-blue-600" />
+                <div className="bg-blue-500 p-3 rounded-xl shadow-lg">
+                  <Users className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900">{filteredUsers.length}</h3>
-                  <p className="text-gray-600">Gevonden Accounts</p>
+                  <h3 className="text-2xl font-bold text-blue-900">{filteredUsers.length}</h3>
+                  <p className="text-blue-700 font-medium">Gevonden Accounts</p>
+                  <p className="text-xs text-blue-600 mt-1">Totaal: {users.length}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-lg p-6 border border-green-200">
               <div className="flex items-center gap-4">
-                <div className="bg-green-100 p-3 rounded-xl">
-                  <LogIn className="w-8 h-8 text-green-600" />
+                <div className="bg-green-500 p-3 rounded-xl shadow-lg">
+                  <CheckCircle className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900">
-                    {filteredUsers.filter(user => user.lastLogin).length}
+                  <h3 className="text-2xl font-bold text-green-900">
+                    {filteredUsers.filter(user => user.email_verified).length}
                   </h3>
-                  <p className="text-gray-600">Actieve Gebruikers</p>
+                  <p className="text-green-700 font-medium">Geverifieerd</p>
+                  <p className="text-xs text-green-600 mt-1">Actief & Bevestigd</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-lg p-6 border border-orange-200">
               <div className="flex items-center gap-4">
-                <div className="bg-orange-100 p-3 rounded-xl">
-                  <Mail className="w-8 h-8 text-orange-600" />
+                <div className="bg-orange-500 p-3 rounded-xl shadow-lg">
+                  <Clock className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900">
-                    {filteredUsers.filter(user => user.emailSent).length}
+                  <h3 className="text-2xl font-bold text-orange-900">
+                    {filteredUsers.filter(user => !user.email_verified && !isAccountExpired(user)).length}
                   </h3>
-                  <p className="text-gray-600">E-mails Verzonden</p>
+                  <p className="text-orange-700 font-medium">In Behandeling</p>
+                  <p className="text-xs text-orange-600 mt-1">Wacht op bevestiging</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl shadow-lg p-6 border border-red-200">
               <div className="flex items-center gap-4">
-                <div className="bg-purple-100 p-3 rounded-xl">
-                  <Tag className="w-8 h-8 text-purple-600" />
+                <div className="bg-red-500 p-3 rounded-xl shadow-lg">
+                  <XCircle className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900">
-                    {Array.from(new Set(filteredUsers.map(user => user.category))).length}
+                  <h3 className="text-2xl font-bold text-red-900">
+                    {filteredUsers.filter(user => isAccountExpired(user)).length}
                   </h3>
-                  <p className="text-gray-600">Categorieën</p>
+                  <p className="text-red-700 font-medium">Verlopen</p>
+                  <p className="text-xs text-red-600 mt-1">5+ dagen niet bevestigd</p>
                 </div>
               </div>
             </div>
@@ -510,14 +475,53 @@ export default function AccountBeheer() {
           {/* Users List */}
           <div className="bg-white rounded-lg shadow-lg">
             <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900">Alle Accounts ({filteredUsers.length})</h2>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Account Overzicht</h2>
+                  <p className="text-gray-600 mt-1">
+                    {filteredUsers.length} van {users.length} accounts
+                    {verificationFilter !== 'all' && (
+                      <span className="ml-2 text-orange-600 font-medium">
+                        • Gefilterd op: {verificationFilter === 'verified' ? 'Geverifieerd' : 
+                                        verificationFilter === 'pending' ? 'In Behandeling' :
+                                        verificationFilter === 'expired' ? 'Verlopen' :
+                                        verificationFilter === 'admin' ? 'Admin Accounts' :
+                                        verificationFilter === 'test' ? 'Test Accounts' :
+                                        verificationFilter === 'no_email' ? 'Geen Email Verzonden' : verificationFilter}
+                      </span>
+                    )}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="text-sm text-gray-500">
+                    Laatste update: {new Date().toLocaleTimeString('nl-NL')}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="divide-y divide-gray-200">
               {filteredUsers.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
                   <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p>Geen accounts gevonden</p>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Geen accounts gevonden</h3>
+                  <p className="text-gray-600 mb-4">
+                    {searchTerm ? `Geen accounts gevonden voor "${searchTerm}"` : 
+                     verificationFilter !== 'all' ? `Geen accounts gevonden voor filter "${verificationFilter}"` :
+                     'Er zijn momenteel geen accounts beschikbaar'}
+                  </p>
+                  {(searchTerm || verificationFilter !== 'all') && (
+                    <button
+                      onClick={() => {
+                        setSearchTerm('');
+                        setVerificationFilter('all');
+                        setSelectedCategory('all');
+                      }}
+                      className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                    >
+                      Filters Resetten
+                    </button>
+                  )}
                 </div>
               ) : (
                 filteredUsers.map((user) => (
@@ -638,6 +642,115 @@ export default function AccountBeheer() {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+
+          {/* Email Verification Status Summary - Moved to bottom */}
+          <div className="bg-white rounded-lg shadow-lg p-6 mt-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="bg-blue-100 p-3 rounded-xl">
+                <Mail className="w-8 h-8 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">Email Verificatie Status</h3>
+                <p className="text-gray-600">Overzicht van alle email verificaties en account statussen</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-blue-500 p-3 rounded-xl shadow-lg">
+                    <Mail className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-blue-600 font-medium">Totaal Accounts</p>
+                    <p className="text-3xl font-bold text-blue-900">{users.length}</p>
+                    <p className="text-xs text-blue-500 mt-1">Alle aangemelde accounts</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-green-500 p-3 rounded-xl shadow-lg">
+                    <CheckCircle className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-green-600 font-medium">Geverifieerd</p>
+                    <p className="text-3xl font-bold text-green-900">{users.filter(u => u.email_verified).length}</p>
+                    <p className="text-xs text-green-500 mt-1">Actief & Bevestigd</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 border border-orange-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-orange-500 p-3 rounded-xl shadow-lg">
+                    <Clock className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-orange-600 font-medium">In Behandeling</p>
+                    <p className="text-3xl font-bold text-orange-900">{users.filter(u => !u.email_verified && !isAccountExpired(u)).length}</p>
+                    <p className="text-xs text-orange-500 mt-1">Wacht op bevestiging</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-6 border border-red-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-red-500 p-3 rounded-xl shadow-lg">
+                    <XCircle className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-red-600 font-medium">Verlopen</p>
+                    <p className="text-3xl font-bold text-red-900">{users.filter(u => isAccountExpired(u)).length}</p>
+                    <p className="text-xs text-red-500 mt-1">5+ dagen niet bevestigd</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Additional Stats Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-purple-500 p-3 rounded-xl shadow-lg">
+                    <UserCheck className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-purple-600 font-medium">Admin Accounts</p>
+                    <p className="text-2xl font-bold text-purple-900">{users.filter(u => u.isAdmin).length}</p>
+                    <p className="text-xs text-purple-500 mt-1">Altijd actief</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-6 border border-yellow-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-yellow-500 p-3 rounded-xl shadow-lg">
+                    <AlertTriangle className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-yellow-600 font-medium">Test Accounts</p>
+                    <p className="text-2xl font-bold text-yellow-900">{users.filter(u => u.isTest).length}</p>
+                    <p className="text-xs text-yellow-500 mt-1">Voor ontwikkeling</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-6 border border-indigo-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-indigo-500 p-3 rounded-xl shadow-lg">
+                    <Send className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-indigo-600 font-medium">Emails Verzonden</p>
+                    <p className="text-2xl font-bold text-indigo-900">{users.filter(u => u.emailSent).length}</p>
+                    <p className="text-xs text-indigo-500 mt-1">Welkom/bevestiging</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
