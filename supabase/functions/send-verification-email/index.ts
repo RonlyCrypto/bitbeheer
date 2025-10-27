@@ -62,11 +62,14 @@ serve(async (req) => {
             
             <h3>Wat kun je verwachten na bevestiging:</h3>
             <ul>
-              <li>🎯 Persoonlijke 1-op-1 begeleiding voor Bitcoin investeren</li>
-              <li>📚 Leer veilig Bitcoin kopen en bewaren</li>
-              <li>🔐 Eigen beheer van je Bitcoin opzetten</li>
-              <li>📊 Toegang tot alle tools en resources</li>
-              <li>💬 Direct contact met Giovanni voor vragen</li>
+              <li>🎯 <strong>Persoonlijke 1-op-1 begeleiding</strong> - Direct contact met Giovanni</li>
+              <li>📊 <strong>Bitcoin Portfolio Dashboard</strong> - Overzicht van je investeringen</li>
+              <li>📈 <strong>Real-time Markt Data</strong> - Live Bitcoin prijzen en trends</li>
+              <li>🔐 <strong>Veilige Opslag Gids</strong> - Cold storage en hardware wallet tips</li>
+              <li>💡 <strong>Investeringsstrategieën</strong> - DCA, timing en risicobeheer</li>
+              <li>📚 <strong>Markt Analyses</strong> - Technische en fundamentele analyses</li>
+              <li>🎥 <strong>Exclusieve Content</strong> - Video's, gidsen en updates</li>
+              <li>👥 <strong>Community Toegang</strong> - Connectie met andere Bitcoin investeerders</li>
             </ul>
             
             <p>Als de knop niet werkt, kopieer dan deze link naar je browser:</p>

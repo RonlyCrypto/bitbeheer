@@ -46,11 +46,14 @@ serve(async (req) => {
           </div>
           <p>Je hebt nu toegang tot:</p>
           <div class="features">
-            <div class="feature-item">✅ <strong>Persoonlijke Dashboard</strong> - Overzicht van je Bitcoin portfolio</div>
-            <div class="feature-item">✅ <strong>1-op-1 Begeleiding</strong> - Persoonlijke hulp bij Bitcoin investeren</div>
-            <div class="feature-item">✅ <strong>Markt Analyses</strong> - Real-time Bitcoin data en trends</div>
-            <div class="feature-item">✅ <strong>Veilige Opslag Tips</strong> - Leer over cold storage en hardware wallets</div>
-            <div class="feature-item">✅ <strong>Strategie Advies</strong> - Op maat gemaakte investeringsstrategieën</div>
+            <div class="feature-item">🎯 <strong>Persoonlijke 1-op-1 begeleiding</strong> - Direct contact met Giovanni</div>
+            <div class="feature-item">📊 <strong>Bitcoin Portfolio Dashboard</strong> - Overzicht van je investeringen</div>
+            <div class="feature-item">📈 <strong>Real-time Markt Data</strong> - Live Bitcoin prijzen en trends</div>
+            <div class="feature-item">🔐 <strong>Veilige Opslag Gids</strong> - Cold storage en hardware wallet tips</div>
+            <div class="feature-item">💡 <strong>Investeringsstrategieën</strong> - DCA, timing en risicobeheer</div>
+            <div class="feature-item">📚 <strong>Markt Analyses</strong> - Technische en fundamentele analyses</div>
+            <div class="feature-item">🎥 <strong>Exclusieve Content</strong> - Video's, gidsen en updates</div>
+            <div class="feature-item">👥 <strong>Community Toegang</strong> - Connectie met andere Bitcoin investeerders</div>
           </div>
           <p style="text-align: center;">
             <a href="https://www.bitbeheer.nl/user-dashboard" class="button">Ga naar je Dashboard</a>

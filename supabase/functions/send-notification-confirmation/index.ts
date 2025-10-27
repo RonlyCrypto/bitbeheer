@@ -58,10 +58,14 @@ serve(async (req) => {
           </p>
           <p><strong>Wat kun je verwachten?</strong></p>
           <ul>
-            <li>Persoonlijke 1-op-1 begeleiding bij Bitcoin investeren</li>
-            <li>Veilige opslag methoden en best practices</li>
-            <li>Real-time markt analyses en trends</li>
-            <li>Strategieën voor verschillende investeringsdoelen</li>
+            <li>🎯 <strong>Persoonlijke 1-op-1 begeleiding</strong> - Direct contact met Giovanni</li>
+            <li>📊 <strong>Bitcoin Portfolio Dashboard</strong> - Overzicht van je investeringen</li>
+            <li>📈 <strong>Real-time Markt Data</strong> - Live Bitcoin prijzen en trends</li>
+            <li>🔐 <strong>Veilige Opslag Gids</strong> - Cold storage en hardware wallet tips</li>
+            <li>💡 <strong>Investeringsstrategieën</strong> - DCA, timing en risicobeheer</li>
+            <li>📚 <strong>Markt Analyses</strong> - Technische en fundamentele analyses</li>
+            <li>🎥 <strong>Exclusieve Content</strong> - Video's, gidsen en updates</li>
+            <li>👥 <strong>Community Toegang</strong> - Connectie met andere Bitcoin investeerders</li>
           </ul>
           <p>Heb je vragen? Neem gerust contact met ons op via <a href="mailto:info@bitbeheer.nl">info@bitbeheer.nl</a></p>
           <p>Met vriendelijke groet,</p>
