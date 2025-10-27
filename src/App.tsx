@@ -83,6 +83,25 @@ function AppContent() {
                           path="/verify-email" 
                           element={<VerifyEmailPage />}
                         />
+                        {/* Catch-all route for 404 handling */}
+                        <Route 
+                          path="*" 
+                          element={
+                            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+                              <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full text-center">
+                                <h1 className="text-6xl font-bold text-orange-600 mb-4">404</h1>
+                                <h2 className="text-2xl font-bold text-gray-900 mb-4">Pagina Niet Gevonden</h2>
+                                <p className="text-gray-600 mb-6">De pagina die je zoekt bestaat niet of is verplaatst.</p>
+                                <a 
+                                  href="/" 
+                                  className="inline-block bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors"
+                                >
+                                  Terug naar Home
+                                </a>
+                              </div>
+                            </div>
+                          }
+                        />
           </Routes>
 
           <Footer />
