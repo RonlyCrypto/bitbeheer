@@ -32,7 +32,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'BitBeheer <update@bitbeheer.nl>',
+        from: type === 'contact' ? 'BitBeheer <info@bitbeheer.nl>' : 'BitBeheer <noreply@bitbeheer.nl>',
         to: [to],
         subject: subject,
         html: htmlContent,
@@ -50,16 +50,17 @@ serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       )
 
-      await supabase
-        .from('email_queue')
-        .insert({
-          to_email: to,
-          subject: subject,
-          html_content: htmlContent,
-          text_content: textContent,
-          status: 'pending',
-          created_at: new Date().toISOString()
-        })
+                    await supabase
+                      .from('email_queue')
+                      .insert({
+                        to_email: to,
+                        from_email: type === 'contact' ? 'info@bitbeheer.nl' : 'noreply@bitbeheer.nl',
+                        subject: subject,
+                        html_content: htmlContent,
+                        text_content: textContent,
+                        status: 'pending',
+                        created_at: new Date().toISOString()
+                      })
 
       return new Response(
         JSON.stringify({ 

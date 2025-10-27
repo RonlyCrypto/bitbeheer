@@ -94,13 +94,18 @@ export class DirectEmailService {
         <p>Beste ${user.name || 'gebruiker'},</p>
         <div>${message}</div>
         <p>Met vriendelijke groet,<br>Het BitBeheer team</p>
+        <hr>
+        <p style="font-size: 12px; color: #666;">
+          Dit is een automatische e-mail van BitBeheer. 
+          Voor vragen kun je contact opnemen via info@bitbeheer.nl
+        </p>
       `;
 
       const result = await this.sendEmail({
         to: user.email,
         subject: subject,
         htmlContent: emailContent,
-        textContent: message,
+        textContent: `${message}\n\nMet vriendelijke groet,\nHet BitBeheer team\n\nDit is een automatische e-mail. Voor vragen: info@bitbeheer.nl`,
         type: 'notification'
       });
 
