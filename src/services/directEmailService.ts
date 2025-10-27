@@ -118,4 +118,89 @@ export class DirectEmailService {
 
     return { success: sent > 0, sent, failed };
   }
+
+  // Wachtwoord reset email
+  static async sendPasswordReset(email: string, name: string, resetToken: string): Promise<boolean> {
+    try {
+      const response = await fetch('https://clqbnkvnydlxtimiazqf.supabase.co/functions/v1/send-password-reset', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          email,
+          name,
+          resetToken
+        })
+      });
+
+      if (response.ok) {
+        console.log('Password reset email sent successfully');
+        return true;
+      } else {
+        console.error('Failed to send password reset email');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
+      return false;
+    }
+  }
+
+  // Account activatie bevestiging email
+  static async sendAccountActivated(email: string, name: string): Promise<boolean> {
+    try {
+      const response = await fetch('https://clqbnkvnydlxtimiazqf.supabase.co/functions/v1/send-account-activated', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          email,
+          name
+        })
+      });
+
+      if (response.ok) {
+        console.log('Account activated email sent successfully');
+        return true;
+      } else {
+        console.error('Failed to send account activated email');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error sending account activated email:', error);
+      return false;
+    }
+  }
+
+  // Notificatie aanmelding bevestiging email
+  static async sendNotificationConfirmation(email: string, name: string): Promise<boolean> {
+    try {
+      const response = await fetch('https://clqbnkvnydlxtimiazqf.supabase.co/functions/v1/send-notification-confirmation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          email,
+          name
+        })
+      });
+
+      if (response.ok) {
+        console.log('Notification confirmation email sent successfully');
+        return true;
+      } else {
+        console.error('Failed to send notification confirmation email');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error sending notification confirmation email:', error);
+      return false;
+    }
+  }
 }

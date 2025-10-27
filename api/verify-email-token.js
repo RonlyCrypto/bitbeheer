@@ -116,6 +116,30 @@ module.exports = async (req, res) => {
 
     console.log('Account verified successfully:', email);
 
+    // Send account activated confirmation email
+    try {
+      const emailResponse = await fetch('https://clqbnkvnydlxtimiazqf.supabase.co/functions/v1/send-account-activated', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`,
+        },
+        body: JSON.stringify({
+          email: user.email,
+          name: user.name
+        })
+      });
+
+      if (emailResponse.ok) {
+        console.log('Account activated confirmation email sent successfully');
+      } else {
+        console.error('Failed to send account activated confirmation email');
+      }
+    } catch (emailError) {
+      console.error('Error sending account activated confirmation email:', emailError);
+      // Don't fail the verification if email fails
+    }
+
     return res.status(200).json({
       success: true,
       message: 'Account succesvol geactiveerd!',

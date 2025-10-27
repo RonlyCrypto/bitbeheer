@@ -137,6 +137,23 @@ export default function SoonOnlinePage() {
                 // Continue even if email fails
               }
 
+              // Send confirmation email to user
+              try {
+                const confirmationSuccess = await DirectEmailService.sendNotificationConfirmation(
+                  email.trim().toLowerCase(),
+                  name?.trim() || 'Niet opgegeven'
+                );
+
+                if (confirmationSuccess) {
+                  console.log('Confirmation email sent successfully');
+                } else {
+                  console.error('Failed to send confirmation email');
+                }
+              } catch (confirmationError) {
+                console.error('Error sending confirmation email:', confirmationError);
+                // Continue even if confirmation email fails
+              }
+
               setSubmitStatus('success');
               setEmail('');
               setName('');
