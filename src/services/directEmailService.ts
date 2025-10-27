@@ -203,4 +203,64 @@ export class DirectEmailService {
       return false;
     }
   }
+
+  // Login bevestiging email
+  static async sendLoginConfirmation(email: string, name: string, loginTime?: string, ipAddress?: string, userAgent?: string): Promise<boolean> {
+    try {
+      const response = await fetch('https://clqbnkvnydlxtimiazqf.supabase.co/functions/v1/send-login-confirmation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          email,
+          name,
+          loginTime: loginTime || new Date().toLocaleString('nl-NL'),
+          ipAddress,
+          userAgent
+        })
+      });
+
+      if (response.ok) {
+        console.log('Login confirmation email sent successfully');
+        return true;
+      } else {
+        console.error('Failed to send login confirmation email');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error sending login confirmation email:', error);
+      return false;
+    }
+  }
+
+  // Account verwijdering waarschuwing email
+  static async sendAccountDeletionWarning(email: string, name: string, daysRemaining: number): Promise<boolean> {
+    try {
+      const response = await fetch('https://clqbnkvnydlxtimiazqf.supabase.co/functions/v1/send-account-deletion-warning', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          email,
+          name,
+          daysRemaining
+        })
+      });
+
+      if (response.ok) {
+        console.log('Account deletion warning email sent successfully');
+        return true;
+      } else {
+        console.error('Failed to send account deletion warning email');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error sending account deletion warning email:', error);
+      return false;
+    }
+  }
 }

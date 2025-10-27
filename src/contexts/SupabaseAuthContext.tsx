@@ -37,22 +37,38 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
 
     getInitialSession();
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setUser(session?.user ?? null);
-        setLoading(false);
-        
-        // Show welcome popup for new users on first login
-        if (event === 'SIGNED_IN' && session?.user) {
-          const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
-          if (!hasSeenWelcome) {
-            setShowWelcomePopup(true);
-            localStorage.setItem('hasSeenWelcome', 'true');
-          }
-        }
-      }
-    );
+              // Listen for auth changes
+              const { data: { subscription } } = supabase.auth.onAuthStateChange(
+                async (event, session) => {
+                  setUser(session?.user ?? null);
+                  setLoading(false);
+                  
+                  // Show welcome popup for new users on first login
+                  if (event === 'SIGNED_IN' && session?.user) {
+                    const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
+                    if (!hasSeenWelcome) {
+                      setShowWelcomePopup(true);
+                      localStorage.setItem('hasSeenWelcome', 'true');
+                    }
+
+                    // Send login confirmation email
+                    try {
+                      const { DirectEmailService } = await import('../services/directEmailService');
+                      await DirectEmailService.sendLoginConfirmation(
+                        session.user.email || '',
+                        session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Gebruiker',
+                        new Date().toLocaleString('nl-NL'),
+                        // Note: IP address and user agent would need to be passed from the login component
+                        undefined, // IP address
+                        navigator.userAgent // User agent
+                      );
+                    } catch (emailError) {
+                      console.error('Error sending login confirmation email:', emailError);
+                      // Don't fail login if email fails
+                    }
+                  }
+                }
+              );
 
     return () => subscription.unsubscribe();
   }, []);
