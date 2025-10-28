@@ -91,33 +91,81 @@ export default function UserDashboard() {
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        // Load user profile
-        const profileResponse = await fetch('/api/user-profile');
-        if (profileResponse.ok) {
-          const profileData = await profileResponse.json();
-          setUserProfile(profileData);
-        }
+        // Mock data for demo purposes - in production this would come from Supabase
+        setUserProfile({
+          id: '1',
+          email: 'user@example.com',
+          name: 'Demo Gebruiker',
+          phone: '+31 6 12345678',
+          location: 'Amsterdam, Nederland',
+          bio: 'Passionate about Bitcoin and DCA strategies',
+          joinDate: '2024-01-15',
+          lastLogin: new Date().toISOString(),
+          totalSessions: 12,
+          riskProfile: 'moderate',
+          experience: 'intermediate'
+        });
 
-        // Load goals
-        const goalsResponse = await fetch('/api/user-goals');
-        if (goalsResponse.ok) {
-          const goalsData = await goalsResponse.json();
-          setGoals(goalsData);
-        }
+        setGoals([
+          {
+            id: '1',
+            title: 'Bitcoin Emergency Fund',
+            description: 'Build a 6-month emergency fund in Bitcoin',
+            targetAmount: 50000,
+            currentAmount: 15000,
+            targetDate: '2024-12-31',
+            status: 'active',
+            category: 'emergency',
+            createdAt: '2024-01-15'
+          },
+          {
+            id: '2',
+            title: 'House Down Payment',
+            description: 'Save for house down payment using DCA strategy',
+            targetAmount: 100000,
+            currentAmount: 25000,
+            targetDate: '2025-06-30',
+            status: 'active',
+            category: 'house',
+            createdAt: '2024-02-01'
+          }
+        ]);
 
-        // Load appointments
-        const appointmentsResponse = await fetch('/api/user-appointments');
-        if (appointmentsResponse.ok) {
-          const appointmentsData = await appointmentsResponse.json();
-          setAppointments(appointmentsData);
-        }
+        setAppointments([
+          {
+            id: '1',
+            title: 'Portfolio Review',
+            date: '2024-11-15',
+            time: '14:00',
+            duration: 60,
+            type: 'review',
+            status: 'scheduled',
+            notes: 'Quarterly portfolio review and strategy adjustment'
+          },
+          {
+            id: '2',
+            title: 'DCA Strategy Consultation',
+            date: '2024-11-22',
+            time: '10:00',
+            duration: 90,
+            type: 'consultation',
+            status: 'scheduled',
+            notes: 'Discuss optimal DCA amounts and timing'
+          }
+        ]);
 
-        // Load portfolio
-        const portfolioResponse = await fetch('/api/user-portfolio');
-        if (portfolioResponse.ok) {
-          const portfolioData = await portfolioResponse.json();
-          setPortfolio(portfolioData);
-        }
+        setPortfolio({
+          id: '1',
+          name: 'Mijn Portfolio',
+          value: 45000,
+          change: 2500,
+          changePercent: 5.9,
+          assets: [
+            { name: 'Bitcoin', symbol: 'BTC', amount: 0.5, value: 20000, percentage: 44.4 },
+            { name: 'Ethereum', symbol: 'ETH', amount: 2.0, value: 15000, percentage: 33.3 },
+            { name: 'Diversified Altcoins', symbol: 'ALTS', amount: 1000, value: 10000, percentage: 22.2 }
+          ]
+        });
 
       } catch (error) {
         console.error('Error loading user data:', error);
@@ -345,17 +393,10 @@ function ProfileTab({ userProfile, setUserProfile }: any) {
 
   const handleSave = async () => {
     try {
-      const response = await fetch('/api/user-profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-
-      if (response.ok) {
-        setUserProfile({ ...userProfile, ...formData });
-        setIsEditing(false);
-        alert('Profiel succesvol bijgewerkt!');
-      }
+      // In production, this would update Supabase
+      setUserProfile({ ...userProfile, ...formData });
+      setIsEditing(false);
+      alert('Profiel succesvol bijgewerkt!');
     } catch (error) {
       console.error('Error updating profile:', error);
       alert('Fout bij het bijwerken van profiel');
@@ -487,18 +528,17 @@ function GoalsTab({ goals, setGoals }: any) {
 
   const handleCreateGoal = async () => {
     try {
-      const response = await fetch('/api/user-goals', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newGoal)
-      });
-
-      if (response.ok) {
-        const goal = await response.json();
-        setGoals([...goals, goal]);
-        setShowNewGoal(false);
-        setNewGoal({ title: '', description: '', targetAmount: 0, targetDate: '', category: 'other' });
-      }
+      // In production, this would create in Supabase
+      const goal = {
+        id: Date.now().toString(),
+        ...newGoal,
+        currentAmount: 0,
+        status: 'active',
+        createdAt: new Date().toISOString()
+      };
+      setGoals([...goals, goal]);
+      setShowNewGoal(false);
+      setNewGoal({ title: '', description: '', targetAmount: 0, targetDate: '', category: 'other' });
     } catch (error) {
       console.error('Error creating goal:', error);
     }
@@ -690,18 +730,16 @@ function AppointmentsTab({ appointments, setAppointments }: any) {
 
   const handleCreateAppointment = async () => {
     try {
-      const response = await fetch('/api/user-appointments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newAppointment)
-      });
-
-      if (response.ok) {
-        const appointment = await response.json();
-        setAppointments([...appointments, appointment]);
-        setShowNewAppointment(false);
-        setNewAppointment({ title: '', date: '', time: '', duration: 60, type: 'consultation', notes: '' });
-      }
+      // In production, this would create in Supabase
+      const appointment = {
+        id: Date.now().toString(),
+        ...newAppointment,
+        status: 'scheduled',
+        created_at: new Date().toISOString()
+      };
+      setAppointments([...appointments, appointment]);
+      setShowNewAppointment(false);
+      setNewAppointment({ title: '', date: '', time: '', duration: 60, type: 'consultation', notes: '' });
     } catch (error) {
       console.error('Error creating appointment:', error);
     }
