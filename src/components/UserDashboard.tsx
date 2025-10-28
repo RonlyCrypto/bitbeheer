@@ -308,7 +308,7 @@ export default function UserDashboard() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mijn Dashboard</h1>
-                <p className="text-gray-600 dark:text-gray-400">Welkom terug, {userProfile?.name || 'Gebruiker'}!</p>
+                <p className="text-gray-600 dark:text-gray-400">Welkom terug, {user?.user_metadata?.name || user?.email?.split('@')[0] || 'Gebruiker'}!</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
