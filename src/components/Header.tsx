@@ -1,12 +1,14 @@
-import { Bitcoin, TrendingUp, BarChart3, Shield, Wallet } from 'lucide-react';
+import { Bitcoin, TrendingUp, BarChart3, Shield, Wallet, LogOut, User } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import BitcoinLivePrice from './BitcoinLivePrice';
 import LoginRegister from './LoginRegister';
 
 export default function Header() {
   const location = useLocation();
   const { isAuthenticated } = useAuth();
+  const { user, signOut } = useSupabaseAuth();
   
   return (
     <header className="bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg">
@@ -22,10 +24,10 @@ export default function Header() {
             </div>
           </Link>
           
-          {/* Navigation Menu */}
+          {/* Navigation Menu - Only visible for admin users */}
           <nav className="hidden md:flex items-center gap-4">
-            {/* Admin Menu - Only visible when authenticated */}
-            {isAuthenticated && (
+            {/* Admin Menu - Only visible when authenticated and user is admin */}
+            {isAuthenticated && user?.user_metadata?.is_admin && (
               <div className="flex items-center gap-3">
                 <Link 
                   to="/admin" 
@@ -108,53 +110,87 @@ export default function Header() {
               <BitcoinLivePrice />
             </div>
             
-            {/* Login/Register */}
-            <LoginRegister 
-              onLogin={async (email, password) => {
-                try {
-                  const response = await fetch('/api/accounts/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                  });
-                  if (response.ok) {
-                    const data = await response.json();
-                    localStorage.setItem('user_account', JSON.stringify(data.account));
-                    return true;
+            {/* User Menu or Login/Register */}
+            {user ? (
+              <div className="flex items-center gap-3">
+                {/* User Profile Dropdown */}
+                <div className="relative group">
+                  <button className="flex items-center gap-3 bg-white bg-opacity-20 px-4 py-3 rounded-xl backdrop-blur-sm hover:bg-opacity-30 transition-all duration-300">
+                    <div className="w-8 h-8 bg-white bg-opacity-30 rounded-full flex items-center justify-center">
+                      <User className="w-5 h-5" />
+                    </div>
+                    <span className="font-medium">{user.user_metadata?.name || user.email}</span>
+                  </button>
+                  
+                  {/* Dropdown Menu */}
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                    <div className="py-2">
+                      <Link 
+                        to="/dashboard" 
+                        className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 transition-colors"
+                      >
+                        <User className="w-4 h-4" />
+                        Mijn Dashboard
+                      </Link>
+                      <button 
+                        onClick={signOut}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Uitloggen
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <LoginRegister 
+                onLogin={async (email, password) => {
+                  try {
+                    const response = await fetch('/api/accounts/login', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email, password })
+                    });
+                    if (response.ok) {
+                      const data = await response.json();
+                      localStorage.setItem('user_account', JSON.stringify(data.account));
+                      return true;
+                    }
+                    return false;
+                  } catch (error) {
+                    console.error('Login error:', error);
+                    return false;
                   }
-                  return false;
-                } catch (error) {
-                  console.error('Login error:', error);
-                  return false;
-                }
-              }}
-              onRegister={async (email, password, name) => {
-                try {
-                  const response = await fetch('/api/accounts/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password, name })
-                  });
-                  return response.ok;
-                } catch (error) {
-                  console.error('Register error:', error);
-                  return false;
-                }
-              }}
-              onPasswordReset={async (email) => {
-                try {
-                  const response = await fetch('/api/accounts/reset-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                  });
-                  return response.ok;
-                } catch (error) {
-                  console.error('Password reset error:', error);
-                  return false;
-                }
-              }}
-            />
+                }}
+                onRegister={async (email, password, name) => {
+                  try {
+                    const response = await fetch('/api/accounts/register', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email, password, name })
+                    });
+                    return response.ok;
+                  } catch (error) {
+                    console.error('Register error:', error);
+                    return false;
+                  }
+                }}
+                onPasswordReset={async (email) => {
+                  try {
+                    const response = await fetch('/api/accounts/reset-password', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email })
+                    });
+                    return response.ok;
+                  } catch (error) {
+                    console.error('Password reset error:', error);
+                    return false;
+                  }
+                }}
+              />
+            )}
             
             <div className="hidden lg:flex items-center gap-3 bg-white bg-opacity-20 px-5 py-3 rounded-xl backdrop-blur-sm">
               <TrendingUp className="w-5 h-5" />

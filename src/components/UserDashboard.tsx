@@ -22,7 +22,12 @@ import {
   BookOpen,
   Users,
   DollarSign,
-  Activity
+  Activity,
+  ExternalLink,
+  Calculator,
+  Info,
+  Wallet,
+  Shield
 } from 'lucide-react';
 
 interface UserProfile {
@@ -49,8 +54,11 @@ interface Goal {
   currentAmount: number;
   targetDate: string;
   status: 'active' | 'completed' | 'paused';
-  category: 'retirement' | 'house' | 'education' | 'emergency' | 'other';
+  category: 'retirement' | 'house' | 'education' | 'emergency' | 'bitcoin' | 'other';
   createdAt: string;
+  isBitcoinGoal?: boolean;
+  targetBitcoinAmount?: number;
+  monthlyInvestment?: number;
 }
 
 interface Appointment {
@@ -86,6 +94,15 @@ export default function UserDashboard() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasWallet, setHasWallet] = useState(false);
+  const [showFirstAppointmentPrompt, setShowFirstAppointmentPrompt] = useState(false);
+  const [showBitcoinCalculator, setShowBitcoinCalculator] = useState(false);
+  const [bitcoinGoal, setBitcoinGoal] = useState({
+    targetAmount: 0,
+    currentAmount: 0,
+    monthlyInvestment: 0,
+    targetDate: ''
+  });
 
   // Load user data
   useEffect(() => {
@@ -130,6 +147,9 @@ export default function UserDashboard() {
             createdAt: '2024-02-01'
           }
         ]);
+
+        // Check if user has appointments
+        setShowFirstAppointmentPrompt(appointments.length === 0);
 
         setAppointments([
           {
@@ -265,10 +285,56 @@ function OverviewTab({ userProfile, goals, appointments, portfolio }: any) {
   const upcomingAppointments = appointments.filter((apt: Appointment) => 
     apt.status === 'scheduled' && new Date(apt.date) > new Date()
   ).length;
+  const [hasWallet, setHasWallet] = useState(false);
+  const [showFirstAppointmentPrompt, setShowFirstAppointmentPrompt] = useState(appointments.length === 0);
 
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Overzicht</h2>
+
+      {/* First Appointment Prompt */}
+      {showFirstAppointmentPrompt && (
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-xl shadow-lg">
+          <div className="flex items-start gap-4">
+            <div className="bg-white bg-opacity-20 p-3 rounded-xl">
+              <Calendar className="w-8 h-8" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold mb-2">Maak je eerste afspraak! 🎯</h3>
+              <p className="text-orange-100 mb-4">
+                Dit is een 20-minuten gesprek om te kijken wat ik voor je kan betekenen. 
+                We bespreken je doelen, risicoprofiel en maken een persoonlijk plan voor jouw Bitcoin reis.
+              </p>
+              <button 
+                onClick={() => setShowFirstAppointmentPrompt(false)}
+                className="bg-white text-orange-600 px-6 py-3 rounded-lg font-semibold hover:bg-orange-50 transition-colors"
+              >
+                Plan je afspraak in
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Wallet Status */}
+      {!hasWallet && (
+        <div className="bg-yellow-50 border border-yellow-200 p-6 rounded-xl">
+          <div className="flex items-start gap-4">
+            <div className="bg-yellow-100 p-3 rounded-xl">
+              <Wallet className="w-8 h-8 text-yellow-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-yellow-800 mb-2">Voeg je BTC wallet toe</h3>
+              <p className="text-yellow-700 mb-4">
+                Om je portfolio te kunnen volgen en je doelen te bereiken, voeg je Bitcoin wallet toe aan je account.
+              </p>
+              <button className="bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-yellow-700 transition-colors">
+                Wallet toevoegen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -371,6 +437,84 @@ function OverviewTab({ userProfile, goals, appointments, portfolio }: any) {
                 </span>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Coinbase and Ledger Blocks */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Ledger Block - Step 1 */}
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-6 rounded-xl relative">
+          <div className="absolute top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+            Stap 1
+          </div>
+          <div className="flex items-start gap-4">
+            <div className="bg-blue-600 p-3 rounded-xl">
+              <Shield className="w-8 h-8 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-blue-900 mb-3">Ledger Hardware Wallet</h3>
+              <p className="text-blue-800 mb-4 leading-relaxed">
+                Een Ledger is een hardware wallet die je Bitcoin offline bewaart. Het is de veiligste manier 
+                om je Bitcoin op te slaan omdat het niet verbonden is met het internet. Je privésleutels blijven 
+                altijd onder jouw controle en kunnen niet gehackt worden.
+              </p>
+              <div className="space-y-2 mb-4">
+                <div className="flex items-center gap-2 text-blue-700">
+                  <CheckCircle className="w-4 h-4" />
+                  <span className="text-sm">Offline opslag van je privésleutels</span>
+                </div>
+                <div className="flex items-center gap-2 text-blue-700">
+                  <CheckCircle className="w-4 h-4" />
+                  <span className="text-sm">Bescherming tegen hackers en malware</span>
+                </div>
+                <div className="flex items-center gap-2 text-blue-700">
+                  <CheckCircle className="w-4 h-4" />
+                  <span className="text-sm">Ondersteuning voor 1000+ cryptocurrencies</span>
+                </div>
+              </div>
+              <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2">
+                <ExternalLink className="w-4 h-4" />
+                Bekijk Ledger
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Coinbase Block - Step 2 */}
+        <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 p-6 rounded-xl relative">
+          <div className="absolute top-4 right-4 bg-orange-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+            Stap 2
+          </div>
+          <div className="flex items-start gap-4">
+            <div className="bg-orange-600 p-3 rounded-xl">
+              <TrendingUp className="w-8 h-8 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-orange-900 mb-3">Coinbase Exchange</h3>
+              <p className="text-orange-800 mb-4 leading-relaxed">
+                Coinbase is een van de meest betrouwbare en gebruiksvriendelijke exchanges voor het kopen van Bitcoin. 
+                Perfect voor beginners met een intuïtieve interface en sterke beveiliging.
+              </p>
+              <div className="space-y-2 mb-4">
+                <div className="flex items-center gap-2 text-orange-700">
+                  <CheckCircle className="w-4 h-4" />
+                  <span className="text-sm">Gereguleerd en verzekerd</span>
+                </div>
+                <div className="flex items-center gap-2 text-orange-700">
+                  <CheckCircle className="w-4 h-4" />
+                  <span className="text-sm">Eenvoudige DCA instellingen</span>
+                </div>
+                <div className="flex items-center gap-2 text-orange-700">
+                  <CheckCircle className="w-4 h-4" />
+                  <span className="text-sm">Lage transactiekosten</span>
+                </div>
+              </div>
+              <button className="bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center gap-2">
+                <ExternalLink className="w-4 h-4" />
+                Start met Coinbase
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -518,12 +662,19 @@ function ProfileTab({ userProfile, setUserProfile }: any) {
 // Goals Tab Component
 function GoalsTab({ goals, setGoals }: any) {
   const [showNewGoal, setShowNewGoal] = useState(false);
+  const [showBitcoinCalculator, setShowBitcoinCalculator] = useState(false);
   const [newGoal, setNewGoal] = useState({
     title: '',
     description: '',
     targetAmount: 0,
     targetDate: '',
     category: 'other'
+  });
+  const [bitcoinGoal, setBitcoinGoal] = useState({
+    targetAmount: 0,
+    currentAmount: 0,
+    monthlyInvestment: 0,
+    targetDate: ''
   });
 
   const handleCreateGoal = async () => {
@@ -544,17 +695,67 @@ function GoalsTab({ goals, setGoals }: any) {
     }
   };
 
+  const calculateBitcoinGoal = () => {
+    if (!bitcoinGoal.targetAmount || !bitcoinGoal.currentAmount || !bitcoinGoal.monthlyInvestment) {
+      return null;
+    }
+
+    const remainingAmount = bitcoinGoal.targetAmount - bitcoinGoal.currentAmount;
+    const monthsNeeded = Math.ceil(remainingAmount / bitcoinGoal.monthlyInvestment);
+    const totalInvestment = bitcoinGoal.currentAmount + (bitcoinGoal.monthlyInvestment * monthsNeeded);
+    
+    return {
+      remainingAmount,
+      monthsNeeded,
+      totalInvestment,
+      monthlyInvestment: bitcoinGoal.monthlyInvestment
+    };
+  };
+
+  const handleCreateBitcoinGoal = () => {
+    const calculation = calculateBitcoinGoal();
+    if (!calculation) return;
+
+    const goal = {
+      id: Date.now().toString(),
+      title: `Bitcoin Doel: ${bitcoinGoal.targetAmount} BTC`,
+      description: `Maandelijks €${calculation.monthlyInvestment} investeren om ${bitcoinGoal.targetAmount} BTC te bereiken`,
+      targetAmount: bitcoinGoal.targetAmount,
+      currentAmount: bitcoinGoal.currentAmount,
+      targetDate: bitcoinGoal.targetDate,
+      status: 'active',
+      category: 'bitcoin',
+      createdAt: new Date().toISOString(),
+      isBitcoinGoal: true,
+      targetBitcoinAmount: bitcoinGoal.targetAmount,
+      monthlyInvestment: calculation.monthlyInvestment
+    };
+    
+    setGoals([...goals, goal]);
+    setShowBitcoinCalculator(false);
+    setBitcoinGoal({ targetAmount: 0, currentAmount: 0, monthlyInvestment: 0, targetDate: '' });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Mijn Doelen</h2>
-        <button
-          onClick={() => setShowNewGoal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Nieuw Doel
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowBitcoinCalculator(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Calculator className="w-4 h-4" />
+            Bitcoin Calculator
+          </button>
+          <button
+            onClick={() => setShowNewGoal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Nieuw Doel
+          </button>
+        </div>
       </div>
 
       {showNewGoal && (
@@ -621,6 +822,96 @@ function GoalsTab({ goals, setGoals }: any) {
             </button>
             <button
               onClick={() => setShowNewGoal(false)}
+              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Annuleren
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Bitcoin Calculator Modal */}
+      {showBitcoinCalculator && (
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Calculator className="w-5 h-5 text-blue-600" />
+            Bitcoin Doel Calculator
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Doel: Aantal Bitcoin</label>
+              <input
+                type="number"
+                step="0.00000001"
+                value={bitcoinGoal.targetAmount}
+                onChange={(e) => setBitcoinGoal({ ...bitcoinGoal, targetAmount: parseFloat(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Bijv. 0.5"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Huidige Bitcoin</label>
+              <input
+                type="number"
+                step="0.00000001"
+                value={bitcoinGoal.currentAmount}
+                onChange={(e) => setBitcoinGoal({ ...bitcoinGoal, currentAmount: parseFloat(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Bijv. 0.1"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Maandelijkse Investering (€)</label>
+              <input
+                type="number"
+                value={bitcoinGoal.monthlyInvestment}
+                onChange={(e) => setBitcoinGoal({ ...bitcoinGoal, monthlyInvestment: parseFloat(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Bijv. 500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Doel Datum</label>
+              <input
+                type="date"
+                value={bitcoinGoal.targetDate}
+                onChange={(e) => setBitcoinGoal({ ...bitcoinGoal, targetDate: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Calculation Results */}
+          {calculateBitcoinGoal() && (
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h4 className="font-semibold text-blue-900 mb-3">Berekening Resultaten:</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div>
+                  <span className="text-blue-700 font-medium">Nog nodig:</span>
+                  <p className="text-blue-900 font-bold">{calculateBitcoinGoal()?.remainingAmount.toFixed(8)} BTC</p>
+                </div>
+                <div>
+                  <span className="text-blue-700 font-medium">Maanden nodig:</span>
+                  <p className="text-blue-900 font-bold">{calculateBitcoinGoal()?.monthsNeeded} maanden</p>
+                </div>
+                <div>
+                  <span className="text-blue-700 font-medium">Totaal investering:</span>
+                  <p className="text-blue-900 font-bold">€{calculateBitcoinGoal()?.totalInvestment.toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-6 flex gap-3">
+            <button
+              onClick={handleCreateBitcoinGoal}
+              disabled={!calculateBitcoinGoal()}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              Bitcoin Doel Toevoegen
+            </button>
+            <button
+              onClick={() => setShowBitcoinCalculator(false)}
               className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
             >
               Annuleren
