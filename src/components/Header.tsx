@@ -24,14 +24,6 @@ export default function Header() {
   console.log('Header - isImpersonating:', isImpersonating);
   console.log('Header - impersonatedUser:', impersonatedUser);
   console.log('Header - canAccessAdmin:', canAccessAdmin);
-  
-  // Debug menu visibility
-  const userType = canAccessAdmin ? 'admin' : 'user';
-  console.log('Header - userType:', userType);
-  console.log('Header - bitcoin_history visible:', isMenuVisible('bitcoin_history', userType));
-  console.log('Header - portfolio_menu visible:', isMenuVisible('portfolio_menu', userType));
-  console.log('Header - market_cap_comparer visible:', isMenuVisible('market_cap_comparer', userType));
-  console.log('Header - educatief_platform visible:', isMenuVisible('educatief_platform', userType));
 
 
   // Close dropdown when clicking outside
@@ -95,7 +87,7 @@ export default function Header() {
                   <span className="text-sm font-medium">Dashboard</span>
                 </Link>
 
-                {(isMenuVisible('bitcoin_history', canAccessAdmin ? 'admin' : 'user') || true) && (
+                {isMenuVisible('bitcoin_history', 'everyone') && (
                   <Link 
                     to="/admin/bitcoin-history" 
                     className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
@@ -115,7 +107,7 @@ export default function Header() {
                   </Link>
                 )}
 
-                {(isMenuVisible('portfolio_menu', canAccessAdmin ? 'admin' : 'user') || true) && (
+                {isMenuVisible('portfolio_menu', 'everyone') && (
                   <Link 
                     to="/admin/portfolio" 
                     className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
@@ -135,7 +127,7 @@ export default function Header() {
                   </Link>
                 )}
 
-                {(isMenuVisible('market_cap_comparer', canAccessAdmin ? 'admin' : 'user') || true) && (
+                {isMenuVisible('market_cap_comparer', 'everyone') && (
                   <Link 
                     to="/admin/market-cap-comparer" 
                     className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
@@ -308,7 +300,7 @@ export default function Header() {
               />
             )}
             
-            {(isMenuVisible('educatief_platform', canAccessAdmin ? 'admin' : 'user') || true) && (
+            {isMenuVisible('educatief_platform', 'everyone') && (
               <div className="hidden lg:flex items-center gap-3 bg-white bg-opacity-20 px-5 py-3 rounded-xl backdrop-blur-sm">
                 <TrendingUp className="w-5 h-5" />
                 <div>

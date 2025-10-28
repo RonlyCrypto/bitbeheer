@@ -71,7 +71,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     );
   };
 
-  const isPageVisible = (id: string, userType: 'admin' | 'user'): boolean => {
+  const isPageVisible = (id: string, userType: 'admin' | 'user' | 'everyone'): boolean => {
     const page = pageVisibility.find(p => p.id === id);
     if (!page) return false;
     
@@ -83,7 +83,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return false;
   };
 
-  const isMenuVisible = (menuId: string, userType: 'admin' | 'user'): boolean => {
+  const isMenuVisible = (menuId: string, userType: 'admin' | 'user' | 'everyone'): boolean => {
     return isPageVisible(menuId, userType);
   };
 
