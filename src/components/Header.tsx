@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePermissions } from '../contexts/PermissionsContext';
+import { useSettings } from '../contexts/SettingsContext';
 import BitcoinLivePrice from './BitcoinLivePrice';
 import LoginRegister from './LoginRegister';
 
@@ -14,6 +15,7 @@ export default function Header() {
   const { user, signOut } = useSupabaseAuth();
   const { theme, toggleTheme } = useTheme();
   const { isImpersonating, impersonatedUser, canAccessAdmin } = usePermissions();
+  const { isMenuVisible } = useSettings(); // Get settings for menu visibility
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
 
   // Debug logging
@@ -85,59 +87,65 @@ export default function Header() {
                   <span className="text-sm font-medium">Dashboard</span>
                 </Link>
 
-                <Link 
-                  to="/admin/bitcoin-history" 
-                  className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
-                    location.pathname === '/admin/bitcoin-history' 
-                      ? 'bg-white bg-opacity-30 shadow-lg' 
-                      : 'hover:bg-white hover:bg-opacity-20 hover:shadow-md'
-                  }`}
-                >
-                  <div className={`p-2 rounded-lg transition-all duration-300 ${
-                    location.pathname === '/admin/bitcoin-history' 
-                      ? 'bg-white bg-opacity-20' 
-                      : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'
-                  }`}>
-                    <TrendingUp className="w-5 h-5" />
-                  </div>
-                  <span className="text-sm font-medium">Bitcoin</span>
-                </Link>
+                {isMenuVisible('bitcoin_history', canAccessAdmin ? 'admin' : 'user') && (
+                  <Link 
+                    to="/admin/bitcoin-history" 
+                    className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
+                      location.pathname === '/admin/bitcoin-history' 
+                        ? 'bg-white bg-opacity-30 shadow-lg' 
+                        : 'hover:bg-white hover:bg-opacity-20 hover:shadow-md'
+                    }`}
+                  >
+                    <div className={`p-2 rounded-lg transition-all duration-300 ${
+                      location.pathname === '/admin/bitcoin-history' 
+                        ? 'bg-white bg-opacity-20' 
+                        : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'
+                    }`}>
+                      <TrendingUp className="w-5 h-5" />
+                    </div>
+                    <span className="text-sm font-medium">Bitcoin</span>
+                  </Link>
+                )}
 
-                <Link 
-                  to="/admin/portfolio" 
-                  className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
-                    location.pathname === '/admin/portfolio' 
-                      ? 'bg-white bg-opacity-30 shadow-lg' 
-                      : 'hover:bg-white hover:bg-opacity-20 hover:shadow-md'
-                  }`}
-                >
-                  <div className={`p-2 rounded-lg transition-all duration-300 ${
-                    location.pathname === '/admin/portfolio' 
-                      ? 'bg-white bg-opacity-20' 
-                      : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'
-                  }`}>
-                    <Wallet className="w-5 h-5" />
-                  </div>
-                  <span className="text-sm font-medium">Portfolio</span>
-                </Link>
+                {isMenuVisible('portfolio_menu', canAccessAdmin ? 'admin' : 'user') && (
+                  <Link 
+                    to="/admin/portfolio" 
+                    className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
+                      location.pathname === '/admin/portfolio' 
+                        ? 'bg-white bg-opacity-30 shadow-lg' 
+                        : 'hover:bg-white hover:bg-opacity-20 hover:shadow-md'
+                    }`}
+                  >
+                    <div className={`p-2 rounded-lg transition-all duration-300 ${
+                      location.pathname === '/admin/portfolio' 
+                        ? 'bg-white bg-opacity-20' 
+                        : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'
+                    }`}>
+                      <Wallet className="w-5 h-5" />
+                    </div>
+                    <span className="text-sm font-medium">Portfolio</span>
+                  </Link>
+                )}
 
-                <Link 
-                  to="/admin/market-cap-comparer" 
-                  className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
-                    location.pathname === '/admin/market-cap-comparer' 
-                      ? 'bg-white bg-opacity-30 shadow-lg' 
-                      : 'hover:bg-white hover:bg-opacity-20 hover:shadow-md'
-                  }`}
-                >
-                  <div className={`p-2 rounded-lg transition-all duration-300 ${
-                    location.pathname === '/admin/market-cap-comparer' 
-                      ? 'bg-white bg-opacity-20' 
-                      : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'
-                  }`}>
-                    <BarChart3 className="w-5 h-5" />
-                  </div>
-                  <span className="text-sm font-medium">Vergelijker</span>
-                </Link>
+                {isMenuVisible('market_cap_comparer', canAccessAdmin ? 'admin' : 'user') && (
+                  <Link 
+                    to="/admin/market-cap-comparer" 
+                    className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
+                      location.pathname === '/admin/market-cap-comparer' 
+                        ? 'bg-white bg-opacity-30 shadow-lg' 
+                        : 'hover:bg-white hover:bg-opacity-20 hover:shadow-md'
+                    }`}
+                  >
+                    <div className={`p-2 rounded-lg transition-all duration-300 ${
+                      location.pathname === '/admin/market-cap-comparer' 
+                        ? 'bg-white bg-opacity-20' 
+                        : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'
+                    }`}>
+                      <BarChart3 className="w-5 h-5" />
+                    </div>
+                    <span className="text-sm font-medium">Vergelijker</span>
+                  </Link>
+                )}
               </div>
             )}
           </nav>
@@ -292,13 +300,15 @@ export default function Header() {
               />
             )}
             
-            <div className="hidden lg:flex items-center gap-3 bg-white bg-opacity-20 px-5 py-3 rounded-xl backdrop-blur-sm">
-            <TrendingUp className="w-5 h-5" />
-            <div>
-              <div className="text-xs text-orange-100">Educatief Platform</div>
-              <div className="font-semibold">Voor Beginners</div>
+            {isMenuVisible('educatief_platform', canAccessAdmin ? 'admin' : 'user') && (
+              <div className="hidden lg:flex items-center gap-3 bg-white bg-opacity-20 px-5 py-3 rounded-xl backdrop-blur-sm">
+                <TrendingUp className="w-5 h-5" />
+                <div>
+                  <div className="text-xs text-orange-100">Educatief Platform</div>
+                  <div className="font-semibold">Voor Beginners</div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

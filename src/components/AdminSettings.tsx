@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Settings, Eye, EyeOff, Save, RefreshCw, Shield, Users, BarChart3, Target, Calendar, BookOpen, Wallet } from 'lucide-react';
+import { useSettings } from '../contexts/SettingsContext';
 
 interface PageVisibility {
   id: string;
@@ -13,49 +14,22 @@ interface PageVisibility {
 
 export default function AdminSettings() {
   const [isLoading, setIsLoading] = useState(false);
-  const [pageVisibility, setPageVisibility] = useState<PageVisibility[]>([
-    // Main Pages
-    { id: 'dashboard', name: 'Dashboard', description: 'Hoofddashboard voor gebruikers', icon: <BarChart3 className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'main' },
-    { id: 'profile', name: 'Profiel', description: 'Gebruikersprofiel beheer', icon: <Users className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'main' },
-    { id: 'goals', name: 'Doelen', description: 'Financiële doelen stellen en volgen', icon: <Target className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'main' },
-    { id: 'portfolio', name: 'Portfolio', description: 'Portfolio overzicht en beheer', icon: <Wallet className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'main' },
-    { id: 'appointments', name: 'Afspraken', description: 'Afspraken inplannen en beheren', icon: <Calendar className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'main' },
-    { id: 'education', name: 'Educatie', description: 'Leren over Bitcoin en investeren', icon: <BookOpen className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'main' },
-    
-    // User Tools
-    { id: 'bitcoin_calculator', name: 'Bitcoin Calculator', description: 'Bitcoin investering calculator', icon: <BarChart3 className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'user' },
-    { id: 'wallet_management', name: 'Wallet Beheer', description: 'Bitcoin wallet toevoegen en beheren', icon: <Wallet className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'user' },
-    { id: 'price_alerts', name: 'Prijs Waarschuwingen', description: 'Bitcoin prijs notificaties', icon: <Eye className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'user' },
-    
-    // Admin Tools
-    { id: 'admin_dashboard', name: 'Admin Dashboard', description: 'Administratief dashboard', icon: <Shield className="w-5 h-5" />, enabled: true, visibleTo: 'admin_only', category: 'admin' },
-    { id: 'account_management', name: 'Account Beheer', description: 'Gebruikersaccounts beheren', icon: <Users className="w-5 h-5" />, enabled: true, visibleTo: 'admin_only', category: 'admin' },
-    { id: 'email_management', name: 'Email Beheer', description: 'Email templates en bulk verzending', icon: <Settings className="w-5 h-5" />, enabled: true, visibleTo: 'admin_only', category: 'admin' },
-    
-    // Menu Items
-    { id: 'bitcoin_history', name: 'Bitcoin Geschiedenis', description: 'Bitcoin prijsdata en DCA simulator', icon: <BarChart3 className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'menu' },
-    { id: 'portfolio_menu', name: 'Portfolio Menu', description: 'Portfolio overzicht in hoofdmenu', icon: <Wallet className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'menu' },
-    { id: 'market_cap_comparer', name: 'Market Cap Vergelijker', description: 'Cryptocurrency vergelijking', icon: <BarChart3 className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'menu' },
-    { id: 'educatief_platform', name: 'Educatief Platform', description: 'Leren over Bitcoin en investeren', icon: <BookOpen className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'menu' },
-  ]);
+  const { pageVisibility, updatePageVisibility } = useSettings();
 
   const handleToggle = (id: string) => {
-    setPageVisibility(prev => 
-      prev.map(page => 
-        page.id === id ? { ...page, enabled: !page.enabled } : page
-      )
-    );
+    const page = pageVisibility.find(p => p.id === id);
+    if (page) {
+      updatePageVisibility(id, { enabled: !page.enabled });
+    }
   };
 
   const handleVisibilityToggle = (id: string) => {
-    setPageVisibility(prev => 
-      prev.map(page => 
-        page.id === id ? { 
-          ...page, 
-          visibleTo: page.visibleTo === 'everyone' ? 'admin_only' : 'everyone' 
-        } : page
-      )
-    );
+    const page = pageVisibility.find(p => p.id === id);
+    if (page) {
+      updatePageVisibility(id, { 
+        visibleTo: page.visibleTo === 'everyone' ? 'admin_only' : 'everyone' 
+      });
+    }
   };
 
   const handleSave = async () => {
@@ -72,13 +46,12 @@ export default function AdminSettings() {
   };
 
   const handleReset = () => {
-    setPageVisibility(prev => 
-      prev.map(page => ({ 
-        ...page, 
+    pageVisibility.forEach(page => {
+      updatePageVisibility(page.id, { 
         enabled: true,
         visibleTo: page.category === 'admin' ? 'admin_only' : 'everyone'
-      }))
-    );
+      });
+    });
   };
 
   const getCategoryTitle = (category: string) => {
