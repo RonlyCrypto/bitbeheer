@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Bitcoin, TrendingUp, BarChart3, Shield, Wallet, LogOut, User, ArrowLeft } from 'lucide-react';
+import { Bitcoin, TrendingUp, BarChart3, Shield, Wallet, LogOut, User, ArrowLeft, Settings, Sun, Moon, UserCircle } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import BitcoinLivePrice from './BitcoinLivePrice';
 import LoginRegister from './LoginRegister';
 
@@ -10,8 +11,10 @@ export default function Header() {
   const location = useLocation();
   const { isAuthenticated } = useAuth();
   const { user, signOut } = useSupabaseAuth();
+  const { theme, toggleTheme } = useTheme();
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [impersonatedUser, setImpersonatedUser] = useState<string | null>(null);
+  const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
 
   // Check if user is impersonating another user
   useEffect(() => {
@@ -31,6 +34,21 @@ export default function Header() {
     return () => window.removeEventListener('storage', checkImpersonation);
   }, []);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showSettingsDropdown) {
+        const target = event.target as Element;
+        if (!target.closest('.settings-dropdown')) {
+          setShowSettingsDropdown(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showSettingsDropdown]);
+
   const handleStopImpersonation = () => {
     localStorage.removeItem('impersonation');
     setIsImpersonating(false);
@@ -41,7 +59,7 @@ export default function Header() {
   
   return (
     <>
-      <header className="bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg">
+    <header className="bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg">
       <div className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-4">
@@ -140,39 +158,95 @@ export default function Header() {
               <BitcoinLivePrice />
             </div>
             
-            {/* User Menu or Login/Register */}
+            {/* Settings Menu or Login/Register */}
             {user ? (
               <div className="flex items-center gap-3">
-                {/* User Profile Dropdown */}
-                <div className="relative group">
-                  <button className="flex items-center gap-3 bg-white bg-opacity-20 px-4 py-3 rounded-xl backdrop-blur-sm hover:bg-opacity-30 transition-all duration-300">
+                {/* Settings Dropdown */}
+                <div className="relative settings-dropdown">
+                  <button 
+                    onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
+                    className="flex items-center gap-3 bg-white bg-opacity-20 px-4 py-3 rounded-xl backdrop-blur-sm hover:bg-opacity-30 transition-all duration-300"
+                  >
                     <div className="w-8 h-8 bg-white bg-opacity-30 rounded-full flex items-center justify-center">
-                      <User className="w-5 h-5" />
+                      <Settings className="w-5 h-5" />
                     </div>
                     <span className="font-medium">{user.user_metadata?.name || user.email}</span>
                   </button>
                   
                   {/* Dropdown Menu */}
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
-                    <div className="py-2">
-                      <Link 
-                        to="/dashboard" 
-                        className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 transition-colors"
-                      >
-                        <User className="w-4 h-4" />
-                        Mijn Dashboard
-                      </Link>
-                      <button 
-                        onClick={signOut}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 transition-colors"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Uitloggen
-                      </button>
+                  {showSettingsDropdown && (
+                    <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-lg z-50 border border-gray-200 dark:border-gray-700">
+                      <div className="py-2">
+                        {/* User Info */}
+                        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center">
+                              <UserCircle className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900 dark:text-white">{user.user_metadata?.name || 'Gebruiker'}</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Menu Items */}
+                        <Link 
+                          to="/dashboard" 
+                          className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          onClick={() => setShowSettingsDropdown(false)}
+                        >
+                          <User className="w-4 h-4" />
+                          Mijn Profiel
+                        </Link>
+                        
+                        <Link 
+                          to="/dashboard" 
+                          className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          onClick={() => setShowSettingsDropdown(false)}
+                        >
+                          <Settings className="w-4 h-4" />
+                          Instellingen
+                        </Link>
+
+                        {/* Theme Toggle */}
+                        <button 
+                          onClick={() => {
+                            toggleTheme();
+                            setShowSettingsDropdown(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          {theme === 'light' ? (
+                            <>
+                              <Moon className="w-4 h-4" />
+                              Dark Mode
+                            </>
+                          ) : (
+                            <>
+                              <Sun className="w-4 h-4" />
+                              Light Mode
+                            </>
+                          )}
+                        </button>
+
+                        <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                        
+                        <button 
+                          onClick={() => {
+                            signOut();
+                            setShowSettingsDropdown(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Uitloggen
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </div>
+                  )}
+            </div>
+          </div>
             ) : (
               <LoginRegister 
                 onLogin={async (email, password) => {
@@ -223,10 +297,10 @@ export default function Header() {
             )}
             
             <div className="hidden lg:flex items-center gap-3 bg-white bg-opacity-20 px-5 py-3 rounded-xl backdrop-blur-sm">
-              <TrendingUp className="w-5 h-5" />
-              <div>
-                <div className="text-xs text-orange-100">Educatief Platform</div>
-                <div className="font-semibold">Voor Beginners</div>
+            <TrendingUp className="w-5 h-5" />
+            <div>
+              <div className="text-xs text-orange-100">Educatief Platform</div>
+              <div className="font-semibold">Voor Beginners</div>
               </div>
             </div>
           </div>

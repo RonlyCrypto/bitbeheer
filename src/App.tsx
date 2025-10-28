@@ -18,6 +18,7 @@ import SiteAccessControl from './components/SiteAccessControl';
 import { CurrencyProvider } from './contexts/CurrencyContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { SupabaseAuthProvider, useSupabaseAuth } from './contexts/SupabaseAuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 function AppContent() {
   const { showWelcomePopup, setShowWelcomePopup, user } = useSupabaseAuth();
@@ -121,15 +122,17 @@ function AppContent() {
 
 function App() {
   return (
-    <SupabaseAuthProvider>
-      <AuthProvider>
-        <CurrencyProvider>
-          <Router>
-            <AppContent />
-          </Router>
-        </CurrencyProvider>
-      </AuthProvider>
-    </SupabaseAuthProvider>
+    <ThemeProvider>
+      <SupabaseAuthProvider>
+        <AuthProvider>
+          <CurrencyProvider>
+            <Router>
+              <AppContent />
+            </Router>
+          </CurrencyProvider>
+        </AuthProvider>
+      </SupabaseAuthProvider>
+    </ThemeProvider>
   );
 }
 

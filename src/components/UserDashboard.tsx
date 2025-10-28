@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { bitcoinPriceService, BitcoinPrice } from '../services/bitcoinPriceService';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface UserProfile {
   id: string;
@@ -91,6 +92,7 @@ interface Portfolio {
 
 export default function UserDashboard() {
   const { user } = useSupabaseAuth();
+  const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState('overview');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -101,6 +103,13 @@ export default function UserDashboard() {
   const [showFirstAppointmentPrompt, setShowFirstAppointmentPrompt] = useState(false);
   const [showBitcoinCalculator, setShowBitcoinCalculator] = useState(false);
   const [bitcoinPrice, setBitcoinPrice] = useState<BitcoinPrice | null>(null);
+  const [showWalletForm, setShowWalletForm] = useState(false);
+  const [walletForm, setWalletForm] = useState({
+    address: '',
+    name: '',
+    type: 'bitcoin'
+  });
+  const [isAddingWallet, setIsAddingWallet] = useState(false);
   const [bitcoinGoal, setBitcoinGoal] = useState({
     targetAmount: 0,
     currentAmount: 0,
@@ -209,6 +218,48 @@ export default function UserDashboard() {
     loadUserData();
   }, [user]);
 
+  const handleAddWallet = async () => {
+    if (!walletForm.address.trim()) {
+      alert('Voer een geldig wallet adres in');
+      return;
+    }
+
+    setIsAddingWallet(true);
+    try {
+      // Simulate API call to add wallet
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Update portfolio with new wallet
+      const newPortfolio = {
+        id: '1',
+        name: 'Mijn Portfolio',
+        value: 45000,
+        change: 2500,
+        changePercent: 5.9,
+        assets: [
+          { name: 'Bitcoin', symbol: 'BTC', amount: 0.5, value: 20000, percentage: 44.4 },
+          { name: 'Ethereum', symbol: 'ETH', amount: 2.0, value: 15000, percentage: 33.3 },
+          { name: 'Diversified Altcoins', symbol: 'ALTS', amount: 1000, value: 10000, percentage: 22.2 }
+        ]
+      };
+      
+      setPortfolio(newPortfolio);
+      setHasWallet(true);
+      
+      // Close form after success
+      setTimeout(() => {
+        setShowWalletForm(false);
+        setWalletForm({ address: '', name: '', type: 'bitcoin' });
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error adding wallet:', error);
+      alert('Fout bij het toevoegen van wallet');
+    } finally {
+      setIsAddingWallet(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -221,25 +272,25 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center gap-4">
-              <div className="bg-orange-100 p-3 rounded-xl">
-                <TrendingUp className="w-8 h-8 text-orange-600" />
+              <div className="bg-orange-100 dark:bg-orange-900 p-3 rounded-xl">
+                <TrendingUp className="w-8 h-8 text-orange-600 dark:text-orange-400" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Mijn Dashboard</h1>
-                <p className="text-gray-600">Welkom terug, {userProfile?.name || 'Gebruiker'}!</p>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mijn Dashboard</h1>
+                <p className="text-gray-600 dark:text-gray-400">Welkom terug, {userProfile?.name || 'Gebruiker'}!</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <button className="p-2 text-gray-400 hover:text-gray-600">
+              <button className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
                 <Bell className="w-6 h-6" />
               </button>
-              <button className="p-2 text-gray-400 hover:text-gray-600">
+              <button className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
                 <Settings className="w-6 h-6" />
               </button>
             </div>
@@ -265,8 +316,8 @@ export default function UserDashboard() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
                     activeTab === tab.id
-                      ? 'bg-orange-100 text-orange-700 font-medium'
-                      : 'text-gray-600 hover:bg-gray-100'
+                      ? 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 font-medium'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                   }`}
                 >
                   <tab.icon className="w-5 h-5" />
@@ -318,7 +369,10 @@ function OverviewTab({ userProfile, goals, appointments, portfolio }: any) {
                 We bespreken je doelen, risicoprofiel en maken een persoonlijk plan voor jouw Bitcoin reis.
               </p>
               <button 
-                onClick={() => setShowFirstAppointmentPrompt(false)}
+                onClick={() => {
+                  setShowFirstAppointmentPrompt(false);
+                  setActiveTab('appointments');
+                }}
                 className="bg-white text-orange-600 px-6 py-3 rounded-lg font-semibold hover:bg-orange-50 transition-colors"
               >
                 Plan je afspraak in
@@ -330,7 +384,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio }: any) {
 
       {/* Wallet Status */}
       {!hasWallet && (
-        <div className="bg-yellow-50 border border-yellow-200 p-6 rounded-xl">
+        <div className={`bg-yellow-50 border border-yellow-200 rounded-xl transition-all duration-500 overflow-hidden ${
+          showWalletForm ? 'p-6' : 'p-6'
+        }`}>
           <div className="flex items-start gap-4">
             <div className="bg-yellow-100 p-3 rounded-xl">
               <Wallet className="w-8 h-8 text-yellow-600" />
@@ -340,10 +396,79 @@ function OverviewTab({ userProfile, goals, appointments, portfolio }: any) {
               <p className="text-yellow-700 mb-4">
                 Om je portfolio te kunnen volgen en je doelen te bereiken, voeg je Bitcoin wallet toe aan je account.
               </p>
-              <button className="bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-yellow-700 transition-colors">
-                Wallet toevoegen
-              </button>
+              
+              {!showWalletForm ? (
+                <button 
+                  onClick={() => setShowWalletForm(true)}
+                  className="bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-yellow-700 transition-colors"
+                >
+                  Wallet toevoegen
+                </button>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-yellow-800 mb-2">Wallet Naam</label>
+                    <input
+                      type="text"
+                      value={walletForm.name}
+                      onChange={(e) => setWalletForm({ ...walletForm, name: e.target.value })}
+                      placeholder="Bijv. Mijn Bitcoin Wallet"
+                      className="w-full px-3 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-yellow-800 mb-2">Bitcoin Adres</label>
+                    <input
+                      type="text"
+                      value={walletForm.address}
+                      onChange={(e) => setWalletForm({ ...walletForm, address: e.target.value })}
+                      placeholder="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
+                      className="w-full px-3 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleAddWallet}
+                      disabled={isAddingWallet}
+                      className="bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-yellow-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {isAddingWallet ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Toevoegen...
+                        </>
+                      ) : (
+                        'Toevoegen'
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setShowWalletForm(false)}
+                      className="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
+                    >
+                      Annuleren
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Wallet Success - Shows when wallet is being added */}
+      {hasWallet && (
+        <div className="bg-green-50 border border-green-200 p-6 rounded-xl animate-pulse">
+          <div className="flex items-center gap-4">
+            <div className="bg-green-100 p-3 rounded-xl">
+              <Wallet className="w-8 h-8 text-green-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-green-800 mb-2">Wallet succesvol toegevoegd!</h3>
+              <p className="text-green-700">
+                Je portfolio wordt nu geladen met je wallet gegevens...
+              </p>
+            </div>
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
           </div>
         </div>
       )}
@@ -1022,30 +1147,86 @@ function PortfolioTab({ portfolio, setPortfolio }: any) {
 // Appointments Tab Component
 function AppointmentsTab({ appointments, setAppointments }: any) {
   const [showNewAppointment, setShowNewAppointment] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState<any[]>([]);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
   const [newAppointment, setNewAppointment] = useState({
     title: '',
     date: '',
     time: '',
     duration: 60,
     type: 'consultation',
-    notes: ''
+    notes: '',
+    reason: ''
   });
 
+  // Load available appointment slots
+  useEffect(() => {
+    const loadAvailableSlots = async () => {
+      try {
+        // Mock available slots - in production this would come from Supabase
+        const mockSlots = [
+          { id: '1', date: '2024-11-20', time: '09:00', duration: 20, available: true },
+          { id: '2', date: '2024-11-20', time: '10:00', duration: 20, available: true },
+          { id: '3', date: '2024-11-20', time: '14:00', duration: 20, available: false },
+          { id: '4', date: '2024-11-21', time: '09:00', duration: 20, available: true },
+          { id: '5', date: '2024-11-21', time: '11:00', duration: 20, available: true },
+          { id: '6', date: '2024-11-21', time: '15:00', duration: 20, available: false },
+          { id: '7', date: '2024-11-22', time: '10:00', duration: 20, available: true },
+          { id: '8', date: '2024-11-22', time: '13:00', duration: 20, available: true },
+        ];
+        setAvailableSlots(mockSlots);
+      } catch (error) {
+        console.error('Error loading available slots:', error);
+      }
+    };
+
+    loadAvailableSlots();
+  }, []);
+
   const handleCreateAppointment = async () => {
+    if (!selectedDate || !selectedTime) {
+      alert('Selecteer een datum en tijd');
+      return;
+    }
+
     try {
       // In production, this would create in Supabase
       const appointment = {
         id: Date.now().toString(),
-        ...newAppointment,
-        status: 'scheduled',
+        title: newAppointment.title || 'Eerste Afspraak',
+        date: selectedDate,
+        time: selectedTime,
+        duration: 20,
+        type: 'consultation',
+        notes: newAppointment.notes,
+        reason: newAppointment.reason,
+        status: 'pending_approval',
         created_at: new Date().toISOString()
       };
       setAppointments([...appointments, appointment]);
       setShowNewAppointment(false);
-      setNewAppointment({ title: '', date: '', time: '', duration: 60, type: 'consultation', notes: '' });
+      setNewAppointment({ title: '', date: '', time: '', duration: 60, type: 'consultation', notes: '', reason: '' });
+      setSelectedDate('');
+      setSelectedTime('');
+      alert('Afspraak aanvraag verzonden! Giovanni zal deze beoordelen en bevestigen.');
     } catch (error) {
       console.error('Error creating appointment:', error);
     }
+  };
+
+  const getAvailableSlotsForDate = (date: string) => {
+    return availableSlots.filter(slot => slot.date === date && slot.available);
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('nl-NL', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
   };
 
   return (
@@ -1057,9 +1238,117 @@ function AppointmentsTab({ appointments, setAppointments }: any) {
           className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
         >
           <Plus className="w-4 h-4" />
-          Nieuwe Afspraak
+          Afspraak Aanvragen
         </button>
       </div>
+
+      {/* Appointment Request Form */}
+      {showNewAppointment && (
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Afspraak Aanvragen</h3>
+          
+          <div className="space-y-6">
+            {/* Reason for appointment */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Reden voor afspraak</label>
+              <select
+                value={newAppointment.reason}
+                onChange={(e) => setNewAppointment({ ...newAppointment, reason: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              >
+                <option value="">Selecteer een reden</option>
+                <option value="first_consultation">Eerste kennismaking (20 min)</option>
+                <option value="portfolio_review">Portfolio review</option>
+                <option value="strategy_discussion">Strategie bespreking</option>
+                <option value="goal_setting">Doelen stellen</option>
+                <option value="other">Anders</option>
+              </select>
+            </div>
+
+            {/* Date Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Selecteer Datum</label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {Array.from(new Set(availableSlots.map(slot => slot.date))).map(date => (
+                  <button
+                    key={date}
+                    onClick={() => {
+                      setSelectedDate(date);
+                      setSelectedTime('');
+                    }}
+                    className={`p-3 rounded-lg border-2 text-left transition-colors ${
+                      selectedDate === date
+                        ? 'border-orange-500 bg-orange-50 text-orange-700'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="font-medium">{formatDate(date)}</div>
+                    <div className="text-sm text-gray-600">
+                      {getAvailableSlotsForDate(date).length} beschikbare tijden
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Time Selection */}
+            {selectedDate && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Selecteer Tijd</label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {getAvailableSlotsForDate(selectedDate).map(slot => (
+                    <button
+                      key={slot.id}
+                      onClick={() => setSelectedTime(slot.time)}
+                      className={`p-3 rounded-lg border-2 text-center transition-colors ${
+                        selectedTime === slot.time
+                          ? 'border-orange-500 bg-orange-50 text-orange-700'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="font-medium">{slot.time}</div>
+                      <div className="text-sm text-gray-600">{slot.duration} min</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Additional Notes */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Aanvullende opmerkingen (optioneel)</label>
+              <textarea
+                value={newAppointment.notes}
+                onChange={(e) => setNewAppointment({ ...newAppointment, notes: e.target.value })}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                placeholder="Vertel ons meer over wat je wilt bespreken..."
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={handleCreateAppointment}
+                disabled={!selectedDate || !selectedTime}
+                className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Afspraak Aanvragen
+              </button>
+              <button
+                onClick={() => {
+                  setShowNewAppointment(false);
+                  setSelectedDate('');
+                  setSelectedTime('');
+                }}
+                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Annuleren
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showNewAppointment && (
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
