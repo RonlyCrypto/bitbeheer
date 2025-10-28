@@ -21,6 +21,8 @@ interface UserAccount {
   verification_token_created?: string;
   verified_at?: string;
   created_at?: string;
+  actief?: boolean;
+  bevestigd?: boolean;
 }
 
 export default function AccountBeheer() {
@@ -34,6 +36,7 @@ export default function AccountBeheer() {
   const [verificationFilter, setVerificationFilter] = useState<string>('all');
   const [isSendingEmail, setIsSendingEmail] = useState<string | null>(null);
   const [isActivating, setIsActivating] = useState<string | null>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
 
   // Calculate remaining time for verification
   const getRemainingTime = (user: UserAccount) => {
@@ -306,7 +309,7 @@ export default function AccountBeheer() {
 
       if (response.ok) {
         alert('Account succesvol geactiveerd!');
-        loadAccounts(); // Refresh the list
+        refreshAccounts(); // Refresh the list
       } else {
         alert('Fout bij het activeren van het account');
       }
@@ -315,6 +318,80 @@ export default function AccountBeheer() {
       alert('Fout bij het activeren van het account');
     } finally {
       setIsActivating(null);
+    }
+  };
+
+  // Update account status (actief/inactief)
+  const handleUpdateAccountStatus = async (userId: string, newStatus: boolean) => {
+    setIsUpdatingStatus(userId);
+    
+    try {
+      const response = await fetch('https://clqbnkvnydlxtimiazqf.supabase.co/functions/v1/update-account-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ 
+          userId, 
+          actief: newStatus 
+        }),
+      });
+
+      if (response.ok) {
+        // Update local state
+        setUsers(users.map(user => 
+          user.id === userId 
+            ? { ...user, actief: newStatus }
+            : user
+        ));
+        alert(`Account ${newStatus ? 'geactiveerd' : 'gedeactiveerd'}!`);
+      } else {
+        alert('Fout bij het updaten van account status');
+      }
+    } catch (error) {
+      console.error('Error updating account status:', error);
+      alert('Fout bij het updaten van account status');
+    } finally {
+      setIsUpdatingStatus(null);
+    }
+  };
+
+  // Resend verification email (fixed)
+  const handleResendVerificationEmail = async (user: UserAccount) => {
+    if (!user.verification_token) {
+      console.error('No verification token found');
+      return;
+    }
+
+    setIsSendingEmail(user.id);
+    
+    try {
+      const response = await fetch('https://clqbnkvnydlxtimiazqf.supabase.co/functions/v1/send-verification-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          email: user.email,
+          name: user.name,
+          verificationToken: user.verification_token
+        })
+      });
+
+      if (response.ok) {
+        alert('Bevestigingsmail opnieuw verzonden!');
+      } else {
+        const errorData = await response.json();
+        console.error('Email sending error:', errorData);
+        alert('Fout bij het verzenden van de bevestigingsmail');
+      }
+    } catch (error) {
+      console.error('Error sending verification email:', error);
+      alert('Fout bij het verzenden van de bevestigingsmail');
+    } finally {
+      setIsSendingEmail(null);
     }
   };
 
@@ -491,6 +568,17 @@ export default function AccountBeheer() {
                                   <CheckCircle className="w-3 h-3" />
                                   Geverifieerd
                                 </span>
+                              )}
+                              {!user.isAdmin && !user.isTest && (
+                                <select
+                                  value={user.actief ? 'actief' : 'inactief'}
+                                  onChange={(e) => handleUpdateAccountStatus(user.id, e.target.value === 'actief')}
+                                  disabled={isUpdatingStatus === user.id}
+                                  className="text-xs px-2 py-1 rounded-full border border-gray-300 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 disabled:opacity-50"
+                                >
+                                  <option value="actief">🟢 Actief</option>
+                                  <option value="inactief">🔴 Inactief</option>
+                                </select>
                               )}
                             </div>
                           </div>
