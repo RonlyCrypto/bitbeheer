@@ -284,52 +284,157 @@ Het BitBeheer Team`,
         return res.status(400).json({ error: 'Invalid action' });
 
       case 'GET':
-        // Get all accounts (admin only)
-        // Always include admin and test accounts
-        const adminAccount = {
-          id: 'admin',
-          email: 'admin@bitbeheer.nl',
-          name: 'Admin Account',
-          category: 'admin',
-          registrationDate: '2024-01-01',
-          lastLogin: new Date().toLocaleString('nl-NL'),
-          loginCount: 1,
-          isAdmin: true
-        };
-        
-        const testAccount = {
-          id: 'test',
-          email: 'test@bitbeheer.nl', 
-          name: 'Test Account',
-          category: 'test',
-          registrationDate: '2024-01-01',
-          lastLogin: new Date().toLocaleString('nl-NL'),
-          loginCount: 1,
-          isTest: true
-        };
-        
-        // Start with admin and test accounts
-        let allAccounts = [adminAccount, testAccount];
-        
-        // Add accounts from storage
-        allAccounts = allAccounts.concat(accounts);
-        
-        // If no accounts in accounts storage, try to get from users API
-        if (accounts.length === 0) {
-          try {
-            const users = JSON.parse(process.env.STORED_USERS || '[]');
-            const accountUsers = users.filter(user => user.category === 'account_aanmelden');
-            allAccounts = allAccounts.concat(accountUsers);
-          } catch (error) {
-            console.error('Error loading from users API:', error);
+        // Get all accounts from Supabase
+        try {
+          const { createClient } = require('@supabase/supabase-js');
+          
+          const supabaseUrl = process.env.VITE_SUPABASE_URL;
+          const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+          
+          if (!supabaseUrl || !supabaseKey) {
+            console.log('Supabase credentials not found, using fallback data');
+            // Fallback to local storage
+            const adminAccount = {
+              id: 'admin',
+              email: 'admin@bitbeheer.nl',
+              name: 'Admin Account',
+              category: 'admin',
+              registrationDate: '2024-01-01',
+              lastLogin: new Date().toLocaleString('nl-NL'),
+              loginCount: 1,
+              isAdmin: true,
+              isTest: false,
+              email_verified: true,
+              created_at: '2024-01-01T00:00:00Z'
+            };
+            
+            const testAccount = {
+              id: 'test',
+              email: 'test@bitbeheer.nl', 
+              name: 'Test Account',
+              category: 'test',
+              registrationDate: '2024-01-01',
+              lastLogin: new Date().toLocaleString('nl-NL'),
+              loginCount: 1,
+              isAdmin: false,
+              isTest: true,
+              email_verified: true,
+              created_at: '2024-01-01T00:00:00Z'
+            };
+            
+            return res.status(200).json({ 
+              success: true, 
+              accounts: [adminAccount, testAccount],
+              count: 2 
+            });
           }
+          
+          const supabase = createClient(supabaseUrl, supabaseKey);
+          
+          // Get accounts from Supabase
+          const { data: accountsData, error: accountsError } = await supabase
+            .from('accounts')
+            .select('*')
+            .order('created_at', { ascending: false });
+          
+          if (accountsError) {
+            console.error('Error fetching accounts from Supabase:', accountsError);
+            throw accountsError;
+          }
+          
+          // Get user profiles from users table for additional data
+          const { data: usersData, error: usersError } = await supabase
+            .from('users')
+            .select('*');
+          
+          if (usersError) {
+            console.error('Error fetching users from Supabase:', usersError);
+          }
+          
+          // Combine accounts with user profile data
+          let allAccounts = (accountsData || []).map(account => {
+            // Find matching user profile
+            const userProfile = (usersData || []).find(user => user.email === account.email);
+            
+            return {
+              id: account.id,
+              email: account.email,
+              name: account.name,
+              category: account.category || 'account_aanmelden',
+              created_at: account.created_at,
+              updated_at: account.updated_at,
+              lastLogin: account.last_login,
+              loginCount: account.login_count || 0,
+              isAdmin: account.is_admin || false,
+              isTest: account.is_test || false,
+              email_verified: userProfile?.email_verified || false,
+              verification_token: userProfile?.verification_token,
+              verification_token_created: userProfile?.verification_token_created,
+              verified_at: userProfile?.verified_at,
+              message: userProfile?.message || 'Geen bericht',
+              timestamp: account.created_at,
+              date: new Date(account.created_at).toLocaleString('nl-NL'),
+              registrationDate: new Date(account.created_at).toLocaleDateString('nl-NL')
+            };
+          });
+          
+          // Add admin and test accounts if not present
+          const hasAdmin = allAccounts.some(acc => acc.isAdmin);
+          const hasTest = allAccounts.some(acc => acc.isTest);
+          
+          if (!hasAdmin) {
+            allAccounts.unshift({
+              id: 'admin',
+              email: 'admin@bitbeheer.nl',
+              name: 'Admin Account',
+              category: 'admin',
+              created_at: '2024-01-01T00:00:00Z',
+              lastLogin: new Date().toLocaleString('nl-NL'),
+              loginCount: 1,
+              isAdmin: true,
+              isTest: false,
+              email_verified: true,
+              message: 'Admin account',
+              timestamp: '2024-01-01T00:00:00Z',
+              date: '01-01-2024',
+              registrationDate: '01-01-2024'
+            });
+          }
+          
+          if (!hasTest) {
+            allAccounts.unshift({
+              id: 'test',
+              email: 'test@bitbeheer.nl',
+              name: 'Test Account',
+              category: 'test',
+              created_at: '2024-01-01T00:00:00Z',
+              lastLogin: new Date().toLocaleString('nl-NL'),
+              loginCount: 1,
+              isAdmin: false,
+              isTest: true,
+              email_verified: true,
+              message: 'Test account',
+              timestamp: '2024-01-01T00:00:00Z',
+              date: '01-01-2024',
+              registrationDate: '01-01-2024'
+            });
+          }
+          
+          console.log('Accounts loaded from Supabase:', allAccounts.length);
+          
+          return res.status(200).json({ 
+            success: true, 
+            accounts: allAccounts,
+            count: allAccounts.length 
+          });
+          
+        } catch (error) {
+          console.error('Error in accounts GET:', error);
+          return res.status(500).json({ 
+            error: 'Failed to fetch accounts',
+            message: 'Er is een fout opgetreden bij het ophalen van accounts'
+          });
         }
-        
-        return res.status(200).json({ 
-          success: true, 
-          accounts: allAccounts,
-          count: allAccounts.length 
-        });
 
       default:
         return res.status(405).json({ error: 'Method not allowed' });

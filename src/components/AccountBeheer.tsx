@@ -411,66 +411,6 @@ export default function AccountBeheer() {
             </div>
           </div>
 
-          {/* Enhanced Stats with Better Filters */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-lg p-6 border border-blue-200">
-              <div className="flex items-center gap-4">
-                <div className="bg-blue-500 p-3 rounded-xl shadow-lg">
-                  <Users className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-blue-900">{filteredUsers.length}</h3>
-                  <p className="text-blue-700 font-medium">Gevonden Accounts</p>
-                  <p className="text-xs text-blue-600 mt-1">Totaal: {users.length}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-lg p-6 border border-green-200">
-              <div className="flex items-center gap-4">
-                <div className="bg-green-500 p-3 rounded-xl shadow-lg">
-                  <CheckCircle className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-green-900">
-                    {filteredUsers.filter(user => user.email_verified).length}
-                  </h3>
-                  <p className="text-green-700 font-medium">Geverifieerd</p>
-                  <p className="text-xs text-green-600 mt-1">Actief & Bevestigd</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-lg p-6 border border-orange-200">
-              <div className="flex items-center gap-4">
-                <div className="bg-orange-500 p-3 rounded-xl shadow-lg">
-                  <Clock className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-orange-900">
-                    {filteredUsers.filter(user => !user.email_verified && !isAccountExpired(user)).length}
-                  </h3>
-                  <p className="text-orange-700 font-medium">In Behandeling</p>
-                  <p className="text-xs text-orange-600 mt-1">Wacht op bevestiging</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl shadow-lg p-6 border border-red-200">
-              <div className="flex items-center gap-4">
-                <div className="bg-red-500 p-3 rounded-xl shadow-lg">
-                  <XCircle className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-red-900">
-                    {filteredUsers.filter(user => isAccountExpired(user)).length}
-                  </h3>
-                  <p className="text-red-700 font-medium">Verlopen</p>
-                  <p className="text-xs text-red-600 mt-1">5+ dagen niet bevestigd</p>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Users List */}
           <div className="bg-white rounded-lg shadow-lg">
@@ -645,111 +585,32 @@ export default function AccountBeheer() {
             </div>
           </div>
 
-          {/* Email Verification Status Summary - Moved to bottom */}
-          <div className="bg-white rounded-lg shadow-lg p-6 mt-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="bg-blue-100 p-3 rounded-xl">
-                <Mail className="w-8 h-8 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900">Email Verificatie Status</h3>
-                <p className="text-gray-600">Overzicht van alle email verificaties en account statussen</p>
-              </div>
+          {/* Compact Email Verification Status - Moved to bottom */}
+          <div className="bg-white rounded-lg shadow-lg p-4 mt-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Mail className="w-5 h-5 text-blue-600" />
+              <h3 className="text-lg font-bold text-gray-900">Email Verificatie Status</h3>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
-                <div className="flex items-center gap-4">
-                  <div className="bg-blue-500 p-3 rounded-xl shadow-lg">
-                    <Mail className="w-8 h-8 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-blue-600 font-medium">Totaal Accounts</p>
-                    <p className="text-3xl font-bold text-blue-900">{users.length}</p>
-                    <p className="text-xs text-blue-500 mt-1">Alle aangemelde accounts</p>
-                  </div>
-                </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-blue-50 rounded-lg p-3 text-center">
+                <p className="text-xs text-blue-600 font-medium">Totaal</p>
+                <p className="text-xl font-bold text-blue-900">{users.length}</p>
               </div>
               
-              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
-                <div className="flex items-center gap-4">
-                  <div className="bg-green-500 p-3 rounded-xl shadow-lg">
-                    <CheckCircle className="w-8 h-8 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-green-600 font-medium">Geverifieerd</p>
-                    <p className="text-3xl font-bold text-green-900">{users.filter(u => u.email_verified).length}</p>
-                    <p className="text-xs text-green-500 mt-1">Actief & Bevestigd</p>
-                  </div>
-                </div>
+              <div className="bg-green-50 rounded-lg p-3 text-center">
+                <p className="text-xs text-green-600 font-medium">Geverifieerd</p>
+                <p className="text-xl font-bold text-green-900">{users.filter(u => u.email_verified).length}</p>
               </div>
               
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 border border-orange-200">
-                <div className="flex items-center gap-4">
-                  <div className="bg-orange-500 p-3 rounded-xl shadow-lg">
-                    <Clock className="w-8 h-8 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-orange-600 font-medium">In Behandeling</p>
-                    <p className="text-3xl font-bold text-orange-900">{users.filter(u => !u.email_verified && !isAccountExpired(u)).length}</p>
-                    <p className="text-xs text-orange-500 mt-1">Wacht op bevestiging</p>
-                  </div>
-                </div>
+              <div className="bg-orange-50 rounded-lg p-3 text-center">
+                <p className="text-xs text-orange-600 font-medium">In Behandeling</p>
+                <p className="text-xl font-bold text-orange-900">{users.filter(u => !u.email_verified && !isAccountExpired(u)).length}</p>
               </div>
               
-              <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-6 border border-red-200">
-                <div className="flex items-center gap-4">
-                  <div className="bg-red-500 p-3 rounded-xl shadow-lg">
-                    <XCircle className="w-8 h-8 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-red-600 font-medium">Verlopen</p>
-                    <p className="text-3xl font-bold text-red-900">{users.filter(u => isAccountExpired(u)).length}</p>
-                    <p className="text-xs text-red-500 mt-1">5+ dagen niet bevestigd</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Additional Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
-                <div className="flex items-center gap-4">
-                  <div className="bg-purple-500 p-3 rounded-xl shadow-lg">
-                    <UserCheck className="w-8 h-8 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-purple-600 font-medium">Admin Accounts</p>
-                    <p className="text-2xl font-bold text-purple-900">{users.filter(u => u.isAdmin).length}</p>
-                    <p className="text-xs text-purple-500 mt-1">Altijd actief</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-6 border border-yellow-200">
-                <div className="flex items-center gap-4">
-                  <div className="bg-yellow-500 p-3 rounded-xl shadow-lg">
-                    <AlertTriangle className="w-8 h-8 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-yellow-600 font-medium">Test Accounts</p>
-                    <p className="text-2xl font-bold text-yellow-900">{users.filter(u => u.isTest).length}</p>
-                    <p className="text-xs text-yellow-500 mt-1">Voor ontwikkeling</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-6 border border-indigo-200">
-                <div className="flex items-center gap-4">
-                  <div className="bg-indigo-500 p-3 rounded-xl shadow-lg">
-                    <Send className="w-8 h-8 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-indigo-600 font-medium">Emails Verzonden</p>
-                    <p className="text-2xl font-bold text-indigo-900">{users.filter(u => u.emailSent).length}</p>
-                    <p className="text-xs text-indigo-500 mt-1">Welkom/bevestiging</p>
-                  </div>
-                </div>
+              <div className="bg-red-50 rounded-lg p-3 text-center">
+                <p className="text-xs text-red-600 font-medium">Verlopen</p>
+                <p className="text-xl font-bold text-red-900">{users.filter(u => isAccountExpired(u)).length}</p>
               </div>
             </div>
           </div>
