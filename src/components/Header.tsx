@@ -56,8 +56,8 @@ export default function Header() {
           
           {/* Navigation Menu - Only visible for admin users */}
           <nav className="hidden md:flex items-center gap-4">
-            {/* Admin Menu - Only visible when authenticated and user is admin */}
-            {isAuthenticated && user?.user_metadata?.is_admin && (
+            {/* Admin Menu - Only visible when authenticated */}
+            {isAuthenticated && (
               <div className="flex items-center gap-3">
                 <Link 
                   to="/admin" 
