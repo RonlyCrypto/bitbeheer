@@ -149,7 +149,7 @@ export default function Header() {
             </div>
             
             {/* Settings Menu or Login/Register */}
-            {(user || isImpersonating) ? (
+            {(user && user.email) || isImpersonating ? (
               <div className="flex items-center gap-3">
                 {/* Settings Dropdown */}
                 <div className="relative settings-dropdown">
@@ -161,7 +161,7 @@ export default function Header() {
                       <Settings className="w-5 h-5" />
                     </div>
                     <span className="font-medium">
-                      {isImpersonating ? impersonatedUser : (user?.user_metadata?.name || user?.email)}
+                      {isImpersonating ? impersonatedUser : (user?.user_metadata?.name || user?.email || 'Gebruiker')}
                     </span>
                   </button>
                   
@@ -177,10 +177,10 @@ export default function Header() {
                             </div>
                             <div>
                               <p className="font-medium text-gray-900 dark:text-white">
-                                {isImpersonating ? impersonatedUser : (user?.user_metadata?.name || 'Gebruiker')}
+                                {isImpersonating ? impersonatedUser : (user?.user_metadata?.name || user?.email || 'Gebruiker')}
                               </p>
                               <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {isImpersonating ? 'Impersonated User' : user?.email}
+                                {isImpersonating ? 'Impersonated User' : (user?.email || 'Niet ingelogd')}
                               </p>
                             </div>
                           </div>

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { impersonationUtils } from '../utils/impersonation';
+import { useSupabaseAuth } from './SupabaseAuthContext';
 
 export type AccountType = 'admin' | 'user' | 'test' | 'premium' | 'basic';
 
@@ -82,6 +83,7 @@ const PERMISSIONS = {
 };
 
 export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useSupabaseAuth();
   const [accountType, setAccountType] = useState<AccountType>('user');
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [impersonatedUser, setImpersonatedUser] = useState<string | null>(null);
@@ -102,36 +104,26 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
         setImpersonatedUser(null);
         
         // Check if user is logged in via Supabase
-        const supabaseUser = localStorage.getItem('sb-clqbnkvnydlxtimiazqf-auth-token');
-        if (supabaseUser) {
-          try {
-            const authData = JSON.parse(supabaseUser);
-            const user = authData.currentSession?.user;
-            
-            if (user) {
-              // Check if user is admin based on email or metadata
-              if (user.email === 'admin@bitbeheer.nl' || user.user_metadata?.is_admin) {
-                setAccountType('admin');
-                console.log('Admin user detected');
-              } else if (user.user_metadata?.is_test) {
-                setAccountType('test');
-                console.log('Test user detected');
-              } else if (user.user_metadata?.is_premium) {
-                setAccountType('premium');
-                console.log('Premium user detected');
-              } else {
-                setAccountType('user');
-                console.log('Regular user detected');
-              }
-            } else {
-              setAccountType('user');
-            }
-          } catch (error) {
-            console.error('Error parsing auth data:', error);
+        if (user) {
+          console.log('Supabase user detected:', user);
+          
+          // Check if user is admin based on email or metadata
+          if (user.email === 'admin@bitbeheer.nl' || user.user_metadata?.is_admin) {
+            setAccountType('admin');
+            console.log('Admin user detected');
+          } else if (user.user_metadata?.is_test) {
+            setAccountType('test');
+            console.log('Test user detected');
+          } else if (user.user_metadata?.is_premium) {
+            setAccountType('premium');
+            console.log('Premium user detected');
+          } else {
             setAccountType('user');
+            console.log('Regular user detected');
           }
         } else {
           setAccountType('user');
+          console.log('No user logged in');
         }
       }
     };
@@ -160,7 +152,7 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       window.removeEventListener('impersonationStarted', handleImpersonationStarted);
       window.removeEventListener('impersonationStopped', handleImpersonationStopped);
     };
-  }, []);
+  }, [user]);
 
   const hasPermission = (permission: string): boolean => {
     const userPermissions = PERMISSIONS[accountType] || [];
