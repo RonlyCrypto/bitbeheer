@@ -393,43 +393,33 @@ export default function AccountBeheer() {
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-gray-500" />
-                  <select
-                    value={verificationFilter}
-                    onChange={(e) => setVerificationFilter(e.target.value)}
-                    className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all min-w-[180px]"
-                  >
-                    <option value="all">Alle Status</option>
-                    <option value="verified">✅ Geverifieerd</option>
-                    <option value="pending">⏳ In Behandeling</option>
-                    <option value="expired">❌ Verlopen</option>
-                    <option value="admin">👑 Admin Accounts</option>
-                    <option value="test">🧪 Test Accounts</option>
-                    <option value="no_email">📧 Geen Email Verzonden</option>
-                  </select>
+                <select
+                  value={verificationFilter}
+                  onChange={(e) => setVerificationFilter(e.target.value)}
+                  className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all min-w-[180px]"
+                >
+                  <option value="all">🔍 Alle Status</option>
+                  <option value="verified">✅ Geverifieerd ({users.filter(u => u.email_verified || u.isAdmin || u.isTest).length})</option>
+                  <option value="pending">⏳ In Behandeling ({users.filter(u => !u.email_verified && !isAccountExpired(u) && !u.isAdmin && !u.isTest).length})</option>
+                  <option value="expired">❌ Verlopen ({users.filter(u => isAccountExpired(u) && !u.isAdmin && !u.isTest).length})</option>
+                  <option value="admin">👑 Admin Accounts ({users.filter(u => u.isAdmin).length})</option>
+                  <option value="test">🧪 Test Accounts ({users.filter(u => u.isTest).length})</option>
+                  <option value="no_email">📧 Geen Email Verzonden ({users.filter(u => !u.emailSent).length})</option>
+                </select>
                 </div>
               </div>
             </div>
           </div>
 
 
-          {/* Users List */}
-          <div className="bg-white rounded-lg shadow-lg">
+          {/* Active Accounts Section */}
+          <div className="bg-white rounded-lg shadow-lg mb-6">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Account Overzicht</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">Actieve Accounts</h2>
                   <p className="text-gray-600 mt-1">
-                    {filteredUsers.length} van {users.length} accounts
-                    {verificationFilter !== 'all' && (
-                      <span className="ml-2 text-orange-600 font-medium">
-                        • Gefilterd op: {verificationFilter === 'verified' ? 'Geverifieerd' : 
-                                        verificationFilter === 'pending' ? 'In Behandeling' :
-                                        verificationFilter === 'expired' ? 'Verlopen' :
-                                        verificationFilter === 'admin' ? 'Admin Accounts' :
-                                        verificationFilter === 'test' ? 'Test Accounts' :
-                                        verificationFilter === 'no_email' ? 'Geen Email Verzonden' : verificationFilter}
-                      </span>
-                    )}
+                    {filteredUsers.filter(user => user.email_verified || user.isAdmin || user.isTest).length} van {users.filter(user => user.email_verified || user.isAdmin || user.isTest).length} actieve accounts
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -441,88 +431,148 @@ export default function AccountBeheer() {
             </div>
 
             <div className="divide-y divide-gray-200">
-              {filteredUsers.length === 0 ? (
+              {filteredUsers.filter(user => user.email_verified || user.isAdmin || user.isTest).length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
-                  <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Geen accounts gevonden</h3>
-                  <p className="text-gray-600 mb-4">
-                    {searchTerm ? `Geen accounts gevonden voor "${searchTerm}"` : 
-                     verificationFilter !== 'all' ? `Geen accounts gevonden voor filter "${verificationFilter}"` :
-                     'Er zijn momenteel geen accounts beschikbaar'}
-                  </p>
-                  {(searchTerm || verificationFilter !== 'all') && (
-                    <button
-                      onClick={() => {
-                        setSearchTerm('');
-                        setVerificationFilter('all');
-                        setSelectedCategory('all');
-                      }}
-                      className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-                    >
-                      Filters Resetten
-                    </button>
-                  )}
+                  <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-300" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Geen actieve accounts</h3>
+                  <p className="text-gray-600">Alle accounts wachten op verificatie</p>
                 </div>
               ) : (
-                filteredUsers.map((user) => (
-                  <div key={user.id} className={`p-6 hover:bg-gray-50 ${
-                    isAccountExpired(user) && !user.isAdmin && !user.isTest ? 'bg-gray-100 opacity-60' : ''
-                  }`}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <span className="font-medium text-gray-900">{user.email}</span>
-                            <span className="text-sm text-gray-500">•</span>
-                            <span className="text-sm text-gray-600">{user.name}</span>
-                            {user.isAdmin && (
-                              <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full font-semibold">
-                                ADMIN
-                              </span>
-                            )}
-                            {user.isTest && (
-                              <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-semibold">
-                                TEST
-                              </span>
-                            )}
-                            {user.category && !user.isAdmin && !user.isTest && (
-                              <>
-                                <span className="text-sm text-gray-500">•</span>
-                                <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
-                                  {user.category}
+                filteredUsers
+                  .filter(user => user.email_verified || user.isAdmin || user.isTest)
+                  .map((user) => (
+                    <div key={user.id} className="p-6 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="font-medium text-gray-900">{user.email}</span>
+                              <span className="text-sm text-gray-500">•</span>
+                              <span className="text-sm text-gray-600">{user.name}</span>
+                              {user.isAdmin && (
+                                <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full font-semibold">
+                                  ADMIN
                                 </span>
-                              </>
+                              )}
+                              {user.isTest && (
+                                <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-semibold">
+                                  TEST
+                                </span>
+                              )}
+                              {user.category && !user.isAdmin && !user.isTest && (
+                                <>
+                                  <span className="text-sm text-gray-500">•</span>
+                                  <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
+                                    {user.category}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                            {user.message && user.message !== 'Geen bericht' && (
+                              <p className="text-sm text-gray-600 mb-2">{user.message}</p>
                             )}
+                            <div className="flex items-center gap-4 text-xs text-gray-400">
+                              <span>Aangemeld: {user.registrationDate || user.date}</span>
+                              {user.lastLogin && (
+                                <span>Laatste login: {user.lastLogin}</span>
+                              )}
+                              {user.loginCount && (
+                                <span>Logins: {user.loginCount}</span>
+                              )}
+                            </div>
+                            <div className="mt-2 flex items-center gap-2">
+                              {user.isAdmin || user.isTest ? (
+                                <span className="inline-flex items-center gap-1 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                  <CheckCircle className="w-3 h-3" />
+                                  Altijd Actief
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                  <CheckCircle className="w-3 h-3" />
+                                  Geverifieerd
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          {user.message && user.message !== 'Geen bericht' && (
-                            <p className="text-sm text-gray-600 mb-2">{user.message}</p>
-                          )}
-                          <div className="flex items-center gap-4 text-xs text-gray-400">
-                            <span>Aangemeld: {user.registrationDate || user.date}</span>
-                            {user.lastLogin && (
-                              <span>Laatste login: {user.lastLogin}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleViewUser(user)}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                            Bekijken
+                          </button>
+                          <button
+                            onClick={() => {
+                              handleLoginAsUser(user);
+                              handleUpdateUserLogin(user.id);
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                          >
+                            <LogIn className="w-4 h-4" />
+                            Inloggen als
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+              )}
+            </div>
+          </div>
+
+          {/* Pending Verification Accounts Section */}
+          <div className="bg-white rounded-lg shadow-lg mb-6">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <Clock className="w-6 h-6 text-orange-600" />
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Wachtend op Verificatie</h2>
+                  <p className="text-gray-600 mt-1">
+                    {filteredUsers.filter(user => !user.email_verified && !isAccountExpired(user) && !user.isAdmin && !user.isTest).length} accounts wachten op email bevestiging
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="divide-y divide-gray-200">
+              {filteredUsers.filter(user => !user.email_verified && !isAccountExpired(user) && !user.isAdmin && !user.isTest).length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  <Clock className="w-12 h-12 mx-auto mb-4 text-orange-300" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Geen accounts in behandeling</h3>
+                  <p className="text-gray-600">Alle accounts zijn geverifieerd of verlopen</p>
+                </div>
+              ) : (
+                filteredUsers
+                  .filter(user => !user.email_verified && !isAccountExpired(user) && !user.isAdmin && !user.isTest)
+                  .map((user) => (
+                    <div key={user.id} className="p-6 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="font-medium text-gray-900">{user.email}</span>
+                              <span className="text-sm text-gray-500">•</span>
+                              <span className="text-sm text-gray-600">{user.name}</span>
+                              {user.category && (
+                                <>
+                                  <span className="text-sm text-gray-500">•</span>
+                                  <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
+                                    {user.category}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                            {user.message && user.message !== 'Geen bericht' && (
+                              <p className="text-sm text-gray-600 mb-2">{user.message}</p>
                             )}
-                            {user.loginCount && (
-                              <span>Logins: {user.loginCount}</span>
-                            )}
-                          </div>
-                          <div className="mt-2 flex items-center gap-2">
-                            {user.isAdmin || user.isTest ? (
-                              <span className="inline-flex items-center gap-1 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                <CheckCircle className="w-3 h-3" />
-                                Altijd Actief
-                              </span>
-                            ) : user.email_verified ? (
-                              <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                                <CheckCircle className="w-3 h-3" />
-                                Geverifieerd
-                              </span>
-                            ) : isAccountExpired(user) ? (
-                              <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
-                                <XCircle className="w-3 h-3" />
-                                Verlopen
-                              </span>
-                            ) : (
+                            <div className="flex items-center gap-4 text-xs text-gray-400">
+                              <span>Aangemeld: {user.registrationDate || user.date}</span>
+                              {user.lastLogin && (
+                                <span>Laatste login: {user.lastLogin}</span>
+                              )}
+                            </div>
+                            <div className="mt-2 flex items-center gap-2">
                               <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full ${
                                 isInWarningPeriod(user) 
                                   ? 'bg-red-100 text-red-800' 
@@ -531,8 +581,6 @@ export default function AccountBeheer() {
                                 <Clock className="w-3 h-3" />
                                 {getRemainingTime(user)} dagen resterend
                               </span>
-                            )}
-                            {!user.email_verified && !isAccountExpired(user) && !user.isAdmin && !user.isTest && (
                               <div className="flex gap-1">
                                 <button
                                   onClick={() => handleManualVerify(user)}
@@ -555,63 +603,205 @@ export default function AccountBeheer() {
                                   {isActivating === user.id ? 'Activeren...' : 'Activeren'}
                                 </button>
                               </div>
-                            )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleViewUser(user)}
-                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          <Eye className="w-4 h-4" />
-                          Bekijken
-                        </button>
-                        <button
-                          onClick={() => {
-                            handleLoginAsUser(user);
-                            handleUpdateUserLogin(user.id);
-                          }}
-                          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                        >
-                          <LogIn className="w-4 h-4" />
-                          Inloggen als
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleViewUser(user)}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                            Bekijken
+                          </button>
+                          <button
+                            onClick={() => {
+                              handleLoginAsUser(user);
+                              handleUpdateUserLogin(user.id);
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                          >
+                            <LogIn className="w-4 h-4" />
+                            Inloggen als
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  ))
               )}
             </div>
           </div>
 
-          {/* Compact Email Verification Status - Moved to bottom */}
-          <div className="bg-white rounded-lg shadow-lg p-4 mt-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Mail className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-bold text-gray-900">Email Verificatie Status</h3>
+          {/* Expired Accounts Section */}
+          <div className="bg-white rounded-lg shadow-lg mb-6">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <XCircle className="w-6 h-6 text-red-600" />
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Verlopen Accounts</h2>
+                  <p className="text-gray-600 mt-1">
+                    {filteredUsers.filter(user => isAccountExpired(user) && !user.isAdmin && !user.isTest).length} accounts zijn verlopen (5+ dagen niet bevestigd)
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="divide-y divide-gray-200">
+              {filteredUsers.filter(user => isAccountExpired(user) && !user.isAdmin && !user.isTest).length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  <XCircle className="w-12 h-12 mx-auto mb-4 text-red-300" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Geen verlopen accounts</h3>
+                  <p className="text-gray-600">Alle accounts zijn actief of in behandeling</p>
+                </div>
+              ) : (
+                filteredUsers
+                  .filter(user => isAccountExpired(user) && !user.isAdmin && !user.isTest)
+                  .map((user) => (
+                    <div key={user.id} className="p-6 bg-gray-100 opacity-75 hover:bg-gray-200 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="font-medium text-gray-600 line-through">{user.email}</span>
+                              <span className="text-sm text-gray-500">•</span>
+                              <span className="text-sm text-gray-500">{user.name}</span>
+                              {user.category && (
+                                <>
+                                  <span className="text-sm text-gray-500">•</span>
+                                  <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">
+                                    {user.category}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                            {user.message && user.message !== 'Geen bericht' && (
+                              <p className="text-sm text-gray-500 mb-2">{user.message}</p>
+                            )}
+                            <div className="flex items-center gap-4 text-xs text-gray-400">
+                              <span>Aangemeld: {user.registrationDate || user.date}</span>
+                              <span className="text-red-500 font-medium">Verlopen op: {new Date(new Date(user.created_at || user.timestamp || user.registrationDate).getTime() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('nl-NL')}</span>
+                            </div>
+                            <div className="mt-2 flex items-center gap-2">
+                              <span className="inline-flex items-center gap-1 text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">
+                                <XCircle className="w-3 h-3" />
+                                Verlopen
+                              </span>
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => {
+                                    if (confirm(`Weet je zeker dat je een nieuw account wilt aanmaken voor ${user.email}? Dit zal alle gegevens opnieuw instellen.`)) {
+                                      // TODO: Implement account recreation
+                                      alert('Functie wordt binnenkort toegevoegd');
+                                    }
+                                  }}
+                                  className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full hover:bg-blue-200 transition-colors"
+                                >
+                                  Nieuw Account Aanmaken
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (confirm(`Weet je zeker dat je dit verlopen account wilt verwijderen?`)) {
+                                      // TODO: Implement account deletion
+                                      alert('Functie wordt binnenkort toegevoegd');
+                                    }
+                                  }}
+                                  className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full hover:bg-red-200 transition-colors"
+                                >
+                                  Verwijderen
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleViewUser(user)}
+                            className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                            Bekijken
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+              )}
+            </div>
+          </div>
+
+          {/* Enhanced Email Verification Status - Bottom Summary */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-lg p-6 mt-6 border border-blue-200">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="bg-blue-500 p-2 rounded-lg">
+                <Mail className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Email Verificatie Overzicht</h3>
+                <p className="text-gray-600 text-sm">Complete status van alle account verificaties</p>
+              </div>
             </div>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="bg-blue-50 rounded-lg p-3 text-center">
-                <p className="text-xs text-blue-600 font-medium">Totaal</p>
-                <p className="text-xl font-bold text-blue-900">{users.length}</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white rounded-lg p-4 text-center shadow-sm border border-blue-100">
+                <div className="flex items-center justify-center mb-2">
+                  <Users className="w-5 h-5 text-blue-600" />
+                </div>
+                <p className="text-xs text-blue-600 font-medium mb-1">Totaal Accounts</p>
+                <p className="text-2xl font-bold text-blue-900">{users.length}</p>
+                <p className="text-xs text-blue-500 mt-1">Alle aangemelde accounts</p>
               </div>
               
-              <div className="bg-green-50 rounded-lg p-3 text-center">
-                <p className="text-xs text-green-600 font-medium">Geverifieerd</p>
-                <p className="text-xl font-bold text-green-900">{users.filter(u => u.email_verified).length}</p>
+              <div className="bg-white rounded-lg p-4 text-center shadow-sm border border-green-100">
+                <div className="flex items-center justify-center mb-2">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                </div>
+                <p className="text-xs text-green-600 font-medium mb-1">Geverifieerd</p>
+                <p className="text-2xl font-bold text-green-900">{users.filter(u => u.email_verified || u.isAdmin || u.isTest).length}</p>
+                <p className="text-xs text-green-500 mt-1">Actief & Bevestigd</p>
               </div>
               
-              <div className="bg-orange-50 rounded-lg p-3 text-center">
-                <p className="text-xs text-orange-600 font-medium">In Behandeling</p>
-                <p className="text-xl font-bold text-orange-900">{users.filter(u => !u.email_verified && !isAccountExpired(u)).length}</p>
+              <div className="bg-white rounded-lg p-4 text-center shadow-sm border border-orange-100">
+                <div className="flex items-center justify-center mb-2">
+                  <Clock className="w-5 h-5 text-orange-600" />
+                </div>
+                <p className="text-xs text-orange-600 font-medium mb-1">In Behandeling</p>
+                <p className="text-2xl font-bold text-orange-900">{users.filter(u => !u.email_verified && !isAccountExpired(u) && !u.isAdmin && !u.isTest).length}</p>
+                <p className="text-xs text-orange-500 mt-1">Wacht op bevestiging</p>
               </div>
               
-              <div className="bg-red-50 rounded-lg p-3 text-center">
-                <p className="text-xs text-red-600 font-medium">Verlopen</p>
-                <p className="text-xl font-bold text-red-900">{users.filter(u => isAccountExpired(u)).length}</p>
+              <div className="bg-white rounded-lg p-4 text-center shadow-sm border border-red-100">
+                <div className="flex items-center justify-center mb-2">
+                  <XCircle className="w-5 h-5 text-red-600" />
+                </div>
+                <p className="text-xs text-red-600 font-medium mb-1">Verlopen</p>
+                <p className="text-2xl font-bold text-red-900">{users.filter(u => isAccountExpired(u) && !u.isAdmin && !u.isTest).length}</p>
+                <p className="text-xs text-red-500 mt-1">5+ dagen niet bevestigd</p>
               </div>
+            </div>
+            
+            {/* Quick Actions */}
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                onClick={() => setVerificationFilter('pending')}
+                className="flex items-center gap-2 px-4 py-2 bg-orange-100 text-orange-800 rounded-lg hover:bg-orange-200 transition-colors text-sm font-medium"
+              >
+                <Clock className="w-4 h-4" />
+                Bekijk In Behandeling ({users.filter(u => !u.email_verified && !isAccountExpired(u) && !u.isAdmin && !u.isTest).length})
+              </button>
+              <button
+                onClick={() => setVerificationFilter('expired')}
+                className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
+              >
+                <XCircle className="w-4 h-4" />
+                Bekijk Verlopen ({users.filter(u => isAccountExpired(u) && !u.isAdmin && !u.isTest).length})
+              </button>
+              <button
+                onClick={() => setVerificationFilter('all')}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
+              >
+                <Users className="w-4 h-4" />
+                Bekijk Alle Accounts
+              </button>
             </div>
           </div>
         </div>
