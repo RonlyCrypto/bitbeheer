@@ -23,11 +23,29 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
   const [showWelcomePopup, setShowWelcomePopup] = useState(false);
 
   useEffect(() => {
+    // Test Supabase connection first
+    const testSupabaseConnection = async () => {
+      try {
+        console.log('Testing Supabase connection...');
+        const { data, error } = await supabase.from('accounts').select('count').limit(1);
+        if (error) {
+          console.error('Supabase connection error:', error);
+        } else {
+          console.log('Supabase connection successful:', data);
+        }
+      } catch (error) {
+        console.error('Supabase connection test failed:', error);
+      }
+    };
+
     // Get initial session
     const getInitialSession = async () => {
       try {
         console.log('Getting initial Supabase session...');
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error getting session:', error);
+        }
         console.log('Initial session:', session);
         console.log('Initial user:', session?.user);
         setUser(session?.user ?? null);
@@ -38,6 +56,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       }
     };
 
+    testSupabaseConnection();
     getInitialSession();
 
               // Listen for auth changes
@@ -94,7 +113,9 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
+      console.log('Attempting to sign in with:', email);
       const result = await signInUser(email, password);
+      console.log('Sign in result:', result);
       return result;
     } catch (error) {
       console.error('Sign in error:', error);

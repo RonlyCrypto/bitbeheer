@@ -32,6 +32,7 @@ import {
 import { bitcoinPriceService, BitcoinPrice } from '../services/bitcoinPriceService';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import AuthTest from './AuthTest';
 
 interface UserProfile {
   id: string;
@@ -273,6 +274,13 @@ export default function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Auth Test Component - Remove this in production */}
+      <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4">
+        <div className="max-w-7xl mx-auto">
+          <AuthTest />
+        </div>
+      </div>
+      
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
