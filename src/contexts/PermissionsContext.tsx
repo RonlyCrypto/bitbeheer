@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { impersonationUtils } from '../utils/impersonation';
 import { useSupabaseAuth } from './SupabaseAuthContext';
+import { useMockAuth } from './MockAuthContext';
 
 export type AccountType = 'admin' | 'user' | 'test' | 'premium' | 'basic';
 
@@ -83,7 +84,12 @@ const PERMISSIONS = {
 };
 
 export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useSupabaseAuth();
+  const { user: supabaseUser } = useSupabaseAuth();
+  const { user: mockUser } = useMockAuth();
+  
+  // Use mock user as primary, fallback to Supabase
+  const user = mockUser || supabaseUser;
+  
   const [accountType, setAccountType] = useState<AccountType>('user');
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [impersonatedUser, setImpersonatedUser] = useState<string | null>(null);

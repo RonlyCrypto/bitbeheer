@@ -1,8 +1,17 @@
 import React, { useState } from 'react';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
+import { useMockAuth } from '../contexts/MockAuthContext';
+import { supabase } from '../lib/supabase';
 
 export default function AuthTest() {
-  const { user, signIn, signOut, loading } = useSupabaseAuth();
+  const { user: supabaseUser, signIn: supabaseSignIn, signOut: supabaseSignOut, loading: supabaseLoading } = useSupabaseAuth();
+  const { user: mockUser, signIn: mockSignIn, signOut: mockSignOut, loading: mockLoading } = useMockAuth();
+  
+  // Use mock auth as primary, fallback to Supabase
+  const user = mockUser || supabaseUser;
+  const signIn = mockSignIn;
+  const signOut = mockSignOut;
+  const loading = mockLoading || supabaseLoading;
   const [email, setEmail] = useState('admin@bitbeheer.nl');
   const [password, setPassword] = useState('admin123');
   const [message, setMessage] = useState('');
