@@ -27,12 +27,13 @@ import {
   Calculator,
   Info,
   Wallet,
-  Shield
+  Shield,
+  ArrowLeft
 } from 'lucide-react';
 import { bitcoinPriceService, BitcoinPrice } from '../services/bitcoinPriceService';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import AuthTest from './AuthTest';
+import { usePermissions } from '../contexts/PermissionsContext';
 
 interface UserProfile {
   id: string;
@@ -94,6 +95,7 @@ interface Portfolio {
 export default function UserDashboard() {
   const { user } = useSupabaseAuth();
   const { theme } = useTheme();
+  const { isImpersonating, impersonatedUser } = usePermissions();
   const [activeTab, setActiveTab] = useState('overview');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -274,12 +276,27 @@ export default function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Auth Test Component - Remove this in production */}
-      <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4">
-        <div className="max-w-7xl mx-auto">
-          <AuthTest />
+      {/* Impersonation Banner - Only show when impersonating */}
+      {isImpersonating && impersonatedUser && (
+        <div className="bg-red-600 text-white py-3 px-4 text-center text-sm font-medium shadow-lg">
+          <div className="container mx-auto flex items-center justify-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              <span>Je bent nu ingelogd als: <strong>{impersonatedUser}</strong></span>
+            </div>
+            <button
+              onClick={() => {
+                // Stop impersonation and redirect to admin
+                window.location.href = '/admin';
+              }}
+              className="flex items-center gap-2 bg-red-700 hover:bg-red-800 px-4 py-2 rounded-lg transition-colors font-medium"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Klik hier om terug te gaan naar admin
+            </button>
+          </div>
         </div>
-      </div>
+      )}
       
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
