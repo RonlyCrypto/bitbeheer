@@ -23,6 +23,8 @@ import NotificatieBeheer from './NotificatieBeheer';
 import AccountBeheer from './AccountBeheer';
 import CategorieBeheer from './CategorieBeheer';
 import EmailVerificationStatus from './EmailVerificationStatus';
+import AdminProfile from './AdminProfile';
+import AdminSettings from './AdminSettings';
 // import PageManagement from './PageManagement';
 
 export default function AdminDashboard() {
@@ -202,6 +204,26 @@ export default function AdminDashboard() {
         >
           Categorieën
         </button>
+                <button
+                  onClick={() => setActiveTab('profile')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'profile'
+                      ? 'border-orange-500 text-orange-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Profiel
+                </button>
+                <button
+                  onClick={() => setActiveTab('settings')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'settings'
+                      ? 'border-orange-500 text-orange-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Instellingen
+                </button>
                 <button
                   onClick={() => setActiveTab('controls')}
                   className={`py-2 px-1 border-b-2 font-medium text-sm ${
@@ -437,6 +459,19 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {/* Profile Tab */}
+          {activeTab === 'profile' && (
+            <div className="space-y-6">
+              <AdminProfile />
+            </div>
+          )}
+
+          {/* Settings Tab */}
+          {activeTab === 'settings' && (
+            <div className="space-y-6">
+              <AdminSettings />
+            </div>
+          )}
 
           {/* Controls Tab */}
           {activeTab === 'controls' && (

@@ -186,24 +186,24 @@ export default function Header() {
                           </div>
                         </div>
 
-                        {/* Menu Items */}
-                        <Link 
-                          to="/dashboard" 
-                          className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                          onClick={() => setShowSettingsDropdown(false)}
-                        >
-                          <User className="w-4 h-4" />
-                          Mijn Profiel
-                        </Link>
-                        
-                        <Link 
-                          to="/dashboard" 
-                          className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                          onClick={() => setShowSettingsDropdown(false)}
-                        >
-                          <Settings className="w-4 h-4" />
-                          Instellingen
-                        </Link>
+                          {/* Menu Items */}
+                          <Link 
+                            to="/admin" 
+                            className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            onClick={() => setShowSettingsDropdown(false)}
+                          >
+                            <User className="w-4 h-4" />
+                            Mijn Profiel
+                          </Link>
+                          
+                          <Link 
+                            to="/admin" 
+                            className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            onClick={() => setShowSettingsDropdown(false)}
+                          >
+                            <Settings className="w-4 h-4" />
+                            Instellingen
+                          </Link>
 
                         {/* Theme Toggle */}
                         <button 
