@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import BitcoinLivePrice from './BitcoinLivePrice';
 import LoginRegister from './LoginRegister';
 
@@ -12,27 +13,9 @@ export default function Header() {
   const { isAuthenticated } = useAuth();
   const { user, signOut } = useSupabaseAuth();
   const { theme, toggleTheme } = useTheme();
-  const [isImpersonating, setIsImpersonating] = useState(false);
-  const [impersonatedUser, setImpersonatedUser] = useState<string | null>(null);
+  const { isImpersonating, impersonatedUser, canAccessAdmin } = usePermissions();
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
 
-  // Check if user is impersonating another user
-  useEffect(() => {
-    const checkImpersonation = () => {
-      const impersonationData = localStorage.getItem('impersonation');
-      if (impersonationData) {
-        const data = JSON.parse(impersonationData);
-        setIsImpersonating(data.isImpersonating);
-        setImpersonatedUser(data.impersonatedUser);
-      }
-    };
-
-    checkImpersonation();
-    
-    // Listen for storage changes
-    window.addEventListener('storage', checkImpersonation);
-    return () => window.removeEventListener('storage', checkImpersonation);
-  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -74,8 +57,8 @@ export default function Header() {
           
           {/* Navigation Menu - Only visible for admin users */}
           <nav className="hidden md:flex items-center gap-4">
-            {/* Admin Menu - Only visible when authenticated */}
-            {isAuthenticated && (
+            {/* Admin Menu - Only visible when user has admin permissions */}
+            {isAuthenticated && canAccessAdmin && (
               <div className="flex items-center gap-3">
                 <Link 
                   to="/admin" 
@@ -159,7 +142,7 @@ export default function Header() {
             </div>
             
             {/* Settings Menu or Login/Register */}
-            {user ? (
+            {(user || isImpersonating) ? (
               <div className="flex items-center gap-3">
                 {/* Settings Dropdown */}
                 <div className="relative settings-dropdown">
@@ -170,7 +153,9 @@ export default function Header() {
                     <div className="w-8 h-8 bg-white bg-opacity-30 rounded-full flex items-center justify-center">
                       <Settings className="w-5 h-5" />
                     </div>
-                    <span className="font-medium">{user.user_metadata?.name || user.email}</span>
+                    <span className="font-medium">
+                      {isImpersonating ? impersonatedUser : (user?.user_metadata?.name || user?.email)}
+                    </span>
                   </button>
                   
                   {/* Dropdown Menu */}
@@ -184,8 +169,12 @@ export default function Header() {
                               <UserCircle className="w-6 h-6 text-orange-600 dark:text-orange-400" />
                             </div>
                             <div>
-                              <p className="font-medium text-gray-900 dark:text-white">{user.user_metadata?.name || 'Gebruiker'}</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
+                              <p className="font-medium text-gray-900 dark:text-white">
+                                {isImpersonating ? impersonatedUser : (user?.user_metadata?.name || 'Gebruiker')}
+                              </p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                {isImpersonating ? 'Impersonated User' : user?.email}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -309,16 +298,19 @@ export default function Header() {
     </header>
 
     {/* Impersonation Banner */}
-    {isImpersonating && (
-      <div className="bg-red-600 text-white py-2 px-4 text-center text-sm font-medium">
-        <div className="container mx-auto flex items-center justify-center gap-2">
-          <span>Je bent ingelogd als: <strong>{impersonatedUser}</strong></span>
+    {isImpersonating && impersonatedUser && (
+      <div className="bg-red-600 text-white py-3 px-4 text-center text-sm font-medium shadow-lg">
+        <div className="container mx-auto flex items-center justify-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <span>Je bent ingelogd als: <strong>{impersonatedUser}</strong></span>
+          </div>
           <button
             onClick={handleStopImpersonation}
-            className="flex items-center gap-1 bg-red-700 hover:bg-red-800 px-3 py-1 rounded transition-colors"
+            className="flex items-center gap-2 bg-red-700 hover:bg-red-800 px-4 py-2 rounded-lg transition-colors font-medium"
           >
-            <ArrowLeft className="w-3 h-3" />
-            Klik hier om terug te gaan naar admin
+            <ArrowLeft className="w-4 h-4" />
+            Terug naar Admin
           </button>
         </div>
       </div>

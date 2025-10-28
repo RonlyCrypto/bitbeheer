@@ -19,6 +19,7 @@ import { CurrencyProvider } from './contexts/CurrencyContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { SupabaseAuthProvider, useSupabaseAuth } from './contexts/SupabaseAuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { PermissionsProvider } from './contexts/PermissionsContext';
 
 function AppContent() {
   const { showWelcomePopup, setShowWelcomePopup, user } = useSupabaseAuth();
@@ -125,11 +126,13 @@ function App() {
     <ThemeProvider>
       <SupabaseAuthProvider>
         <AuthProvider>
-          <CurrencyProvider>
-            <Router>
-              <AppContent />
-            </Router>
-          </CurrencyProvider>
+          <PermissionsProvider>
+            <CurrencyProvider>
+              <Router>
+                <AppContent />
+              </Router>
+            </CurrencyProvider>
+          </PermissionsProvider>
         </AuthProvider>
       </SupabaseAuthProvider>
     </ThemeProvider>
