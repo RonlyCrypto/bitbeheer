@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Users, Eye, LogIn, Mail, Calendar, MessageSquare, Tag, Search, Filter, RefreshCw, Clock, CheckCircle, XCircle, Send, UserCheck, AlertTriangle } from 'lucide-react';
+import { Users, Eye, LogIn, Mail, Calendar, MessageSquare, Tag, Search, Filter, RefreshCw, Clock, CheckCircle, XCircle, Send, UserCheck, AlertTriangle, UserCog } from 'lucide-react';
+import { impersonationUtils } from '../utils/impersonation';
 
 interface UserAccount {
   id: string;
@@ -319,6 +320,19 @@ export default function AccountBeheer() {
       alert('Fout bij het updaten van account status');
     } finally {
       setIsUpdatingStatus(null);
+    }
+  };
+
+  const handleImpersonateUser = (user: UserAccount) => {
+    if (user.isAdmin || user.isTest) {
+      alert('Je kunt geen admin of test accounts impersoneren');
+      return;
+    }
+
+    if (confirm(`Weet je zeker dat je wilt inloggen als ${user.name} (${user.email})?`)) {
+      impersonationUtils.startImpersonation(user.email, 'admin');
+      // Redirect to user dashboard
+      window.location.href = '/dashboard';
     }
   };
 
@@ -654,6 +668,14 @@ export default function AccountBeheer() {
                                   className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full hover:bg-green-200 transition-colors disabled:opacity-50"
                                 >
                                   {isActivating === user.id ? 'Activeren...' : 'Activeren'}
+                                </button>
+                                <button
+                                  onClick={() => handleImpersonateUser(user)}
+                                  className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full hover:bg-blue-200 transition-colors"
+                                  title="Inloggen als deze gebruiker"
+                                >
+                                  <UserCog className="w-3 h-3 inline mr-1" />
+                                  Inloggen
                                 </button>
                               </div>
                             </div>

@@ -29,6 +29,8 @@ import {
   Wallet,
   Shield
 } from 'lucide-react';
+import { bitcoinPriceService, BitcoinPrice } from '../services/bitcoinPriceService';
+import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 
 interface UserProfile {
   id: string;
@@ -88,6 +90,7 @@ interface Portfolio {
 }
 
 export default function UserDashboard() {
+  const { user } = useSupabaseAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -97,6 +100,7 @@ export default function UserDashboard() {
   const [hasWallet, setHasWallet] = useState(false);
   const [showFirstAppointmentPrompt, setShowFirstAppointmentPrompt] = useState(false);
   const [showBitcoinCalculator, setShowBitcoinCalculator] = useState(false);
+  const [bitcoinPrice, setBitcoinPrice] = useState<BitcoinPrice | null>(null);
   const [bitcoinGoal, setBitcoinGoal] = useState({
     targetAmount: 0,
     currentAmount: 0,
@@ -108,84 +112,92 @@ export default function UserDashboard() {
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        // Mock data for demo purposes - in production this would come from Supabase
-        setUserProfile({
-          id: '1',
-          email: 'user@example.com',
-          name: 'Demo Gebruiker',
-          phone: '+31 6 12345678',
-          location: 'Amsterdam, Nederland',
-          bio: 'Passionate about Bitcoin and DCA strategies',
-          joinDate: '2024-01-15',
-          lastLogin: new Date().toISOString(),
-          totalSessions: 12,
-          riskProfile: 'moderate',
-          experience: 'intermediate'
+        // Load Bitcoin price
+        const price = await bitcoinPriceService.getCurrentPrice();
+        setBitcoinPrice(price);
+
+        // Load user profile from Supabase
+        if (user) {
+          const response = await fetch('/api/user-profile', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${user.access_token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            const profileData = await response.json();
+            setUserProfile(profileData);
+          } else {
+            // Create basic profile from user data
+            setUserProfile({
+              id: user.id,
+              email: user.email || '',
+              name: user.user_metadata?.name || user.email?.split('@')[0] || 'Gebruiker',
+              phone: user.user_metadata?.phone || '',
+              location: user.user_metadata?.location || '',
+              bio: user.user_metadata?.bio || '',
+              joinDate: user.created_at ? new Date(user.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+              lastLogin: new Date().toISOString(),
+              totalSessions: 0,
+              riskProfile: user.user_metadata?.riskProfile || 'moderate',
+              experience: user.user_metadata?.experience || 'beginner'
+            });
+          }
+        }
+
+        // Load goals from Supabase
+        const goalsResponse = await fetch('/api/user-goals', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${user?.access_token}`,
+            'Content-Type': 'application/json'
+          }
         });
 
-        setGoals([
-          {
-            id: '1',
-            title: 'Bitcoin Emergency Fund',
-            description: 'Build a 6-month emergency fund in Bitcoin',
-            targetAmount: 50000,
-            currentAmount: 15000,
-            targetDate: '2024-12-31',
-            status: 'active',
-            category: 'emergency',
-            createdAt: '2024-01-15'
-          },
-          {
-            id: '2',
-            title: 'House Down Payment',
-            description: 'Save for house down payment using DCA strategy',
-            targetAmount: 100000,
-            currentAmount: 25000,
-            targetDate: '2025-06-30',
-            status: 'active',
-            category: 'house',
-            createdAt: '2024-02-01'
+        if (goalsResponse.ok) {
+          const goalsData = await goalsResponse.json();
+          setGoals(goalsData);
+        } else {
+          setGoals([]);
+        }
+
+        // Load appointments from Supabase
+        const appointmentsResponse = await fetch('/api/user-appointments', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${user?.access_token}`,
+            'Content-Type': 'application/json'
           }
-        ]);
-
-        // Check if user has appointments
-        setShowFirstAppointmentPrompt(appointments.length === 0);
-
-        setAppointments([
-          {
-            id: '1',
-            title: 'Portfolio Review',
-            date: '2024-11-15',
-            time: '14:00',
-            duration: 60,
-            type: 'review',
-            status: 'scheduled',
-            notes: 'Quarterly portfolio review and strategy adjustment'
-          },
-          {
-            id: '2',
-            title: 'DCA Strategy Consultation',
-            date: '2024-11-22',
-            time: '10:00',
-            duration: 90,
-            type: 'consultation',
-            status: 'scheduled',
-            notes: 'Discuss optimal DCA amounts and timing'
-          }
-        ]);
-
-        setPortfolio({
-          id: '1',
-          name: 'Mijn Portfolio',
-          value: 45000,
-          change: 2500,
-          changePercent: 5.9,
-          assets: [
-            { name: 'Bitcoin', symbol: 'BTC', amount: 0.5, value: 20000, percentage: 44.4 },
-            { name: 'Ethereum', symbol: 'ETH', amount: 2.0, value: 15000, percentage: 33.3 },
-            { name: 'Diversified Altcoins', symbol: 'ALTS', amount: 1000, value: 10000, percentage: 22.2 }
-          ]
         });
+
+        if (appointmentsResponse.ok) {
+          const appointmentsData = await appointmentsResponse.json();
+          setAppointments(appointmentsData);
+          setShowFirstAppointmentPrompt(appointmentsData.length === 0);
+        } else {
+          setAppointments([]);
+          setShowFirstAppointmentPrompt(true);
+        }
+
+        // Load portfolio from Supabase
+        const portfolioResponse = await fetch('/api/user-portfolio', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${user?.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (portfolioResponse.ok) {
+          const portfolioData = await portfolioResponse.json();
+          setPortfolio(portfolioData);
+          setHasWallet(portfolioData && portfolioData.assets && portfolioData.assets.length > 0);
+        } else {
+          setPortfolio(null);
+          setHasWallet(false);
+        }
 
       } catch (error) {
         console.error('Error loading user data:', error);
@@ -195,7 +207,7 @@ export default function UserDashboard() {
     };
 
     loadUserData();
-  }, []);
+  }, [user]);
 
   if (isLoading) {
     return (

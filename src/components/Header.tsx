@@ -1,4 +1,5 @@
-import { Bitcoin, TrendingUp, BarChart3, Shield, Wallet, LogOut, User } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Bitcoin, TrendingUp, BarChart3, Shield, Wallet, LogOut, User, ArrowLeft } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
@@ -9,9 +10,38 @@ export default function Header() {
   const location = useLocation();
   const { isAuthenticated } = useAuth();
   const { user, signOut } = useSupabaseAuth();
+  const [isImpersonating, setIsImpersonating] = useState(false);
+  const [impersonatedUser, setImpersonatedUser] = useState<string | null>(null);
+
+  // Check if user is impersonating another user
+  useEffect(() => {
+    const checkImpersonation = () => {
+      const impersonationData = localStorage.getItem('impersonation');
+      if (impersonationData) {
+        const data = JSON.parse(impersonationData);
+        setIsImpersonating(data.isImpersonating);
+        setImpersonatedUser(data.impersonatedUser);
+      }
+    };
+
+    checkImpersonation();
+    
+    // Listen for storage changes
+    window.addEventListener('storage', checkImpersonation);
+    return () => window.removeEventListener('storage', checkImpersonation);
+  }, []);
+
+  const handleStopImpersonation = () => {
+    localStorage.removeItem('impersonation');
+    setIsImpersonating(false);
+    setImpersonatedUser(null);
+    // Redirect to admin dashboard
+    window.location.href = '/admin';
+  };
   
   return (
-    <header className="bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg">
+    <>
+      <header className="bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg">
       <div className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-4">
@@ -203,5 +233,22 @@ export default function Header() {
         </div>
       </div>
     </header>
+
+    {/* Impersonation Banner */}
+    {isImpersonating && (
+      <div className="bg-red-600 text-white py-2 px-4 text-center text-sm font-medium">
+        <div className="container mx-auto flex items-center justify-center gap-2">
+          <span>Je bent ingelogd als: <strong>{impersonatedUser}</strong></span>
+          <button
+            onClick={handleStopImpersonation}
+            className="flex items-center gap-1 bg-red-700 hover:bg-red-800 px-3 py-1 rounded transition-colors"
+          >
+            <ArrowLeft className="w-3 h-3" />
+            Klik hier om terug te gaan naar admin
+          </button>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
