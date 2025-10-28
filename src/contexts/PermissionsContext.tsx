@@ -89,29 +89,45 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   useEffect(() => {
     const checkImpersonation = () => {
       const impersonationData = impersonationUtils.getCurrentImpersonation();
-      if (impersonationData) {
-        setIsImpersonating(impersonationData.isImpersonating);
+      console.log('Checking impersonation:', impersonationData);
+      
+      if (impersonationData && impersonationData.isImpersonating) {
+        setIsImpersonating(true);
         setImpersonatedUser(impersonationData.impersonatedUser);
         // When impersonating, user has basic permissions
         setAccountType('user');
+        console.log('Impersonating user:', impersonationData.impersonatedUser);
       } else {
         setIsImpersonating(false);
         setImpersonatedUser(null);
-        // Check actual user permissions from localStorage or API
-        const userAccount = localStorage.getItem('user_account');
-        if (userAccount) {
+        
+        // Check if user is logged in via Supabase
+        const supabaseUser = localStorage.getItem('sb-clqbnkvnydlxtimiazqf-auth-token');
+        if (supabaseUser) {
           try {
-            const account = JSON.parse(userAccount);
-            if (account.is_admin) {
-              setAccountType('admin');
-            } else if (account.is_test) {
-              setAccountType('test');
-            } else if (account.is_premium) {
-              setAccountType('premium');
+            const authData = JSON.parse(supabaseUser);
+            const user = authData.currentSession?.user;
+            
+            if (user) {
+              // Check if user is admin based on email or metadata
+              if (user.email === 'admin@bitbeheer.nl' || user.user_metadata?.is_admin) {
+                setAccountType('admin');
+                console.log('Admin user detected');
+              } else if (user.user_metadata?.is_test) {
+                setAccountType('test');
+                console.log('Test user detected');
+              } else if (user.user_metadata?.is_premium) {
+                setAccountType('premium');
+                console.log('Premium user detected');
+              } else {
+                setAccountType('user');
+                console.log('Regular user detected');
+              }
             } else {
               setAccountType('user');
             }
           } catch (error) {
+            console.error('Error parsing auth data:', error);
             setAccountType('user');
           }
         } else {
@@ -122,14 +138,27 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     checkImpersonation();
     
-    // Listen for impersonation changes
-    const handleImpersonationChange = () => checkImpersonation();
-    window.addEventListener('impersonationStarted', handleImpersonationChange);
-    window.addEventListener('impersonationStopped', handleImpersonationChange);
+    // Listen for impersonation events
+    const handleImpersonationStarted = () => {
+      console.log('Impersonation started event received');
+      checkImpersonation();
+    };
+    
+    const handleImpersonationStopped = () => {
+      console.log('Impersonation stopped event received');
+      checkImpersonation();
+    };
+    
+    window.addEventListener('impersonationStarted', handleImpersonationStarted);
+    window.addEventListener('impersonationStopped', handleImpersonationStopped);
+    
+    // Check every second for changes
+    const interval = setInterval(checkImpersonation, 1000);
     
     return () => {
-      window.removeEventListener('impersonationStarted', handleImpersonationChange);
-      window.removeEventListener('impersonationStopped', handleImpersonationChange);
+      clearInterval(interval);
+      window.removeEventListener('impersonationStarted', handleImpersonationStarted);
+      window.removeEventListener('impersonationStopped', handleImpersonationStopped);
     };
   }, []);
 

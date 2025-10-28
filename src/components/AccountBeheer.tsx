@@ -330,9 +330,8 @@ export default function AccountBeheer() {
     }
 
     if (confirm(`Weet je zeker dat je wilt inloggen als ${user.name} (${user.email})?`)) {
+      console.log('Starting impersonation for:', user.email);
       impersonationUtils.startImpersonation(user.email, 'admin');
-      // Redirect to user dashboard
-      window.location.href = '/dashboard';
     }
   };
 

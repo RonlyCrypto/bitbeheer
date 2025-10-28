@@ -16,6 +16,13 @@ export default function Header() {
   const { isImpersonating, impersonatedUser, canAccessAdmin } = usePermissions();
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
 
+  // Debug logging
+  console.log('Header - isAuthenticated:', isAuthenticated);
+  console.log('Header - user:', user);
+  console.log('Header - isImpersonating:', isImpersonating);
+  console.log('Header - impersonatedUser:', impersonatedUser);
+  console.log('Header - canAccessAdmin:', canAccessAdmin);
+
 
   // Close dropdown when clicking outside
   useEffect(() => {
