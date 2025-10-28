@@ -18,7 +18,6 @@ import SiteAccessControl from './components/SiteAccessControl';
 import { CurrencyProvider } from './contexts/CurrencyContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { SupabaseAuthProvider, useSupabaseAuth } from './contexts/SupabaseAuthContext';
-import { MockAuthProvider } from './contexts/MockAuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { PermissionsProvider } from './contexts/PermissionsContext';
 
@@ -125,19 +124,17 @@ function AppContent() {
 function App() {
   return (
     <ThemeProvider>
-      <MockAuthProvider>
-        <SupabaseAuthProvider>
-          <AuthProvider>
-            <PermissionsProvider>
-              <CurrencyProvider>
-                <Router>
-                  <AppContent />
-                </Router>
-              </CurrencyProvider>
-            </PermissionsProvider>
-          </AuthProvider>
-        </SupabaseAuthProvider>
-      </MockAuthProvider>
+      <SupabaseAuthProvider>
+        <AuthProvider>
+          <PermissionsProvider>
+            <CurrencyProvider>
+              <Router>
+                <AppContent />
+              </Router>
+            </CurrencyProvider>
+          </PermissionsProvider>
+        </AuthProvider>
+      </SupabaseAuthProvider>
     </ThemeProvider>
   );
 }

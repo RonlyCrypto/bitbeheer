@@ -1,38 +1,52 @@
 import React, { useState } from 'react';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
-import { useMockAuth } from '../contexts/MockAuthContext';
 import { supabase } from '../lib/supabase';
 
 export default function AuthTest() {
-  const { user: supabaseUser, signIn: supabaseSignIn, signOut: supabaseSignOut, loading: supabaseLoading } = useSupabaseAuth();
-  const { user: mockUser, signIn: mockSignIn, signOut: mockSignOut, loading: mockLoading } = useMockAuth();
-  
-  // Use mock auth as primary, fallback to Supabase
-  const user = mockUser || supabaseUser;
-  const signIn = mockSignIn;
-  const signOut = mockSignOut;
-  const loading = mockLoading || supabaseLoading;
+  const { user, signIn, signOut, loading } = useSupabaseAuth();
   const [email, setEmail] = useState('admin@bitbeheer.nl');
   const [password, setPassword] = useState('admin123');
   const [message, setMessage] = useState('');
 
   const handleTestLogin = async () => {
     setMessage('Attempting login...');
-    const result = await signIn(email, password);
-    if (result.success) {
-      setMessage('Login successful!');
-    } else {
-      setMessage(`Login failed: ${result.error}`);
+    
+    try {
+      // Direct Supabase authentication
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+      
+      if (error) {
+        setMessage(`Login failed: ${error.message}`);
+        console.error('Login error:', error);
+      } else {
+        setMessage('Login successful!');
+        console.log('Login successful:', data);
+      }
+    } catch (error) {
+      setMessage(`Login error: ${error}`);
+      console.error('Login error:', error);
     }
   };
 
   const handleTestLogout = async () => {
     setMessage('Logging out...');
-    const result = await signOut();
-    if (result.success) {
-      setMessage('Logout successful!');
-    } else {
-      setMessage(`Logout failed: ${result.error}`);
+    
+    try {
+      // Direct Supabase logout
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        setMessage(`Logout failed: ${error.message}`);
+        console.error('Logout error:', error);
+      } else {
+        setMessage('Logout successful!');
+        console.log('Logout successful');
+      }
+    } catch (error) {
+      setMessage(`Logout error: ${error}`);
+      console.error('Logout error:', error);
     }
   };
 

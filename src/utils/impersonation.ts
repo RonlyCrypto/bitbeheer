@@ -6,6 +6,9 @@ export interface ImpersonationData {
   startTime: string;
 }
 
+// Simple in-memory impersonation state (no localStorage)
+let impersonationState: ImpersonationData | null = null;
+
 export const impersonationUtils = {
   // Start impersonating a user
   startImpersonation: (userEmail: string, originalUser: string) => {
@@ -16,7 +19,8 @@ export const impersonationUtils = {
       startTime: new Date().toISOString()
     };
     
-    localStorage.setItem('impersonation', JSON.stringify(data));
+    impersonationState = data;
+    console.log('Started impersonation:', data);
     
     // Dispatch custom event to notify other components
     window.dispatchEvent(new CustomEvent('impersonationStarted', { detail: data }));
@@ -24,7 +28,8 @@ export const impersonationUtils = {
 
   // Stop impersonating
   stopImpersonation: () => {
-    localStorage.removeItem('impersonation');
+    impersonationState = null;
+    console.log('Stopped impersonation');
     
     // Dispatch custom event to notify other components
     window.dispatchEvent(new CustomEvent('impersonationStopped'));
@@ -32,32 +37,16 @@ export const impersonationUtils = {
 
   // Check if currently impersonating
   isCurrentlyImpersonating: (): boolean => {
-    const data = localStorage.getItem('impersonation');
-    if (!data) return false;
-    
-    try {
-      const parsed = JSON.parse(data);
-      return parsed.isImpersonating === true;
-    } catch {
-      return false;
-    }
+    return impersonationState?.isImpersonating === true;
   },
 
   // Get current impersonation data
   getCurrentImpersonation: (): ImpersonationData | null => {
-    const data = localStorage.getItem('impersonation');
-    if (!data) return null;
-    
-    try {
-      return JSON.parse(data);
-    } catch {
-      return null;
-    }
+    return impersonationState;
   },
 
   // Get impersonated user email
   getImpersonatedUser: (): string | null => {
-    const data = this.getCurrentImpersonation();
-    return data?.impersonatedUser || null;
+    return impersonationState?.impersonatedUser || null;
   }
 };
