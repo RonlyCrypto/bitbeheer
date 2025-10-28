@@ -7,35 +7,53 @@ interface PageVisibility {
   description: string;
   icon: React.ReactNode;
   enabled: boolean;
-  category: 'main' | 'user' | 'admin';
+  visibleTo: 'everyone' | 'admin_only';
+  category: 'main' | 'user' | 'admin' | 'menu';
 }
 
 export default function AdminSettings() {
   const [isLoading, setIsLoading] = useState(false);
   const [pageVisibility, setPageVisibility] = useState<PageVisibility[]>([
     // Main Pages
-    { id: 'dashboard', name: 'Dashboard', description: 'Hoofddashboard voor gebruikers', icon: <BarChart3 className="w-5 h-5" />, enabled: true, category: 'main' },
-    { id: 'profile', name: 'Profiel', description: 'Gebruikersprofiel beheer', icon: <Users className="w-5 h-5" />, enabled: true, category: 'main' },
-    { id: 'goals', name: 'Doelen', description: 'Financiële doelen stellen en volgen', icon: <Target className="w-5 h-5" />, enabled: true, category: 'main' },
-    { id: 'portfolio', name: 'Portfolio', description: 'Portfolio overzicht en beheer', icon: <Wallet className="w-5 h-5" />, enabled: true, category: 'main' },
-    { id: 'appointments', name: 'Afspraken', description: 'Afspraken inplannen en beheren', icon: <Calendar className="w-5 h-5" />, enabled: true, category: 'main' },
-    { id: 'education', name: 'Educatie', description: 'Leren over Bitcoin en investeren', icon: <BookOpen className="w-5 h-5" />, enabled: true, category: 'main' },
+    { id: 'dashboard', name: 'Dashboard', description: 'Hoofddashboard voor gebruikers', icon: <BarChart3 className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'main' },
+    { id: 'profile', name: 'Profiel', description: 'Gebruikersprofiel beheer', icon: <Users className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'main' },
+    { id: 'goals', name: 'Doelen', description: 'Financiële doelen stellen en volgen', icon: <Target className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'main' },
+    { id: 'portfolio', name: 'Portfolio', description: 'Portfolio overzicht en beheer', icon: <Wallet className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'main' },
+    { id: 'appointments', name: 'Afspraken', description: 'Afspraken inplannen en beheren', icon: <Calendar className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'main' },
+    { id: 'education', name: 'Educatie', description: 'Leren over Bitcoin en investeren', icon: <BookOpen className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'main' },
     
     // User Tools
-    { id: 'bitcoin_calculator', name: 'Bitcoin Calculator', description: 'Bitcoin investering calculator', icon: <BarChart3 className="w-5 h-5" />, enabled: true, category: 'user' },
-    { id: 'wallet_management', name: 'Wallet Beheer', description: 'Bitcoin wallet toevoegen en beheren', icon: <Wallet className="w-5 h-5" />, enabled: true, category: 'user' },
-    { id: 'price_alerts', name: 'Prijs Waarschuwingen', description: 'Bitcoin prijs notificaties', icon: <Eye className="w-5 h-5" />, enabled: true, category: 'user' },
+    { id: 'bitcoin_calculator', name: 'Bitcoin Calculator', description: 'Bitcoin investering calculator', icon: <BarChart3 className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'user' },
+    { id: 'wallet_management', name: 'Wallet Beheer', description: 'Bitcoin wallet toevoegen en beheren', icon: <Wallet className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'user' },
+    { id: 'price_alerts', name: 'Prijs Waarschuwingen', description: 'Bitcoin prijs notificaties', icon: <Eye className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'user' },
     
     // Admin Tools
-    { id: 'admin_dashboard', name: 'Admin Dashboard', description: 'Administratief dashboard', icon: <Shield className="w-5 h-5" />, enabled: true, category: 'admin' },
-    { id: 'account_management', name: 'Account Beheer', description: 'Gebruikersaccounts beheren', icon: <Users className="w-5 h-5" />, enabled: true, category: 'admin' },
-    { id: 'email_management', name: 'Email Beheer', description: 'Email templates en bulk verzending', icon: <Settings className="w-5 h-5" />, enabled: true, category: 'admin' },
+    { id: 'admin_dashboard', name: 'Admin Dashboard', description: 'Administratief dashboard', icon: <Shield className="w-5 h-5" />, enabled: true, visibleTo: 'admin_only', category: 'admin' },
+    { id: 'account_management', name: 'Account Beheer', description: 'Gebruikersaccounts beheren', icon: <Users className="w-5 h-5" />, enabled: true, visibleTo: 'admin_only', category: 'admin' },
+    { id: 'email_management', name: 'Email Beheer', description: 'Email templates en bulk verzending', icon: <Settings className="w-5 h-5" />, enabled: true, visibleTo: 'admin_only', category: 'admin' },
+    
+    // Menu Items
+    { id: 'bitcoin_history', name: 'Bitcoin Geschiedenis', description: 'Bitcoin prijsdata en DCA simulator', icon: <BarChart3 className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'menu' },
+    { id: 'portfolio_menu', name: 'Portfolio Menu', description: 'Portfolio overzicht in hoofdmenu', icon: <Wallet className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'menu' },
+    { id: 'market_cap_comparer', name: 'Market Cap Vergelijker', description: 'Cryptocurrency vergelijking', icon: <BarChart3 className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'menu' },
+    { id: 'educatief_platform', name: 'Educatief Platform', description: 'Leren over Bitcoin en investeren', icon: <BookOpen className="w-5 h-5" />, enabled: true, visibleTo: 'everyone', category: 'menu' },
   ]);
 
   const handleToggle = (id: string) => {
     setPageVisibility(prev => 
       prev.map(page => 
         page.id === id ? { ...page, enabled: !page.enabled } : page
+      )
+    );
+  };
+
+  const handleVisibilityToggle = (id: string) => {
+    setPageVisibility(prev => 
+      prev.map(page => 
+        page.id === id ? { 
+          ...page, 
+          visibleTo: page.visibleTo === 'everyone' ? 'admin_only' : 'everyone' 
+        } : page
       )
     );
   };
@@ -55,7 +73,11 @@ export default function AdminSettings() {
 
   const handleReset = () => {
     setPageVisibility(prev => 
-      prev.map(page => ({ ...page, enabled: true }))
+      prev.map(page => ({ 
+        ...page, 
+        enabled: true,
+        visibleTo: page.category === 'admin' ? 'admin_only' : 'everyone'
+      }))
     );
   };
 
@@ -64,6 +86,7 @@ export default function AdminSettings() {
       case 'main': return 'Hoofdpagina\'s';
       case 'user': return 'Gebruiker Tools';
       case 'admin': return 'Admin Tools';
+      case 'menu': return 'Menu Items';
       default: return 'Overig';
     }
   };
@@ -73,11 +96,12 @@ export default function AdminSettings() {
       case 'main': return 'Basis functionaliteiten voor alle gebruikers';
       case 'user': return 'Geavanceerde tools voor gebruikers';
       case 'admin': return 'Administratieve functionaliteiten';
+      case 'menu': return 'Hoofdmenu items en navigatie';
       default: return 'Overige functionaliteiten';
     }
   };
 
-  const categories = ['main', 'user', 'admin'];
+  const categories = ['main', 'user', 'admin', 'menu'];
 
   return (
     <div className="space-y-6">
@@ -155,18 +179,40 @@ export default function AdminSettings() {
                           }`}>
                             {page.description}
                           </p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <span className={`text-xs px-2 py-1 rounded-full ${
+                              page.visibleTo === 'everyone'
+                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                            }`}>
+                              {page.visibleTo === 'everyone' ? 'Iedereen' : 'Alleen Admin'}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleToggle(page.id)}
-                        className={`p-2 rounded-lg transition-colors ${
-                          page.enabled
-                            ? 'bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-800 dark:text-green-400 dark:hover:bg-green-700'
-                            : 'bg-gray-100 text-gray-400 hover:bg-gray-200 dark:bg-gray-600 dark:text-gray-500 dark:hover:bg-gray-500'
-                        }`}
-                      >
-                        {page.enabled ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleVisibilityToggle(page.id)}
+                          className={`p-2 rounded-lg transition-colors ${
+                            page.visibleTo === 'everyone'
+                              ? 'bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-800 dark:text-blue-400 dark:hover:bg-blue-700'
+                              : 'bg-orange-100 text-orange-600 hover:bg-orange-200 dark:bg-orange-800 dark:text-orange-400 dark:hover:bg-orange-700'
+                          }`}
+                          title={page.visibleTo === 'everyone' ? 'Zichtbaar voor iedereen' : 'Alleen zichtbaar voor admin'}
+                        >
+                          {page.visibleTo === 'everyone' ? <Users className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
+                        </button>
+                        <button
+                          onClick={() => handleToggle(page.id)}
+                          className={`p-2 rounded-lg transition-colors ${
+                            page.enabled
+                              ? 'bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-800 dark:text-green-400 dark:hover:bg-green-700'
+                              : 'bg-gray-100 text-gray-400 hover:bg-gray-200 dark:bg-gray-600 dark:text-gray-500 dark:hover:bg-gray-500'
+                          }`}
+                        >
+                          {page.enabled ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
