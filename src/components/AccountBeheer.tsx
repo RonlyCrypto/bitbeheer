@@ -258,41 +258,6 @@ export default function AccountBeheer() {
     }
   };
 
-  // Resend verification email
-  const handleResendVerificationEmail = async (user: UserAccount) => {
-    if (!user.verification_token) {
-      console.error('No verification token found');
-      return;
-    }
-
-    setIsSendingEmail(user.id);
-    
-    try {
-      const response = await fetch('https://clqbnkvnydlxtimiazqf.supabase.co/functions/v1/send-verification-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
-          email: user.email,
-          name: user.name,
-          verificationToken: user.verification_token
-        })
-      });
-
-      if (response.ok) {
-        alert('Bevestigingsmail opnieuw verzonden!');
-      } else {
-        alert('Fout bij het verzenden van de bevestigingsmail');
-      }
-    } catch (error) {
-      console.error('Error sending verification email:', error);
-      alert('Fout bij het verzenden van de bevestigingsmail');
-    } finally {
-      setIsSendingEmail(null);
-    }
-  };
 
   // Manual account activation
   const handleManualActivate = async (userId: string) => {
