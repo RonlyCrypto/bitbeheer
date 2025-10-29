@@ -131,8 +131,28 @@ export default function SystemStatusDebug() {
         ))}
         
         <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            Last updated: {new Date().toLocaleTimeString()}
+          <div className="space-y-2">
+            <button
+              onClick={() => {
+                console.log('🧪 Testing impersonation...');
+                impersonationUtils.startImpersonation('test@example.com', 'admin@bitbeheer.nl');
+              }}
+              className="w-full bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700"
+            >
+              Test Impersonation
+            </button>
+            <button
+              onClick={() => {
+                console.log('🛑 Stopping impersonation...');
+                impersonationUtils.stopImpersonation();
+              }}
+              className="w-full bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700"
+            >
+              Stop Impersonation
+            </button>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              Last updated: {new Date().toLocaleTimeString()}
+            </div>
           </div>
         </div>
       </div>

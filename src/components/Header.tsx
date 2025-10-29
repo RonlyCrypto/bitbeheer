@@ -19,12 +19,14 @@ export default function Header() {
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
 
   // Debug logging
-  console.log('Header - isAuthenticated:', isAuthenticated);
-  console.log('Header - user:', user);
-  console.log('Header - isImpersonating:', isImpersonating);
-  console.log('Header - impersonatedUser:', impersonatedUser);
-  console.log('Header - canAccessAdmin:', canAccessAdmin);
-  console.log('Header - Should show impersonation banner:', isImpersonating && impersonatedUser);
+  console.log('🏠 Header - isAuthenticated:', isAuthenticated);
+  console.log('🏠 Header - user:', user);
+  console.log('🏠 Header - user email:', user?.email);
+  console.log('🏠 Header - user metadata:', user?.user_metadata);
+  console.log('🏠 Header - isImpersonating:', isImpersonating);
+  console.log('🏠 Header - impersonatedUser:', impersonatedUser);
+  console.log('🏠 Header - canAccessAdmin:', canAccessAdmin);
+  console.log('🏠 Header - Should show impersonation banner:', isImpersonating && impersonatedUser);
 
 
   // Close dropdown when clicking outside
@@ -189,7 +191,10 @@ export default function Header() {
                                 {isImpersonating ? impersonatedUser : (user?.user_metadata?.name || user?.email?.split('@')[0] || 'Admin')}
                               </p>
                               <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {isImpersonating ? 'Impersonated User' : (user?.email || 'Niet ingelogd')}
+                                {isImpersonating 
+                                  ? 'Impersonated User' 
+                                  : (user?.email || (isAuthenticated ? 'Ingelogd' : 'Niet ingelogd'))
+                                }
                               </p>
                             </div>
                           </div>
