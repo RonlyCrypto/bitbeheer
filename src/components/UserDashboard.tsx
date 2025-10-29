@@ -787,7 +787,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio }: any) {
 function ProfileTab({ userProfile, setUserProfile, user, isImpersonating, impersonatedUser }: any) {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: userProfile?.name || '',
     first_name: userProfile?.first_name || '',
     last_name: userProfile?.last_name || '',
     email: userProfile?.email || '',
@@ -828,11 +827,11 @@ function ProfileTab({ userProfile, setUserProfile, user, isImpersonating, impers
       <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Naam *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Voornaam *</label>
             <input
               type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              value={formData.first_name}
+              onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
               disabled={!isEditing}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
@@ -845,16 +844,6 @@ function ProfileTab({ userProfile, setUserProfile, user, isImpersonating, impers
               value={getDisplayEmail(user, isImpersonating, impersonatedUser, true)}
               disabled
               className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Voornaam</label>
-            <input
-              type="text"
-              value={formData.first_name}
-              onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-              disabled={!isEditing}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
             />
           </div>
           <div>
