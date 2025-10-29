@@ -22,6 +22,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { PermissionsProvider } from './contexts/PermissionsContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import ImpersonationBanner from './components/ImpersonationBanner';
+import SystemStatusDebug from './components/SystemStatusDebug';
 
 function AppContent() {
   const { showWelcomePopup, setShowWelcomePopup, user } = useSupabaseAuth();
@@ -34,6 +35,9 @@ function AppContent() {
           
           {/* Global Impersonation Banner - Show on all routes when impersonating */}
           <ImpersonationBanner />
+          
+          {/* System Status Debug - Only in development */}
+          {process.env.NODE_ENV === 'development' && <SystemStatusDebug />}
 
           <Routes>
                 <Route path="/" element={<FrontPage />} />

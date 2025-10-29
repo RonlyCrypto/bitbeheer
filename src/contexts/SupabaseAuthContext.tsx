@@ -26,28 +26,28 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     // Test Supabase connection first
     const testSupabaseConnection = async () => {
       try {
-        console.log('Testing Supabase connection...');
+        console.log('🔍 Testing Supabase connection...');
         const { data, error } = await supabase.from('accounts').select('count').limit(1);
         if (error) {
-          console.error('Supabase connection error:', error);
+          console.error('❌ Supabase connection error:', error);
         } else {
-          console.log('Supabase connection successful:', data);
+          console.log('✅ Supabase connection successful:', data);
         }
       } catch (error) {
-        console.error('Supabase connection test failed:', error);
+        console.error('❌ Supabase connection test failed:', error);
       }
     };
 
     // Get initial session
     const getInitialSession = async () => {
       try {
-        console.log('Getting initial Supabase session...');
+        console.log('🔍 Getting initial Supabase session...');
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
-          console.error('Error getting session:', error);
+          console.error('❌ Error getting session:', error);
         }
-        console.log('Initial session:', session);
-        console.log('Initial user:', session?.user);
+        console.log('📊 Initial session:', session);
+        console.log('👤 Initial user:', session?.user);
         setUser(session?.user ?? null);
       } catch (error) {
         console.error('Error getting initial session:', error);
@@ -62,8 +62,9 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
               // Listen for auth changes
               const { data: { subscription } } = supabase.auth.onAuthStateChange(
                 async (event, session) => {
-                  console.log('Auth state change:', event, session);
-                  console.log('User from session:', session?.user);
+                  console.log('🔄 Auth state change:', event, session);
+                  console.log('👤 User from session:', session?.user);
+                  console.log('🔐 Is authenticated:', !!session?.user);
                   setUser(session?.user ?? null);
                   setLoading(false);
                   
