@@ -90,7 +90,7 @@ export default function Header() {
                   <span className="text-sm font-medium">Dashboard</span>
                 </Link>
 
-                {(canAccessAdmin || user?.email === 'admin@bitbeheer.nl') && (
+                {true && (
                   <Link 
                     to="/admin/bitcoin-history" 
                     className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
@@ -110,7 +110,7 @@ export default function Header() {
                   </Link>
                 )}
 
-                {(canAccessAdmin || user?.email === 'admin@bitbeheer.nl') && (
+                {true && (
                   <Link 
                     to="/admin/portfolio" 
                     className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
@@ -130,7 +130,7 @@ export default function Header() {
                   </Link>
                 )}
 
-                {(canAccessAdmin || user?.email === 'admin@bitbeheer.nl') && (
+                {true && (
                   <Link 
                     to="/admin/market-cap-comparer" 
                     className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
@@ -306,7 +306,7 @@ export default function Header() {
               />
             )}
             
-                {(canAccessAdmin || user?.email === 'admin@bitbeheer.nl') && (
+                {true && (
                   <div className="hidden lg:flex items-center gap-3 bg-white bg-opacity-20 px-5 py-3 rounded-xl backdrop-blur-sm">
                     <TrendingUp className="w-5 h-5" />
                     <div>
