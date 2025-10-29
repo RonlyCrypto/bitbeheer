@@ -21,7 +21,7 @@ export default function SystemStatusDebug() {
     return () => clearInterval(interval);
   }, []);
 
-  const impersonationData = impersonationUtils.getCurrentImpersonation();
+  const impersonationData = impersonationUtils.refreshState();
 
   const statusChecks = [
     {
@@ -136,10 +136,8 @@ export default function SystemStatusDebug() {
               onClick={() => {
                 console.log('🧪 Testing impersonation...');
                 impersonationUtils.startImpersonation('jan@example.com', 'admin@bitbeheer.nl');
-                // Force a page refresh to see the banner
-                setTimeout(() => {
-                  window.location.reload();
-                }, 100);
+                // Trigger a state refresh instead of page reload
+                setRefreshKey(prev => prev + 1);
               }}
               className="w-full bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700"
             >
@@ -149,10 +147,8 @@ export default function SystemStatusDebug() {
               onClick={() => {
                 console.log('🧪 Testing impersonation with Gio...');
                 impersonationUtils.startImpersonation('giovanni.hooten@gmail.com', 'admin@bitbeheer.nl');
-                // Force a page refresh to see the banner
-                setTimeout(() => {
-                  window.location.reload();
-                }, 100);
+                // Trigger a state refresh instead of page reload
+                setRefreshKey(prev => prev + 1);
               }}
               className="w-full bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700"
             >
@@ -162,10 +158,8 @@ export default function SystemStatusDebug() {
               onClick={() => {
                 console.log('🛑 Stopping impersonation...');
                 impersonationUtils.stopImpersonation();
-                // Force a page refresh to see the banner disappear
-                setTimeout(() => {
-                  window.location.reload();
-                }, 100);
+                // Trigger a state refresh instead of page reload
+                setRefreshKey(prev => prev + 1);
               }}
               className="w-full bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700"
             >

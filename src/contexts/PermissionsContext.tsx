@@ -91,8 +91,9 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   useEffect(() => {
     const checkImpersonation = () => {
-      const impersonationData = impersonationUtils.getCurrentImpersonation();
-      console.log('🔍 Checking impersonation:', impersonationData);
+      // Refresh state from localStorage first
+      const impersonationData = impersonationUtils.refreshState();
+      console.log('🔍 Checking impersonation (refreshed from localStorage):', impersonationData);
       
       if (impersonationData && impersonationData.isImpersonating) {
         setIsImpersonating(true);
