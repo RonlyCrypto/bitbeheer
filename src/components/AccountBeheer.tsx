@@ -183,14 +183,8 @@ export default function AccountBeheer() {
   };
 
   const handleLoginAsUser = (user: UserAccount) => {
-    // Set user session in localStorage
-    localStorage.setItem('user_session', JSON.stringify({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      category: user.category,
-      loginTime: new Date().toISOString()
-    }));
+    // Start impersonation using impersonation utils
+    impersonationUtils.startImpersonation(user.email, 'admin@bitbeheer.nl');
     
     // Redirect to user dashboard
     window.location.href = '/user-dashboard';

@@ -6,6 +6,7 @@ import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useSettings } from '../contexts/SettingsContext';
+import { impersonationUtils } from '../utils/impersonation';
 import BitcoinLivePrice from './BitcoinLivePrice';
 import LoginRegister from './LoginRegister';
 
@@ -244,13 +245,19 @@ export default function Header() {
                         
                         <button 
                           onClick={() => {
-                            signOut();
+                            if (isImpersonating) {
+                              // Stop impersonation and return to admin
+                              impersonationUtils.stopImpersonation();
+                              window.location.href = '/admin';
+                            } else {
+                              signOut();
+                            }
                             setShowSettingsDropdown(false);
                           }}
                           className="w-full flex items-center gap-3 px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                         >
                           <LogOut className="w-4 h-4" />
-                          Uitloggen
+                          {isImpersonating ? 'Terug naar Admin' : 'Uitloggen'}
                         </button>
                       </div>
                     </div>

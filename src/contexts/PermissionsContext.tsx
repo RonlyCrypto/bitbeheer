@@ -97,9 +97,10 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       if (impersonationData && impersonationData.isImpersonating) {
         setIsImpersonating(true);
         setImpersonatedUser(impersonationData.impersonatedUser);
-        // When impersonating, user has basic permissions
+        // When impersonating, user has basic permissions (not admin)
         setAccountType('user');
         console.log('🎭 Impersonating user:', impersonationData.impersonatedUser);
+        console.log('🎭 User will see regular user interface');
       } else {
         setIsImpersonating(false);
         setImpersonatedUser(null);
