@@ -21,6 +21,7 @@ import { SupabaseAuthProvider, useSupabaseAuth } from './contexts/SupabaseAuthCo
 import { ThemeProvider } from './contexts/ThemeContext';
 import { PermissionsProvider } from './contexts/PermissionsContext';
 import { SettingsProvider } from './contexts/SettingsContext';
+import ImpersonationBanner from './components/ImpersonationBanner';
 
 function AppContent() {
   const { showWelcomePopup, setShowWelcomePopup, user } = useSupabaseAuth();
@@ -30,6 +31,9 @@ function AppContent() {
       <SiteAccessControl>
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
           <Header />
+          
+          {/* Global Impersonation Banner - Show on all routes when impersonating */}
+          <ImpersonationBanner />
 
           <Routes>
                 <Route path="/" element={<FrontPage />} />

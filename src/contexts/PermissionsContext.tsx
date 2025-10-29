@@ -164,6 +164,11 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const canAccessPremium = hasPermission('premium.features');
   const canAccessBasic = hasPermission('user.dashboard');
   
+  // Debug logging
+  console.log('PermissionsContext - isImpersonating:', isImpersonating);
+  console.log('PermissionsContext - impersonatedUser:', impersonatedUser);
+  console.log('PermissionsContext - accountType:', accountType);
+  
 
   return (
     <PermissionsContext.Provider value={{
