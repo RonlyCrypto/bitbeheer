@@ -5,16 +5,15 @@ import { signUpUser } from '../lib/supabase';
 
 export default function AanmeldenPage() {
   const [formData, setFormData] = useState({
-    naam: '',
+    voornaam: '',
+    achternaam: '',
     email: '',
     telefoon: '',
+    locatie: '',
     spaargeld: '',
     ervaring: '',
     motivatie: '',
     verwachtingen: '',
-    voornaam: '',
-    achternaam: '',
-    locatie: '',
     bedrijf: '',
     investeringsdoel: '',
     voorkeurContact: 'email',
@@ -47,15 +46,14 @@ export default function AanmeldenPage() {
         },
         body: JSON.stringify({
           email: formData.email,
-          naam: formData.naam,
+          voornaam: formData.voornaam,
+          achternaam: formData.achternaam,
           telefoon: formData.telefoon,
+          locatie: formData.locatie,
           spaargeld: formData.spaargeld,
           ervaring: formData.ervaring,
           motivatie: formData.motivatie,
           verwachtingen: formData.verwachtingen,
-          voornaam: formData.voornaam,
-          achternaam: formData.achternaam,
-          locatie: formData.locatie,
           bedrijf: formData.bedrijf,
           investeringsdoel: formData.investeringsdoel,
           voorkeurContact: formData.voorkeurContact,
@@ -188,16 +186,44 @@ export default function AanmeldenPage() {
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Volledige Naam *
+                      Voornaam *
                     </label>
                     <input
                       type="text"
-                      name="naam"
-                      value={formData.naam}
+                      name="voornaam"
+                      value={formData.voornaam}
                       onChange={handleChange}
                       required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                      placeholder="Je volledige naam"
+                      placeholder="Je voornaam"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Achternaam *
+                    </label>
+                    <input
+                      type="text"
+                      name="achternaam"
+                      value={formData.achternaam}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      placeholder="Je achternaam"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Locatie *
+                    </label>
+                    <input
+                      type="text"
+                      name="locatie"
+                      value={formData.locatie}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      placeholder="Stad, Land"
                     />
                   </div>
                   <div>
@@ -326,45 +352,6 @@ export default function AanmeldenPage() {
                   Aanvullende Informatie (Optioneel)
                 </h3>
                 <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Voornaam
-                    </label>
-                    <input
-                      type="text"
-                      name="voornaam"
-                      value={formData.voornaam}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                      placeholder="Je voornaam"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Achternaam
-                    </label>
-                    <input
-                      type="text"
-                      name="achternaam"
-                      value={formData.achternaam}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                      placeholder="Je achternaam"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Locatie
-                    </label>
-                    <input
-                      type="text"
-                      name="locatie"
-                      value={formData.locatie}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                      placeholder="Stad, Land"
-                    />
-                  </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Bedrijf/Organisatie

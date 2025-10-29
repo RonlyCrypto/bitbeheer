@@ -22,15 +22,14 @@ module.exports = async (req, res) => {
   try {
     const { 
       email, 
-      naam, 
+      voornaam,
+      achternaam,
       telefoon, 
+      locatie,
       spaargeld, 
       ervaring, 
       motivatie, 
       verwachtingen,
-      voornaam,
-      achternaam,
-      locatie,
       bedrijf,
       investeringsdoel,
       voorkeurContact,
@@ -40,9 +39,15 @@ module.exports = async (req, res) => {
 
     console.log('Create account request body:', req.body);
 
-    if (!email || !naam) {
-      console.log('Missing required fields:', { email: !!email, naam: !!naam });
-      return res.status(400).json({ error: 'Email en naam zijn verplicht' });
+    if (!email || !voornaam || !achternaam || !telefoon || !locatie) {
+      console.log('Missing required fields:', { 
+        email: !!email, 
+        voornaam: !!voornaam, 
+        achternaam: !!achternaam,
+        telefoon: !!telefoon,
+        locatie: !!locatie
+      });
+      return res.status(400).json({ error: 'Email, voornaam, achternaam, telefoon en locatie zijn verplicht' });
     }
 
     console.log('Creating account for:', email);
@@ -77,17 +82,15 @@ module.exports = async (req, res) => {
     const tempPassword = Math.random().toString(36).slice(-12) + 'A1!';
     const passwordHash = await bcrypt.hash(tempPassword, 10);
 
-    // Parse name into first and last name if not provided separately
-    const nameParts = naam.trim().split(' ');
-    const firstName = voornaam || nameParts[0] || '';
-    const lastName = achternaam || nameParts.slice(1).join(' ') || '';
+    // Create full name from first and last name
+    const fullName = `${voornaam.trim()} ${achternaam.trim()}`.trim();
 
     // Create account in accounts table (this is where user accounts are stored)
     const accountData = {
       email: email.toLowerCase().trim(),
-      name: naam.trim(),
-      first_name: firstName,
-      last_name: lastName,
+      name: fullName,
+      first_name: voornaam.trim(),
+      last_name: achternaam.trim(),
       phone: telefoon || null,
       location: locatie || null,
       company: bedrijf || null,
