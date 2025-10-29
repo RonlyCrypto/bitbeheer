@@ -32,16 +32,19 @@ export default function ProfilePopup({
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
-      document.body.style.filter = 'grayscale(100%) blur(2px)';
+      document.body.style.filter = 'grayscale(30%) blur(1px)';
+      document.body.style.transition = 'filter 0.3s ease-in-out';
     } else {
       document.body.style.overflow = 'unset';
       document.body.style.filter = 'none';
+      document.body.style.transition = 'filter 0.3s ease-in-out';
     }
 
     // Cleanup on unmount
     return () => {
       document.body.style.overflow = 'unset';
       document.body.style.filter = 'none';
+      document.body.style.transition = 'none';
     };
   }, [isOpen]);
   const [formData, setFormData] = useState({
@@ -109,7 +112,7 @@ export default function ProfilePopup({
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
+      className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           onClose();
@@ -119,6 +122,12 @@ export default function ProfilePopup({
       <div 
         className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden animate-in fade-in-0 zoom-in-95 duration-300 border-2 border-orange-200 dark:border-orange-800"
         onClick={(e) => e.stopPropagation()}
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)'
+        }}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
