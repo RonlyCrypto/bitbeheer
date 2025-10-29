@@ -90,10 +90,10 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [impersonatedUser, setImpersonatedUser] = useState<string | null>(null);
 
   useEffect(() => {
-    const checkImpersonation = () => {
-      // Refresh state from localStorage first
-      const impersonationData = impersonationUtils.refreshState();
-      console.log('🔍 Checking impersonation (refreshed from localStorage):', impersonationData);
+    const checkImpersonation = async () => {
+      // Refresh state from Supabase first
+      const impersonationData = await impersonationUtils.refreshState();
+      console.log('🔍 Checking impersonation (refreshed from Supabase):', impersonationData);
       
       if (impersonationData && impersonationData.isImpersonating) {
         setIsImpersonating(true);
