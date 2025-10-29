@@ -1,6 +1,4 @@
-// Impersonation utility functions with Supabase integration
-import { supabase } from '../lib/supabase';
-
+// Impersonation utility functions - Simple localStorage version
 export interface ImpersonationData {
   isImpersonating: boolean;
   impersonatedUser: string;
@@ -8,62 +6,13 @@ export interface ImpersonationData {
   startTime: string;
 }
 
-// Cache for current impersonation state
-let currentImpersonationState: ImpersonationData | null = null;
+// Simple impersonation state using localStorage
+const IMPERSONATION_KEY = 'impersonation_state';
 
 export const impersonationUtils = {
   // Start impersonating a user
   startImpersonation: async (userEmail: string, originalUser: string) => {
     try {
-      console.log('🎭 Starting impersonation:', userEmail, 'by', originalUser);
-      
-      // Generate unique session ID
-      const sessionId = `imp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Insert session into Supabase
-      const { data, error } = await supabase
-        .from('impersonation_sessions')
-        .insert({
-          admin_email: originalUser,
-          user_email: userEmail,
-          session_id: sessionId,
-          start_time: new Date().toISOString(),
-          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
-          is_active: true
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('❌ Error creating impersonation session:', error);
-        
-        // If table doesn't exist, fall back to localStorage
-        if (error.message.includes('relation "impersonation_sessions" does not exist')) {
-          console.log('⚠️ Impersonation table not found, using localStorage fallback');
-          
-          // Store in localStorage as fallback
-          const impersonationData: ImpersonationData = {
-            isImpersonating: true,
-            impersonatedUser: userEmail,
-            originalUser: originalUser,
-            startTime: new Date().toISOString()
-          };
-          
-          localStorage.setItem('impersonation_state', JSON.stringify(impersonationData));
-          currentImpersonationState = impersonationData;
-          
-          console.log('✅ Started impersonation (localStorage fallback):', userEmail);
-          
-          // Dispatch custom event to notify other components
-          window.dispatchEvent(new CustomEvent('impersonationStarted', { detail: impersonationData }));
-          
-          return impersonationData;
-        }
-        
-        throw new Error(`Failed to create impersonation session: ${error.message}`);
-      }
-
-      // Update local state
       const impersonationData: ImpersonationData = {
         isImpersonating: true,
         impersonatedUser: userEmail,
@@ -71,19 +20,17 @@ export const impersonationUtils = {
         startTime: new Date().toISOString()
       };
 
-      currentImpersonationState = impersonationData;
+      // Store in localStorage for persistence
+      localStorage.setItem(IMPERSONATION_KEY, JSON.stringify(impersonationData));
       
-      // Store session ID in localStorage for persistence
-      localStorage.setItem('impersonation_session_id', sessionId);
-      
-      console.log('✅ Started impersonation session:', sessionId);
+      console.log('Started impersonation:', userEmail);
       
       // Dispatch custom event to notify other components
       window.dispatchEvent(new CustomEvent('impersonationStarted', { detail: impersonationData }));
       
       return impersonationData;
     } catch (error) {
-      console.error('❌ Error starting impersonation:', error);
+      console.error('Error starting impersonation:', error);
       throw error;
     }
   },
@@ -91,171 +38,54 @@ export const impersonationUtils = {
   // Stop impersonating
   stopImpersonation: async () => {
     try {
-      console.log('🛑 Stopping impersonation...');
+      // Remove from localStorage
+      localStorage.removeItem(IMPERSONATION_KEY);
       
-      const sessionId = localStorage.getItem('impersonation_session_id');
-      
-      if (sessionId) {
-        try {
-          // Deactivate session in Supabase
-          const { error } = await supabase
-            .from('impersonation_sessions')
-            .update({ is_active: false })
-            .eq('session_id', sessionId);
-
-          if (error) {
-            console.error('❌ Error deactivating session:', error);
-          } else {
-            console.log('✅ Deactivated impersonation session:', sessionId);
-          }
-        } catch (dbError) {
-          console.log('⚠️ Database error, continuing with localStorage cleanup');
-        }
-      }
-
-      // Clear local state
-      currentImpersonationState = null;
-      localStorage.removeItem('impersonation_session_id');
-      localStorage.removeItem('impersonation_state'); // Also clear localStorage fallback
-      
-      console.log('✅ Stopped impersonation');
+      console.log('Stopped impersonation');
       
       // Dispatch custom event to notify other components
       window.dispatchEvent(new CustomEvent('impersonationStopped'));
-      
-      // Force a small delay to ensure state is cleared
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
     } catch (error) {
-      console.error('❌ Error stopping impersonation:', error);
-      
-      // Force clear state even if there's an error
-      currentImpersonationState = null;
-      localStorage.removeItem('impersonation_session_id');
-      localStorage.removeItem('impersonation_state');
-      
-      // Dispatch event anyway
-      window.dispatchEvent(new CustomEvent('impersonationStopped'));
+      console.error('Error stopping impersonation:', error);
     }
   },
 
   // Check if currently impersonating
   isCurrentlyImpersonating: (): boolean => {
-    return currentImpersonationState?.isImpersonating === true;
+    try {
+      const stored = localStorage.getItem(IMPERSONATION_KEY);
+      if (!stored) return false;
+      
+      const data = JSON.parse(stored);
+      return data?.isImpersonating === true;
+    } catch (error) {
+      console.error('Error checking impersonation state:', error);
+      return false;
+    }
   },
 
   // Get current impersonation data
   getCurrentImpersonation: (): ImpersonationData | null => {
-    return currentImpersonationState;
+    try {
+      const stored = localStorage.getItem(IMPERSONATION_KEY);
+      if (!stored) return null;
+      
+      const data = JSON.parse(stored);
+      return data?.isImpersonating ? data : null;
+    } catch (error) {
+      console.error('Error getting impersonation data:', error);
+      return null;
+    }
   },
 
   // Get impersonated user email
   getImpersonatedUser: (): string | null => {
-    return currentImpersonationState?.impersonatedUser || null;
+    const data = impersonationUtils.getCurrentImpersonation();
+    return data?.impersonatedUser || null;
   },
 
-  // Refresh state from Supabase
-  refreshState: async (): Promise<ImpersonationData | null> => {
-    try {
-      const sessionId = localStorage.getItem('impersonation_session_id');
-      
-      if (!sessionId) {
-        // Check localStorage fallback
-        const stored = localStorage.getItem('impersonation_state');
-        if (stored) {
-          try {
-            const data = JSON.parse(stored);
-            if (data?.isImpersonating) {
-              currentImpersonationState = data;
-              console.log('✅ Refreshed impersonation state from localStorage:', data);
-              return data;
-            }
-          } catch (e) {
-            console.log('❌ Invalid localStorage data');
-          }
-        }
-        currentImpersonationState = null;
-        return null;
-      }
-
-      console.log('🔄 Refreshing impersonation state from Supabase...');
-
-      // Check if session exists and is active in Supabase
-      const { data, error } = await supabase
-        .from('impersonation_sessions')
-        .select('*')
-        .eq('session_id', sessionId)
-        .eq('is_active', true)
-        .single();
-
-      if (error || !data) {
-        console.log('❌ No active impersonation session found');
-        
-        // Fall back to localStorage
-        const stored = localStorage.getItem('impersonation_state');
-        if (stored) {
-          try {
-            const fallbackData = JSON.parse(stored);
-            if (fallbackData?.isImpersonating) {
-              currentImpersonationState = fallbackData;
-              console.log('✅ Using localStorage fallback:', fallbackData);
-              return fallbackData;
-            }
-          } catch (e) {
-            console.log('❌ Invalid localStorage fallback data');
-          }
-        }
-        
-        currentImpersonationState = null;
-        localStorage.removeItem('impersonation_session_id');
-        return null;
-      }
-
-      // Check if session expired
-      if (new Date() > new Date(data.expires_at)) {
-        console.log('⏰ Impersonation session expired');
-        currentImpersonationState = null;
-        localStorage.removeItem('impersonation_session_id');
-        
-        // Deactivate expired session
-        await supabase
-          .from('impersonation_sessions')
-          .update({ is_active: false })
-          .eq('session_id', sessionId);
-        
-        return null;
-      }
-
-      // Update local state with data from Supabase
-      currentImpersonationState = {
-        isImpersonating: true,
-        impersonatedUser: data.user_email,
-        originalUser: data.admin_email,
-        startTime: data.start_time
-      };
-
-      console.log('✅ Refreshed impersonation state:', currentImpersonationState);
-      return currentImpersonationState;
-    } catch (error) {
-      console.error('❌ Error refreshing impersonation state:', error);
-      
-      // Fall back to localStorage
-      const stored = localStorage.getItem('impersonation_state');
-      if (stored) {
-        try {
-          const fallbackData = JSON.parse(stored);
-          if (fallbackData?.isImpersonating) {
-            currentImpersonationState = fallbackData;
-            console.log('✅ Using localStorage fallback after error:', fallbackData);
-            return fallbackData;
-          }
-        } catch (e) {
-          console.log('❌ Invalid localStorage fallback data after error');
-        }
-      }
-      
-      currentImpersonationState = null;
-      return null;
-    }
+  // Refresh state (for compatibility)
+  refreshState: async () => {
+    return impersonationUtils.getCurrentImpersonation();
   }
 };
