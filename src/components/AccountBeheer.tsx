@@ -184,14 +184,24 @@ export default function AccountBeheer() {
 
   const handleLoginAsUser = async (user: UserAccount) => {
     try {
+      console.log('🎭 Starting impersonation for user:', user.email);
+      
       // Start impersonation using secure impersonation utils
       await impersonationUtils.startImpersonation(user.email, 'admin@bitbeheer.nl');
       
-      // Redirect to user dashboard
-      window.location.href = '/user-dashboard';
+      console.log('✅ Impersonation started, redirecting to user dashboard...');
+      
+      // Small delay to ensure state is updated
+      setTimeout(() => {
+        window.location.href = '/user-dashboard';
+      }, 100);
+      
     } catch (error) {
-      console.error('Failed to start impersonation:', error);
-      alert('Kon niet inloggen als gebruiker. Probeer het opnieuw.');
+      console.error('❌ Failed to start impersonation:', error);
+      
+      // Show more detailed error message
+      const errorMessage = error instanceof Error ? error.message : 'Onbekende fout';
+      alert(`Kon niet inloggen als gebruiker: ${errorMessage}\n\nControleer of de database tabel 'impersonation_sessions' bestaat.`);
     }
   };
 

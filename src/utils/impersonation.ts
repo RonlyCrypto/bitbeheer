@@ -36,6 +36,30 @@ export const impersonationUtils = {
 
       if (error) {
         console.error('❌ Error creating impersonation session:', error);
+        
+        // If table doesn't exist, fall back to localStorage
+        if (error.message.includes('relation "impersonation_sessions" does not exist')) {
+          console.log('⚠️ Impersonation table not found, using localStorage fallback');
+          
+          // Store in localStorage as fallback
+          const impersonationData: ImpersonationData = {
+            isImpersonating: true,
+            impersonatedUser: userEmail,
+            originalUser: originalUser,
+            startTime: new Date().toISOString()
+          };
+          
+          localStorage.setItem('impersonation_state', JSON.stringify(impersonationData));
+          currentImpersonationState = impersonationData;
+          
+          console.log('✅ Started impersonation (localStorage fallback):', userEmail);
+          
+          // Dispatch custom event to notify other components
+          window.dispatchEvent(new CustomEvent('impersonationStarted', { detail: impersonationData }));
+          
+          return impersonationData;
+        }
+        
         throw new Error(`Failed to create impersonation session: ${error.message}`);
       }
 
@@ -119,6 +143,20 @@ export const impersonationUtils = {
       const sessionId = localStorage.getItem('impersonation_session_id');
       
       if (!sessionId) {
+        // Check localStorage fallback
+        const stored = localStorage.getItem('impersonation_state');
+        if (stored) {
+          try {
+            const data = JSON.parse(stored);
+            if (data?.isImpersonating) {
+              currentImpersonationState = data;
+              console.log('✅ Refreshed impersonation state from localStorage:', data);
+              return data;
+            }
+          } catch (e) {
+            console.log('❌ Invalid localStorage data');
+          }
+        }
         currentImpersonationState = null;
         return null;
       }
@@ -135,6 +173,22 @@ export const impersonationUtils = {
 
       if (error || !data) {
         console.log('❌ No active impersonation session found');
+        
+        // Fall back to localStorage
+        const stored = localStorage.getItem('impersonation_state');
+        if (stored) {
+          try {
+            const fallbackData = JSON.parse(stored);
+            if (fallbackData?.isImpersonating) {
+              currentImpersonationState = fallbackData;
+              console.log('✅ Using localStorage fallback:', fallbackData);
+              return fallbackData;
+            }
+          } catch (e) {
+            console.log('❌ Invalid localStorage fallback data');
+          }
+        }
+        
         currentImpersonationState = null;
         localStorage.removeItem('impersonation_session_id');
         return null;
@@ -167,6 +221,22 @@ export const impersonationUtils = {
       return currentImpersonationState;
     } catch (error) {
       console.error('❌ Error refreshing impersonation state:', error);
+      
+      // Fall back to localStorage
+      const stored = localStorage.getItem('impersonation_state');
+      if (stored) {
+        try {
+          const fallbackData = JSON.parse(stored);
+          if (fallbackData?.isImpersonating) {
+            currentImpersonationState = fallbackData;
+            console.log('✅ Using localStorage fallback after error:', fallbackData);
+            return fallbackData;
+          }
+        } catch (e) {
+          console.log('❌ Invalid localStorage fallback data after error');
+        }
+      }
+      
       currentImpersonationState = null;
       return null;
     }
