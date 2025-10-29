@@ -35,6 +35,7 @@ import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { getDisplayName, getDisplayEmail } from '../utils/emailUtils';
+import ProfilePopup from './ProfilePopup';
 
 interface UserProfile {
   id: string;
@@ -106,12 +107,12 @@ export default function UserDashboard() {
   const { isImpersonating, impersonatedUser } = usePermissions();
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Check if we should show profile tab from URL
+  // Check if we should show profile popup from URL
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const tab = urlParams.get('tab');
     if (tab === 'profile') {
-      setActiveTab('profile');
+      setShowProfilePopup(true);
     }
   }, []);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -119,6 +120,7 @@ export default function UserDashboard() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [hasWallet, setHasWallet] = useState(false);
   const [showFirstAppointmentPrompt, setShowFirstAppointmentPrompt] = useState(false);
   const [showBitcoinCalculator, setShowBitcoinCalculator] = useState(false);
@@ -414,7 +416,6 @@ export default function UserDashboard() {
           {/* Main Content */}
           <div className="flex-1">
             {activeTab === 'overview' && <OverviewTab userProfile={userProfile} goals={goals} appointments={appointments} portfolio={portfolio} />}
-            {activeTab === 'profile' && <ProfileTab userProfile={userProfile} setUserProfile={setUserProfile} user={user} isImpersonating={isImpersonating} impersonatedUser={impersonatedUser} />}
             {activeTab === 'goals' && <GoalsTab goals={goals} setGoals={setGoals} />}
             {activeTab === 'portfolio' && <PortfolioTab portfolio={portfolio} setPortfolio={setPortfolio} />}
             {activeTab === 'appointments' && <AppointmentsTab appointments={appointments} setAppointments={setAppointments} />}
@@ -422,6 +423,17 @@ export default function UserDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Profile Popup */}
+      <ProfilePopup
+        isOpen={showProfilePopup}
+        onClose={() => setShowProfilePopup(false)}
+        userProfile={userProfile}
+        setUserProfile={setUserProfile}
+        user={user}
+        isImpersonating={isImpersonating}
+        impersonatedUser={impersonatedUser}
+      />
     </div>
   );
 }
@@ -791,157 +803,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio }: any) {
   );
 }
 
-// Profile Tab Component
-function ProfileTab({ userProfile, setUserProfile, user, isImpersonating, impersonatedUser }: any) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    first_name: userProfile?.first_name || '',
-    last_name: userProfile?.last_name || '',
-    email: userProfile?.email || '',
-    phone: userProfile?.phone || '',
-    location: userProfile?.location || '',
-    company: userProfile?.company || '',
-    bio: userProfile?.bio || '',
-    investmentGoal: userProfile?.investmentGoal || '',
-    preferredContact: userProfile?.preferredContact || 'email',
-    newsletterSubscription: userProfile?.newsletterSubscription || false,
-    marketingConsent: userProfile?.marketingConsent || false
-  });
-
-  const handleSave = async () => {
-    try {
-      // In production, this would update Supabase
-      setUserProfile({ ...userProfile, ...formData });
-      setIsEditing(false);
-      alert('Profiel succesvol bijgewerkt!');
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      alert('Fout bij het bijwerken van profiel');
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Mijn Profiel</h2>
-        <button
-          onClick={() => setIsEditing(!isEditing)}
-          className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-        >
-          {isEditing ? 'Annuleren' : 'Bewerken'}
-        </button>
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Voornaam *</label>
-            <input
-              type="text"
-              value={formData.first_name}
-              onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-              disabled={!isEditing}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-            <input
-              type="email"
-              value={getDisplayEmail(user, isImpersonating, impersonatedUser, true)}
-              disabled
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Achternaam</label>
-            <input
-              type="text"
-              value={formData.last_name}
-              onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-              disabled={!isEditing}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Telefoon</label>
-            <input
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              disabled={!isEditing}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Locatie</label>
-            <input
-              type="text"
-              value={formData.location}
-              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              disabled={!isEditing}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Bedrijf/Organisatie</label>
-            <input
-              type="text"
-              value={formData.company}
-              onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-              disabled={!isEditing}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Investeringsdoel</label>
-            <select
-              value={formData.investmentGoal}
-              onChange={(e) => setFormData({ ...formData, investmentGoal: e.target.value })}
-              disabled={!isEditing}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
-            >
-              <option value="">Selecteer je investeringsdoel</option>
-              <option value="pensioen">Pensioen opbouw</option>
-              <option value="sparen">Lange termijn sparen</option>
-              <option value="trading">Actief trading</option>
-              <option value="diversificatie">Portfolio diversificatie</option>
-              <option value="leren">Leren over Bitcoin</option>
-            </select>
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Over mij</label>
-            <textarea
-              value={formData.bio}
-              onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-              disabled={!isEditing}
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
-            />
-          </div>
-        </div>
-
-        {isEditing && (
-          <div className="mt-6 flex gap-3">
-            <button
-              onClick={handleSave}
-              className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-            >
-              Opslaan
-            </button>
-            <button
-              onClick={() => setIsEditing(false)}
-              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Annuleren
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 // Goals Tab Component
 function GoalsTab({ goals, setGoals }: any) {

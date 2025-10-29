@@ -19,12 +19,22 @@ export const maskEmail = (email: string): string => {
 
 export const getDisplayName = (user: any, isImpersonating: boolean, impersonatedUser: string | null): string => {
   if (isImpersonating && impersonatedUser) {
-    return impersonatedUser;
+    // For impersonation, try to get first name from user data or fallback to email username
+    if (user?.user_metadata?.first_name) {
+      return user.user_metadata.first_name;
+    }
+    // Fallback to email username for impersonation
+    return impersonatedUser.split('@')[0];
   }
   
   // Try to get full name from user metadata
   if (user?.user_metadata?.first_name && user?.user_metadata?.last_name) {
     return `${user.user_metadata.first_name} ${user.user_metadata.last_name}`;
+  }
+  
+  // Try to get first name only
+  if (user?.user_metadata?.first_name) {
+    return user.user_metadata.first_name;
   }
   
   // Try to get name from user metadata
