@@ -342,7 +342,7 @@ export default function AccountBeheer() {
       try {
         console.log('🎭 Starting impersonation for user:', user.email);
         
-        // Start impersonation using secure impersonation utils
+        // Start impersonation using impersonation utils
         await impersonationUtils.startImpersonation(user.email, 'admin@bitbeheer.nl');
         
         console.log('✅ Impersonation started, redirecting to user dashboard...');
@@ -354,10 +354,7 @@ export default function AccountBeheer() {
         
       } catch (error) {
         console.error('❌ Failed to start impersonation:', error);
-        
-        // Show more detailed error message
-        const errorMessage = error instanceof Error ? error.message : 'Onbekende fout';
-        alert(`Kon niet inloggen als gebruiker: ${errorMessage}\n\nControleer of de database tabel 'impersonation_sessions' bestaat.`);
+        alert('Kon niet inloggen als gebruiker. Probeer het opnieuw.');
       }
     }
   };
