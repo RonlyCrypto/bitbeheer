@@ -21,6 +21,11 @@ export default function ProfilePopup({
   isImpersonating, 
   impersonatedUser 
 }: ProfilePopupProps) {
+  console.log('🎭 ProfilePopup - isOpen:', isOpen);
+  console.log('🎭 ProfilePopup - userProfile:', userProfile);
+  console.log('🎭 ProfilePopup - user:', user);
+  console.log('🎭 ProfilePopup - isImpersonating:', isImpersonating);
+  console.log('🎭 ProfilePopup - impersonatedUser:', impersonatedUser);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     first_name: userProfile?.first_name || '',

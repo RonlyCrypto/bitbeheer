@@ -174,7 +174,7 @@ export default function Header() {
                       <Settings className="w-5 h-5" />
                     </div>
                     <span className="font-medium">
-                      {getDisplayName(user, isImpersonating, impersonatedUser)}
+                      {getDisplayName(user, isImpersonating, impersonatedUser, null)}
                     </span>
                   </button>
                   
@@ -190,7 +190,7 @@ export default function Header() {
                             </div>
                             <div>
                               <p className="font-medium text-gray-900 dark:text-white">
-                                {getDisplayName(user, isImpersonating, impersonatedUser)}
+                                {getDisplayName(user, isImpersonating, impersonatedUser, null)}
                               </p>
                               <p className="text-sm text-gray-600 dark:text-gray-400">
                                 {getDisplayEmail(user, isImpersonating, impersonatedUser, isAuthenticated)}

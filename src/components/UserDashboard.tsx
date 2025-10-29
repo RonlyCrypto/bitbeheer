@@ -106,21 +106,24 @@ export default function UserDashboard() {
   const { theme } = useTheme();
   const { isImpersonating, impersonatedUser } = usePermissions();
   const [activeTab, setActiveTab] = useState('overview');
-
-  // Check if we should show profile popup from URL
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const tab = urlParams.get('tab');
-    if (tab === 'profile') {
-      setShowProfilePopup(true);
-    }
-  }, []);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
+
+  // Check if we should show profile popup from URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    console.log('🔍 URL params:', window.location.search);
+    console.log('🔍 Tab parameter:', tab);
+    if (tab === 'profile') {
+      console.log('✅ Opening profile popup from URL');
+      setShowProfilePopup(true);
+    }
+  }, []);
   const [hasWallet, setHasWallet] = useState(false);
   const [showFirstAppointmentPrompt, setShowFirstAppointmentPrompt] = useState(false);
   const [showBitcoinCalculator, setShowBitcoinCalculator] = useState(false);
@@ -370,7 +373,7 @@ export default function UserDashboard() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mijn Dashboard</h1>
-                <p className="text-gray-600 dark:text-gray-400">Welkom terug, {getDisplayName(user, isImpersonating, impersonatedUser)}!</p>
+                <p className="text-gray-600 dark:text-gray-400">Welkom terug, {getDisplayName(user, isImpersonating, impersonatedUser, userProfile)}!</p>
               </div>
             </div>
             <div className="flex items-center gap-4">

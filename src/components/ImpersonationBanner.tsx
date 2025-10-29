@@ -45,7 +45,7 @@ export default function ImpersonationBanner() {
       <div className="container mx-auto flex items-center justify-center gap-4">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-          <span>Je bent ingelogd als: <strong>{getDisplayName(null, true, impersonatedUser)}</strong></span>
+          <span>Je bent ingelogd als: <strong>{getDisplayName(null, true, impersonatedUser, null)}</strong></span>
         </div>
         <button
           onClick={handleStopImpersonation}
