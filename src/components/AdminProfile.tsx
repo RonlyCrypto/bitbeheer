@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User, Mail, Phone, MapPin, Save, Edit, X } from 'lucide-react';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
+import { supabase } from '../lib/supabase';
 
 export default function AdminProfile() {
   const { user } = useSupabaseAuth();
@@ -20,9 +21,21 @@ export default function AdminProfile() {
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      // Here you would update the user profile in Supabase
-      // For now, we'll just simulate the save
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Update user metadata in Supabase
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          name: profileData.name,
+          phone: profileData.phone,
+          location: profileData.location,
+          bio: profileData.bio
+        }
+      });
+
+      if (error) {
+        console.error('Error updating user metadata:', error);
+        throw error;
+      }
+
       setIsEditing(false);
       console.log('Profile saved:', profileData);
     } catch (error) {

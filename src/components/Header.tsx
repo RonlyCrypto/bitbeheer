@@ -169,7 +169,7 @@ export default function Header() {
                       <Settings className="w-5 h-5" />
                     </div>
                     <span className="font-medium">
-                      {isImpersonating ? impersonatedUser : (user?.user_metadata?.name || user?.email?.split('@')[0] || 'Gebruiker')}
+                      {isImpersonating ? impersonatedUser : (user?.user_metadata?.name || user?.email?.split('@')[0] || 'Admin')}
                     </span>
                   </button>
                   
@@ -185,10 +185,10 @@ export default function Header() {
                             </div>
                             <div>
                               <p className="font-medium text-gray-900 dark:text-white">
-                                {isImpersonating ? impersonatedUser : (user?.user_metadata?.name || user?.email?.split('@')[0] || 'Gebruiker')}
+                                {isImpersonating ? impersonatedUser : (user?.user_metadata?.name || user?.email?.split('@')[0] || 'Admin')}
                               </p>
                               <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {isImpersonating ? 'Impersonated User' : (user?.email || 'admin@bitbeheer.nl')}
+                                {isImpersonating ? 'Impersonated User' : (user?.email || 'Niet ingelogd')}
                               </p>
                             </div>
                           </div>
