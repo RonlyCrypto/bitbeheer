@@ -96,29 +96,46 @@ export const impersonationUtils = {
       const sessionId = localStorage.getItem('impersonation_session_id');
       
       if (sessionId) {
-        // Deactivate session in Supabase
-        const { error } = await supabase
-          .from('impersonation_sessions')
-          .update({ is_active: false })
-          .eq('session_id', sessionId);
+        try {
+          // Deactivate session in Supabase
+          const { error } = await supabase
+            .from('impersonation_sessions')
+            .update({ is_active: false })
+            .eq('session_id', sessionId);
 
-        if (error) {
-          console.error('❌ Error deactivating session:', error);
-        } else {
-          console.log('✅ Deactivated impersonation session:', sessionId);
+          if (error) {
+            console.error('❌ Error deactivating session:', error);
+          } else {
+            console.log('✅ Deactivated impersonation session:', sessionId);
+          }
+        } catch (dbError) {
+          console.log('⚠️ Database error, continuing with localStorage cleanup');
         }
       }
 
       // Clear local state
       currentImpersonationState = null;
       localStorage.removeItem('impersonation_session_id');
+      localStorage.removeItem('impersonation_state'); // Also clear localStorage fallback
       
       console.log('✅ Stopped impersonation');
       
       // Dispatch custom event to notify other components
       window.dispatchEvent(new CustomEvent('impersonationStopped'));
+      
+      // Force a small delay to ensure state is cleared
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
     } catch (error) {
       console.error('❌ Error stopping impersonation:', error);
+      
+      // Force clear state even if there's an error
+      currentImpersonationState = null;
+      localStorage.removeItem('impersonation_session_id');
+      localStorage.removeItem('impersonation_state');
+      
+      // Dispatch event anyway
+      window.dispatchEvent(new CustomEvent('impersonationStopped'));
     }
   },
 

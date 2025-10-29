@@ -12,10 +12,23 @@ export default function ImpersonationBanner() {
   console.log('🔴 ImpersonationBanner - Should show banner:', isImpersonating && impersonatedUser);
 
   const handleStopImpersonation = async () => {
-    console.log('🛑 Stopping impersonation...');
-    await impersonationUtils.stopImpersonation();
-    // Redirect to admin dashboard
-    window.location.href = '/admin';
+    try {
+      console.log('🛑 Stopping impersonation...');
+      await impersonationUtils.stopImpersonation();
+      
+      console.log('✅ Impersonation stopped, redirecting to admin...');
+      
+      // Small delay to ensure state is cleared
+      setTimeout(() => {
+        window.location.href = '/admin';
+      }, 200);
+      
+    } catch (error) {
+      console.error('❌ Error stopping impersonation:', error);
+      
+      // Force redirect even if there's an error
+      window.location.href = '/admin';
+    }
   };
 
   // Only show banner when impersonating

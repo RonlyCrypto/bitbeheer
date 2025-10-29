@@ -250,9 +250,24 @@ export default function Header() {
                         <button 
                           onClick={async () => {
                             if (isImpersonating) {
-                              // Stop impersonation and return to admin
-                              await impersonationUtils.stopImpersonation();
-                              window.location.href = '/admin';
+                              try {
+                                // Stop impersonation and return to admin
+                                console.log('🛑 Stopping impersonation from header...');
+                                await impersonationUtils.stopImpersonation();
+                                
+                                console.log('✅ Impersonation stopped, redirecting to admin...');
+                                
+                                // Small delay to ensure state is cleared
+                                setTimeout(() => {
+                                  window.location.href = '/admin';
+                                }, 200);
+                                
+                              } catch (error) {
+                                console.error('❌ Error stopping impersonation from header:', error);
+                                
+                                // Force redirect even if there's an error
+                                window.location.href = '/admin';
+                              }
                             } else {
                               signOut();
                             }
