@@ -34,6 +34,7 @@ import { bitcoinPriceService, BitcoinPrice } from '../services/bitcoinPriceServi
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePermissions } from '../contexts/PermissionsContext';
+import { useProfilePopup } from '../contexts/ProfilePopupContext';
 import { getDisplayName, getDisplayEmail } from '../utils/emailUtils';
 import ProfilePopup from './ProfilePopup';
 
@@ -102,28 +103,17 @@ interface Portfolio {
 }
 
 export default function UserDashboard() {
+  console.log('🎯 UserDashboard component loaded');
   const { user } = useSupabaseAuth();
   const { theme } = useTheme();
   const { isImpersonating, impersonatedUser } = usePermissions();
+  const { isOpen: isProfilePopupOpen, closeProfilePopup } = useProfilePopup();
   const [activeTab, setActiveTab] = useState('overview');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showProfilePopup, setShowProfilePopup] = useState(false);
-
-  // Check if we should show profile popup from URL
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const tab = urlParams.get('tab');
-    console.log('🔍 URL params:', window.location.search);
-    console.log('🔍 Tab parameter:', tab);
-    if (tab === 'profile') {
-      console.log('✅ Opening profile popup from URL');
-      setShowProfilePopup(true);
-    }
-  }, []);
   const [hasWallet, setHasWallet] = useState(false);
   const [showFirstAppointmentPrompt, setShowFirstAppointmentPrompt] = useState(false);
   const [showBitcoinCalculator, setShowBitcoinCalculator] = useState(false);
@@ -429,8 +419,8 @@ export default function UserDashboard() {
 
       {/* Profile Popup */}
       <ProfilePopup
-        isOpen={showProfilePopup}
-        onClose={() => setShowProfilePopup(false)}
+        isOpen={isProfilePopupOpen}
+        onClose={closeProfilePopup}
         userProfile={userProfile}
         setUserProfile={setUserProfile}
         user={user}

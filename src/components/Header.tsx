@@ -6,6 +6,7 @@ import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useSettings } from '../contexts/SettingsContext';
+import { useProfilePopup } from '../contexts/ProfilePopupContext';
 import { impersonationUtils } from '../utils/impersonation';
 import { getDisplayName, getDisplayEmail } from '../utils/emailUtils';
 import BitcoinLivePrice from './BitcoinLivePrice';
@@ -18,6 +19,7 @@ export default function Header() {
   const { theme, toggleTheme } = useTheme();
   const { isImpersonating, impersonatedUser, canAccessAdmin } = usePermissions();
   const { isMenuVisible } = useSettings(); // Get settings for menu visibility
+  const { openProfilePopup } = useProfilePopup();
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
 
   // Debug logging
@@ -200,14 +202,28 @@ export default function Header() {
                         </div>
 
                           {/* Menu Items */}
-                          <Link 
-                            to={isImpersonating ? "/user-dashboard?tab=profile" : "/admin"} 
-                            className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                            onClick={() => setShowSettingsDropdown(false)}
-                          >
-                            <User className="w-4 h-4" />
-                            {isImpersonating ? 'Gebruiker Profiel' : 'Mijn Profiel'}
-                          </Link>
+                          {isImpersonating ? (
+                            <button
+                              className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                              onClick={() => {
+                                console.log('🔗 Gebruiker Profiel clicked, opening popup');
+                                openProfilePopup();
+                                setShowSettingsDropdown(false);
+                              }}
+                            >
+                              <User className="w-4 h-4" />
+                              Gebruiker Profiel
+                            </button>
+                          ) : (
+                            <Link 
+                              to="/admin" 
+                              className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                              onClick={() => setShowSettingsDropdown(false)}
+                            >
+                              <User className="w-4 h-4" />
+                              Mijn Profiel
+                            </Link>
+                          )}
                           
                           {!isImpersonating && (
                             <Link 
