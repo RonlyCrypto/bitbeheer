@@ -188,7 +188,7 @@ export default function Header() {
                                 {isImpersonating ? impersonatedUser : (user?.user_metadata?.name || user?.email?.split('@')[0] || 'Gebruiker')}
                               </p>
                               <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {isImpersonating ? 'Impersonated User' : (user?.email || 'Niet ingelogd')}
+                                {isImpersonating ? 'Impersonated User' : (user?.email || 'admin@bitbeheer.nl')}
                               </p>
                             </div>
                           </div>
@@ -300,15 +300,28 @@ export default function Header() {
               />
             )}
             
-            {isMenuVisible('educatief_platform', 'everyone') && (
-              <div className="hidden lg:flex items-center gap-3 bg-white bg-opacity-20 px-5 py-3 rounded-xl backdrop-blur-sm">
-                <TrendingUp className="w-5 h-5" />
-                <div>
-                  <div className="text-xs text-orange-100">Educatief Platform</div>
-                  <div className="font-semibold">Voor Beginners</div>
-                </div>
-              </div>
-            )}
+                {isMenuVisible('educatief_platform', 'everyone') && (
+                  <div className="hidden lg:flex items-center gap-3 bg-white bg-opacity-20 px-5 py-3 rounded-xl backdrop-blur-sm">
+                    <TrendingUp className="w-5 h-5" />
+                    <div>
+                      <div className="text-xs text-orange-100">Educatief Platform</div>
+                      <div className="font-semibold">Voor Beginners</div>
+                    </div>
+                  </div>
+                )}
+
+                {isMenuVisible('available_pages', canAccessAdmin ? 'admin' : 'user') && (
+                  <Link 
+                    to="/admin" 
+                    className="hidden lg:flex items-center gap-3 bg-white bg-opacity-20 px-5 py-3 rounded-xl backdrop-blur-sm hover:bg-opacity-30 transition-all"
+                  >
+                    <BarChart3 className="w-5 h-5" />
+                    <div>
+                      <div className="text-xs text-orange-100">Beschikbare Pagina's</div>
+                      <div className="font-semibold">Beheer</div>
+                    </div>
+                  </Link>
+                )}
           </div>
         </div>
       </div>

@@ -14,6 +14,7 @@ interface PageVisibility {
 
 export default function AdminSettings() {
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('pages');
   const { pageVisibility, updatePageVisibility } = useSettings();
 
   const handleToggle = (id: string) => {
@@ -104,96 +105,321 @@ export default function AdminSettings() {
         </div>
       </div>
 
-      <div className="space-y-8">
-        {categories.map(category => {
-          const categoryPages = pageVisibility.filter(page => page.category === category);
-          return (
-            <div key={category} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {getCategoryTitle(category)}
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {getCategoryDescription(category)}
-                </p>
-              </div>
+      {/* Tabs */}
+      <div className="border-b border-gray-200 dark:border-gray-700">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('pages')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'pages'
+                ? 'border-orange-500 text-orange-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Pagina's & Menu
+          </button>
+          <button
+            onClick={() => setActiveTab('tools')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'tools'
+                ? 'border-orange-500 text-orange-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Tools & Features
+          </button>
+          <button
+            onClick={() => setActiveTab('admin')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'admin'
+                ? 'border-orange-500 text-orange-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Admin Tools
+          </button>
+        </nav>
+      </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {categoryPages.map(page => (
-                  <div
-                    key={page.id}
-                    className={`p-4 rounded-lg border transition-all ${
-                      page.enabled
-                        ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20'
-                        : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/50'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3">
-                        <div className={`p-2 rounded-lg ${
-                          page.enabled
-                            ? 'bg-green-100 text-green-600 dark:bg-green-800 dark:text-green-400'
-                            : 'bg-gray-100 text-gray-400 dark:bg-gray-600 dark:text-gray-500'
-                        }`}>
-                          {page.icon}
-                        </div>
-                        <div>
-                          <h4 className={`font-medium ${
+      {/* Tab Content */}
+      {activeTab === 'pages' && (
+        <div className="space-y-8">
+          {['main', 'menu'].map(category => {
+            const categoryPages = pageVisibility.filter(page => page.category === category);
+            return (
+              <div key={category} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {getCategoryTitle(category)}
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    {getCategoryDescription(category)}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {categoryPages.map(page => (
+                    <div
+                      key={page.id}
+                      className={`p-4 rounded-lg border transition-all ${
+                        page.enabled
+                          ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20'
+                          : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/50'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3">
+                          <div className={`p-2 rounded-lg ${
                             page.enabled
-                              ? 'text-gray-900 dark:text-white'
-                              : 'text-gray-500 dark:text-gray-400'
+                              ? 'bg-green-100 text-green-600 dark:bg-green-800 dark:text-green-400'
+                              : 'bg-gray-100 text-gray-400 dark:bg-gray-600 dark:text-gray-500'
                           }`}>
-                            {page.name}
-                          </h4>
-                          <p className={`text-sm mt-1 ${
-                            page.enabled
-                              ? 'text-gray-600 dark:text-gray-300'
-                              : 'text-gray-400 dark:text-gray-500'
-                          }`}>
-                            {page.description}
-                          </p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className={`text-xs px-2 py-1 rounded-full ${
-                              page.visibleTo === 'everyone'
-                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                                : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                            {page.icon}
+                          </div>
+                          <div>
+                            <h4 className={`font-medium ${
+                              page.enabled
+                                ? 'text-gray-900 dark:text-white'
+                                : 'text-gray-500 dark:text-gray-400'
                             }`}>
-                              {page.visibleTo === 'everyone' ? 'Iedereen' : 'Alleen Admin'}
-                            </span>
+                              {page.name}
+                            </h4>
+                            <p className={`text-sm mt-1 ${
+                              page.enabled
+                                ? 'text-gray-600 dark:text-gray-300'
+                                : 'text-gray-400 dark:text-gray-500'
+                            }`}>
+                              {page.description}
+                            </p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                page.visibleTo === 'everyone'
+                                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                  : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                              }`}>
+                                {page.visibleTo === 'everyone' ? 'Iedereen' : 'Alleen Admin'}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleVisibilityToggle(page.id)}
-                          className={`p-2 rounded-lg transition-colors ${
-                            page.visibleTo === 'everyone'
-                              ? 'bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-800 dark:text-blue-400 dark:hover:bg-blue-700'
-                              : 'bg-orange-100 text-orange-600 hover:bg-orange-200 dark:bg-orange-800 dark:text-orange-400 dark:hover:bg-orange-700'
-                          }`}
-                          title={page.visibleTo === 'everyone' ? 'Zichtbaar voor iedereen' : 'Alleen zichtbaar voor admin'}
-                        >
-                          {page.visibleTo === 'everyone' ? <Users className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
-                        </button>
-                        <button
-                          onClick={() => handleToggle(page.id)}
-                          className={`p-2 rounded-lg transition-colors ${
-                            page.enabled
-                              ? 'bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-800 dark:text-green-400 dark:hover:bg-green-700'
-                              : 'bg-gray-100 text-gray-400 hover:bg-gray-200 dark:bg-gray-600 dark:text-gray-500 dark:hover:bg-gray-500'
-                          }`}
-                        >
-                          {page.enabled ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleVisibilityToggle(page.id)}
+                            className={`p-2 rounded-lg transition-colors ${
+                              page.visibleTo === 'everyone'
+                                ? 'bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-800 dark:text-blue-400 dark:hover:bg-blue-700'
+                                : 'bg-orange-100 text-orange-600 hover:bg-orange-200 dark:bg-orange-800 dark:text-orange-400 dark:hover:bg-orange-700'
+                            }`}
+                            title={page.visibleTo === 'everyone' ? 'Zichtbaar voor iedereen' : 'Alleen zichtbaar voor admin'}
+                          >
+                            {page.visibleTo === 'everyone' ? <Users className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
+                          </button>
+                          <button
+                            onClick={() => handleToggle(page.id)}
+                            className={`p-2 rounded-lg transition-colors ${
+                              page.enabled
+                                ? 'bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-800 dark:text-green-400 dark:hover:bg-green-700'
+                                : 'bg-gray-100 text-gray-400 hover:bg-gray-200 dark:bg-gray-600 dark:text-gray-500 dark:hover:bg-gray-500'
+                            }`}
+                          >
+                            {page.enabled ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
+
+      {activeTab === 'tools' && (
+        <div className="space-y-8">
+          {['user'].map(category => {
+            const categoryPages = pageVisibility.filter(page => page.category === category);
+            return (
+              <div key={category} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {getCategoryTitle(category)}
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    {getCategoryDescription(category)}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {categoryPages.map(page => (
+                    <div
+                      key={page.id}
+                      className={`p-4 rounded-lg border transition-all ${
+                        page.enabled
+                          ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20'
+                          : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/50'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3">
+                          <div className={`p-2 rounded-lg ${
+                            page.enabled
+                              ? 'bg-green-100 text-green-600 dark:bg-green-800 dark:text-green-400'
+                              : 'bg-gray-100 text-gray-400 dark:bg-gray-600 dark:text-gray-500'
+                          }`}>
+                            {page.icon}
+                          </div>
+                          <div>
+                            <h4 className={`font-medium ${
+                              page.enabled
+                                ? 'text-gray-900 dark:text-white'
+                                : 'text-gray-500 dark:text-gray-400'
+                            }`}>
+                              {page.name}
+                            </h4>
+                            <p className={`text-sm mt-1 ${
+                              page.enabled
+                                ? 'text-gray-600 dark:text-gray-300'
+                                : 'text-gray-400 dark:text-gray-500'
+                            }`}>
+                              {page.description}
+                            </p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                page.visibleTo === 'everyone'
+                                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                  : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                              }`}>
+                                {page.visibleTo === 'everyone' ? 'Iedereen' : 'Alleen Admin'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleVisibilityToggle(page.id)}
+                            className={`p-2 rounded-lg transition-colors ${
+                              page.visibleTo === 'everyone'
+                                ? 'bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-800 dark:text-blue-400 dark:hover:bg-blue-700'
+                                : 'bg-orange-100 text-orange-600 hover:bg-orange-200 dark:bg-orange-800 dark:text-orange-400 dark:hover:bg-orange-700'
+                            }`}
+                            title={page.visibleTo === 'everyone' ? 'Zichtbaar voor iedereen' : 'Alleen zichtbaar voor admin'}
+                          >
+                            {page.visibleTo === 'everyone' ? <Users className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
+                          </button>
+                          <button
+                            onClick={() => handleToggle(page.id)}
+                            className={`p-2 rounded-lg transition-colors ${
+                              page.enabled
+                                ? 'bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-800 dark:text-green-400 dark:hover:bg-green-700'
+                                : 'bg-gray-100 text-gray-400 hover:bg-gray-200 dark:bg-gray-600 dark:text-gray-500 dark:hover:bg-gray-500'
+                            }`}
+                          >
+                            {page.enabled ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {activeTab === 'admin' && (
+        <div className="space-y-8">
+          {['admin'].map(category => {
+            const categoryPages = pageVisibility.filter(page => page.category === category);
+            return (
+              <div key={category} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {getCategoryTitle(category)}
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    {getCategoryDescription(category)}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {categoryPages.map(page => (
+                    <div
+                      key={page.id}
+                      className={`p-4 rounded-lg border transition-all ${
+                        page.enabled
+                          ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20'
+                          : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/50'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3">
+                          <div className={`p-2 rounded-lg ${
+                            page.enabled
+                              ? 'bg-green-100 text-green-600 dark:bg-green-800 dark:text-green-400'
+                              : 'bg-gray-100 text-gray-400 dark:bg-gray-600 dark:text-gray-500'
+                          }`}>
+                            {page.icon}
+                          </div>
+                          <div>
+                            <h4 className={`font-medium ${
+                              page.enabled
+                                ? 'text-gray-900 dark:text-white'
+                                : 'text-gray-500 dark:text-gray-400'
+                            }`}>
+                              {page.name}
+                            </h4>
+                            <p className={`text-sm mt-1 ${
+                              page.enabled
+                                ? 'text-gray-600 dark:text-gray-300'
+                                : 'text-gray-400 dark:text-gray-500'
+                            }`}>
+                              {page.description}
+                            </p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                page.visibleTo === 'everyone'
+                                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                  : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                              }`}>
+                                {page.visibleTo === 'everyone' ? 'Iedereen' : 'Alleen Admin'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleVisibilityToggle(page.id)}
+                            className={`p-2 rounded-lg transition-colors ${
+                              page.visibleTo === 'everyone'
+                                ? 'bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-800 dark:text-blue-400 dark:hover:bg-blue-700'
+                                : 'bg-orange-100 text-orange-600 hover:bg-orange-200 dark:bg-orange-800 dark:text-orange-400 dark:hover:bg-orange-700'
+                            }`}
+                            title={page.visibleTo === 'everyone' ? 'Zichtbaar voor iedereen' : 'Alleen zichtbaar voor admin'}
+                          >
+                            {page.visibleTo === 'everyone' ? <Users className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
+                          </button>
+                          <button
+                            onClick={() => handleToggle(page.id)}
+                            className={`p-2 rounded-lg transition-colors ${
+                              page.enabled
+                                ? 'bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-800 dark:text-green-400 dark:hover:bg-green-700'
+                                : 'bg-gray-100 text-gray-400 hover:bg-gray-200 dark:bg-gray-600 dark:text-gray-500 dark:hover:bg-gray-500'
+                            }`}
+                          >
+                            {page.enabled ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Summary */}
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">

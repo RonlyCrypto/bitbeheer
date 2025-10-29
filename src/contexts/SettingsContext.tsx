@@ -43,6 +43,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     { id: 'portfolio_menu', name: 'Portfolio Menu', description: 'Portfolio overzicht in hoofdmenu', enabled: true, visibleTo: 'everyone', category: 'menu' },
     { id: 'market_cap_comparer', name: 'Market Cap Vergelijker', description: 'Cryptocurrency vergelijking', enabled: true, visibleTo: 'everyone', category: 'menu' },
     { id: 'educatief_platform', name: 'Educatief Platform', description: 'Leren over Bitcoin en investeren', enabled: true, visibleTo: 'everyone', category: 'menu' },
+    
+    // Available Pages (from Admin Dashboard)
+    { id: 'available_pages', name: 'Beschikbare Pagina\'s', description: 'Beheer beschikbare pagina\'s', enabled: true, visibleTo: 'admin_only', category: 'menu' },
   ]);
 
   // Load settings from localStorage on mount
