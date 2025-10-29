@@ -24,6 +24,12 @@ export default function Header() {
   console.log('Header - isImpersonating:', isImpersonating);
   console.log('Header - impersonatedUser:', impersonatedUser);
   console.log('Header - canAccessAdmin:', canAccessAdmin);
+  
+  // Debug menu visibility
+  console.log('Header - bitcoin_history visible:', isMenuVisible('bitcoin_history', 'everyone'));
+  console.log('Header - portfolio_menu visible:', isMenuVisible('portfolio_menu', 'everyone'));
+  console.log('Header - market_cap_comparer visible:', isMenuVisible('market_cap_comparer', 'everyone'));
+  console.log('Header - educatief_platform visible:', isMenuVisible('educatief_platform', 'everyone'));
 
 
   // Close dropdown when clicking outside
