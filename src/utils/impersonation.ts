@@ -14,10 +14,11 @@ export const impersonationUtils = {
   // Start impersonating a user (secure server-side)
   startImpersonation: async (userEmail: string, originalUser: string) => {
     try {
-      const response = await fetch('/api/impersonation', {
+      const response = await fetch('https://clqbnkvnyldlxtimiaqf.supabase.co/functions/v1/impersonation', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNscWJua3ZueWRseHRpbWlhenFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzMzU4OTIsImV4cCI6MjA3NjkxMTg5Mn0.2QqJgJgJgJgJgJgJgJgJgJgJgJgJgJgJgJgJgJgJg',
         },
         body: JSON.stringify({
           action: 'start',
@@ -55,7 +56,7 @@ export const impersonationUtils = {
   stopImpersonation: async () => {
     if (currentSessionId) {
       try {
-        const response = await fetch('/api/impersonation', {
+        const response = await fetch('https://clqbnkvnyldlxtimiaqf.supabase.co/functions/v1/impersonation', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -108,10 +109,11 @@ export const impersonationUtils = {
     }
 
     try {
-      const response = await fetch('/api/impersonation', {
+      const response = await fetch('https://clqbnkvnyldlxtimiaqf.supabase.co/functions/v1/impersonation', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNscWJua3ZueWRseHRpbWlhenFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzMzU4OTIsImV4cCI6MjA3NjkxMTg5Mn0.2QqJgJgJgJgJgJgJgJgJgJgJgJgJgJgJgJgJgJgJg',
         },
         body: JSON.stringify({
           action: 'verify',
