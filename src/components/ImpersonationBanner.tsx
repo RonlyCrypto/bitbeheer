@@ -11,9 +11,9 @@ export default function ImpersonationBanner() {
   console.log('🔴 ImpersonationBanner - impersonatedUser:', impersonatedUser);
   console.log('🔴 ImpersonationBanner - Should show banner:', isImpersonating && impersonatedUser);
 
-  const handleStopImpersonation = () => {
+  const handleStopImpersonation = async () => {
     console.log('🛑 Stopping impersonation...');
-    impersonationUtils.stopImpersonation();
+    await impersonationUtils.stopImpersonation();
     // Redirect to admin dashboard
     window.location.href = '/admin';
   };

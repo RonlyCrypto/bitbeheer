@@ -182,12 +182,17 @@ export default function AccountBeheer() {
     setShowUserModal(true);
   };
 
-  const handleLoginAsUser = (user: UserAccount) => {
-    // Start impersonation using impersonation utils
-    impersonationUtils.startImpersonation(user.email, 'admin@bitbeheer.nl');
-    
-    // Redirect to user dashboard
-    window.location.href = '/user-dashboard';
+  const handleLoginAsUser = async (user: UserAccount) => {
+    try {
+      // Start impersonation using secure impersonation utils
+      await impersonationUtils.startImpersonation(user.email, 'admin@bitbeheer.nl');
+      
+      // Redirect to user dashboard
+      window.location.href = '/user-dashboard';
+    } catch (error) {
+      console.error('Failed to start impersonation:', error);
+      alert('Kon niet inloggen als gebruiker. Probeer het opnieuw.');
+    }
   };
 
   const handleUpdateUserLogin = async (userId: string) => {

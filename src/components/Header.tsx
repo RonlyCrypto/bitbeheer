@@ -248,10 +248,10 @@ export default function Header() {
                         <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
                         
                         <button 
-                          onClick={() => {
+                          onClick={async () => {
                             if (isImpersonating) {
                               // Stop impersonation and return to admin
-                              impersonationUtils.stopImpersonation();
+                              await impersonationUtils.stopImpersonation();
                               window.location.href = '/admin';
                             } else {
                               signOut();
