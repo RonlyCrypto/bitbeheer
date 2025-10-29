@@ -135,16 +135,37 @@ export default function SystemStatusDebug() {
             <button
               onClick={() => {
                 console.log('🧪 Testing impersonation...');
-                impersonationUtils.startImpersonation('test@example.com', 'admin@bitbeheer.nl');
+                impersonationUtils.startImpersonation('jan@example.com', 'admin@bitbeheer.nl');
+                // Force a page refresh to see the banner
+                setTimeout(() => {
+                  window.location.reload();
+                }, 100);
               }}
               className="w-full bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700"
             >
-              Test Impersonation
+              Test Impersonation (Jan)
+            </button>
+            <button
+              onClick={() => {
+                console.log('🧪 Testing impersonation with Gio...');
+                impersonationUtils.startImpersonation('giovanni.hooten@gmail.com', 'admin@bitbeheer.nl');
+                // Force a page refresh to see the banner
+                setTimeout(() => {
+                  window.location.reload();
+                }, 100);
+              }}
+              className="w-full bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700"
+            >
+              Test Impersonation (Gio)
             </button>
             <button
               onClick={() => {
                 console.log('🛑 Stopping impersonation...');
                 impersonationUtils.stopImpersonation();
+                // Force a page refresh to see the banner disappear
+                setTimeout(() => {
+                  window.location.reload();
+                }, 100);
               }}
               className="w-full bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700"
             >

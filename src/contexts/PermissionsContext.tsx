@@ -168,9 +168,10 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const canAccessBasic = hasPermission('user.dashboard');
   
   // Debug logging
-  console.log('PermissionsContext - isImpersonating:', isImpersonating);
-  console.log('PermissionsContext - impersonatedUser:', impersonatedUser);
-  console.log('PermissionsContext - accountType:', accountType);
+  console.log('🎭 PermissionsContext - isImpersonating:', isImpersonating);
+  console.log('🎭 PermissionsContext - impersonatedUser:', impersonatedUser);
+  console.log('🎭 PermissionsContext - accountType:', accountType);
+  console.log('🎭 PermissionsContext - Should show banner:', isImpersonating && impersonatedUser);
   
 
   return (

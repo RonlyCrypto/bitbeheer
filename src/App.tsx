@@ -36,8 +36,8 @@ function AppContent() {
           {/* Global Impersonation Banner - Show on all routes when impersonating */}
           <ImpersonationBanner />
           
-          {/* System Status Debug - Only in development */}
-          {process.env.NODE_ENV === 'development' && <SystemStatusDebug />}
+          {/* System Status Debug - Always visible for now */}
+          <SystemStatusDebug />
 
           <Routes>
                 <Route path="/" element={<FrontPage />} />

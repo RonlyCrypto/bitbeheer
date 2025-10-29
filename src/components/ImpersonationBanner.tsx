@@ -6,7 +6,13 @@ import { impersonationUtils } from '../utils/impersonation';
 export default function ImpersonationBanner() {
   const { isImpersonating, impersonatedUser } = usePermissions();
 
+  // Debug logging
+  console.log('🔴 ImpersonationBanner - isImpersonating:', isImpersonating);
+  console.log('🔴 ImpersonationBanner - impersonatedUser:', impersonatedUser);
+  console.log('🔴 ImpersonationBanner - Should show banner:', isImpersonating && impersonatedUser);
+
   const handleStopImpersonation = () => {
+    console.log('🛑 Stopping impersonation...');
     impersonationUtils.stopImpersonation();
     // Redirect to admin dashboard
     window.location.href = '/admin';
@@ -14,8 +20,11 @@ export default function ImpersonationBanner() {
 
   // Only show banner when impersonating
   if (!isImpersonating || !impersonatedUser) {
+    console.log('🔴 ImpersonationBanner - Not showing banner (not impersonating or no user)');
     return null;
   }
+
+  console.log('🔴 ImpersonationBanner - Rendering banner for:', impersonatedUser);
 
   return (
     <div className="bg-red-600 text-white py-3 px-4 text-center text-sm font-medium shadow-lg">
