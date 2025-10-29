@@ -24,8 +24,6 @@ export default function Header() {
   console.log('Header - isImpersonating:', isImpersonating);
   console.log('Header - impersonatedUser:', impersonatedUser);
   console.log('Header - canAccessAdmin:', canAccessAdmin);
-  console.log('Header - user email:', user?.email);
-  console.log('Header - user metadata:', user?.user_metadata);
 
 
   // Close dropdown when clicking outside
@@ -89,7 +87,7 @@ export default function Header() {
                   <span className="text-sm font-medium">Dashboard</span>
                 </Link>
 
-                {canAccessAdmin && (
+                {(canAccessAdmin || user?.email === 'admin@bitbeheer.nl') && (
                   <Link 
                     to="/admin/bitcoin-history" 
                     className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
@@ -109,7 +107,7 @@ export default function Header() {
                   </Link>
                 )}
 
-                {canAccessAdmin && (
+                {(canAccessAdmin || user?.email === 'admin@bitbeheer.nl') && (
                   <Link 
                     to="/admin/portfolio" 
                     className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
@@ -129,7 +127,7 @@ export default function Header() {
                   </Link>
                 )}
 
-                {canAccessAdmin && (
+                {(canAccessAdmin || user?.email === 'admin@bitbeheer.nl') && (
                   <Link 
                     to="/admin/market-cap-comparer" 
                     className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
@@ -302,7 +300,7 @@ export default function Header() {
               />
             )}
             
-                {canAccessAdmin && (
+                {(canAccessAdmin || user?.email === 'admin@bitbeheer.nl') && (
                   <div className="hidden lg:flex items-center gap-3 bg-white bg-opacity-20 px-5 py-3 rounded-xl backdrop-blur-sm">
                     <TrendingUp className="w-5 h-5" />
                     <div>

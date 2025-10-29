@@ -111,7 +111,7 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
           // Check if user is admin based on email or metadata
           if (user.email === 'admin@bitbeheer.nl' || user.user_metadata?.is_admin) {
             setAccountType('admin');
-            console.log('Admin user detected');
+            console.log('Admin user detected via email or metadata');
           } else if (user.user_metadata?.is_test) {
             setAccountType('test');
             console.log('Test user detected');
@@ -164,11 +164,6 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const canAccessPremium = hasPermission('premium.features');
   const canAccessBasic = hasPermission('user.dashboard');
   
-  // Debug logging
-  console.log('PermissionsContext - accountType:', accountType);
-  console.log('PermissionsContext - canAccessAdmin:', canAccessAdmin);
-  console.log('PermissionsContext - user:', user);
-  console.log('PermissionsContext - user email:', user?.email);
 
   return (
     <PermissionsContext.Provider value={{
