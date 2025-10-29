@@ -27,7 +27,15 @@ module.exports = async (req, res) => {
       spaargeld, 
       ervaring, 
       motivatie, 
-      verwachtingen 
+      verwachtingen,
+      voornaam,
+      achternaam,
+      locatie,
+      bedrijf,
+      investeringsdoel,
+      voorkeurContact,
+      nieuwsbrief,
+      marketingToestemming
     } = req.body;
 
     console.log('Create account request body:', req.body);
@@ -69,10 +77,25 @@ module.exports = async (req, res) => {
     const tempPassword = Math.random().toString(36).slice(-12) + 'A1!';
     const passwordHash = await bcrypt.hash(tempPassword, 10);
 
+    // Parse name into first and last name if not provided separately
+    const nameParts = naam.trim().split(' ');
+    const firstName = voornaam || nameParts[0] || '';
+    const lastName = achternaam || nameParts.slice(1).join(' ') || '';
+
     // Create account in accounts table (this is where user accounts are stored)
     const accountData = {
       email: email.toLowerCase().trim(),
       name: naam.trim(),
+      first_name: firstName,
+      last_name: lastName,
+      phone: telefoon || null,
+      location: locatie || null,
+      company: bedrijf || null,
+      experience_level: ervaring || null,
+      investment_goal: investeringsdoel || null,
+      preferred_contact: voorkeurContact || null,
+      newsletter_subscription: nieuwsbrief === 'true' || nieuwsbrief === true,
+      marketing_consent: marketingToestemming === 'true' || marketingToestemming === true,
       password_hash: passwordHash,
       category: 'nieuwe_gebruiker',
       created_at: new Date().toISOString(),

@@ -7,6 +7,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { impersonationUtils } from '../utils/impersonation';
+import { getDisplayName, getDisplayEmail } from '../utils/emailUtils';
 import BitcoinLivePrice from './BitcoinLivePrice';
 import LoginRegister from './LoginRegister';
 
@@ -173,7 +174,7 @@ export default function Header() {
                       <Settings className="w-5 h-5" />
                     </div>
                     <span className="font-medium">
-                      {isImpersonating ? impersonatedUser : (user?.user_metadata?.name || user?.email?.split('@')[0] || 'Admin')}
+                      {getDisplayName(user, isImpersonating, impersonatedUser)}
                     </span>
                   </button>
                   
@@ -189,13 +190,10 @@ export default function Header() {
                             </div>
                             <div>
                               <p className="font-medium text-gray-900 dark:text-white">
-                                {isImpersonating ? impersonatedUser : (user?.user_metadata?.name || user?.email?.split('@')[0] || 'Admin')}
+                                {getDisplayName(user, isImpersonating, impersonatedUser)}
                               </p>
                               <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {isImpersonating 
-                                  ? 'Ingelogd als gebruiker' 
-                                  : (user?.email || (isAuthenticated ? 'Ingelogd' : 'Niet ingelogd'))
-                                }
+                                {getDisplayEmail(user, isImpersonating, impersonatedUser, isAuthenticated)}
                               </p>
                             </div>
                           </div>

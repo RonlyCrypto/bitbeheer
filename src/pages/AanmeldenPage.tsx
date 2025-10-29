@@ -11,7 +11,15 @@ export default function AanmeldenPage() {
     spaargeld: '',
     ervaring: '',
     motivatie: '',
-    verwachtingen: ''
+    verwachtingen: '',
+    voornaam: '',
+    achternaam: '',
+    locatie: '',
+    bedrijf: '',
+    investeringsdoel: '',
+    voorkeurContact: 'email',
+    nieuwsbrief: false,
+    marketingToestemming: false
   });
 
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -44,7 +52,15 @@ export default function AanmeldenPage() {
           spaargeld: formData.spaargeld,
           ervaring: formData.ervaring,
           motivatie: formData.motivatie,
-          verwachtingen: formData.verwachtingen
+          verwachtingen: formData.verwachtingen,
+          voornaam: formData.voornaam,
+          achternaam: formData.achternaam,
+          locatie: formData.locatie,
+          bedrijf: formData.bedrijf,
+          investeringsdoel: formData.investeringsdoel,
+          voorkeurContact: formData.voorkeurContact,
+          nieuwsbrief: formData.nieuwsbrief,
+          marketingToestemming: formData.marketingToestemming
         }),
       });
 
@@ -299,6 +315,129 @@ export default function AanmeldenPage() {
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                       placeholder="Wat hoop je te leren over Bitcoin en hoe zien je ideale begeleiding eruit?"
                     />
+                  </div>
+                </div>
+              </div>
+
+              {/* Aanvullende Informatie */}
+              <div className="bg-gray-50 p-6 rounded-xl">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <User className="w-6 h-6 text-orange-600" />
+                  Aanvullende Informatie (Optioneel)
+                </h3>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Voornaam
+                    </label>
+                    <input
+                      type="text"
+                      name="voornaam"
+                      value={formData.voornaam}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      placeholder="Je voornaam"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Achternaam
+                    </label>
+                    <input
+                      type="text"
+                      name="achternaam"
+                      value={formData.achternaam}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      placeholder="Je achternaam"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Locatie
+                    </label>
+                    <input
+                      type="text"
+                      name="locatie"
+                      value={formData.locatie}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      placeholder="Stad, Land"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Bedrijf/Organisatie
+                    </label>
+                    <input
+                      type="text"
+                      name="bedrijf"
+                      value={formData.bedrijf}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      placeholder="Je werkgever of bedrijf"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Investeringsdoel
+                    </label>
+                    <select
+                      name="investeringsdoel"
+                      value={formData.investeringsdoel}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    >
+                      <option value="">Selecteer je investeringsdoel</option>
+                      <option value="pensioen">Pensioen opbouw</option>
+                      <option value="sparen">Lange termijn sparen</option>
+                      <option value="trading">Actief trading</option>
+                      <option value="diversificatie">Portfolio diversificatie</option>
+                      <option value="leren">Leren over Bitcoin</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Voorkeur Contact
+                    </label>
+                    <select
+                      name="voorkeurContact"
+                      value={formData.voorkeurContact}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    >
+                      <option value="email">E-mail</option>
+                      <option value="telefoon">Telefoon</option>
+                      <option value="whatsapp">WhatsApp</option>
+                    </select>
+                  </div>
+                </div>
+                
+                {/* Checkboxes */}
+                <div className="mt-6 space-y-4">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="nieuwsbrief"
+                      checked={formData.nieuwsbrief}
+                      onChange={(e) => setFormData({...formData, nieuwsbrief: e.target.checked})}
+                      className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                    />
+                    <label className="ml-2 text-sm text-gray-700">
+                      Ik wil graag de nieuwsbrief ontvangen met Bitcoin updates en tips
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="marketingToestemming"
+                      checked={formData.marketingToestemming}
+                      onChange={(e) => setFormData({...formData, marketingToestemming: e.target.checked})}
+                      className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                    />
+                    <label className="ml-2 text-sm text-gray-700">
+                      Ik geef toestemming voor marketing communicatie over Bitcoin gerelateerde diensten
+                    </label>
                   </div>
                 </div>
               </div>
