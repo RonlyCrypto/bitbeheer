@@ -24,12 +24,8 @@ export default function Header() {
   console.log('Header - isImpersonating:', isImpersonating);
   console.log('Header - impersonatedUser:', impersonatedUser);
   console.log('Header - canAccessAdmin:', canAccessAdmin);
-  
-  // Debug menu visibility
-  console.log('Header - bitcoin_history visible:', isMenuVisible('bitcoin_history', 'everyone'));
-  console.log('Header - portfolio_menu visible:', isMenuVisible('portfolio_menu', 'everyone'));
-  console.log('Header - market_cap_comparer visible:', isMenuVisible('market_cap_comparer', 'everyone'));
-  console.log('Header - educatief_platform visible:', isMenuVisible('educatief_platform', 'everyone'));
+  console.log('Header - user email:', user?.email);
+  console.log('Header - user metadata:', user?.user_metadata);
 
 
   // Close dropdown when clicking outside
@@ -93,7 +89,7 @@ export default function Header() {
                   <span className="text-sm font-medium">Dashboard</span>
                 </Link>
 
-                {(isMenuVisible('bitcoin_history', 'everyone') || true) && (
+                {canAccessAdmin && (
                   <Link 
                     to="/admin/bitcoin-history" 
                     className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
@@ -113,7 +109,7 @@ export default function Header() {
                   </Link>
                 )}
 
-                {(isMenuVisible('portfolio_menu', 'everyone') || true) && (
+                {canAccessAdmin && (
                   <Link 
                     to="/admin/portfolio" 
                     className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
@@ -133,7 +129,7 @@ export default function Header() {
                   </Link>
                 )}
 
-                {(isMenuVisible('market_cap_comparer', 'everyone') || true) && (
+                {canAccessAdmin && (
                   <Link 
                     to="/admin/market-cap-comparer" 
                     className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
@@ -306,7 +302,7 @@ export default function Header() {
               />
             )}
             
-                {(isMenuVisible('educatief_platform', 'everyone') || true) && (
+                {canAccessAdmin && (
                   <div className="hidden lg:flex items-center gap-3 bg-white bg-opacity-20 px-5 py-3 rounded-xl backdrop-blur-sm">
                     <TrendingUp className="w-5 h-5" />
                     <div>

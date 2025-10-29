@@ -163,6 +163,12 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const canAccessAdmin = hasPermission('admin.dashboard');
   const canAccessPremium = hasPermission('premium.features');
   const canAccessBasic = hasPermission('user.dashboard');
+  
+  // Debug logging
+  console.log('PermissionsContext - accountType:', accountType);
+  console.log('PermissionsContext - canAccessAdmin:', canAccessAdmin);
+  console.log('PermissionsContext - user:', user);
+  console.log('PermissionsContext - user email:', user?.email);
 
   return (
     <PermissionsContext.Provider value={{
