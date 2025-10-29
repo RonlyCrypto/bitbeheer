@@ -795,8 +795,6 @@ function ProfileTab({ userProfile, setUserProfile, user, isImpersonating, impers
     location: userProfile?.location || '',
     company: userProfile?.company || '',
     bio: userProfile?.bio || '',
-    riskProfile: userProfile?.riskProfile || 'moderate',
-    experience: userProfile?.experience || 'beginner',
     investmentGoal: userProfile?.investmentGoal || '',
     preferredContact: userProfile?.preferredContact || 'email',
     newsletterSubscription: userProfile?.newsletterSubscription || false,
@@ -830,12 +828,13 @@ function ProfileTab({ userProfile, setUserProfile, user, isImpersonating, impers
       <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Volledige Naam</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Naam *</label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               disabled={!isEditing}
+              required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
             />
           </div>
@@ -923,32 +922,6 @@ function ProfileTab({ userProfile, setUserProfile, user, isImpersonating, impers
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Risicoprofiel</label>
-            <select
-              value={formData.riskProfile}
-              onChange={(e) => setFormData({ ...formData, riskProfile: e.target.value })}
-              disabled={!isEditing}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
-            >
-              <option value="conservative">Conservatief</option>
-              <option value="moderate">Gematigd</option>
-              <option value="aggressive">Agressief</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Ervaring</label>
-            <select
-              value={formData.experience}
-              onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
-              disabled={!isEditing}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
-            >
-              <option value="beginner">Beginner</option>
-              <option value="intermediate">Gemiddeld</option>
-              <option value="advanced">Gevorderd</option>
-            </select>
           </div>
         </div>
 
