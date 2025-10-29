@@ -68,10 +68,10 @@ export default function Header() {
             </div>
           </Link>
           
-          {/* Navigation Menu - Always visible */}
+          {/* Navigation Menu - Only visible for admin */}
           <nav className="hidden md:flex items-center gap-4">
-            {/* Admin Menu - Always visible */}
-            {true && (
+            {/* Admin Menu - Only visible when not impersonating */}
+            {!isImpersonating && (
               <div className="flex items-center gap-3">
                 <Link 
                   to="/admin" 
@@ -193,7 +193,7 @@ export default function Header() {
                               </p>
                               <p className="text-sm text-gray-600 dark:text-gray-400">
                                 {isImpersonating 
-                                  ? 'Impersonated User' 
+                                  ? 'Ingelogd als gebruiker' 
                                   : (user?.email || (isAuthenticated ? 'Ingelogd' : 'Niet ingelogd'))
                                 }
                               </p>
@@ -203,43 +203,47 @@ export default function Header() {
 
                           {/* Menu Items */}
                           <Link 
-                            to="/admin" 
+                            to={isImpersonating ? "/user-dashboard" : "/admin"} 
                             className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                             onClick={() => setShowSettingsDropdown(false)}
                           >
                             <User className="w-4 h-4" />
-                            Mijn Profiel
+                            {isImpersonating ? 'Gebruiker Profiel' : 'Mijn Profiel'}
                           </Link>
                           
-                          <Link 
-                            to="/admin" 
-                            className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                            onClick={() => setShowSettingsDropdown(false)}
-                          >
-                            <Settings className="w-4 h-4" />
-                            Instellingen
-                          </Link>
-
-                        {/* Theme Toggle */}
-                        <button 
-                          onClick={() => {
-                            toggleTheme();
-                            setShowSettingsDropdown(false);
-                          }}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                        >
-                          {theme === 'light' ? (
-                            <>
-                              <Moon className="w-4 h-4" />
-                              Dark Mode
-                            </>
-                          ) : (
-                            <>
-                              <Sun className="w-4 h-4" />
-                              Light Mode
-                            </>
+                          {!isImpersonating && (
+                            <Link 
+                              to="/admin" 
+                              className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                              onClick={() => setShowSettingsDropdown(false)}
+                            >
+                              <Settings className="w-4 h-4" />
+                              Instellingen
+                            </Link>
                           )}
-                        </button>
+
+                        {/* Theme Toggle - Only for admin */}
+                        {!isImpersonating && (
+                          <button 
+                            onClick={() => {
+                              toggleTheme();
+                              setShowSettingsDropdown(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          >
+                            {theme === 'light' ? (
+                              <>
+                                <Moon className="w-4 h-4" />
+                                Dark Mode
+                              </>
+                            ) : (
+                              <>
+                                <Sun className="w-4 h-4" />
+                                Light Mode
+                              </>
+                            )}
+                          </button>
+                        )}
 
                         <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
                         
