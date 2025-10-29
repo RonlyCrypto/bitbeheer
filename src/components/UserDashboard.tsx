@@ -34,13 +34,17 @@ import { bitcoinPriceService, BitcoinPrice } from '../services/bitcoinPriceServi
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePermissions } from '../contexts/PermissionsContext';
+import { getDisplayName, getDisplayEmail } from '../utils/emailUtils';
 
 interface UserProfile {
   id: string;
   email: string;
   name: string;
+  first_name?: string;
+  last_name?: string;
   phone?: string;
   location?: string;
+  company?: string;
   bio?: string;
   avatar?: string;
   joinDate: string;
@@ -49,6 +53,10 @@ interface UserProfile {
   currentGoal?: string;
   riskProfile?: 'conservative' | 'moderate' | 'aggressive';
   experience?: 'beginner' | 'intermediate' | 'advanced';
+  investmentGoal?: string;
+  preferredContact?: 'email' | 'phone' | 'whatsapp';
+  newsletterSubscription?: boolean;
+  marketingConsent?: boolean;
 }
 
 interface Goal {
@@ -128,21 +136,85 @@ export default function UserDashboard() {
         const price = await bitcoinPriceService.getCurrentPrice();
         setBitcoinPrice(price);
 
-        // Load user profile - using mock data for now
+        // Load user profile from database
         if (user) {
-          setUserProfile({
-            id: user.id,
-            email: user.email || '',
-            name: user.user_metadata?.name || user.email?.split('@')[0] || 'Gebruiker',
-            phone: user.user_metadata?.phone || '+31 6 12345678',
-            location: user.user_metadata?.location || 'Amsterdam, Nederland',
-            bio: user.user_metadata?.bio || 'Passionate about Bitcoin and DCA strategies',
-            joinDate: user.created_at ? new Date(user.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-            lastLogin: new Date().toISOString(),
-            totalSessions: 12,
-            riskProfile: user.user_metadata?.riskProfile || 'moderate',
-            experience: user.user_metadata?.experience || 'intermediate'
-          });
+          try {
+            // Fetch user profile from accounts table
+            const response = await fetch('/api/accounts');
+            if (response.ok) {
+              const accounts = await response.json();
+              const userAccount = accounts.find((account: any) => account.email === user.email);
+              
+              if (userAccount) {
+                setUserProfile({
+                  id: userAccount.id || user.id,
+                  email: userAccount.email || user.email || '',
+                  name: userAccount.name || user.user_metadata?.name || user.email?.split('@')[0] || 'Gebruiker',
+                  first_name: userAccount.first_name,
+                  last_name: userAccount.last_name,
+                  phone: userAccount.phone || user.user_metadata?.phone,
+                  location: userAccount.location || user.user_metadata?.location,
+                  company: userAccount.company,
+                  bio: user.user_metadata?.bio || 'Passionate about Bitcoin and DCA strategies',
+                  joinDate: userAccount.created_at ? new Date(userAccount.created_at).toISOString().split('T')[0] : (user.created_at ? new Date(user.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]),
+                  lastLogin: userAccount.last_login ? new Date(userAccount.last_login).toISOString() : new Date().toISOString(),
+                  totalSessions: userAccount.login_count || 0,
+                  riskProfile: user.user_metadata?.riskProfile || 'moderate',
+                  experience: userAccount.experience_level || user.user_metadata?.experience || 'intermediate',
+                  investmentGoal: userAccount.investment_goal,
+                  preferredContact: userAccount.preferred_contact,
+                  newsletterSubscription: userAccount.newsletter_subscription,
+                  marketingConsent: userAccount.marketing_consent
+                });
+              } else {
+                // Fallback to user metadata if account not found
+                setUserProfile({
+                  id: user.id,
+                  email: user.email || '',
+                  name: user.user_metadata?.name || user.email?.split('@')[0] || 'Gebruiker',
+                  phone: user.user_metadata?.phone,
+                  location: user.user_metadata?.location,
+                  bio: user.user_metadata?.bio || 'Passionate about Bitcoin and DCA strategies',
+                  joinDate: user.created_at ? new Date(user.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                  lastLogin: new Date().toISOString(),
+                  totalSessions: 0,
+                  riskProfile: user.user_metadata?.riskProfile || 'moderate',
+                  experience: user.user_metadata?.experience || 'intermediate'
+                });
+              }
+            } else {
+              // Fallback to user metadata if API fails
+              setUserProfile({
+                id: user.id,
+                email: user.email || '',
+                name: user.user_metadata?.name || user.email?.split('@')[0] || 'Gebruiker',
+                phone: user.user_metadata?.phone,
+                location: user.user_metadata?.location,
+                bio: user.user_metadata?.bio || 'Passionate about Bitcoin and DCA strategies',
+                joinDate: user.created_at ? new Date(user.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                lastLogin: new Date().toISOString(),
+                totalSessions: 0,
+                riskProfile: user.user_metadata?.riskProfile || 'moderate',
+                experience: user.user_metadata?.experience || 'intermediate'
+              });
+            }
+          } catch (error) {
+            console.error('Error loading user profile:', error);
+            // Fallback to user metadata if error
+            setUserProfile({
+              id: user.id,
+              email: user.email || '',
+              name: user.user_metadata?.name || user.email?.split('@')[0] || 'Gebruiker',
+              phone: user.user_metadata?.phone,
+              location: user.user_metadata?.location,
+              bio: user.user_metadata?.bio || 'Passionate about Bitcoin and DCA strategies',
+              joinDate: user.created_at ? new Date(user.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+              lastLogin: new Date().toISOString(),
+              totalSessions: 0,
+              riskProfile: user.user_metadata?.riskProfile || 'moderate',
+              experience: user.user_metadata?.experience || 'intermediate'
+            });
+          }
         }
 
         // Load goals - using mock data for now
@@ -287,7 +359,7 @@ export default function UserDashboard() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mijn Dashboard</h1>
-                <p className="text-gray-600 dark:text-gray-400">Welkom terug, {user?.user_metadata?.name || user?.email?.split('@')[0] || 'Gebruiker'}!</p>
+                <p className="text-gray-600 dark:text-gray-400">Welkom terug, {getDisplayName(user, isImpersonating, impersonatedUser)}!</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -716,12 +788,19 @@ function ProfileTab({ userProfile, setUserProfile }: any) {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: userProfile?.name || '',
+    first_name: userProfile?.first_name || '',
+    last_name: userProfile?.last_name || '',
     email: userProfile?.email || '',
     phone: userProfile?.phone || '',
     location: userProfile?.location || '',
+    company: userProfile?.company || '',
     bio: userProfile?.bio || '',
     riskProfile: userProfile?.riskProfile || 'moderate',
-    experience: userProfile?.experience || 'beginner'
+    experience: userProfile?.experience || 'beginner',
+    investmentGoal: userProfile?.investmentGoal || '',
+    preferredContact: userProfile?.preferredContact || 'email',
+    newsletterSubscription: userProfile?.newsletterSubscription || false,
+    marketingConsent: userProfile?.marketingConsent || false
   });
 
   const handleSave = async () => {
@@ -751,7 +830,7 @@ function ProfileTab({ userProfile, setUserProfile }: any) {
       <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Naam</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Volledige Naam</label>
             <input
               type="text"
               value={formData.name}
@@ -764,9 +843,29 @@ function ProfileTab({ userProfile, setUserProfile }: any) {
             <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
             <input
               type="email"
-              value={formData.email}
+              value={getDisplayEmail(user, isImpersonating, impersonatedUser, true)}
               disabled
               className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Voornaam</label>
+            <input
+              type="text"
+              value={formData.first_name}
+              onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+              disabled={!isEditing}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Achternaam</label>
+            <input
+              type="text"
+              value={formData.last_name}
+              onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+              disabled={!isEditing}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
             />
           </div>
           <div>
@@ -788,6 +887,32 @@ function ProfileTab({ userProfile, setUserProfile }: any) {
               disabled={!isEditing}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Bedrijf/Organisatie</label>
+            <input
+              type="text"
+              value={formData.company}
+              onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+              disabled={!isEditing}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Investeringsdoel</label>
+            <select
+              value={formData.investmentGoal}
+              onChange={(e) => setFormData({ ...formData, investmentGoal: e.target.value })}
+              disabled={!isEditing}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
+            >
+              <option value="">Selecteer je investeringsdoel</option>
+              <option value="pensioen">Pensioen opbouw</option>
+              <option value="sparen">Lange termijn sparen</option>
+              <option value="trading">Actief trading</option>
+              <option value="diversificatie">Portfolio diversificatie</option>
+              <option value="leren">Leren over Bitcoin</option>
+            </select>
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">Over mij</label>
