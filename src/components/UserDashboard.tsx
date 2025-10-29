@@ -406,7 +406,7 @@ export default function UserDashboard() {
           {/* Main Content */}
           <div className="flex-1">
             {activeTab === 'overview' && <OverviewTab userProfile={userProfile} goals={goals} appointments={appointments} portfolio={portfolio} />}
-            {activeTab === 'profile' && <ProfileTab userProfile={userProfile} setUserProfile={setUserProfile} />}
+            {activeTab === 'profile' && <ProfileTab userProfile={userProfile} setUserProfile={setUserProfile} user={user} isImpersonating={isImpersonating} impersonatedUser={impersonatedUser} />}
             {activeTab === 'goals' && <GoalsTab goals={goals} setGoals={setGoals} />}
             {activeTab === 'portfolio' && <PortfolioTab portfolio={portfolio} setPortfolio={setPortfolio} />}
             {activeTab === 'appointments' && <AppointmentsTab appointments={appointments} setAppointments={setAppointments} />}
@@ -784,7 +784,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio }: any) {
 }
 
 // Profile Tab Component
-function ProfileTab({ userProfile, setUserProfile }: any) {
+function ProfileTab({ userProfile, setUserProfile, user, isImpersonating, impersonatedUser }: any) {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: userProfile?.name || '',
