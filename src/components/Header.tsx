@@ -90,7 +90,7 @@ export default function Header() {
                   <span className="text-sm font-medium">Dashboard</span>
                 </Link>
 
-                {true && (
+                {isMenuVisible('bitcoin_history', 'everyone') && (
                   <Link 
                     to="/admin/bitcoin-history" 
                     className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
@@ -110,7 +110,7 @@ export default function Header() {
                   </Link>
                 )}
 
-                {true && (
+                {isMenuVisible('portfolio_menu', 'everyone') && (
                   <Link 
                     to="/admin/portfolio" 
                     className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
@@ -130,7 +130,7 @@ export default function Header() {
                   </Link>
                 )}
 
-                {true && (
+                {isMenuVisible('market_cap_comparer', 'everyone') && (
                   <Link 
                     to="/admin/market-cap-comparer" 
                     className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
@@ -306,17 +306,8 @@ export default function Header() {
               />
             )}
             
-                {true && (
-                  <div className="hidden lg:flex items-center gap-3 bg-white bg-opacity-20 px-5 py-3 rounded-xl backdrop-blur-sm">
-                    <TrendingUp className="w-5 h-5" />
-                    <div>
-                      <div className="text-xs text-orange-100">Educatief Platform</div>
-                      <div className="font-semibold">Voor Beginners</div>
-                    </div>
-                  </div>
-                )}
 
-                {true && (
+                {isMenuVisible('available_pages', 'everyone') && (
                   <Link 
                     to="/admin" 
                     className="hidden lg:flex items-center gap-3 bg-white bg-opacity-20 px-5 py-3 rounded-xl backdrop-blur-sm hover:bg-opacity-30 transition-all"
