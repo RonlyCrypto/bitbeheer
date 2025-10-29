@@ -201,7 +201,7 @@ export default function Header() {
 
                           {/* Menu Items */}
                           <Link 
-                            to={isImpersonating ? "/user-dashboard" : "/admin"} 
+                            to={isImpersonating ? "/user-dashboard?tab=profile" : "/admin"} 
                             className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                             onClick={() => setShowSettingsDropdown(false)}
                           >

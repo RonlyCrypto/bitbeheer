@@ -105,6 +105,15 @@ export default function UserDashboard() {
   const { theme } = useTheme();
   const { isImpersonating, impersonatedUser } = usePermissions();
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Check if we should show profile tab from URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    if (tab === 'profile') {
+      setActiveTab('profile');
+    }
+  }, []);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -381,7 +390,6 @@ export default function UserDashboard() {
             <nav className="space-y-2">
               {[
                 { id: 'overview', label: 'Overzicht', icon: BarChart3 },
-                { id: 'profile', label: 'Profiel', icon: User },
                 { id: 'goals', label: 'Doelen', icon: Target },
                 { id: 'portfolio', label: 'Portfolio', icon: PieChart },
                 { id: 'appointments', label: 'Afspraken', icon: Calendar },
