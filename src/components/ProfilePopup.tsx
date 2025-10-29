@@ -27,6 +27,23 @@ export default function ProfilePopup({
   console.log('🎭 ProfilePopup - isImpersonating:', isImpersonating);
   console.log('🎭 ProfilePopup - impersonatedUser:', impersonatedUser);
   const [isEditing, setIsEditing] = useState(false);
+
+  // Block body scroll when popup is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.filter = 'grayscale(100%) blur(2px)';
+    } else {
+      document.body.style.overflow = 'unset';
+      document.body.style.filter = 'none';
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+      document.body.style.filter = 'none';
+    };
+  }, [isOpen]);
   const [formData, setFormData] = useState({
     first_name: userProfile?.first_name || '',
     last_name: userProfile?.last_name || '',
@@ -91,8 +108,18 @@ export default function ProfilePopup({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden animate-in fade-in-0 zoom-in-95 duration-300">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div 
+        className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden animate-in fade-in-0 zoom-in-95 duration-300 border-2 border-orange-200 dark:border-orange-800"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
