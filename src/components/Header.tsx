@@ -67,10 +67,10 @@ export default function Header() {
             </div>
           </Link>
           
-          {/* Navigation Menu - Only visible for admin users */}
+          {/* Navigation Menu - Always visible */}
           <nav className="hidden md:flex items-center gap-4">
-            {/* Admin Menu - Only visible when user has admin permissions */}
-            {isAuthenticated && canAccessAdmin && (
+            {/* Admin Menu - Always visible */}
+            {true && (
               <div className="flex items-center gap-3">
                 <Link 
                   to="/admin" 
@@ -316,7 +316,7 @@ export default function Header() {
                   </div>
                 )}
 
-                {isMenuVisible('available_pages', canAccessAdmin ? 'admin' : 'user') && (
+                {true && (
                   <Link 
                     to="/admin" 
                     className="hidden lg:flex items-center gap-3 bg-white bg-opacity-20 px-5 py-3 rounded-xl backdrop-blur-sm hover:bg-opacity-30 transition-all"
