@@ -81,12 +81,16 @@ export default function AdminChat() {
           {messages.length === 0 ? (
             <p className="text-gray-500">Geen berichten voor deze gebruiker.</p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {messages.map((m) => (
                 <div key={m.id} className={`flex ${m.from_admin ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`px-3 py-2 rounded-lg text-sm ${m.from_admin ? 'bg-orange-600 text-white' : 'bg-white border'}`}>
-                    <div>{m.body}</div>
-                    <div className="text-[11px] opacity-70 mt-1">{new Date(m.created_at).toLocaleString('nl-NL')}</div>
+                  <div className="max-w-[75%]">
+                    <div className={`text-[11px] mb-1 ${m.from_admin ? 'text-right text-gray-500' : 'text-left text-gray-500'}`}>
+                      {m.from_admin ? 'Admin' : m.email} • {new Date(m.created_at).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                    <div className={`px-3 py-2 rounded-lg text-sm ${m.from_admin ? 'bg-orange-600 text-white' : 'bg-white border'}`}>
+                      <div>{m.body}</div>
+                    </div>
                   </div>
                 </div>
               ))}

@@ -38,11 +38,22 @@ export default function Helpdesk() {
     if (!user?.email || !newMessage.trim()) return;
     setLoading(true);
     try {
+      const body = newMessage.trim();
+      // Optimistic update
+      const optimistic: SupportMessage = {
+        id: `temp-${Date.now()}`,
+        email: user.email,
+        body,
+        created_at: new Date().toISOString(),
+        from_admin: false
+      };
+      setMessages((prev) => [...prev, optimistic]);
+      setNewMessage('');
+
       const { error } = await supabase
         .from('support_messages')
-        .insert([{ email: user.email, body: newMessage.trim(), from_admin: false, created_at: new Date().toISOString() }]);
+        .insert([{ email: user.email, body, from_admin: false, created_at: optimistic.created_at }]);
       if (error) throw error;
-      setNewMessage('');
       await loadMessages();
     } catch (e) {
       console.error('Support send error', e);
@@ -67,10 +78,14 @@ export default function Helpdesk() {
         ) : (
           <div className="space-y-3">
             {messages.map((m) => (
-              <div key={m.id} className={`flex ${m.from_admin ? 'justify-start' : 'justify-end'}`}>
-                <div className={`px-3 py-2 rounded-lg text-sm ${m.from_admin ? 'bg-gray-100 text-gray-800' : 'bg-orange-600 text-white'}`}>
-                  <div>{m.body}</div>
-                  <div className="text-[11px] opacity-70 mt-1">{new Date(m.created_at).toLocaleString('nl-NL')}</div>
+              <div key={m.id} className={`flex ${m.from_admin ? 'justify-end' : 'justify-start'}`}>
+                <div className="max-w-[75%]">
+                  <div className={`text-[11px] mb-1 ${m.from_admin ? 'text-right text-gray-500' : 'text-left text-gray-500'}`}>
+                    {m.from_admin ? 'Admin' : 'Jij'} • {new Date(m.created_at).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <div className={`px-3 py-2 rounded-lg text-sm ${m.from_admin ? 'bg-gray-100 text-gray-800' : 'bg-orange-600 text-white'}`}>
+                    <div>{m.body}</div>
+                  </div>
                 </div>
               </div>
             ))}
