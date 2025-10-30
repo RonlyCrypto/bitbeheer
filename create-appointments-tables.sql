@@ -42,13 +42,19 @@ ALTER TABLE public.available_slots DISABLE ROW LEVEL SECURITY; -- Admin only, ha
 ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for appointments
+-- Drop existing policies if they exist (for clean setup)
+DROP POLICY IF EXISTS "Users can read their own appointments" ON public.appointments;
+DROP POLICY IF EXISTS "Users can create appointments" ON public.appointments;
+DROP POLICY IF EXISTS "Admin can read all appointments" ON public.appointments;
+DROP POLICY IF EXISTS "Admin can update appointments" ON public.appointments;
+
 -- Users can read their own appointments
 CREATE POLICY "Users can read their own appointments"
   ON public.appointments
   FOR SELECT
   USING (
-    auth.role() = 'authenticated' OR
-    email = (SELECT email FROM auth.users WHERE id = auth.uid())
+    auth.role() = 'authenticated' AND
+    user_email = (SELECT email FROM auth.users WHERE id = auth.uid())
   );
 
 -- Users can create their own appointments
@@ -56,7 +62,7 @@ CREATE POLICY "Users can create appointments"
   ON public.appointments
   FOR INSERT
   WITH CHECK (
-    auth.role() = 'authenticated' OR
+    auth.role() = 'authenticated' AND
     user_email = (SELECT email FROM auth.users WHERE id = auth.uid())
   );
 
