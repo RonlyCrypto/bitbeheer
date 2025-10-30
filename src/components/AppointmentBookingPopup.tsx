@@ -208,16 +208,37 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
       
       // Debug: Check current session and JWT
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      const sessionUserEmail = sessionData?.session?.user?.email;
+      const isAdminSession = sessionUserEmail === 'admin@bitbeheer.nl';
+      
       console.log('🔐 Current session:', {
         session: sessionData?.session,
-        userEmail: sessionData?.session?.user?.email,
+        userEmail: sessionUserEmail,
         userMetadata: sessionData?.session?.user?.user_metadata,
-        isAdmin: user?.email === 'admin@bitbeheer.nl',
+        isAdmin: isAdminSession,
         isImpersonating,
         impersonatedUser,
         effectiveUserEmail,
         sessionError
       });
+
+      // IMPORTANT: If admin is impersonating, the JWT still contains admin@bitbeheer.nl
+      // So the RLS policy should work. But if it doesn't, we need to check the actual session.
+      console.log('🔍 RLS Check:', {
+        'auth.jwt() email would be': sessionUserEmail,
+        'Should pass admin policy': isAdminSession,
+        'Appointment user_email': appointmentData.user_email,
+        'Effective user email': effectiveUserEmail
+      });
+
+      // If admin is impersonating, we need to ensure the RLS policy recognizes admin
+      // The policy checks auth.jwt() ->> 'email', which should be admin@bitbeheer.nl
+      // if the session is still the admin session
+      if (!isAdminSession && isImpersonating) {
+        console.warn('⚠️ Warning: Admin impersonating but session email is not admin@bitbeheer.nl');
+        console.warn('⚠️ This may cause RLS policy to fail');
+        console.warn('⚠️ Session email:', sessionUserEmail, 'Expected: admin@bitbeheer.nl');
+      }
 
       const { data, error } = await supabase
         .from('appointments')
@@ -234,14 +255,18 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
         
         // Extra debugging for RLS errors
         if (error.code === '42501' || error.message?.includes('row-level security')) {
+          const sessionUserEmail = sessionData?.session?.user?.email;
           console.error('🚨 RLS Policy Error Details:', {
-            currentUserEmail: user?.email,
-            sessionUserEmail: sessionData?.session?.user?.email,
+            contextUserEmail: user?.email || 'null/undefined',
+            sessionUserEmail: sessionUserEmail || 'null/undefined',
             isImpersonating,
             impersonatedUser,
             effectiveUserEmail,
             appointmentUserEmail: appointmentData.user_email,
-            isAdmin: user?.email === 'admin@bitbeheer.nl'
+            isAdminFromContext: user?.email === 'admin@bitbeheer.nl',
+            isAdminFromSession: sessionUserEmail === 'admin@bitbeheer.nl',
+            'Expected JWT email for RLS': sessionUserEmail,
+            'Should match admin policy': sessionUserEmail === 'admin@bitbeheer.nl'
           });
         }
         
@@ -272,13 +297,19 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
       ];
       
       if (isRLSError) {
+        // Get session info for better error message
+        const { data: sessionCheck } = await supabase.auth.getSession();
+        const sessionEmail = sessionCheck?.session?.user?.email;
+        const isAdminFromSession = sessionEmail === 'admin@bitbeheer.nl';
+        
         errorTitle = 'Toegangsrechten probleem';
         errorDetails = [
-          `Je bent ingelogd als: ${user?.email || 'onbekend'}`,
+          `Session email: ${sessionEmail || 'onbekend'}`,
           `Impersonation actief: ${isImpersonating ? 'Ja' : 'Nee'}`,
           `Effectieve gebruiker: ${effectiveUserEmail || 'geen'}`,
-          `Admin status: ${user?.email === 'admin@bitbeheer.nl' ? 'Ja' : 'Nee'}`,
-          'De RLS policy laat deze actie mogelijk niet toe. Contacteer de admin.'
+          `Admin in session: ${isAdminFromSession ? 'Ja' : 'Nee'}`,
+          `RLS Policy verwacht: admin@bitbeheer.nl in JWT`,
+          `Voer het fix-appointments-rls.sql script uit in Supabase om dit te fixen`
         ];
       }
       
