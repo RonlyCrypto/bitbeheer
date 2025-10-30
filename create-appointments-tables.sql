@@ -54,7 +54,7 @@ CREATE POLICY "Users can read their own appointments"
   FOR SELECT
   USING (
     auth.role() = 'authenticated' AND
-    user_email = (SELECT email FROM auth.users WHERE id = auth.uid())
+    user_email = (auth.jwt() ->> 'email')
   );
 
 -- Users can create their own appointments
@@ -63,7 +63,7 @@ CREATE POLICY "Users can create appointments"
   FOR INSERT
   WITH CHECK (
     auth.role() = 'authenticated' AND
-    user_email = (SELECT email FROM auth.users WHERE id = auth.uid())
+    user_email = (auth.jwt() ->> 'email')
   );
 
 -- Admin can read all appointments
@@ -71,8 +71,7 @@ CREATE POLICY "Admin can read all appointments"
   ON public.appointments
   FOR SELECT
   USING (
-    auth.jwt() ->> 'email' = 'admin@bitbeheer.nl' OR
-    (SELECT email FROM auth.users WHERE id = auth.uid()) = 'admin@bitbeheer.nl'
+    auth.jwt() ->> 'email' = 'admin@bitbeheer.nl'
   );
 
 -- Admin can update appointments
@@ -80,7 +79,6 @@ CREATE POLICY "Admin can update appointments"
   ON public.appointments
   FOR UPDATE
   USING (
-    auth.jwt() ->> 'email' = 'admin@bitbeheer.nl' OR
-    (SELECT email FROM auth.users WHERE id = auth.uid()) = 'admin@bitbeheer.nl'
+    auth.jwt() ->> 'email' = 'admin@bitbeheer.nl'
   );
 

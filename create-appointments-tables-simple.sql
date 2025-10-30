@@ -36,10 +36,49 @@ CREATE INDEX IF NOT EXISTS idx_appointments_user_email ON public.appointments(us
 CREATE INDEX IF NOT EXISTS idx_appointments_status ON public.appointments(status);
 CREATE INDEX IF NOT EXISTS idx_available_slots_date ON public.available_slots(date);
 
--- TEMPORARILY DISABLE RLS FOR TESTING
--- You can add proper RLS policies later once everything works
-ALTER TABLE public.available_slots DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.appointments DISABLE ROW LEVEL SECURITY;
+-- Enable RLS but with simple policies
+ALTER TABLE public.available_slots DISABLE ROW LEVEL SECURITY; -- Admin only via app
+ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
+
+-- Simple RLS policies using JWT email (no auth.users access needed)
+DROP POLICY IF EXISTS "Users can read their own appointments" ON public.appointments;
+DROP POLICY IF EXISTS "Users can create appointments" ON public.appointments;
+DROP POLICY IF EXISTS "Admin can read all appointments" ON public.appointments;
+DROP POLICY IF EXISTS "Admin can update appointments" ON public.appointments;
+
+-- Users can read their own appointments
+CREATE POLICY "Users can read their own appointments"
+  ON public.appointments
+  FOR SELECT
+  USING (
+    auth.role() = 'authenticated' AND
+    user_email = (auth.jwt() ->> 'email')
+  );
+
+-- Users can create their own appointments
+CREATE POLICY "Users can create appointments"
+  ON public.appointments
+  FOR INSERT
+  WITH CHECK (
+    auth.role() = 'authenticated' AND
+    user_email = (auth.jwt() ->> 'email')
+  );
+
+-- Admin can read all appointments
+CREATE POLICY "Admin can read all appointments"
+  ON public.appointments
+  FOR SELECT
+  USING (
+    auth.jwt() ->> 'email' = 'admin@bitbeheer.nl'
+  );
+
+-- Admin can update appointments
+CREATE POLICY "Admin can update appointments"
+  ON public.appointments
+  FOR UPDATE
+  USING (
+    auth.jwt() ->> 'email' = 'admin@bitbeheer.nl'
+  );
 
 -- Grant necessary permissions
 GRANT ALL ON public.available_slots TO authenticated;
