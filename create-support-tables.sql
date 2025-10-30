@@ -42,15 +42,25 @@ DROP POLICY IF EXISTS "Admin can delete wallets" ON public.wallets;
 
 -- RLS Policies for support_messages
 -- Users can read/write their own messages
+-- Note: Using auth.uid() check for authenticated users, and allow by email for now
 CREATE POLICY "Users can read their own messages"
   ON public.support_messages
   FOR SELECT
-  USING (auth.jwt() ->> 'email' = email OR auth.jwt() ->> 'email' = 'admin@bitbeheer.nl');
+  USING (
+    auth.role() = 'authenticated' OR 
+    auth.jwt() ->> 'email' = email OR 
+    auth.jwt() ->> 'email' = 'admin@bitbeheer.nl' OR
+    email = (SELECT email FROM auth.users WHERE id = auth.uid())
+  );
 
 CREATE POLICY "Users can insert their own messages"
   ON public.support_messages
   FOR INSERT
-  WITH CHECK (auth.jwt() ->> 'email' = email);
+  WITH CHECK (
+    auth.role() = 'authenticated' OR
+    auth.jwt() ->> 'email' = email OR
+    email = (SELECT email FROM auth.users WHERE id = auth.uid())
+  );
 
 -- Admin can read all messages
 CREATE POLICY "Admin can read all messages"

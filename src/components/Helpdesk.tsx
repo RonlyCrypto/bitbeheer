@@ -48,10 +48,19 @@ export default function Helpdesk() {
   }, [user?.email]);
 
   const sendMessage = async () => {
-    if (!user?.email || !newMessage.trim()) return;
+    if (!user?.email || !newMessage.trim()) {
+      console.warn('Cannot send: no user email or empty message', { user: user?.email, message: newMessage.trim() });
+      return;
+    }
     setLoading(true);
+    const body = newMessage.trim();
     try {
-      const body = newMessage.trim();
+      console.log('Sending message:', { email: user.email, body });
+      
+      // Check current session
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      console.log('Current session:', { session: sessionData?.session, error: sessionError });
+      
       // Optimistic update
       const optimistic: SupportMessage = {
         id: `temp-${Date.now()}`,
@@ -63,17 +72,28 @@ export default function Helpdesk() {
       setMessages((prev) => [...prev, optimistic]);
       setNewMessage('');
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('support_messages')
-        .insert([{ email: user.email, body, from_admin: false, created_at: optimistic.created_at }]);
-      if (error) throw error;
+        .insert([{ email: user.email, body, from_admin: false, created_at: optimistic.created_at }])
+        .select();
+      
+      console.log('Insert result:', { data, error });
+      
+      if (error) {
+        console.error('Supabase insert error:', error);
+        throw error;
+      }
+      
+      console.log('Message sent successfully:', data);
       await loadMessages();
     } catch (e: any) {
-      console.error('Support send error', e);
+      console.error('Support send error:', e);
       // Remove optimistic update on error
       setMessages((prev) => prev.filter(m => !m.id.startsWith('temp-')));
-      setNewMessage(body || newMessage); // Restore message
-      alert(`Bericht verzenden mislukt: ${e.message || 'Controleer of de support_messages tabel bestaat in Supabase'}`);
+      setNewMessage(body); // Restore message
+      
+      const errorMsg = e.message || e.error?.message || JSON.stringify(e);
+      alert(`Bericht verzenden mislukt: ${errorMsg}\n\nControleer:\n1. Is de support_messages tabel aangemaakt?\n2. Zijn de RLS policies correct ingesteld?\n3. Is de gebruiker ingelogd?`);
     } finally {
       setLoading(false);
     }
