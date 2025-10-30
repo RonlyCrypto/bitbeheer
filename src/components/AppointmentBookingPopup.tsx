@@ -100,42 +100,70 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
   };
 
   const handleSubmit = async () => {
-    if (!selectedSlot || !user?.email) return;
+    console.log('🔵 handleSubmit called', { selectedSlot, userEmail: user?.email, submitting });
+    
+    if (!selectedSlot) {
+      alert('Selecteer eerst een tijd slot');
+      return;
+    }
+    
+    if (!user?.email) {
+      alert('Je bent niet ingelogd. Log eerst in om een afspraak te maken.');
+      return;
+    }
     
     setSubmitting(true);
     try {
       const slot = availableSlots.find(s => s.id === selectedSlot);
-      if (!slot) throw new Error('Slot niet gevonden');
+      if (!slot) {
+        throw new Error('Slot niet gevonden');
+      }
 
+      console.log('📅 Booking slot:', slot);
+
+      // Calculate end time correctly
       const [hours, minutes] = slot.start_time.split(':').map(Number);
-      const endTime = new Date(0);
-      endTime.setHours(hours, minutes + slot.duration_minutes);
+      const endTime = new Date();
+      endTime.setHours(hours, minutes + slot.duration_minutes, 0, 0);
       const endTimeStr = `${String(endTime.getHours()).padStart(2, '0')}:${String(endTime.getMinutes()).padStart(2, '0')}:00`;
 
-      const { error } = await supabase
+      const appointmentData = {
+        user_email: user.email,
+        user_name: user.user_metadata?.name || user.email.split('@')[0],
+        slot_id: slot.id,
+        date: slot.date,
+        start_time: slot.start_time,
+        end_time: endTimeStr,
+        duration_minutes: slot.duration_minutes,
+        status: 'pending',
+        notes: notes.trim() || null,
+      };
+
+      console.log('💾 Inserting appointment:', appointmentData);
+
+      const { data, error } = await supabase
         .from('appointments')
-        .insert([{
-          user_email: user.email,
-          user_name: user.user_metadata?.name || user.email.split('@')[0],
-          slot_id: slot.id,
-          date: slot.date,
-          start_time: slot.start_time,
-          end_time: endTimeStr,
-          duration_minutes: slot.duration_minutes,
-          status: 'pending',
-          notes: notes.trim() || null,
-        }]);
+        .insert([appointmentData])
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Supabase error:', error);
+        throw error;
+      }
 
+      console.log('✅ Appointment created:', data);
+
+      alert('Afspraak succesvol geboekt! Je ontvangt een bevestiging zodra deze is goedgekeurd.');
+      
       onSuccess();
       onClose();
       setSelectedDate('');
       setSelectedSlot('');
       setNotes('');
     } catch (error: any) {
-      console.error('Error booking appointment:', error);
-      alert(`Fout bij het boeken: ${error.message}`);
+      console.error('❌ Error booking appointment:', error);
+      const errorMessage = error.message || 'Onbekende fout';
+      alert(`Fout bij het boeken van de afspraak:\n\n${errorMessage}\n\nControleer:\n1. Of je ingelogd bent\n2. Of het slot nog beschikbaar is\n3. Of je rechten hebt om afspraken te maken`);
     } finally {
       setSubmitting(false);
     }
@@ -295,8 +323,12 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
             Annuleren
           </button>
           <button
-            onClick={handleSubmit}
-            disabled={!selectedSlot || submitting}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleSubmit();
+            }}
+            disabled={!selectedSlot || submitting || !user?.email}
             className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
           >
             {submitting ? (
