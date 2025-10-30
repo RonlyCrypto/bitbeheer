@@ -26,6 +26,7 @@ import CategorieBeheer from './CategorieBeheer';
 import EmailVerificationStatus from './EmailVerificationStatus';
 import AdminProfile from './AdminProfile';
 import AdminSettings from './AdminSettings';
+import AdminAppointmentManagement from './AdminAppointmentManagement';
 // import PageManagement from './PageManagement';
 
 export default function AdminDashboard() {
@@ -174,6 +175,16 @@ export default function AdminDashboard() {
                   }`}
                 >
                   Chat
+                </button>
+                <button
+                  onClick={() => setActiveTab('appointments')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'appointments'
+                      ? 'border-orange-500 text-orange-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Afspraken
                 </button>
                 <button
                   onClick={() => setActiveTab('notifications')}
@@ -467,6 +478,13 @@ export default function AdminDashboard() {
           {activeTab === 'chat' && (
             <div className="space-y-6">
               <AdminChat />
+            </div>
+          )}
+
+          {/* Appointments Tab */}
+          {activeTab === 'appointments' && (
+            <div className="space-y-6">
+              <AdminAppointmentManagement />
             </div>
           )}
 

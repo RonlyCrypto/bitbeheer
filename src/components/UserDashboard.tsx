@@ -38,6 +38,7 @@ import { useProfilePopup } from '../contexts/ProfilePopupContext';
 import { getDisplayName, getDisplayEmail } from '../utils/emailUtils';
 import { supabase } from '../lib/supabase';
 import ProfilePopup from './ProfilePopup';
+import AppointmentBookingPopup from './AppointmentBookingPopup';
 import Helpdesk from './Helpdesk';
 
 interface UserProfile {
@@ -127,6 +128,7 @@ export default function UserDashboard() {
     type: 'bitcoin'
   });
   const [isAddingWallet, setIsAddingWallet] = useState(false);
+  const [showAppointmentPopup, setShowAppointmentPopup] = useState(false);
   const [bitcoinGoal, setBitcoinGoal] = useState({
     targetAmount: 0,
     currentAmount: 0,
@@ -405,10 +407,20 @@ export default function UserDashboard() {
 
           {/* Main Content */}
           <div className="flex-1">
-            {activeTab === 'overview' && <OverviewTab userProfile={userProfile} goals={goals} appointments={appointments} portfolio={portfolio} />}
+            {activeTab === 'overview' && <OverviewTab 
+              userProfile={userProfile} 
+              goals={goals} 
+              appointments={appointments} 
+              portfolio={portfolio}
+              onBookAppointment={() => setShowAppointmentPopup(true)}
+            />}
             {activeTab === 'goals' && <GoalsTab goals={goals} setGoals={setGoals} />}
             {activeTab === 'portfolio' && <PortfolioTab portfolio={portfolio} setPortfolio={setPortfolio} />}
-            {activeTab === 'appointments' && <AppointmentsTab appointments={appointments} setAppointments={setAppointments} />}
+            {activeTab === 'appointments' && <AppointmentsTab 
+              appointments={appointments} 
+              setAppointments={setAppointments}
+              onBookAppointment={() => setShowAppointmentPopup(true)}
+            />}
                 {activeTab === 'education' && <EducationTab />}
                 {activeTab === 'helpdesk' && <Helpdesk />}
           </div>
@@ -425,12 +437,23 @@ export default function UserDashboard() {
         isImpersonating={isImpersonating}
         impersonatedUser={impersonatedUser}
       />
+
+      {/* Appointment Booking Popup */}
+      <AppointmentBookingPopup
+        isOpen={showAppointmentPopup}
+        onClose={() => setShowAppointmentPopup(false)}
+        onSuccess={() => {
+          setShowAppointmentPopup(false);
+          setShowFirstAppointmentPrompt(false);
+          setActiveTab('appointments');
+        }}
+      />
     </div>
   );
 }
 
 // Overview Tab Component
-function OverviewTab({ userProfile, goals, appointments, portfolio }: any) {
+function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppointment }: any) {
   const activeGoals = goals.filter((goal: Goal) => goal.status === 'active').length;
   const upcomingAppointments = appointments.filter((apt: Appointment) => 
     apt.status === 'scheduled' && new Date(apt.date) > new Date()
@@ -513,7 +536,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio }: any) {
               <button 
                 onClick={() => {
                   setShowFirstAppointmentPrompt(false);
-                  setActiveTab('appointments');
+                  if (onBookAppointment) {
+                    onBookAppointment();
+                  }
                 }}
                 className="bg-white text-orange-600 px-6 py-3 rounded-lg font-semibold hover:bg-orange-50 transition-colors"
               >
@@ -1151,334 +1176,145 @@ function PortfolioTab({ portfolio, setPortfolio }: any) {
 }
 
 // Appointments Tab Component
-function AppointmentsTab({ appointments, setAppointments }: any) {
-  const [showNewAppointment, setShowNewAppointment] = useState(false);
-  const [availableSlots, setAvailableSlots] = useState<any[]>([]);
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedTime, setSelectedTime] = useState('');
-  const [newAppointment, setNewAppointment] = useState({
-    title: '',
-    date: '',
-    time: '',
-    duration: 60,
-    type: 'consultation',
-    notes: '',
-    reason: ''
-  });
+function AppointmentsTab({ appointments, setAppointments, onBookAppointment }: any) {
+  const { user } = useSupabaseAuth();
+  const [userAppointments, setUserAppointments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Load available appointment slots
   useEffect(() => {
-    const loadAvailableSlots = async () => {
-      try {
-        // Mock available slots - in production this would come from Supabase
-        const mockSlots = [
-          { id: '1', date: '2024-11-20', time: '09:00', duration: 20, available: true },
-          { id: '2', date: '2024-11-20', time: '10:00', duration: 20, available: true },
-          { id: '3', date: '2024-11-20', time: '14:00', duration: 20, available: false },
-          { id: '4', date: '2024-11-21', time: '09:00', duration: 20, available: true },
-          { id: '5', date: '2024-11-21', time: '11:00', duration: 20, available: true },
-          { id: '6', date: '2024-11-21', time: '15:00', duration: 20, available: false },
-          { id: '7', date: '2024-11-22', time: '10:00', duration: 20, available: true },
-          { id: '8', date: '2024-11-22', time: '13:00', duration: 20, available: true },
-        ];
-        setAvailableSlots(mockSlots);
-      } catch (error) {
-        console.error('Error loading available slots:', error);
-      }
-    };
+    loadUserAppointments();
+  }, [user?.email]);
 
-    loadAvailableSlots();
-  }, []);
-
-  const handleCreateAppointment = async () => {
-    if (!selectedDate || !selectedTime) {
-      alert('Selecteer een datum en tijd');
-      return;
-    }
-
+  const loadUserAppointments = async () => {
+    if (!user?.email) return;
+    setLoading(true);
     try {
-      // In production, this would create in Supabase
-      const appointment = {
-        id: Date.now().toString(),
-        title: newAppointment.title || 'Eerste Afspraak',
-        date: selectedDate,
-        time: selectedTime,
-        duration: 20,
-        type: 'consultation',
-        notes: newAppointment.notes,
-        reason: newAppointment.reason,
-        status: 'pending_approval',
-        created_at: new Date().toISOString()
-      };
-      setAppointments([...appointments, appointment]);
-      setShowNewAppointment(false);
-      setNewAppointment({ title: '', date: '', time: '', duration: 60, type: 'consultation', notes: '', reason: '' });
-      setSelectedDate('');
-      setSelectedTime('');
-      alert('Afspraak aanvraag verzonden! Giovanni zal deze beoordelen en bevestigen.');
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('user_email', user.email)
+        .order('date', { ascending: true })
+        .order('start_time', { ascending: true });
+      
+      if (error) throw error;
+      setUserAppointments(data || []);
+      setAppointments(data || []);
     } catch (error) {
-      console.error('Error creating appointment:', error);
+      console.error('Error loading appointments:', error);
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const getAvailableSlotsForDate = (date: string) => {
-    return availableSlots.filter(slot => slot.date === date && slot.available);
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('nl-NL', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Mijn Afspraken</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Mijn Afspraken</h2>
         <button
-          onClick={() => setShowNewAppointment(true)}
+          onClick={onBookAppointment}
           className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
         >
           <Plus className="w-4 h-4" />
-          Afspraak Aanvragen
+          Afspraak Boeken
         </button>
       </div>
 
-      {/* Appointment Request Form */}
-      {showNewAppointment && (
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Afspraak Aanvragen</h3>
-          
-          <div className="space-y-6">
-            {/* Reason for appointment */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Reden voor afspraak</label>
-              <select
-                value={newAppointment.reason}
-                onChange={(e) => setNewAppointment({ ...newAppointment, reason: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Afspraken laden...</p>
+        </div>
+      ) : userAppointments.length === 0 ? (
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 border border-gray-200 dark:border-gray-700 text-center">
+          <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Nog geen afspraken</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">Plan je eerste afspraak in om te beginnen!</p>
+          <button
+            onClick={onBookAppointment}
+            className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+          >
+            Afspraak Boeken
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {userAppointments.map((apt: any) => {
+            const dateObj = new Date(apt.date);
+            const isPast = new Date(`${apt.date}T${apt.end_time}`) < new Date();
+            
+            return (
+              <div
+                key={apt.id}
+                className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-2 ${
+                  apt.status === 'confirmed'
+                    ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/10'
+                    : apt.status === 'pending'
+                    ? 'border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/10'
+                    : 'border-gray-200 dark:border-gray-700'
+                }`}
               >
-                <option value="">Selecteer een reden</option>
-                <option value="first_consultation">Eerste kennismaking (20 min)</option>
-                <option value="portfolio_review">Portfolio review</option>
-                <option value="strategy_discussion">Strategie bespreking</option>
-                <option value="goal_setting">Doelen stellen</option>
-                <option value="other">Anders</option>
-              </select>
-            </div>
-
-            {/* Date Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Selecteer Datum</label>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {Array.from(new Set(availableSlots.map(slot => slot.date))).map(date => (
-                  <button
-                    key={date}
-                    onClick={() => {
-                      setSelectedDate(date);
-                      setSelectedTime('');
-                    }}
-                    className={`p-3 rounded-lg border-2 text-left transition-colors ${
-                      selectedDate === date
-                        ? 'border-orange-500 bg-orange-50 text-orange-700'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="font-medium">{formatDate(date)}</div>
-                    <div className="text-sm text-gray-600">
-                      {getAvailableSlotsForDate(date).length} beschikbare tijden
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-4 flex-1">
+                    <div className={`p-3 rounded-lg ${
+                      apt.status === 'confirmed'
+                        ? 'bg-green-100 dark:bg-green-900'
+                        : apt.status === 'pending'
+                        ? 'bg-orange-100 dark:bg-orange-900'
+                        : 'bg-gray-100 dark:bg-gray-700'
+                    }`}>
+                      <Calendar className={`w-6 h-6 ${
+                        apt.status === 'confirmed'
+                          ? 'text-green-600 dark:text-green-400'
+                          : apt.status === 'pending'
+                          ? 'text-orange-600 dark:text-orange-400'
+                          : 'text-gray-600 dark:text-gray-400'
+                      }`} />
                     </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Time Selection */}
-            {selectedDate && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Selecteer Tijd</label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {getAvailableSlotsForDate(selectedDate).map(slot => (
-                    <button
-                      key={slot.id}
-                      onClick={() => setSelectedTime(slot.time)}
-                      className={`p-3 rounded-lg border-2 text-center transition-colors ${
-                        selectedTime === slot.time
-                          ? 'border-orange-500 bg-orange-50 text-orange-700'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="font-medium">{slot.time}</div>
-                      <div className="text-sm text-gray-600">{slot.duration} min</div>
-                    </button>
-                  ))}
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                        Eerste Afspraak
+                      </h3>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                          <Calendar className="w-4 h-4" />
+                          {dateObj.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                          <Clock className="w-4 h-4" />
+                          {apt.start_time} - {apt.end_time} ({apt.duration_minutes} minuten)
+                        </div>
+                      </div>
+                      {apt.notes && (
+                        <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                          <p className="text-sm text-gray-700 dark:text-gray-300">
+                            <strong>Opmerkingen:</strong> {apt.notes}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <span className={`text-xs px-3 py-1 rounded-full font-medium ${
+                      apt.status === 'confirmed'
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                        : apt.status === 'pending'
+                        ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                        : apt.status === 'cancelled'
+                        ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                    }`}>
+                      {apt.status === 'confirmed' ? '✅ Bevestigd' :
+                       apt.status === 'pending' ? '⏳ In Afwachting' :
+                       apt.status === 'cancelled' ? '❌ Geannuleerd' :
+                       '❓ Onbekend'}
+                    </span>
+                  </div>
                 </div>
               </div>
-            )}
-
-            {/* Additional Notes */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Aanvullende opmerkingen (optioneel)</label>
-              <textarea
-                value={newAppointment.notes}
-                onChange={(e) => setNewAppointment({ ...newAppointment, notes: e.target.value })}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                placeholder="Vertel ons meer over wat je wilt bespreken..."
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3">
-              <button
-                onClick={handleCreateAppointment}
-                disabled={!selectedDate || !selectedTime}
-                className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Afspraak Aanvragen
-              </button>
-              <button
-                onClick={() => {
-                  setShowNewAppointment(false);
-                  setSelectedDate('');
-                  setSelectedTime('');
-                }}
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Annuleren
-              </button>
-            </div>
-          </div>
+            );
+          })}
         </div>
       )}
-
-      {showNewAppointment && (
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Nieuwe Afspraak Inplannen</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Titel</label>
-              <input
-                type="text"
-                value={newAppointment.title}
-                onChange={(e) => setNewAppointment({ ...newAppointment, title: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
-              <select
-                value={newAppointment.type}
-                onChange={(e) => setNewAppointment({ ...newAppointment, type: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-              >
-                <option value="consultation">Consultatie</option>
-                <option value="review">Review</option>
-                <option value="strategy">Strategie</option>
-                <option value="follow-up">Follow-up</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Datum</label>
-              <input
-                type="date"
-                value={newAppointment.date}
-                onChange={(e) => setNewAppointment({ ...newAppointment, date: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Tijd</label>
-              <input
-                type="time"
-                value={newAppointment.time}
-                onChange={(e) => setNewAppointment({ ...newAppointment, time: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Duur (minuten)</label>
-              <select
-                value={newAppointment.duration}
-                onChange={(e) => setNewAppointment({ ...newAppointment, duration: Number(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-              >
-                <option value={30}>30 minuten</option>
-                <option value={60}>1 uur</option>
-                <option value={90}>1.5 uur</option>
-                <option value={120}>2 uur</option>
-              </select>
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Notities</label>
-              <textarea
-                value={newAppointment.notes}
-                onChange={(e) => setNewAppointment({ ...newAppointment, notes: e.target.value })}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-              />
-            </div>
-          </div>
-          <div className="mt-4 flex gap-3">
-            <button
-              onClick={handleCreateAppointment}
-              className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-            >
-              Afspraak Inplannen
-            </button>
-            <button
-              onClick={() => setShowNewAppointment(false)}
-              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Annuleren
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="space-y-4">
-        {appointments.map((appointment: Appointment) => (
-          <div key={appointment.id} className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="bg-orange-100 p-3 rounded-lg">
-                  <Calendar className="w-6 h-6 text-orange-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">{appointment.title}</h3>
-                  <p className="text-sm text-gray-600 capitalize">{appointment.type}</p>
-                  <p className="text-sm text-gray-500">
-                    {new Date(appointment.date).toLocaleDateString('nl-NL')} om {appointment.time} 
-                    ({appointment.duration} minuten)
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className={`text-xs px-3 py-1 rounded-full ${
-                  appointment.status === 'scheduled' ? 'bg-green-100 text-green-800' :
-                  appointment.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                  'bg-red-100 text-red-800'
-                }`}>
-                  {appointment.status === 'scheduled' ? 'Gepland' : 
-                   appointment.status === 'completed' ? 'Voltooid' : 'Geannuleerd'}
-                </span>
-                <button className="p-2 text-gray-400 hover:text-gray-600">
-                  <Edit className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            {appointment.notes && (
-              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-700">{appointment.notes}</p>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
