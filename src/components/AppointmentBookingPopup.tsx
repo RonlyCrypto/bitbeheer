@@ -28,8 +28,8 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
 
   useEffect(() => {
     if (isOpen) {
-      loadAvailableSlots();
-      loadBookedSlots();
+      setLoading(true);
+      Promise.all([loadAvailableSlots(), loadBookedSlots()]).finally(() => setLoading(false));
     }
   }, [isOpen]);
 
@@ -45,6 +45,7 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
       setAvailableSlots(data || []);
     } catch (error) {
       console.error('Error loading slots:', error);
+      alert('Fout bij het laden van beschikbare tijden');
     }
   };
 
