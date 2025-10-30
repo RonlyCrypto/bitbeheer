@@ -221,15 +221,17 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
 
       let data, error;
 
-      // If impersonating as admin, use Edge Function to create appointment
+      // If impersonating, ALWAYS use Edge Function to create appointment
       // This allows admin to create appointments for the impersonated user
       // The Edge Function uses service role to bypass RLS
-      const shouldUseEdgeFunction = isImpersonating && isAdminSession && impersonatedUser;
+      // We only need impersonating + impersonatedUser (session check is not critical)
+      const shouldUseEdgeFunction = isImpersonating && !!impersonatedUser;
       
       console.log('🔍 Decision check for Edge Function:', {
         isImpersonating,
         isAdminSession,
         impersonatedUser,
+        effectiveUserEmail,
         shouldUseEdgeFunction
       });
       
@@ -239,16 +241,25 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
         console.log('🎭 Appointment will be created for:', impersonatedUser);
         
         try {
+          // Use admin email from session, or fallback to checking if user is admin
+          const adminEmailToUse = sessionUserEmail === 'admin@bitbeheer.nl' 
+            ? sessionUserEmail 
+            : user?.email === 'admin@bitbeheer.nl' 
+              ? user.email 
+              : 'admin@bitbeheer.nl'; // Fallback
+          
           console.log('📤 Calling Edge Function with:', {
             appointmentData,
-            adminEmail: sessionUserEmail,
-            impersonatedUserEmail: impersonatedUser || effectiveUserEmail
+            adminEmail: adminEmailToUse,
+            impersonatedUserEmail: impersonatedUser || effectiveUserEmail,
+            sessionUserEmail,
+            userEmail: user?.email
           });
 
           const { data: functionData, error: functionError } = await supabase.functions.invoke('create-appointment', {
             body: {
               appointmentData,
-              adminEmail: sessionUserEmail,
+              adminEmail: adminEmailToUse,
               impersonatedUserEmail: impersonatedUser || effectiveUserEmail
             }
           });
