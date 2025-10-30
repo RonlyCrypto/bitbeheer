@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Clock, User, Trash2, CheckCircle, XCircle, Edit } from 'lucide-react';
+import { Calendar, Plus, Clock, User, Trash2, CheckCircle, XCircle, Edit, Search, Filter, Download, Copy, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface AvailableSlot {
@@ -16,20 +16,39 @@ interface Appointment {
   date: string;
   start_time: string;
   end_time: string;
+  duration_minutes: number;
   status: string;
   notes?: string;
   admin_notes?: string;
 }
 
+type ViewMode = 'single' | 'recurring' | 'calendar';
+
 export default function AdminAppointmentManagement() {
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('single');
   const [showSlotForm, setShowSlotForm] = useState(false);
+  const [showRecurringForm, setShowRecurringForm] = useState(false);
+  const [showEditAppointment, setShowEditAppointment] = useState(false);
+  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [newSlot, setNewSlot] = useState({
     date: '',
     start_time: '',
     duration_minutes: 20
+  });
+  const [recurringPattern, setRecurringPattern] = useState({
+    start_date: '',
+    end_date: '',
+    start_time: '',
+    end_time: '',
+    duration_minutes: 20,
+    repeat_type: 'weekly', // daily, weekly, monthly
+    repeat_days: [] as number[], // 0=Sunday, 1=Monday, etc.
+    interval: 1 // every X weeks/days
   });
 
   useEffect(() => {
@@ -39,7 +58,6 @@ export default function AdminAppointmentManagement() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Load available slots
       const { data: slots, error: slotsError } = await supabase
         .from('available_slots')
         .select('*')
@@ -49,7 +67,6 @@ export default function AdminAppointmentManagement() {
       if (slotsError) throw slotsError;
       setAvailableSlots(slots || []);
 
-      // Load appointments
       const { data: apts, error: aptsError } = await supabase
         .from('appointments')
         .select('*')
@@ -92,6 +109,99 @@ export default function AdminAppointmentManagement() {
     }
   };
 
+  const addRecurringSlots = async () => {
+    if (!recurringPattern.start_date || !recurringPattern.end_date || !recurringPattern.start_time || !recurringPattern.end_time) {
+      alert('Vul alle velden in');
+      return;
+    }
+
+    try {
+      const slotsToAdd: any[] = [];
+      const startDate = new Date(recurringPattern.start_date);
+      const endDate = new Date(recurringPattern.end_date);
+      const startTime = parseTime(recurringPattern.start_time);
+      const endTime = parseTime(recurringPattern.end_time);
+      const interval = recurringPattern.interval || 1;
+
+      let currentDate = new Date(startDate);
+
+      while (currentDate <= endDate) {
+        const dayOfWeek = currentDate.getDay();
+        
+        // Check if this day matches the pattern
+        const shouldAdd = recurringPattern.repeat_type === 'daily' || 
+                         (recurringPattern.repeat_type === 'weekly' && recurringPattern.repeat_days.includes(dayOfWeek));
+
+        if (shouldAdd) {
+          // Generate slots for this day from start_time to end_time
+          let currentSlotTime = new Date(startTime);
+          const endSlotTime = new Date(endTime);
+          const slotDuration = recurringPattern.duration_minutes;
+
+          while (currentSlotTime < endSlotTime) {
+            const timeStr = `${String(currentSlotTime.getHours()).padStart(2, '0')}:${String(currentSlotTime.getMinutes()).padStart(2, '0')}`;
+            slotsToAdd.push({
+              date: currentDate.toISOString().split('T')[0],
+              start_time: timeStr + ':00',
+              duration_minutes: slotDuration
+            });
+
+            currentSlotTime.setMinutes(currentSlotTime.getMinutes() + slotDuration);
+          }
+        }
+
+        // Move to next interval
+        if (recurringPattern.repeat_type === 'daily') {
+          currentDate.setDate(currentDate.getDate() + interval);
+        } else if (recurringPattern.repeat_type === 'weekly') {
+          currentDate.setDate(currentDate.getDate() + (7 * interval));
+        } else if (recurringPattern.repeat_type === 'monthly') {
+          currentDate.setMonth(currentDate.getMonth() + interval);
+        }
+      }
+
+      if (slotsToAdd.length === 0) {
+        alert('Geen slots gevonden voor dit patroon');
+        return;
+      }
+
+      // Insert in batches to avoid too large requests
+      const batchSize = 50;
+      for (let i = 0; i < slotsToAdd.length; i += batchSize) {
+        const batch = slotsToAdd.slice(i, i + batchSize);
+        const { error } = await supabase
+          .from('available_slots')
+          .insert(batch);
+        
+        if (error) throw error;
+      }
+
+      alert(`${slotsToAdd.length} slots succesvol toegevoegd!`);
+      setShowRecurringForm(false);
+      setRecurringPattern({
+        start_date: '',
+        end_date: '',
+        start_time: '',
+        end_time: '',
+        duration_minutes: 20,
+        repeat_type: 'weekly',
+        repeat_days: [],
+        interval: 1
+      });
+      await loadData();
+    } catch (error: any) {
+      console.error('Error adding recurring slots:', error);
+      alert(`Fout bij toevoegen: ${error.message}`);
+    }
+  };
+
+  const parseTime = (timeStr: string) => {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes || 0, 0, 0);
+    return date;
+  };
+
   const deleteSlot = async (slotId: string) => {
     if (!confirm('Weet je zeker dat je deze beschikbare tijd wilt verwijderen?')) return;
 
@@ -106,6 +216,51 @@ export default function AdminAppointmentManagement() {
     } catch (error: any) {
       console.error('Error deleting slot:', error);
       alert(`Fout bij verwijderen: ${error.message}`);
+    }
+  };
+
+  const deleteMultipleSlots = async (slotIds: string[]) => {
+    if (!confirm(`Weet je zeker dat je ${slotIds.length} slots wilt verwijderen?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('available_slots')
+        .delete()
+        .in('id', slotIds);
+
+      if (error) throw error;
+      await loadData();
+    } catch (error: any) {
+      console.error('Error deleting slots:', error);
+      alert(`Fout bij verwijderen: ${error.message}`);
+    }
+  };
+
+  const updateAppointment = async () => {
+    if (!editingAppointment) return;
+
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({
+          date: editingAppointment.date,
+          start_time: editingAppointment.start_time,
+          end_time: editingAppointment.end_time,
+          duration_minutes: editingAppointment.duration_minutes,
+          admin_notes: editingAppointment.admin_notes,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editingAppointment.id);
+
+      if (error) throw error;
+      
+      setShowEditAppointment(false);
+      setEditingAppointment(null);
+      await loadData();
+      alert('Afspraak succesvol bijgewerkt!');
+    } catch (error: any) {
+      console.error('Error updating appointment:', error);
+      alert(`Fout bij bijwerken: ${error.message}`);
     }
   };
 
@@ -129,16 +284,56 @@ export default function AdminAppointmentManagement() {
     }
   };
 
-  const getSlotAppointment = (slotId: string) => {
-    return appointments.find(apt => apt.id === slotId);
+  const toggleRepeatDay = (day: number) => {
+    setRecurringPattern(prev => ({
+      ...prev,
+      repeat_days: prev.repeat_days.includes(day)
+        ? prev.repeat_days.filter(d => d !== day)
+        : [...prev.repeat_days, day]
+    }));
   };
 
-  const isSlotBooked = (slot: AvailableSlot) => {
-    return appointments.some(apt => 
-      apt.date === slot.date && 
-      apt.start_time === slot.start_time &&
-      ['pending', 'confirmed'].includes(apt.status)
-    );
+  const getFilteredAppointments = () => {
+    let filtered = appointments.filter(a => ['pending', 'confirmed'].includes(a.status));
+    
+    if (filterStatus !== 'all') {
+      filtered = filtered.filter(a => a.status === filterStatus);
+    }
+    
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(a => 
+        (a.user_email?.toLowerCase().includes(query)) ||
+        (a.user_name?.toLowerCase().includes(query)) ||
+        (a.date.includes(query)) ||
+        (a.notes?.toLowerCase().includes(query))
+      );
+    }
+    
+    return filtered;
+  };
+
+  const exportAppointments = () => {
+    const csv = [
+      ['Datum', 'Tijd', 'Gebruiker', 'Email', 'Status', 'Notities', 'Admin Notities'].join(','),
+      ...getFilteredAppointments().map(apt => [
+        apt.date,
+        `${apt.start_time}-${apt.end_time}`,
+        apt.user_name || '',
+        apt.user_email,
+        apt.status,
+        (apt.notes || '').replace(/"/g, '""'),
+        (apt.admin_notes || '').replace(/"/g, '""')
+      ].map(v => `"${v}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `afspraken-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
   };
 
   const getSlotAppointmentForSlot = (slot: AvailableSlot) => {
@@ -149,23 +344,50 @@ export default function AdminAppointmentManagement() {
     );
   };
 
+  const isSlotBooked = (slot: AvailableSlot) => {
+    return appointments.some(apt => 
+      apt.date === slot.date && 
+      apt.start_time === slot.start_time &&
+      ['pending', 'confirmed'].includes(apt.status)
+    );
+  };
+
+  const dayNames = ['Zo', 'Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za'];
+  const fullDayNames = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Afspraken Beheer</h2>
           <p className="text-gray-600 dark:text-gray-400">Beheer beschikbare tijden en bekijk geboekte afspraken</p>
         </div>
-        <button
-          onClick={() => setShowSlotForm(!showSlotForm)}
-          className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          Beschikbare Tijd Toevoegen
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowRecurringForm(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Copy className="w-5 h-5" />
+            Terugkerend Patroon
+          </button>
+          <button
+            onClick={() => setShowSlotForm(!showSlotForm)}
+            className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            Enkele Tijd
+          </button>
+          <button
+            onClick={loadData}
+            className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            <RefreshCw className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
-      {/* Add Slot Form */}
+      {/* Single Slot Form */}
       {showSlotForm && (
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold mb-4">Nieuwe Beschikbare Tijd</h3>
@@ -219,12 +441,227 @@ export default function AdminAppointmentManagement() {
         </div>
       )}
 
+      {/* Recurring Pattern Form */}
+      {showRecurringForm && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold mb-4">Terugkerend Patroon Toevoegen</h3>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Van Datum</label>
+                <input
+                  type="date"
+                  value={recurringPattern.start_date}
+                  onChange={(e) => setRecurringPattern({ ...recurringPattern, start_date: e.target.value })}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tot Datum</label>
+                <input
+                  type="date"
+                  value={recurringPattern.end_date}
+                  onChange={(e) => setRecurringPattern({ ...recurringPattern, end_date: e.target.value })}
+                  min={recurringPattern.start_date || new Date().toISOString().split('T')[0]}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Van Tijd</label>
+                <input
+                  type="time"
+                  value={recurringPattern.start_time}
+                  onChange={(e) => setRecurringPattern({ ...recurringPattern, start_time: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tot Tijd</label>
+                <input
+                  type="time"
+                  value={recurringPattern.end_time}
+                  onChange={(e) => setRecurringPattern({ ...recurringPattern, end_time: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Herhaal Type</label>
+                <select
+                  value={recurringPattern.repeat_type}
+                  onChange={(e) => setRecurringPattern({ ...recurringPattern, repeat_type: e.target.value, repeat_days: [] })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="daily">Dagelijks</option>
+                  <option value="weekly">Wekelijks</option>
+                  <option value="monthly">Maandelijks</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Duur per Slot (minuten)</label>
+                <select
+                  value={recurringPattern.duration_minutes}
+                  onChange={(e) => setRecurringPattern({ ...recurringPattern, duration_minutes: parseInt(e.target.value) })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value={20}>20 minuten</option>
+                  <option value={30}>30 minuten</option>
+                  <option value={60}>60 minuten</option>
+                </select>
+              </div>
+            </div>
+
+            {recurringPattern.repeat_type === 'weekly' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Dagen van de Week</label>
+                <div className="flex gap-2 flex-wrap">
+                  {dayNames.map((day, index) => (
+                    <button
+                      key={index}
+                      onClick={() => toggleRepeatDay(index)}
+                      className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                        recurringPattern.repeat_days.includes(index)
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-blue-300'
+                      }`}
+                    >
+                      {day}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {(recurringPattern.repeat_type === 'weekly' || recurringPattern.repeat_type === 'daily') && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Herhaal elke {recurringPattern.repeat_type === 'weekly' ? 'X weken' : 'X dagen'}
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={recurringPattern.interval}
+                  onChange={(e) => setRecurringPattern({ ...recurringPattern, interval: parseInt(e.target.value) || 1 })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={addRecurringSlots}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Patroon Toevoegen
+              </button>
+              <button
+                onClick={() => {
+                  setShowRecurringForm(false);
+                  setRecurringPattern({
+                    start_date: '',
+                    end_date: '',
+                    start_time: '',
+                    end_time: '',
+                    duration_minutes: 20,
+                    repeat_type: 'weekly',
+                    repeat_days: [],
+                    interval: 1
+                  });
+                }}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                Annuleren
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Appointment Modal */}
+      {showEditAppointment && editingAppointment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-semibold mb-4">Afspraak Bewerken</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Datum</label>
+                <input
+                  type="date"
+                  value={editingAppointment.date}
+                  onChange={(e) => setEditingAppointment({ ...editingAppointment, date: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Start Tijd</label>
+                  <input
+                    type="time"
+                    value={editingAppointment.start_time}
+                    onChange={(e) => {
+                      const newEndTime = calculateEndTime(e.target.value, editingAppointment.duration_minutes);
+                      setEditingAppointment({ ...editingAppointment, start_time: e.target.value, end_time: newEndTime });
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Duur (minuten)</label>
+                  <select
+                    value={editingAppointment.duration_minutes}
+                    onChange={(e) => {
+                      const duration = parseInt(e.target.value);
+                      const newEndTime = calculateEndTime(editingAppointment.start_time, duration);
+                      setEditingAppointment({ ...editingAppointment, duration_minutes: duration, end_time: newEndTime });
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value={20}>20 minuten</option>
+                    <option value={30}>30 minuten</option>
+                    <option value={60}>60 minuten</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Admin Notities</label>
+                <textarea
+                  value={editingAppointment.admin_notes || ''}
+                  onChange={(e) => setEditingAppointment({ ...editingAppointment, admin_notes: e.target.value })}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white"
+                  placeholder="Interne notities alleen zichtbaar voor admin..."
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={updateAppointment}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Opslaan
+                </button>
+                <button
+                  onClick={() => {
+                    setShowEditAppointment(false);
+                    setEditingAppointment(null);
+                  }}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Annuleren
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Available Slots */}
       <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-          <Clock className="w-5 h-5 text-orange-600" />
-          Beschikbare Tijden
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-semibold flex items-center gap-2">
+            <Clock className="w-5 h-5 text-orange-600" />
+            Beschikbare Tijden ({availableSlots.length})
+          </h3>
+        </div>
         {loading ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
@@ -241,7 +678,7 @@ export default function AdminAppointmentManagement() {
                   <div className="font-semibold text-gray-900 dark:text-white mb-3">
                     {dateObj.toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
                     {slotsForDate.map((slot) => {
                       const appointment = getSlotAppointmentForSlot(slot);
                       const isBooked = isSlotBooked(slot);
@@ -269,9 +706,9 @@ export default function AdminAppointmentManagement() {
                           )}
                           <button
                             onClick={() => deleteSlot(slot.id)}
-                            className="text-xs text-red-600 hover:text-red-700"
+                            className="text-xs text-red-600 hover:text-red-700 flex items-center gap-1"
                           >
-                            <Trash2 className="w-3 h-3 inline" /> Verwijderen
+                            <Trash2 className="w-3 h-3" /> Verwijderen
                           </button>
                         </div>
                       );
@@ -284,88 +721,137 @@ export default function AdminAppointmentManagement() {
         )}
       </div>
 
-      {/* Booked Appointments */}
+      {/* Booked Appointments with Filters */}
       <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-          <User className="w-5 h-5 text-orange-600" />
-          Geboekte Afspraken ({appointments.filter(a => ['pending', 'confirmed'].includes(a.status)).length})
-        </h3>
-        {appointments.filter(a => ['pending', 'confirmed'].includes(a.status)).length === 0 ? (
-          <p className="text-gray-500 text-center py-8">Nog geen geboekte afspraken</p>
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
+          <h3 className="text-xl font-semibold flex items-center gap-2">
+            <User className="w-5 h-5 text-orange-600" />
+            Geboekte Afspraken ({getFilteredAppointments().length})
+          </h3>
+          <div className="flex gap-2 flex-wrap">
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Zoeken..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="all">Alle Status</option>
+              <option value="pending">In Afwachting</option>
+              <option value="confirmed">Bevestigd</option>
+            </select>
+            <button
+              onClick={exportAppointments}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Exporteren
+            </button>
+          </div>
+        </div>
+        {getFilteredAppointments().length === 0 ? (
+          <p className="text-gray-500 text-center py-8">Geen afspraken gevonden</p>
         ) : (
           <div className="space-y-4">
-            {appointments
-              .filter(a => ['pending', 'confirmed'].includes(a.status))
-              .map((apt) => {
-                const dateObj = new Date(apt.date);
-                return (
-                  <div
-                    key={apt.id}
-                    className={`p-4 rounded-lg border-2 ${
-                      apt.status === 'confirmed'
-                        ? 'border-green-300 bg-green-50 dark:bg-green-900/20'
-                        : 'border-orange-300 bg-orange-50 dark:bg-orange-900/20'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Calendar className="w-4 h-4 text-gray-500" />
-                          <span className="font-semibold text-gray-900 dark:text-white">
-                            {dateObj.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <Clock className="w-4 h-4 text-gray-500" />
-                          <span className="text-gray-700 dark:text-gray-300">
-                            {apt.start_time} - {apt.end_time}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <User className="w-4 h-4 text-gray-500" />
-                          <span className="text-gray-700 dark:text-gray-300">
-                            {apt.user_name || apt.user_email}
-                          </span>
-                        </div>
-                        {apt.notes && (
-                          <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                            <strong>Opmerkingen:</strong> {apt.notes}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          apt.status === 'confirmed'
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                            : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
-                        }`}>
-                          {apt.status === 'confirmed' ? 'Bevestigd' : 'In Afwachting'}
+            {getFilteredAppointments().map((apt) => {
+              const dateObj = new Date(apt.date);
+              return (
+                <div
+                  key={apt.id}
+                  className={`p-4 rounded-lg border-2 ${
+                    apt.status === 'confirmed'
+                      ? 'border-green-300 bg-green-50 dark:bg-green-900/20'
+                      : 'border-orange-300 bg-orange-50 dark:bg-orange-900/20'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Calendar className="w-4 h-4 text-gray-500" />
+                        <span className="font-semibold text-gray-900 dark:text-white">
+                          {dateObj.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                         </span>
-                        {apt.status === 'pending' && (
-                          <button
-                            onClick={() => updateAppointmentStatus(apt.id, 'confirmed')}
-                            className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-colors"
-                          >
-                            <CheckCircle className="w-3 h-3" />
-                            Bevestigen
-                          </button>
-                        )}
-                        <button
-                          onClick={() => updateAppointmentStatus(apt.id, 'cancelled')}
-                          className="flex items-center gap-1 px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition-colors"
-                        >
-                          <XCircle className="w-3 h-3" />
-                          Annuleren
-                        </button>
                       </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock className="w-4 h-4 text-gray-500" />
+                        <span className="text-gray-700 dark:text-gray-300">
+                          {apt.start_time} - {apt.end_time} ({apt.duration_minutes} min)
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <User className="w-4 h-4 text-gray-500" />
+                        <span className="text-gray-700 dark:text-gray-300">
+                          {apt.user_name || apt.user_email}
+                        </span>
+                      </div>
+                      {apt.notes && (
+                        <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                          <strong>Klant Opmerkingen:</strong> {apt.notes}
+                        </div>
+                      )}
+                      {apt.admin_notes && (
+                        <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 p-2 rounded">
+                          <strong>Admin Notities:</strong> {apt.admin_notes}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        apt.status === 'confirmed'
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                          : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                      }`}>
+                        {apt.status === 'confirmed' ? 'Bevestigd' : 'In Afwachting'}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setEditingAppointment({ ...apt });
+                          setShowEditAppointment(true);
+                        }}
+                        className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
+                      >
+                        <Edit className="w-3 h-3" />
+                        Bewerken
+                      </button>
+                      {apt.status === 'pending' && (
+                        <button
+                          onClick={() => updateAppointmentStatus(apt.id, 'confirmed')}
+                          className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-colors"
+                        >
+                          <CheckCircle className="w-3 h-3" />
+                          Bevestigen
+                        </button>
+                      )}
+                      <button
+                        onClick={() => updateAppointmentStatus(apt.id, 'cancelled')}
+                        className="flex items-center gap-1 px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition-colors"
+                      >
+                        <XCircle className="w-3 h-3" />
+                        Annuleren
+                      </button>
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
     </div>
   );
-}
 
+  function calculateEndTime(startTime: string, durationMinutes: number): string {
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const end = new Date();
+    end.setHours(hours, minutes + durationMinutes, 0, 0);
+    return `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}:00`;
+  }
+}
