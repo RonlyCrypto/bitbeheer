@@ -139,6 +139,20 @@ module.exports = async (req, res) => {
     if (accountError) {
       console.error('Error creating account:', accountError);
       console.error('Account data that failed:', accountData);
+      const message = accountError.message || '';
+      const isDuplicate =
+        accountError.code === '23505' ||
+        message.includes('duplicate key value') ||
+        message.includes('accounts_email_key');
+
+      if (isDuplicate) {
+        return res.status(409).json({
+          success: false,
+          error: 'Account bestaat al met dit e-mailadres',
+          details: 'duplicate_email'
+        });
+      }
+
       return res.status(500).json({
         success: false,
         error: 'Failed to create account',
