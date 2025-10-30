@@ -30,50 +30,60 @@ CREATE INDEX IF NOT EXISTS idx_wallets_email ON public.wallets(email);
 ALTER TABLE public.support_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.wallets ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist (for clean setup)
+DROP POLICY IF EXISTS "Users can read their own messages" ON public.support_messages;
+DROP POLICY IF EXISTS "Users can insert their own messages" ON public.support_messages;
+DROP POLICY IF EXISTS "Admin can read all messages" ON public.support_messages;
+DROP POLICY IF EXISTS "Admin can insert replies" ON public.support_messages;
+DROP POLICY IF EXISTS "Users can read their own wallet" ON public.wallets;
+DROP POLICY IF EXISTS "Users can insert their own wallet" ON public.wallets;
+DROP POLICY IF EXISTS "Admin can read all wallets" ON public.wallets;
+DROP POLICY IF EXISTS "Admin can delete wallets" ON public.wallets;
+
 -- RLS Policies for support_messages
 -- Users can read/write their own messages
-CREATE POLICY IF NOT EXISTS "Users can read their own messages"
+CREATE POLICY "Users can read their own messages"
   ON public.support_messages
   FOR SELECT
   USING (auth.jwt() ->> 'email' = email OR auth.jwt() ->> 'email' = 'admin@bitbeheer.nl');
 
-CREATE POLICY IF NOT EXISTS "Users can insert their own messages"
+CREATE POLICY "Users can insert their own messages"
   ON public.support_messages
   FOR INSERT
   WITH CHECK (auth.jwt() ->> 'email' = email);
 
 -- Admin can read all messages
-CREATE POLICY IF NOT EXISTS "Admin can read all messages"
+CREATE POLICY "Admin can read all messages"
   ON public.support_messages
   FOR SELECT
   USING (auth.jwt() ->> 'email' = 'admin@bitbeheer.nl');
 
 -- Admin can insert replies
-CREATE POLICY IF NOT EXISTS "Admin can insert replies"
+CREATE POLICY "Admin can insert replies"
   ON public.support_messages
   FOR INSERT
   WITH CHECK (auth.jwt() ->> 'email' = 'admin@bitbeheer.nl' OR auth.jwt() ->> 'email' = email);
 
 -- RLS Policies for wallets
 -- Users can read/write their own wallet
-CREATE POLICY IF NOT EXISTS "Users can read their own wallet"
+CREATE POLICY "Users can read their own wallet"
   ON public.wallets
   FOR SELECT
   USING (auth.jwt() ->> 'email' = email OR auth.jwt() ->> 'email' = 'admin@bitbeheer.nl');
 
-CREATE POLICY IF NOT EXISTS "Users can insert their own wallet"
+CREATE POLICY "Users can insert their own wallet"
   ON public.wallets
   FOR INSERT
   WITH CHECK (auth.jwt() ->> 'email' = email);
 
 -- Admin can read all wallets
-CREATE POLICY IF NOT EXISTS "Admin can read all wallets"
+CREATE POLICY "Admin can read all wallets"
   ON public.wallets
   FOR SELECT
   USING (auth.jwt() ->> 'email' = 'admin@bitbeheer.nl');
 
 -- Admin can delete wallets
-CREATE POLICY IF NOT EXISTS "Admin can delete wallets"
+CREATE POLICY "Admin can delete wallets"
   ON public.wallets
   FOR DELETE
   USING (auth.jwt() ->> 'email' = 'admin@bitbeheer.nl');
