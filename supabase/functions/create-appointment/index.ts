@@ -14,8 +14,22 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  console.log('📥 Edge Function called:', {
+    method: req.method,
+    url: req.url,
+    hasAuthHeader: !!req.headers.get('Authorization')
+  });
+
   try {
-    const { appointmentData, adminEmail, impersonatedUserEmail } = await req.json()
+    const requestBody = await req.json();
+    const { appointmentData, adminEmail, impersonatedUserEmail } = requestBody;
+    
+    console.log('📦 Request body:', {
+      hasAppointmentData: !!appointmentData,
+      adminEmail,
+      impersonatedUserEmail,
+      appointmentDataKeys: appointmentData ? Object.keys(appointmentData) : 'none'
+    });
 
     // Verify admin is making the request
     const authHeader = req.headers.get('Authorization')
@@ -52,9 +66,11 @@ serve(async (req) => {
     )
 
     // Verify admin email matches
+    console.log('🔐 Verifying admin email:', { adminEmail, expected: 'admin@bitbeheer.nl' });
     if (adminEmail !== 'admin@bitbeheer.nl') {
+      console.error('❌ Unauthorized: Admin email mismatch');
       return new Response(
-        JSON.stringify({ error: 'Unauthorized: Admin access required' }),
+        JSON.stringify({ error: 'Unauthorized: Admin access required', received: adminEmail }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -70,23 +86,39 @@ serve(async (req) => {
     })
 
     // Insert appointment with service role (bypasses RLS)
+    const appointmentToInsert = {
+      ...appointmentData,
+      user_email: finalUserEmail
+    };
+    
+    console.log('💾 Inserting appointment:', appointmentToInsert);
+    
     const { data, error } = await supabaseAdmin
       .from('appointments')
-      .insert([{
-        ...appointmentData,
-        user_email: finalUserEmail
-      }])
+      .insert([appointmentToInsert])
       .select()
       .single()
 
     if (error) {
-      console.error('Error creating appointment:', error)
+      console.error('❌ Error creating appointment:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
       return new Response(
-        JSON.stringify({ error: error.message, details: error }),
+        JSON.stringify({ 
+          error: error.message, 
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
+    console.log('✅ Appointment created successfully:', data);
+    
     return new Response(
       JSON.stringify({ success: true, data }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
