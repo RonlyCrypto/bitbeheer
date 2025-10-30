@@ -205,6 +205,19 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
       };
 
       console.log('💾 Inserting appointment:', appointmentData);
+      
+      // Debug: Check current session and JWT
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      console.log('🔐 Current session:', {
+        session: sessionData?.session,
+        userEmail: sessionData?.session?.user?.email,
+        userMetadata: sessionData?.session?.user?.user_metadata,
+        isAdmin: user?.email === 'admin@bitbeheer.nl',
+        isImpersonating,
+        impersonatedUser,
+        effectiveUserEmail,
+        sessionError
+      });
 
       const { data, error } = await supabase
         .from('appointments')
@@ -212,7 +225,26 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
         .select();
 
       if (error) {
-        console.error('❌ Supabase error:', error);
+        console.error('❌ Supabase insert error:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        
+        // Extra debugging for RLS errors
+        if (error.code === '42501' || error.message?.includes('row-level security')) {
+          console.error('🚨 RLS Policy Error Details:', {
+            currentUserEmail: user?.email,
+            sessionUserEmail: sessionData?.session?.user?.email,
+            isImpersonating,
+            impersonatedUser,
+            effectiveUserEmail,
+            appointmentUserEmail: appointmentData.user_email,
+            isAdmin: user?.email === 'admin@bitbeheer.nl'
+          });
+        }
+        
         throw error;
       }
 
@@ -231,16 +263,29 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
       // Check if it's an RLS policy error
       const isRLSError = errorMessage.includes('row-level security') || errorMessage.includes('RLS') || error.code === '42501';
       
+      // More specific error message for RLS errors
+      let errorTitle = 'Fout bij het boeken van de afspraak';
+      let errorDetails = [
+        'Of je ingelogd bent',
+        'Of het slot nog beschikbaar is',
+        'Of je rechten hebt om afspraken te maken'
+      ];
+      
+      if (isRLSError) {
+        errorTitle = 'Toegangsrechten probleem';
+        errorDetails = [
+          `Je bent ingelogd als: ${user?.email || 'onbekend'}`,
+          `Impersonation actief: ${isImpersonating ? 'Ja' : 'Nee'}`,
+          `Effectieve gebruiker: ${effectiveUserEmail || 'geen'}`,
+          `Admin status: ${user?.email === 'admin@bitbeheer.nl' ? 'Ja' : 'Nee'}`,
+          'De RLS policy laat deze actie mogelijk niet toe. Contacteer de admin.'
+        ];
+      }
+      
       setErrorPopup({
         isOpen: true,
-        message: isRLSError 
-          ? 'Fout bij het boeken van de afspraak: Toegangsrechten probleem'
-          : `Fout bij het boeken van de afspraak: ${errorMessage}`,
-        details: [
-          'Of je ingelogd bent',
-          'Of het slot nog beschikbaar is',
-          'Of je rechten hebt om afspraken te maken'
-        ]
+        message: `${errorTitle}: ${errorMessage}`,
+        details: errorDetails
       });
     } finally {
       setSubmitting(false);
