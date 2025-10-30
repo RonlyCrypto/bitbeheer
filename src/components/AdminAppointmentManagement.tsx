@@ -134,9 +134,12 @@ export default function AdminAppointmentManagement() {
 
         if (shouldAdd) {
           // Generate slots for this day from start_time to end_time
+          // IMPORTANT: Always use 30 minute intervals between slots (regardless of slot duration)
+          // This ensures minimum 30 minutes between appointment starts
           let currentSlotTime = new Date(startTime);
           const endSlotTime = new Date(endTime);
           const slotDuration = recurringPattern.duration_minutes;
+          const timeInterval = 30; // Always 30 minutes between slots
 
           while (currentSlotTime < endSlotTime) {
             const timeStr = `${String(currentSlotTime.getHours()).padStart(2, '0')}:${String(currentSlotTime.getMinutes()).padStart(2, '0')}`;
@@ -146,7 +149,8 @@ export default function AdminAppointmentManagement() {
               duration_minutes: slotDuration
             });
 
-            currentSlotTime.setMinutes(currentSlotTime.getMinutes() + slotDuration);
+            // Move to next slot: always 30 minutes later (not slotDuration!)
+            currentSlotTime.setMinutes(currentSlotTime.getMinutes() + timeInterval);
           }
         }
 

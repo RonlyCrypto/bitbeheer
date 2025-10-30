@@ -66,6 +66,14 @@ CREATE POLICY "Users can create appointments"
     user_email = (auth.jwt() ->> 'email')
   );
 
+-- Admin can create appointments for any user (for impersonation support)
+CREATE POLICY "Admin can create appointments"
+  ON public.appointments
+  FOR INSERT
+  WITH CHECK (
+    auth.jwt() ->> 'email' = 'admin@bitbeheer.nl'
+  );
+
 -- Admin can read all appointments
 CREATE POLICY "Admin can read all appointments"
   ON public.appointments
