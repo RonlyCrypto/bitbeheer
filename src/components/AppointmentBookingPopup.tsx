@@ -26,6 +26,20 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
   const [submitting, setSubmitting] = useState(false);
   const [notes, setNotes] = useState('');
 
+  // Debug: Log when user changes
+  useEffect(() => {
+    console.log('👤 User state changed:', { 
+      hasUser: !!user, 
+      email: user?.email,
+      userMetadata: user?.user_metadata 
+    });
+  }, [user]);
+
+  // Debug: Log when selectedSlot changes
+  useEffect(() => {
+    console.log('📌 SelectedSlot changed:', selectedSlot);
+  }, [selectedSlot]);
+
   useEffect(() => {
     if (isOpen) {
       setLoading(true);
@@ -58,28 +72,24 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
       
       if (error) throw error;
       
-      // Create set of blocked slots (including 20 min after end time)
+      // Create set of blocked slots
+      // Rule: Minimum 30 minutes between start of appointments
       const blocked = new Set<string>();
       (data || []).forEach((apt: any) => {
+        // Parse start time
+        const [startHours, startMinutes] = apt.start_time.split(':').map(Number);
+        const startTimeMinutes = startHours * 60 + startMinutes;
+        
         // Block the actual appointment slot
         const startKey = `${apt.date}_${apt.start_time}`;
         blocked.add(startKey);
         
-        // Parse end time and block until 20 min after
-        const [endHours, endMinutes] = apt.end_time.split(':').map(Number);
-        const blockUntilMinutes = endMinutes + 20;
-        const blockUntilHours = endHours + Math.floor(blockUntilMinutes / 60);
-        const finalBlockMinute = blockUntilMinutes % 60;
-        
-        // Block all 30-min slots from end_time to blockUntil
-        const endTimeMinutes = endHours * 60 + endMinutes;
-        const blockUntilTimeMinutes = blockUntilHours * 60 + finalBlockMinute;
-        
-        // Generate blocked time keys (every 30 minutes)
-        for (let mins = endTimeMinutes; mins < blockUntilTimeMinutes; mins += 30) {
-          const h = Math.floor(mins / 60);
+        // Block all times within 30 minutes after the start time
+        // This ensures minimum 30 minutes between appointment starts
+        for (let mins = startTimeMinutes + 1; mins < startTimeMinutes + 30; mins += 1) {
+          const h = Math.floor(mins / 60) % 24;
           const m = mins % 60;
-          const timeKey = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+          const timeKey = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
           blocked.add(`${apt.date}_${timeKey}`);
         }
       });
@@ -96,6 +106,7 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
   };
 
   const handleSlotSelect = (slotId: string) => {
+    console.log('🟢 Slot selected:', slotId);
     setSelectedSlot(slotId);
   };
 
@@ -174,8 +185,31 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
   };
 
   const isSlotBlocked = (slot: AvailableSlot) => {
+    // Check if this exact slot is blocked
     const key = `${slot.date}_${slot.start_time}`;
-    return bookedSlots.has(key);
+    if (bookedSlots.has(key)) return true;
+    
+    // Also check if any booked appointment starts within 30 minutes before this slot
+    // This ensures minimum 30 minutes between appointment starts
+    const [slotHours, slotMinutes] = slot.start_time.split(':').map(Number);
+    const slotTimeMinutes = slotHours * 60 + slotMinutes;
+    
+    // Check all booked slots to see if any starts within 30 minutes before this slot
+    for (const blockedKey of bookedSlots) {
+      const [blockedDate, blockedTime] = blockedKey.split('_');
+      if (blockedDate !== slot.date) continue;
+      
+      const [blockedHours, blockedMinutes] = blockedTime.split(':').map(Number);
+      const blockedTimeMinutes = blockedHours * 60 + blockedMinutes;
+      
+      // If a booked appointment starts within 30 minutes before this slot, block it
+      const timeDiff = slotTimeMinutes - blockedTimeMinutes;
+      if (timeDiff > 0 && timeDiff < 30) {
+        return true;
+      }
+    }
+    
+    return false;
   };
 
   const uniqueDates = Array.from(new Set(availableSlots.map(s => s.date))).sort();
@@ -326,10 +360,12 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
+              console.log('🔴 Button clicked', { selectedSlot, userEmail: user?.email, submitting });
               handleSubmit();
             }}
-            disabled={!selectedSlot || submitting || !user?.email}
+            disabled={submitting || !selectedSlot}
             className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+            title={!selectedSlot ? 'Selecteer eerst een tijd' : submitting ? 'Bezig met boeken...' : ''}
           >
             {submitting ? (
               <>
