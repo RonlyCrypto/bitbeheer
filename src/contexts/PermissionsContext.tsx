@@ -83,7 +83,7 @@ const PERMISSIONS = {
 };
 
 export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useSupabaseAuth();
+  const { user, loading } = useSupabaseAuth();
   
   const [accountType, setAccountType] = useState<AccountType>('user');
   const [isImpersonating, setIsImpersonating] = useState(false);
@@ -106,6 +106,11 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
         setIsImpersonating(false);
         setImpersonatedUser(null);
         
+        // Wait for auth to finish initializing before logging/setting state
+        if (loading) {
+          return;
+        }
+
         // Check if user is logged in via Supabase
         if (user) {
           console.log('👤 Supabase user detected:', user);
@@ -148,16 +153,14 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     
     window.addEventListener('impersonationStarted', handleImpersonationStarted);
     window.addEventListener('impersonationStopped', handleImpersonationStopped);
-    
-    // Check every second for changes
-    const interval = setInterval(checkImpersonation, 1000);
+    window.addEventListener('storage', checkImpersonation);
     
     return () => {
-      clearInterval(interval);
       window.removeEventListener('impersonationStarted', handleImpersonationStarted);
       window.removeEventListener('impersonationStopped', handleImpersonationStopped);
+      window.removeEventListener('storage', checkImpersonation);
     };
-  }, [user]);
+  }, [user, loading]);
 
   const hasPermission = (permission: string): boolean => {
     const userPermissions = PERMISSIONS[accountType] || [];

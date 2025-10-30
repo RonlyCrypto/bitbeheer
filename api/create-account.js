@@ -85,6 +85,26 @@ module.exports = async (req, res) => {
     // Create full name from first and last name
     const fullName = `${voornaam.trim()} ${achternaam.trim()}`.trim();
 
+    // Check for existing account with same email to avoid unique constraint violation
+    const { data: existingAccount, error: existingError } = await supabase
+      .from('accounts')
+      .select('id, email, category, verified, active')
+      .eq('email', email.toLowerCase().trim())
+      .maybeSingle();
+
+    if (existingError) {
+      console.error('Error checking existing account:', existingError);
+    }
+
+    if (existingAccount) {
+      console.warn('Account already exists for email:', email);
+      return res.status(409).json({
+        success: false,
+        error: 'Account bestaat al met dit e-mailadres',
+        details: 'duplicate_email'
+      });
+    }
+
     // Create account in accounts table (this is where user accounts are stored)
     const accountData = {
       email: email.toLowerCase().trim(),
