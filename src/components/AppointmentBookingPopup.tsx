@@ -224,18 +224,40 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
       // If impersonating as admin, use Edge Function to create appointment
       // This allows admin to create appointments for the impersonated user
       // The Edge Function uses service role to bypass RLS
-      if (isImpersonating && isAdminSession && impersonatedUser) {
+      const shouldUseEdgeFunction = isImpersonating && isAdminSession && impersonatedUser;
+      
+      console.log('🔍 Decision check for Edge Function:', {
+        isImpersonating,
+        isAdminSession,
+        impersonatedUser,
+        shouldUseEdgeFunction
+      });
+      
+      if (shouldUseEdgeFunction) {
         console.log('🎭 Admin impersonating - using Edge Function to create appointment...');
         console.log('🎭 Impersonated user:', impersonatedUser);
         console.log('🎭 Appointment will be created for:', impersonatedUser);
         
         try {
+          console.log('📤 Calling Edge Function with:', {
+            appointmentData,
+            adminEmail: sessionUserEmail,
+            impersonatedUserEmail: impersonatedUser || effectiveUserEmail
+          });
+
           const { data: functionData, error: functionError } = await supabase.functions.invoke('create-appointment', {
             body: {
               appointmentData,
               adminEmail: sessionUserEmail,
               impersonatedUserEmail: impersonatedUser || effectiveUserEmail
             }
+          });
+
+          console.log('📥 Edge Function response:', {
+            functionData,
+            functionError,
+            'functionData type': typeof functionData,
+            'functionData keys': functionData ? Object.keys(functionData) : 'null'
           });
 
           if (functionError) {
@@ -248,14 +270,27 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
               details: functionData.details 
             };
             console.error('❌ Edge Function returned error:', functionData.error);
-          } else {
-            data = functionData?.data ? (Array.isArray(functionData.data) ? functionData.data : [functionData.data]) : functionData?.data;
+          } else if (functionData?.success && functionData?.data) {
+            // Edge Function returns { success: true, data: ... }
+            data = Array.isArray(functionData.data) ? functionData.data : [functionData.data];
             console.log('✅ Appointment created via Edge Function:', data);
+          } else if (functionData?.data) {
+            // Fallback: if data is directly in response
+            data = Array.isArray(functionData.data) ? functionData.data : [functionData.data];
+            console.log('✅ Appointment created via Edge Function (fallback):', data);
+          } else {
+            // No data but no error - log for debugging
+            console.warn('⚠️ Edge Function returned success but no data:', functionData);
+            error = {
+              message: 'Edge Function returned success but no appointment data',
+              code: 'FUNCTION_ERROR'
+            };
           }
         } catch (functionErr: any) {
           error = {
             message: functionErr.message || 'Edge Function call failed',
-            code: 'FUNCTION_ERROR'
+            code: 'FUNCTION_ERROR',
+            originalError: functionErr
           };
           console.error('❌ Failed to call Edge Function:', functionErr);
         }
@@ -279,7 +314,9 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
           hint: error.hint,
           isImpersonating,
           impersonatedUser,
-          usedEdgeFunction: isImpersonating && isAdminSession
+          usedEdgeFunction: shouldUseEdgeFunction,
+          sessionUserEmail,
+          effectiveUserEmail
         });
         
         throw error;
