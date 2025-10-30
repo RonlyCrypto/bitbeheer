@@ -16,6 +16,12 @@ export default function AdminChat() {
   const [messages, setMessages] = useState<SupportMessage[]>([]);
   const [reply, setReply] = useState('');
 
+  const getInitials = (email: string, isAdmin: boolean) => {
+    if (isAdmin) return 'A';
+    const parts = email.split('@')[0].split(/[._-]/);
+    return parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase().slice(0, 2) : email[0].toUpperCase();
+  };
+
   const colorForEmail = (email: string) => {
     // Simple hash to pick a color
     const colors = [
@@ -65,12 +71,16 @@ export default function AdminChat() {
 
   const sendReply = async () => {
     if (!selectedEmail || !reply.trim()) return;
-    const { error } = await supabase
-      .from('support_messages')
-      .insert([{ email: selectedEmail, body: reply.trim(), from_admin: true, created_at: new Date().toISOString() }]);
-    if (!error) {
+    try {
+      const { error } = await supabase
+        .from('support_messages')
+        .insert([{ email: selectedEmail, body: reply.trim(), from_admin: true, created_at: new Date().toISOString() }]);
+      if (error) throw error;
       setReply('');
       await loadMessages();
+    } catch (e: any) {
+      console.error('Reply send error', e);
+      alert(`Antwoord verzenden mislukt: ${e.message || 'Controleer of de support_messages tabel bestaat in Supabase'}`);
     }
   };
 
@@ -104,23 +114,47 @@ export default function AdminChat() {
             <p className="text-gray-500">Geen berichten voor deze gebruiker.</p>
           ) : (
             <div className="space-y-3">
-              {messages.map((m) => (
-                <div key={m.id} className={`flex ${m.from_admin ? 'justify-end' : 'justify-start'}`}>
-                  <div className="max-w-[75%]">
-                    <div className={`text-[11px] mb-1 ${m.from_admin ? 'text-right text-gray-500' : `text-left ${colorForEmail(m.email).label}`}`}>
-                      {m.from_admin ? 'Admin' : m.email} • {formatStamp(m.created_at)}
+              {messages.map((m) => {
+                const userColor = colorForEmail(m.email);
+                const avatarColor = userColor.bubble.includes('blue') ? 'bg-blue-500' : 
+                                   userColor.bubble.includes('green') ? 'bg-green-500' : 
+                                   userColor.bubble.includes('purple') ? 'bg-purple-500' : 
+                                   userColor.bubble.includes('pink') ? 'bg-pink-500' : 
+                                   userColor.bubble.includes('teal') ? 'bg-teal-500' : 'bg-amber-500';
+                return (
+                  <div key={m.id} className={`flex items-start gap-2 ${m.from_admin ? 'justify-end' : 'justify-start'}`}>
+                    {!m.from_admin && (
+                      <div className={`w-8 h-8 rounded-full text-white flex items-center justify-center text-xs font-semibold flex-shrink-0 ${avatarColor}`}>
+                        {getInitials(m.email, false)}
+                      </div>
+                    )}
+                    <div className="max-w-[75%]">
+                      <div className={`text-[11px] mb-1 ${m.from_admin ? 'text-right text-gray-500' : `text-left ${userColor.label}`}`}>
+                        {m.from_admin ? 'Admin' : m.email} • {formatStamp(m.created_at)}
+                      </div>
+                      <div className={`px-3 py-2 rounded-lg text-sm shadow-sm ${m.from_admin ? 'bg-orange-600 text-white' : `border ${userColor.bubble}`}`}>
+                        <div>{m.body}</div>
+                      </div>
                     </div>
-                    <div className={`px-3 py-2 rounded-lg text-sm shadow-sm ${m.from_admin ? 'bg-orange-600 text-white' : `border ${colorForEmail(m.email).bubble}`}`}>
-                      <div>{m.body}</div>
-                    </div>
+                    {m.from_admin && (
+                      <div className="w-8 h-8 rounded-full bg-orange-600 text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                        A
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
         <div className="mt-3 flex gap-2">
-          <input value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Schrijf een antwoord..." className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
+          <input
+            value={reply}
+            onChange={(e) => setReply(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && reply.trim()) sendReply(); }}
+            placeholder="Schrijf een antwoord..."
+            className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          />
           <button onClick={sendReply} className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center gap-2">
             <Send className="w-4 h-4" />
             Stuur

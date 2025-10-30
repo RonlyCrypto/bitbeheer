@@ -17,6 +17,12 @@ export default function Helpdesk() {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const getInitials = (email: string, isAdmin: boolean) => {
+    if (isAdmin) return 'A';
+    const parts = email.split('@')[0].split(/[._-]/);
+    return parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase().slice(0, 2) : email[0].toUpperCase();
+  };
+
   const formatStamp = (iso: string) => {
     const d = new Date(iso);
     const day = d.toLocaleDateString('nl-NL', { weekday: 'short', day: '2-digit', month: '2-digit' });
@@ -62,9 +68,12 @@ export default function Helpdesk() {
         .insert([{ email: user.email, body, from_admin: false, created_at: optimistic.created_at }]);
       if (error) throw error;
       await loadMessages();
-    } catch (e) {
+    } catch (e: any) {
       console.error('Support send error', e);
-      alert('Bericht verzenden mislukt');
+      // Remove optimistic update on error
+      setMessages((prev) => prev.filter(m => !m.id.startsWith('temp-')));
+      setNewMessage(body || newMessage); // Restore message
+      alert(`Bericht verzenden mislukt: ${e.message || 'Controleer of de support_messages tabel bestaat in Supabase'}`);
     } finally {
       setLoading(false);
     }
@@ -85,7 +94,12 @@ export default function Helpdesk() {
         ) : (
           <div className="space-y-3">
             {messages.map((m) => (
-              <div key={m.id} className={`flex ${m.from_admin ? 'justify-end' : 'justify-start'}`}>
+              <div key={m.id} className={`flex items-start gap-2 ${m.from_admin ? 'justify-end' : 'justify-start'}`}>
+                {!m.from_admin && (
+                  <div className="w-8 h-8 rounded-full bg-orange-600 text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                    {getInitials(user?.email || '', false)}
+                  </div>
+                )}
                 <div className="max-w-[75%]">
                   <div className={`text-[11px] mb-1 ${m.from_admin ? 'text-right text-gray-500' : 'text-left text-gray-500'}`}>
                     {m.from_admin ? 'Admin' : 'Jij'} • {formatStamp(m.created_at)}
@@ -94,6 +108,11 @@ export default function Helpdesk() {
                     <div>{m.body}</div>
                   </div>
                 </div>
+                {m.from_admin && (
+                  <div className="w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                    A
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -104,6 +123,7 @@ export default function Helpdesk() {
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && !loading && newMessage.trim()) sendMessage(); }}
           placeholder="Schrijf je bericht..."
           className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
         />
