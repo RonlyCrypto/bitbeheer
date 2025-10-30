@@ -273,28 +273,44 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
 
           if (functionError) {
             error = functionError;
-            console.error('❌ Edge Function error:', error);
+            console.error('❌ Edge Function invoke error:', {
+              error,
+              message: functionError?.message,
+              details: functionError
+            });
           } else if (functionData?.error) {
             error = { 
               message: functionData.error, 
-              code: 'FUNCTION_ERROR',
-              details: functionData.details 
+              code: functionData.code || 'FUNCTION_ERROR',
+              details: functionData.details,
+              hint: functionData.hint
             };
-            console.error('❌ Edge Function returned error:', functionData.error);
-          } else if (functionData?.success && functionData?.data) {
+            console.error('❌ Edge Function returned error:', {
+              error: functionData.error,
+              code: functionData.code,
+              details: functionData.details,
+              hint: functionData.hint
+            });
+          } else if (functionData?.success === true && functionData?.data) {
             // Edge Function returns { success: true, data: ... }
             data = Array.isArray(functionData.data) ? functionData.data : [functionData.data];
             console.log('✅ Appointment created via Edge Function:', data);
-          } else if (functionData?.data) {
-            // Fallback: if data is directly in response
+          } else if (functionData?.data && !functionData?.error) {
+            // Fallback: if data is directly in response without error
             data = Array.isArray(functionData.data) ? functionData.data : [functionData.data];
             console.log('✅ Appointment created via Edge Function (fallback):', data);
           } else {
             // No data but no error - log for debugging
-            console.warn('⚠️ Edge Function returned success but no data:', functionData);
+            console.warn('⚠️ Edge Function returned unexpected response:', {
+              functionData,
+              hasSuccess: !!functionData?.success,
+              hasData: !!functionData?.data,
+              hasError: !!functionData?.error
+            });
             error = {
               message: 'Edge Function returned success but no appointment data',
-              code: 'FUNCTION_ERROR'
+              code: 'FUNCTION_ERROR',
+              response: functionData
             };
           }
         } catch (functionErr: any) {
