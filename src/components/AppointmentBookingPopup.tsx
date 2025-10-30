@@ -3,6 +3,7 @@ import { X, Calendar, Clock, User, CheckCircle, AlertCircle } from 'lucide-react
 import { supabase } from '../lib/supabase';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
+import ErrorPopup from './ErrorPopup';
 
 interface AvailableSlot {
   id: string;
@@ -30,6 +31,11 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [notes, setNotes] = useState('');
+  const [errorPopup, setErrorPopup] = useState<{ isOpen: boolean; message: string; details?: string[] }>({
+    isOpen: false,
+    message: '',
+    details: []
+  });
 
   // Debug: Log when user changes
   useEffect(() => {
@@ -67,7 +73,14 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
       setAvailableSlots(data || []);
     } catch (error) {
       console.error('Error loading slots:', error);
-      alert('Fout bij het laden van beschikbare tijden');
+      setErrorPopup({
+        isOpen: true,
+        message: 'Fout bij het laden van beschikbare tijden',
+        details: [
+          'Controleer je internetverbinding',
+          'Refresh de pagina en probeer het opnieuw'
+        ]
+      });
     }
   };
 
@@ -129,12 +142,23 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
     });
     
     if (!selectedSlot) {
-      alert('Selecteer eerst een tijd slot');
+      setErrorPopup({
+        isOpen: true,
+        message: 'Selecteer eerst een tijd slot om door te gaan.',
+        details: []
+      });
       return;
     }
     
     if (!effectiveUserEmail) {
-      alert('Je bent niet ingelogd. Log eerst in om een afspraak te maken.');
+      setErrorPopup({
+        isOpen: true,
+        message: 'Je bent niet ingelogd. Log eerst in om een afspraak te maken.',
+        details: [
+          'Zorg dat je ingelogd bent voordat je een afspraak probeert te boeken',
+          'Refresh de pagina als het probleem blijft bestaan'
+        ]
+      });
       return;
     }
     
@@ -194,8 +218,7 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
 
       console.log('✅ Appointment created:', data);
 
-      alert('Afspraak succesvol geboekt! Je ontvangt een bevestiging zodra deze is goedgekeurd.');
-      
+      // Success - close popup and show success message
       onSuccess();
       onClose();
       setSelectedDate('');
@@ -204,7 +227,21 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
     } catch (error: any) {
       console.error('❌ Error booking appointment:', error);
       const errorMessage = error.message || 'Onbekende fout';
-      alert(`Fout bij het boeken van de afspraak:\n\n${errorMessage}\n\nControleer:\n1. Of je ingelogd bent\n2. Of het slot nog beschikbaar is\n3. Of je rechten hebt om afspraken te maken`);
+      
+      // Check if it's an RLS policy error
+      const isRLSError = errorMessage.includes('row-level security') || errorMessage.includes('RLS') || error.code === '42501';
+      
+      setErrorPopup({
+        isOpen: true,
+        message: isRLSError 
+          ? 'Fout bij het boeken van de afspraak: Toegangsrechten probleem'
+          : `Fout bij het boeken van de afspraak: ${errorMessage}`,
+        details: [
+          'Of je ingelogd bent',
+          'Of het slot nog beschikbaar is',
+          'Of je rechten hebt om afspraken te maken'
+        ]
+      });
     } finally {
       setSubmitting(false);
     }
@@ -426,6 +463,14 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
           </button>
         </div>
       </div>
+
+      {/* Error Popup */}
+      <ErrorPopup
+        isOpen={errorPopup.isOpen}
+        onClose={() => setErrorPopup({ isOpen: false, message: '', details: [] })}
+        message={errorPopup.message}
+        details={errorPopup.details}
+      />
     </div>
   );
 }

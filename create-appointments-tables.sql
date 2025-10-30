@@ -45,6 +45,7 @@ ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
 -- Drop existing policies if they exist (for clean setup)
 DROP POLICY IF EXISTS "Users can read their own appointments" ON public.appointments;
 DROP POLICY IF EXISTS "Users can create appointments" ON public.appointments;
+DROP POLICY IF EXISTS "Admin can create appointments" ON public.appointments;
 DROP POLICY IF EXISTS "Admin can read all appointments" ON public.appointments;
 DROP POLICY IF EXISTS "Admin can update appointments" ON public.appointments;
 
