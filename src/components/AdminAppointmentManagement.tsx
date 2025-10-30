@@ -847,11 +847,11 @@ export default function AdminAppointmentManagement() {
       </div>
     </div>
   );
-
-  function calculateEndTime(startTime: string, durationMinutes: number): string {
-    const [hours, minutes] = startTime.split(':').map(Number);
-    const end = new Date();
-    end.setHours(hours, minutes + durationMinutes, 0, 0);
-    return `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}:00`;
-  }
 }
+
+const calculateEndTime = (startTime: string, durationMinutes: number): string => {
+  const [hours, minutes] = startTime.split(':').map(Number);
+  const end = new Date();
+  end.setHours(hours, minutes + durationMinutes, 0, 0);
+  return `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}:00`;
+};
