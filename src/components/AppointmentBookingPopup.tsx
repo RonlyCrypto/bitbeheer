@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Calendar, Clock, User, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 
 interface AvailableSlot {
   id: string;
@@ -18,6 +19,10 @@ interface AppointmentBookingPopupProps {
 
 export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: AppointmentBookingPopupProps) {
   const { user } = useSupabaseAuth();
+  const { isImpersonating, impersonatedUser } = usePermissions();
+  
+  // Get the effective user email (impersonated user if impersonating, otherwise real user)
+  const effectiveUserEmail = isImpersonating && impersonatedUser ? impersonatedUser : user?.email;
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
   const [bookedSlots, setBookedSlots] = useState<Set<string>>(new Set());
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -31,9 +36,12 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
     console.log('👤 User state changed:', { 
       hasUser: !!user, 
       email: user?.email,
-      userMetadata: user?.user_metadata 
+      userMetadata: user?.user_metadata,
+      isImpersonating,
+      impersonatedUser,
+      effectiveUserEmail
     });
-  }, [user]);
+  }, [user, isImpersonating, impersonatedUser, effectiveUserEmail]);
 
   // Debug: Log when selectedSlot changes
   useEffect(() => {
@@ -111,14 +119,21 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
   };
 
   const handleSubmit = async () => {
-    console.log('🔵 handleSubmit called', { selectedSlot, userEmail: user?.email, submitting });
+    console.log('🔵 handleSubmit called', { 
+      selectedSlot, 
+      userEmail: user?.email,
+      isImpersonating,
+      impersonatedUser,
+      effectiveUserEmail,
+      submitting 
+    });
     
     if (!selectedSlot) {
       alert('Selecteer eerst een tijd slot');
       return;
     }
     
-    if (!user?.email) {
+    if (!effectiveUserEmail) {
       alert('Je bent niet ingelogd. Log eerst in om een afspraak te maken.');
       return;
     }
@@ -138,9 +153,24 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
       endTime.setHours(hours, minutes + slot.duration_minutes, 0, 0);
       const endTimeStr = `${String(endTime.getHours()).padStart(2, '0')}:${String(endTime.getMinutes()).padStart(2, '0')}:00`;
 
+      // Get user name - if impersonating, try to get from profile, otherwise use metadata
+      let userName = effectiveUserEmail.split('@')[0];
+      if (isImpersonating) {
+        // For impersonation, we might need to fetch the user profile
+        // For now, use email username as fallback
+        userName = impersonatedUser?.split('@')[0] || effectiveUserEmail.split('@')[0];
+      } else if (user?.user_metadata?.name) {
+        userName = user.user_metadata.name;
+      } else if (user?.user_metadata?.first_name) {
+        userName = user.user_metadata.first_name;
+        if (user.user_metadata.last_name) {
+          userName += ` ${user.user_metadata.last_name}`;
+        }
+      }
+
       const appointmentData = {
-        user_email: user.email,
-        user_name: user.user_metadata?.name || user.email.split('@')[0],
+        user_email: effectiveUserEmail,
+        user_name: userName,
         slot_id: slot.id,
         date: slot.date,
         start_time: slot.start_time,
@@ -368,12 +398,19 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              console.log('🔴 Button clicked', { selectedSlot, userEmail: user?.email, submitting });
+              console.log('🔴 Button clicked', { 
+                selectedSlot, 
+                userEmail: user?.email,
+                isImpersonating,
+                impersonatedUser,
+                effectiveUserEmail,
+                submitting 
+              });
               handleSubmit();
             }}
-            disabled={submitting || !selectedSlot}
+            disabled={submitting || !selectedSlot || !effectiveUserEmail}
             className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
-            title={!selectedSlot ? 'Selecteer eerst een tijd' : submitting ? 'Bezig met boeken...' : ''}
+            title={!effectiveUserEmail ? 'Je bent niet ingelogd' : !selectedSlot ? 'Selecteer eerst een tijd' : submitting ? 'Bezig met boeken...' : ''}
           >
             {submitting ? (
               <>
