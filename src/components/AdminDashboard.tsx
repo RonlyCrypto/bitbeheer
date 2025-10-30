@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import NotificatieBeheer from './NotificatieBeheer';
 import AccountBeheer from './AccountBeheer';
+import AdminChat from './AdminChat';
 import CategorieBeheer from './CategorieBeheer';
 import EmailVerificationStatus from './EmailVerificationStatus';
 import AdminProfile from './AdminProfile';
@@ -30,7 +31,7 @@ import AdminSettings from './AdminSettings';
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [isSoonOnlineMode, setIsSoonOnlineMode] = useState(true);
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<any[]>([]);
 
   useEffect(() => {
     // Check current soon online mode status
@@ -163,6 +164,16 @@ export default function AdminDashboard() {
                   }`}
                 >
                   Dashboard
+                </button>
+                <button
+                  onClick={() => setActiveTab('chat')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'chat'
+                      ? 'border-orange-500 text-orange-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Chat
                 </button>
                 <button
                   onClick={() => setActiveTab('notifications')}
@@ -449,6 +460,13 @@ export default function AdminDashboard() {
           {activeTab === 'accounts' && (
             <div className="space-y-6">
               <AccountBeheer />
+            </div>
+          )}
+
+          {/* Chat Tab */}
+          {activeTab === 'chat' && (
+            <div className="space-y-6">
+              <AdminChat />
             </div>
           )}
 

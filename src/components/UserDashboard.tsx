@@ -38,6 +38,7 @@ import { useProfilePopup } from '../contexts/ProfilePopupContext';
 import { getDisplayName, getDisplayEmail } from '../utils/emailUtils';
 import { supabase } from '../lib/supabase';
 import ProfilePopup from './ProfilePopup';
+import Helpdesk from './Helpdesk';
 
 interface UserProfile {
   id: string;
@@ -248,45 +249,22 @@ export default function UserDashboard() {
           }
         ]);
 
-        // Load appointments - using mock data for now
-        setAppointments([
-          {
-            id: '1',
-            title: 'Portfolio Review',
-            date: '2024-11-15',
-            time: '14:00',
-            duration: 60,
-            type: 'review',
-            status: 'scheduled',
-            notes: 'Quarterly portfolio review and strategy adjustment'
-          },
-          {
-            id: '2',
-            title: 'DCA Strategy Consultation',
-            date: '2024-11-22',
-            time: '10:00',
-            duration: 90,
-            type: 'consultation',
-            status: 'scheduled',
-            notes: 'Discuss optimal DCA amounts and timing'
-          }
-        ]);
+        // Load appointments/goals/portfolio from DB — TODO: implement when schema is ready
         setShowFirstAppointmentPrompt(false);
 
-        // Load portfolio - using mock data for now
-        setPortfolio({
-          id: '1',
-          name: 'Mijn Portfolio',
-          value: 45000,
-          change: 2500,
-          changePercent: 5.9,
-          assets: [
-            { name: 'Bitcoin', symbol: 'BTC', amount: 0.5, value: 20000, percentage: 44.4 },
-            { name: 'Ethereum', symbol: 'ETH', amount: 2.0, value: 15000, percentage: 33.3 },
-            { name: 'Diversified Altcoins', symbol: 'ALTS', amount: 1000, value: 10000, percentage: 22.2 }
-          ]
-        });
-        setHasWallet(true);
+        // Wallet: detect single wallet from DB
+        if (user?.email) {
+          const { data: wallets, error: walletErr } = await supabase
+            .from('wallets')
+            .select('*')
+            .eq('email', user.email)
+            .limit(1);
+          if (!walletErr && wallets && wallets.length > 0) {
+            setHasWallet(true);
+          } else {
+            setHasWallet(false);
+          }
+        }
 
       } catch (error) {
         console.error('Error loading user data:', error);
@@ -304,26 +282,43 @@ export default function UserDashboard() {
       return;
     }
 
+    if (hasWallet) {
+      alert('Je kunt maar één wallet toevoegen. Neem contact op met de admin voor wijzigingen.');
+      return;
+    }
+
     setIsAddingWallet(true);
     try {
-      // Simulate API call to add wallet
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Update portfolio with new wallet
-      const newPortfolio = {
-        id: '1',
-        name: 'Mijn Portfolio',
-        value: 45000,
-        change: 2500,
-        changePercent: 5.9,
-        assets: [
-          { name: 'Bitcoin', symbol: 'BTC', amount: 0.5, value: 20000, percentage: 44.4 },
-          { name: 'Ethereum', symbol: 'ETH', amount: 2.0, value: 15000, percentage: 33.3 },
-          { name: 'Diversified Altcoins', symbol: 'ALTS', amount: 1000, value: 10000, percentage: 22.2 }
-        ]
-      };
-      
-      setPortfolio(newPortfolio);
+      if (!user?.email) throw new Error('Geen gebruiker bekend');
+
+      // Check again server-side for existing wallet
+      const { data: existing, error: checkErr } = await supabase
+        .from('wallets')
+        .select('id')
+        .eq('email', user.email)
+        .limit(1);
+      if (checkErr) throw checkErr;
+      if (existing && existing.length > 0) {
+        setHasWallet(true);
+        alert('Er is al een wallet gekoppeld aan dit account.');
+        setIsAddingWallet(false);
+        return;
+      }
+
+      // Insert wallet
+      const { error: insertErr } = await supabase
+        .from('wallets')
+        .insert([
+          {
+            email: user.email,
+            address: walletForm.address.trim(),
+            name: walletForm.name?.trim() || null,
+            type: walletForm.type,
+            created_at: new Date().toISOString(),
+          }
+        ]);
+      if (insertErr) throw insertErr;
+
       setHasWallet(true);
       
       // Close form after success
@@ -389,7 +384,8 @@ export default function UserDashboard() {
                 { id: 'goals', label: 'Doelen', icon: Target },
                 { id: 'portfolio', label: 'Portfolio', icon: PieChart },
                 { id: 'appointments', label: 'Afspraken', icon: Calendar },
-                { id: 'education', label: 'Educatie', icon: BookOpen },
+                    { id: 'education', label: 'Educatie', icon: BookOpen },
+                    { id: 'helpdesk', label: 'Helpdesk', icon: Mail },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -413,7 +409,8 @@ export default function UserDashboard() {
             {activeTab === 'goals' && <GoalsTab goals={goals} setGoals={setGoals} />}
             {activeTab === 'portfolio' && <PortfolioTab portfolio={portfolio} setPortfolio={setPortfolio} />}
             {activeTab === 'appointments' && <AppointmentsTab appointments={appointments} setAppointments={setAppointments} />}
-            {activeTab === 'education' && <EducationTab />}
+                {activeTab === 'education' && <EducationTab />}
+                {activeTab === 'helpdesk' && <Helpdesk />}
           </div>
         </div>
       </div>
@@ -456,23 +453,30 @@ function OverviewTab({ userProfile, goals, appointments, portfolio }: any) {
 
     setIsAddingWallet(true);
     try {
-      // Simulate API call to add wallet
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Update portfolio with new wallet
-      const newPortfolio = {
-        id: '1',
-        name: 'Mijn Portfolio',
-        value: 45000,
-        change: 2500,
-        changePercent: 5.9,
-        assets: [
-          { name: 'Bitcoin', symbol: 'BTC', amount: 0.5, value: 20000, percentage: 44.4 },
-          { name: 'Ethereum', symbol: 'ETH', amount: 2.0, value: 15000, percentage: 33.3 },
-          { name: 'Diversified Altcoins', symbol: 'ALTS', amount: 1000, value: 10000, percentage: 22.2 }
-        ]
-      };
-      
+      // Get current user email
+      const { data: authData } = await supabase.auth.getUser();
+      const email = authData?.user?.email || null;
+      if (!email) throw new Error('Geen gebruiker bekend');
+
+      // Check existing wallet
+      const { data: existing, error: checkErr } = await supabase
+        .from('wallets')
+        .select('id')
+        .eq('email', email)
+        .limit(1);
+      if (checkErr) throw checkErr;
+      if (existing && existing.length > 0) {
+        setHasWallet(true);
+        alert('Er is al een wallet gekoppeld aan dit account.');
+        setIsAddingWallet(false);
+        return;
+      }
+
+      const { error: insertErr } = await supabase
+        .from('wallets')
+        .insert([{ email, address: walletForm.address.trim(), name: walletForm.name?.trim() || null, type: walletForm.type, created_at: new Date().toISOString() }]);
+      if (insertErr) throw insertErr;
+
       setHasWallet(true);
       
       // Close form after success
