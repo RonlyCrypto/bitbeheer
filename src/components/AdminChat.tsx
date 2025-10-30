@@ -16,6 +16,28 @@ export default function AdminChat() {
   const [messages, setMessages] = useState<SupportMessage[]>([]);
   const [reply, setReply] = useState('');
 
+  const colorForEmail = (email: string) => {
+    // Simple hash to pick a color
+    const colors = [
+      { bubble: 'bg-blue-50 border-blue-200 text-blue-900', label: 'text-blue-600' },
+      { bubble: 'bg-green-50 border-green-200 text-green-900', label: 'text-green-600' },
+      { bubble: 'bg-purple-50 border-purple-200 text-purple-900', label: 'text-purple-600' },
+      { bubble: 'bg-pink-50 border-pink-200 text-pink-900', label: 'text-pink-600' },
+      { bubble: 'bg-teal-50 border-teal-200 text-teal-900', label: 'text-teal-600' },
+      { bubble: 'bg-amber-50 border-amber-200 text-amber-900', label: 'text-amber-600' },
+    ];
+    let hash = 0;
+    for (let i = 0; i < email.length; i++) hash = (hash * 31 + email.charCodeAt(i)) >>> 0;
+    return colors[hash % colors.length];
+  };
+
+  const formatStamp = (iso: string) => {
+    const d = new Date(iso);
+    const day = d.toLocaleDateString('nl-NL', { weekday: 'short', day: '2-digit', month: '2-digit' });
+    const time = d.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+    return `${day} • ${time}`;
+  };
+
   const loadCustomers = async () => {
     const { data, error } = await supabase
       .from('support_messages')
@@ -85,10 +107,10 @@ export default function AdminChat() {
               {messages.map((m) => (
                 <div key={m.id} className={`flex ${m.from_admin ? 'justify-end' : 'justify-start'}`}>
                   <div className="max-w-[75%]">
-                    <div className={`text-[11px] mb-1 ${m.from_admin ? 'text-right text-gray-500' : 'text-left text-gray-500'}`}>
-                      {m.from_admin ? 'Admin' : m.email} • {new Date(m.created_at).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
+                    <div className={`text-[11px] mb-1 ${m.from_admin ? 'text-right text-gray-500' : `text-left ${colorForEmail(m.email).label}`}`}>
+                      {m.from_admin ? 'Admin' : m.email} • {formatStamp(m.created_at)}
                     </div>
-                    <div className={`px-3 py-2 rounded-lg text-sm ${m.from_admin ? 'bg-orange-600 text-white' : 'bg-white border'}`}>
+                    <div className={`px-3 py-2 rounded-lg text-sm shadow-sm ${m.from_admin ? 'bg-orange-600 text-white' : `border ${colorForEmail(m.email).bubble}`}`}>
                       <div>{m.body}</div>
                     </div>
                   </div>

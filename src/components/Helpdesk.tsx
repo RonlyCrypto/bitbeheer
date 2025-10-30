@@ -17,6 +17,13 @@ export default function Helpdesk() {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const formatStamp = (iso: string) => {
+    const d = new Date(iso);
+    const day = d.toLocaleDateString('nl-NL', { weekday: 'short', day: '2-digit', month: '2-digit' });
+    const time = d.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+    return `${day} • ${time}`;
+  };
+
   const loadMessages = async () => {
     if (!user?.email) return;
     const { data, error } = await supabase
@@ -81,9 +88,9 @@ export default function Helpdesk() {
               <div key={m.id} className={`flex ${m.from_admin ? 'justify-end' : 'justify-start'}`}>
                 <div className="max-w-[75%]">
                   <div className={`text-[11px] mb-1 ${m.from_admin ? 'text-right text-gray-500' : 'text-left text-gray-500'}`}>
-                    {m.from_admin ? 'Admin' : 'Jij'} • {new Date(m.created_at).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
+                    {m.from_admin ? 'Admin' : 'Jij'} • {formatStamp(m.created_at)}
                   </div>
-                  <div className={`px-3 py-2 rounded-lg text-sm ${m.from_admin ? 'bg-gray-100 text-gray-800' : 'bg-orange-600 text-white'}`}>
+                  <div className={`px-3 py-2 rounded-lg text-sm ${m.from_admin ? 'bg-gray-100 text-gray-800' : 'bg-orange-600 text-white'} shadow-sm` }>
                     <div>{m.body}</div>
                   </div>
                 </div>
