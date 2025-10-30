@@ -24,12 +24,17 @@ export default function AanmeldenPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     });
+    if (fieldErrors[name]) {
+      setFieldErrors({ ...fieldErrors, [name]: false });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,6 +43,27 @@ export default function AanmeldenPage() {
     setMessage(null);
 
     try {
+      // Validate required fields
+      const newErrors: Record<string, boolean> = {};
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!formData.voornaam?.trim()) newErrors.voornaam = true;
+      if (!formData.achternaam?.trim()) newErrors.achternaam = true;
+      if (!formData.locatie?.trim()) newErrors.locatie = true;
+      if (!formData.email?.trim() || !emailRegex.test(formData.email)) newErrors.email = true;
+      if (!formData.telefoon?.trim()) newErrors.telefoon = true;
+
+      if (Object.keys(newErrors).length > 0) {
+        setFieldErrors(newErrors);
+        setIsLoading(false);
+        setMessage({ type: 'error', text: 'Controleer de gemarkeerde velden en probeer opnieuw.' });
+        const firstErrorName = Object.keys(newErrors)[0];
+        const el = document.querySelector(`[name="${firstErrorName}"]`) as HTMLElement | null;
+        if (el && typeof el.scrollIntoView === 'function') {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+
       // Create complete account with all form data
       const accountResponse = await fetch('/api/create-account', {
         method: 'POST',
@@ -74,10 +100,15 @@ export default function AanmeldenPage() {
       } else {
         const errorData = await accountResponse.json();
         console.error('Account creation failed:', errorData);
-        setMessage({ 
-          type: 'error', 
-          text: 'Er is een fout opgetreden bij het aanmaken van je account. Probeer het opnieuw.' 
-        });
+        if (accountResponse.status === 409 || errorData?.details === 'duplicate_email') {
+          setFieldErrors({ ...fieldErrors, email: true });
+          setMessage({ type: 'error', text: 'Dit e-mailadres is al in gebruik.' });
+        } else {
+          setMessage({ 
+            type: 'error', 
+            text: 'Er is een fout opgetreden bij het aanmaken van je account. Probeer het opnieuw.' 
+          });
+        }
       }
     } catch (error) {
       console.error('Account creation error:', error);
@@ -177,6 +208,19 @@ export default function AanmeldenPage() {
             )}
             
             <form onSubmit={handleSubmit} className="space-y-8">
+              <style>
+                {`
+                  @keyframes bb-blink-red {
+                    0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.0); }
+                    50% { box-shadow: 0 0 0 3px rgba(239,68,68,0.35); }
+                  }
+                  .bb-error-field {
+                    background-color: #FFFBEB; /* amber-50 */
+                    border-color: #EF4444 !important; /* red-500 */
+                    animation: bb-blink-red 0.6s ease-in-out 3;
+                  }
+                `}
+              </style>
               {/* Persoonlijke Gegevens */}
               <div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
@@ -194,7 +238,7 @@ export default function AanmeldenPage() {
                       value={formData.voornaam}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${fieldErrors.voornaam ? 'bb-error-field' : 'border-gray-300'}`}
                       placeholder="Je voornaam"
                     />
                   </div>
@@ -208,7 +252,7 @@ export default function AanmeldenPage() {
                       value={formData.achternaam}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${fieldErrors.achternaam ? 'bb-error-field' : 'border-gray-300'}`}
                       placeholder="Je achternaam"
                     />
                   </div>
@@ -222,7 +266,7 @@ export default function AanmeldenPage() {
                       value={formData.locatie}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${fieldErrors.locatie ? 'bb-error-field' : 'border-gray-300'}`}
                       placeholder="Stad, Land"
                     />
                   </div>
@@ -236,7 +280,7 @@ export default function AanmeldenPage() {
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${fieldErrors.email ? 'bb-error-field' : 'border-gray-300'}`}
                       placeholder="je@email.com"
                     />
                   </div>
@@ -250,7 +294,7 @@ export default function AanmeldenPage() {
                       value={formData.telefoon}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${fieldErrors.telefoon ? 'bb-error-field' : 'border-gray-300'}`}
                       placeholder="06-12345678"
                     />
                   </div>
