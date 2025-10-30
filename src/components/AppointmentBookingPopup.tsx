@@ -306,7 +306,15 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
                       return (
                         <button
                           key={slot.id}
-                          onClick={() => !isBlocked && handleSlotSelect(slot.id)}
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (!isBlocked) {
+                              console.log('🟡 Clicking slot:', slot.id, 'blocked:', isBlocked);
+                              handleSlotSelect(slot.id);
+                            }
+                          }}
                           disabled={isBlocked}
                           className={`p-3 rounded-lg border-2 transition-all flex items-center justify-center gap-2 ${
                             isBlocked
@@ -317,7 +325,7 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
                           }`}
                         >
                           <Clock className="w-4 h-4" />
-                          <span className="font-medium">{slot.start_time}</span>
+                          <span className="font-medium">{slot.start_time.slice(0, 5)}</span>
                           {isBlocked && <span className="text-xs">Geblokkeerd</span>}
                         </button>
                       );
