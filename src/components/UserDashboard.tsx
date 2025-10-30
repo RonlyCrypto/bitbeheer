@@ -36,6 +36,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useProfilePopup } from '../contexts/ProfilePopupContext';
 import { getDisplayName, getDisplayEmail } from '../utils/emailUtils';
+import { supabase } from '../lib/supabase';
 import ProfilePopup from './ProfilePopup';
 
 interface UserProfile {

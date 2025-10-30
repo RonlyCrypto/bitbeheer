@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import { X, User, Save, Edit3 } from 'lucide-react';
 import { getDisplayEmail } from '../utils/emailUtils';
 
@@ -40,6 +41,54 @@ export default function ProfilePopup({
     return () => {
       document.body.style.overflow = 'unset';
     };
+  }, [isOpen]);
+
+  // Load fresh profile data from Supabase when opening, if fields are empty
+  useEffect(() => {
+    const loadFromSupabase = async () => {
+      try {
+        const targetEmail = isImpersonating && impersonatedUser ? impersonatedUser : (user?.email || '');
+        if (!targetEmail) return;
+
+        const needsFetch = !userProfile?.first_name || !userProfile?.location || !userProfile?.company;
+        if (!needsFetch) return;
+
+        const { data, error } = await supabase
+          .from('accounts')
+          .select('*')
+          .eq('email', targetEmail)
+          .limit(1);
+
+        if (!error && data && data.length > 0) {
+          const acc: any = data[0];
+          setUserProfile({
+            ...userProfile,
+            id: acc.id || userProfile?.id,
+            email: acc.email || targetEmail,
+            name: acc.name || userProfile?.name || targetEmail.split('@')[0],
+            first_name: acc.first_name ?? userProfile?.first_name,
+            last_name: acc.last_name ?? userProfile?.last_name,
+            phone: acc.phone ?? userProfile?.phone,
+            location: acc.location ?? userProfile?.location,
+            company: acc.company ?? userProfile?.company,
+            investmentGoal: acc.investment_goal ?? userProfile?.investmentGoal,
+            preferredContact: acc.preferred_contact ?? userProfile?.preferredContact,
+            newsletterSubscription: acc.newsletter_subscription ?? userProfile?.newsletterSubscription,
+            marketingConsent: acc.marketing_consent ?? userProfile?.marketingConsent,
+            joinDate: (acc.created_at ? new Date(acc.created_at).toISOString().split('T')[0] : userProfile?.joinDate) || new Date().toISOString().split('T')[0],
+            lastLogin: acc.last_login ? new Date(acc.last_login).toISOString() : (userProfile?.lastLogin || new Date().toISOString()),
+            totalSessions: acc.login_count ?? (userProfile?.totalSessions || 0)
+          });
+        }
+      } catch (err) {
+        console.error('ProfilePopup Supabase load error:', err);
+      }
+    };
+
+    if (isOpen) {
+      loadFromSupabase();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
   const [formData, setFormData] = useState({
     first_name: userProfile?.first_name || '',
@@ -213,6 +262,7 @@ export default function ProfilePopup({
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 disabled={!isEditing}
+                list="nl-cities"
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 dark:disabled:bg-gray-700 dark:bg-gray-800 dark:text-white"
               />
             </div>
@@ -297,6 +347,37 @@ export default function ProfilePopup({
             </div>
           </div>
         </div>
+        {/* NL cities datalist for location autocomplete */}
+        <datalist id="nl-cities">
+          <option value="Amsterdam" />
+          <option value="Rotterdam" />
+          <option value="Den Haag" />
+          <option value="Utrecht" />
+          <option value="Groningen" />
+          <option value="Eindhoven" />
+          <option value="Tilburg" />
+          <option value="Almere" />
+          <option value="Breda" />
+          <option value="Nijmegen" />
+          <option value="Apeldoorn" />
+          <option value="Haarlem" />
+          <option value="Enschede" />
+          <option value="Amersfoort" />
+          <option value="Zaanstad" />
+          <option value="'s-Hertogenbosch" />
+          <option value="Zwolle" />
+          <option value="Zoetermeer" />
+          <option value="Leiden" />
+          <option value="Dordrecht" />
+          <option value="Ede" />
+          <option value="Leeuwarden" />
+          <option value="Maastricht" />
+          <option value="Arnhem" />
+          <option value="Gouda" />
+          <option value="Goes" />
+          <option value="Gorinchem" />
+          <option value="Geleen" />
+        </datalist>
       </div>
     </div>
   );
