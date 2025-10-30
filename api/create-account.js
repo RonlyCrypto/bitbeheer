@@ -199,7 +199,7 @@ module.exports = async (req, res) => {
         },
         body: JSON.stringify({
           email: email.toLowerCase().trim(),
-          name: naam.trim(),
+          name: fullName,
           verificationToken: verificationToken
         })
       });
