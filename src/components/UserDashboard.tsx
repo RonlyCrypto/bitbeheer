@@ -420,6 +420,8 @@ export default function UserDashboard() {
               appointments={appointments} 
               setAppointments={setAppointments}
               onBookAppointment={() => setShowAppointmentPopup(true)}
+              isImpersonating={isImpersonating}
+              impersonatedUser={impersonatedUser}
             />}
                 {activeTab === 'education' && <EducationTab />}
                 {activeTab === 'helpdesk' && <Helpdesk />}
@@ -446,6 +448,10 @@ export default function UserDashboard() {
           setShowAppointmentPopup(false);
           setShowFirstAppointmentPrompt(false);
           setActiveTab('appointments');
+          // Trigger refresh of appointments list
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('refreshAppointments'));
+          }, 500); // Small delay to ensure appointment is saved
         }}
       />
     </div>
@@ -1176,27 +1182,47 @@ function PortfolioTab({ portfolio, setPortfolio }: any) {
 }
 
 // Appointments Tab Component
-function AppointmentsTab({ appointments, setAppointments, onBookAppointment }: any) {
+function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isImpersonating, impersonatedUser }: any) {
   const { user } = useSupabaseAuth();
+  const { isImpersonating: contextImpersonating, impersonatedUser: contextImpersonatedUser } = usePermissions();
   const [userAppointments, setUserAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Get effective user email (impersonated user if impersonating, otherwise real user)
+  const effectiveUserEmail = (isImpersonating || contextImpersonating) && (impersonatedUser || contextImpersonatedUser) 
+    ? (impersonatedUser || contextImpersonatedUser)
+    : user?.email;
 
   useEffect(() => {
     loadUserAppointments();
-  }, [user?.email]);
+  }, [effectiveUserEmail, refreshKey]);
+
+  // Expose refresh function via window event
+  useEffect(() => {
+    const handleRefreshAppointments = () => {
+      console.log('🔄 Refreshing appointments list...');
+      setRefreshKey(prev => prev + 1);
+    };
+
+    window.addEventListener('refreshAppointments', handleRefreshAppointments);
+    return () => window.removeEventListener('refreshAppointments', handleRefreshAppointments);
+  }, []);
 
   const loadUserAppointments = async () => {
-    if (!user?.email) return;
+    if (!effectiveUserEmail) return;
     setLoading(true);
     try {
+      console.log('📋 Loading appointments for:', effectiveUserEmail);
       const { data, error } = await supabase
         .from('appointments')
         .select('*')
-        .eq('user_email', user.email)
+        .eq('user_email', effectiveUserEmail)
         .order('date', { ascending: true })
         .order('start_time', { ascending: true });
       
       if (error) throw error;
+      console.log('✅ Loaded appointments:', data?.length || 0);
       setUserAppointments(data || []);
       setAppointments(data || []);
     } catch (error) {
