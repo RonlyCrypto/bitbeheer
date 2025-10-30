@@ -125,8 +125,49 @@ export default function ProfilePopup({
 
   const handleSave = async () => {
     try {
-      // In production, this would update Supabase
-      setUserProfile({ ...userProfile, ...formData });
+      const targetEmail = (userProfile?.email) || (isImpersonating && impersonatedUser) || user?.email;
+      if (!targetEmail) throw new Error('Geen e-mailadres beschikbaar om profiel te updaten');
+
+      const updatePayload: any = {
+        first_name: formData.first_name || null,
+        last_name: formData.last_name || null,
+        phone: formData.phone || null,
+        location: formData.location || null,
+        company: formData.company || null,
+        investment_goal: formData.investmentGoal || null,
+        preferred_contact: formData.preferredContact || null,
+        newsletter_subscription: !!formData.newsletterSubscription,
+        marketing_consent: !!formData.marketingConsent,
+        updated_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('accounts')
+        .update(updatePayload)
+        .eq('email', targetEmail)
+        .select('*')
+        .limit(1);
+
+      if (error) throw error;
+
+      const updated = data && data[0] ? data[0] : null;
+      setUserProfile({
+        ...userProfile,
+        ...formData,
+        email: targetEmail,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        phone: formData.phone,
+        location: formData.location,
+        company: formData.company,
+        investmentGoal: formData.investmentGoal,
+        preferredContact: formData.preferredContact,
+        newsletterSubscription: formData.newsletterSubscription,
+        marketingConsent: formData.marketingConsent,
+        lastLogin: updated?.last_login || userProfile?.lastLogin,
+        totalSessions: updated?.login_count ?? userProfile?.totalSessions
+      });
+
       setIsEditing(false);
     } catch (error) {
       console.error('Error saving profile:', error);
@@ -230,7 +271,7 @@ export default function ProfilePopup({
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
               <input
                 type="email"
-                value={getDisplayEmail(user, isImpersonating, impersonatedUser, true)}
+                value={formData.email || userProfile?.email || (isImpersonating && impersonatedUser) || user?.email || ''}
                 disabled
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 dark:text-gray-400"
               />
