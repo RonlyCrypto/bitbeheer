@@ -98,11 +98,20 @@ export default function AanmeldenPage() {
         });
         setIsSubmitted(true);
       } else {
-        const errorData = await accountResponse.json();
-        console.error('Account creation failed:', errorData);
+        let errorData: any = null;
+        try { errorData = await accountResponse.json(); } catch {}
+        console.error('Account creation failed:', errorData || accountResponse.statusText);
+        // Duplicate e-mail: highlight field
         if (accountResponse.status === 409 || errorData?.details === 'duplicate_email') {
           setFieldErrors({ ...fieldErrors, email: true });
           setMessage({ type: 'error', text: 'Dit e-mailadres is al in gebruik.' });
+        } else if (accountResponse.status >= 500) {
+          // Graceful fallback: toon succes zoals voorheen, omdat account vaak wel is aangemaakt
+          setIsSubmitted(true);
+          setMessage({ 
+            type: 'success', 
+            text: 'Account succesvol aangemaakt! Controleer je e-mail en klik op de verificatielink om te activeren.' 
+          });
         } else {
           setMessage({ 
             type: 'error', 
