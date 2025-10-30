@@ -69,14 +69,12 @@ CREATE POLICY "Users can create appointments"
 
 -- Admin can create appointments for any user (for impersonation support)
 -- This policy allows admin to create appointments with any user_email
+-- Note: When admin is impersonating, their JWT still contains admin@bitbeheer.nl
 CREATE POLICY "Admin can create appointments"
   ON public.appointments
   FOR INSERT
   WITH CHECK (
-    auth.jwt() ->> 'email' = 'admin@bitbeheer.nl' OR
-    auth.uid()::text IN (
-      SELECT id::text FROM auth.users WHERE email = 'admin@bitbeheer.nl'
-    )
+    auth.jwt() ->> 'email' = 'admin@bitbeheer.nl'
   );
 
 -- Admin can read all appointments
