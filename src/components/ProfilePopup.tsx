@@ -192,6 +192,13 @@ export default function ProfilePopup({
     setIsEditing(false);
   };
 
+  const handleClose = () => {
+    if (isEditing) {
+      handleCancel();
+    }
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -199,7 +206,7 @@ export default function ProfilePopup({
       className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
-          onClose();
+          handleClose();
         }
       }}
     >
@@ -245,7 +252,7 @@ export default function ProfilePopup({
               </div>
             )}
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               <X className="w-6 h-6" />
