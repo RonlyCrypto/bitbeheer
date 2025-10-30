@@ -206,57 +206,53 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
 
       console.log('💾 Inserting appointment:', appointmentData);
       
-      // Debug: Check current session and JWT
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      // Debug: Check current session
+      const { data: sessionData } = await supabase.auth.getSession();
       const sessionUserEmail = sessionData?.session?.user?.email;
       const isAdminSession = sessionUserEmail === 'admin@bitbeheer.nl';
       
-      // Fallback: If user context is null but we're impersonating, assume admin session
-      const isAdmin = user?.email === 'admin@bitbeheer.nl' || isAdminSession || (isImpersonating && !user?.email);
-      
       console.log('🔐 Current session:', {
-        session: sessionData?.session,
-        userEmail: sessionUserEmail,
-        contextUserEmail: user?.email,
-        userMetadata: sessionData?.session?.user?.user_metadata,
-        isAdminFromSession: isAdminSession,
-        isAdminFromContext: user?.email === 'admin@bitbeheer.nl',
-        isAdminCalculated: isAdmin,
+        sessionUserEmail,
+        isAdminSession,
         isImpersonating,
         impersonatedUser,
-        effectiveUserEmail,
-        sessionError
+        effectiveUserEmail
       });
 
-      // IMPORTANT: If admin is impersonating, the JWT still contains admin@bitbeheer.nl
-      // So the RLS policy should work. But if it doesn't, we need to check the actual session.
-      console.log('🔍 RLS Check:', {
-        'auth.jwt() email would be': sessionUserEmail,
-        'Should pass admin policy': isAdminSession,
-        'Appointment user_email': appointmentData.user_email,
-        'Effective user email': effectiveUserEmail,
-        'Is Admin (calculated)': isAdmin
-      });
+      let data, error;
 
-      // If admin is impersonating but session doesn't show admin, warn
-      if (!isAdminSession && isImpersonating) {
-        console.warn('⚠️ Warning: Admin impersonating but session email is not admin@bitbeheer.nl');
-        console.warn('⚠️ Session email:', sessionUserEmail, 'Expected: admin@bitbeheer.nl');
-        console.warn('⚠️ This may cause RLS policy to fail unless the JWT contains admin email');
-      }
-      
-      // If we don't have an admin session but we're impersonating, 
-      // the RLS policy might fail. Log this clearly.
-      if (!isAdminSession && isImpersonating) {
-        console.error('❌ CRITICAL: Admin impersonation but Supabase session is not admin');
-        console.error('❌ RLS policy requires: auth.jwt() ->> email = admin@bitbeheer.nl');
-        console.error('❌ Actual session email:', sessionUserEmail);
-      }
+      // If impersonating, use Edge Function to bypass RLS
+      if (isImpersonating && isAdminSession) {
+        console.log('🎭 Using Edge Function for impersonation...');
+        
+        const { data: functionData, error: functionError } = await supabase.functions.invoke('create-appointment', {
+          body: {
+            appointmentData,
+            adminEmail: sessionUserEmail,
+            impersonatedUserEmail: impersonatedUser || effectiveUserEmail
+          }
+        });
 
-      const { data, error } = await supabase
-        .from('appointments')
-        .insert([appointmentData])
-        .select();
+        if (functionError) {
+          error = functionError;
+          console.error('❌ Edge Function error:', error);
+        } else if (functionData?.error) {
+          error = { message: functionData.error, code: 'FUNCTION_ERROR' };
+          console.error('❌ Edge Function returned error:', functionData.error);
+        } else {
+          data = functionData?.data;
+          console.log('✅ Appointment created via Edge Function:', data);
+        }
+      } else {
+        // Normal insert (for regular users or admin when not impersonating)
+        const result = await supabase
+          .from('appointments')
+          .insert([appointmentData])
+          .select();
+        
+        data = result.data;
+        error = result.error;
+      }
 
       if (error) {
         console.error('❌ Supabase insert error:', {
