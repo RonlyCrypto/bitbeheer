@@ -221,30 +221,47 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
 
       let data, error;
 
-      // If impersonating, use Edge Function to bypass RLS
-      if (isImpersonating && isAdminSession) {
-        console.log('🎭 Using Edge Function for impersonation...');
+      // If impersonating as admin, use Edge Function to create appointment
+      // This allows admin to create appointments for the impersonated user
+      // The Edge Function uses service role to bypass RLS
+      if (isImpersonating && isAdminSession && impersonatedUser) {
+        console.log('🎭 Admin impersonating - using Edge Function to create appointment...');
+        console.log('🎭 Impersonated user:', impersonatedUser);
+        console.log('🎭 Appointment will be created for:', impersonatedUser);
         
-        const { data: functionData, error: functionError } = await supabase.functions.invoke('create-appointment', {
-          body: {
-            appointmentData,
-            adminEmail: sessionUserEmail,
-            impersonatedUserEmail: impersonatedUser || effectiveUserEmail
-          }
-        });
+        try {
+          const { data: functionData, error: functionError } = await supabase.functions.invoke('create-appointment', {
+            body: {
+              appointmentData,
+              adminEmail: sessionUserEmail,
+              impersonatedUserEmail: impersonatedUser || effectiveUserEmail
+            }
+          });
 
-        if (functionError) {
-          error = functionError;
-          console.error('❌ Edge Function error:', error);
-        } else if (functionData?.error) {
-          error = { message: functionData.error, code: 'FUNCTION_ERROR' };
-          console.error('❌ Edge Function returned error:', functionData.error);
-        } else {
-          data = functionData?.data;
-          console.log('✅ Appointment created via Edge Function:', data);
+          if (functionError) {
+            error = functionError;
+            console.error('❌ Edge Function error:', error);
+          } else if (functionData?.error) {
+            error = { 
+              message: functionData.error, 
+              code: 'FUNCTION_ERROR',
+              details: functionData.details 
+            };
+            console.error('❌ Edge Function returned error:', functionData.error);
+          } else {
+            data = functionData?.data ? (Array.isArray(functionData.data) ? functionData.data : [functionData.data]) : functionData?.data;
+            console.log('✅ Appointment created via Edge Function:', data);
+          }
+        } catch (functionErr: any) {
+          error = {
+            message: functionErr.message || 'Edge Function call failed',
+            code: 'FUNCTION_ERROR'
+          };
+          console.error('❌ Failed to call Edge Function:', functionErr);
         }
       } else {
         // Normal insert (for regular users or admin when not impersonating)
+        console.log('👤 Normal appointment creation (no impersonation)...');
         const result = await supabase
           .from('appointments')
           .insert([appointmentData])
@@ -255,43 +272,15 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
       }
 
       if (error) {
-        console.error('❌ Supabase insert error:', {
+        console.error('❌ Appointment creation error:', {
           code: error.code,
           message: error.message,
           details: error.details,
-          hint: error.hint
+          hint: error.hint,
+          isImpersonating,
+          impersonatedUser,
+          usedEdgeFunction: isImpersonating && isAdminSession
         });
-        
-        // Extra debugging for RLS errors
-        if (error.code === '42501' || error.message?.includes('row-level security')) {
-          const sessionUserEmail = sessionData?.session?.user?.email;
-          console.error('🚨 RLS Policy Error Details:', {
-            contextUserEmail: user?.email || 'null/undefined',
-            sessionUserEmail: sessionUserEmail || 'null/undefined',
-            isImpersonating,
-            impersonatedUser,
-            effectiveUserEmail,
-            appointmentUserEmail: appointmentData.user_email,
-            isAdminFromContext: user?.email === 'admin@bitbeheer.nl',
-            isAdminFromSession: sessionUserEmail === 'admin@bitbeheer.nl',
-            'Expected JWT email for RLS': sessionUserEmail,
-            'Should match admin policy': sessionUserEmail === 'admin@bitbeheer.nl',
-            'Error Code': error.code,
-            'Error Message': error.message,
-            'Error Details': error.details,
-            'Error Hint': error.hint
-          });
-          
-          // If session is not admin but we're impersonating, this is the root cause
-          if (isImpersonating && sessionUserEmail !== 'admin@bitbeheer.nl') {
-            console.error('💥 ROOT CAUSE IDENTIFIED:');
-            console.error('💥 - Impersonation is active');
-            console.error('💥 - But Supabase session email is:', sessionUserEmail);
-            console.error('💥 - RLS policy requires: admin@bitbeheer.nl');
-            console.error('💥 SOLUTION: Make sure you are logged in as admin@bitbeheer.nl in Supabase');
-            console.error('💥 SOLUTION: Impersonation should NOT change the Supabase session');
-          }
-        }
         
         throw error;
       }
