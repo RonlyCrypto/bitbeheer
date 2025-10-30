@@ -211,11 +211,17 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
       const sessionUserEmail = sessionData?.session?.user?.email;
       const isAdminSession = sessionUserEmail === 'admin@bitbeheer.nl';
       
+      // Fallback: If user context is null but we're impersonating, assume admin session
+      const isAdmin = user?.email === 'admin@bitbeheer.nl' || isAdminSession || (isImpersonating && !user?.email);
+      
       console.log('🔐 Current session:', {
         session: sessionData?.session,
         userEmail: sessionUserEmail,
+        contextUserEmail: user?.email,
         userMetadata: sessionData?.session?.user?.user_metadata,
-        isAdmin: isAdminSession,
+        isAdminFromSession: isAdminSession,
+        isAdminFromContext: user?.email === 'admin@bitbeheer.nl',
+        isAdminCalculated: isAdmin,
         isImpersonating,
         impersonatedUser,
         effectiveUserEmail,
@@ -228,16 +234,23 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
         'auth.jwt() email would be': sessionUserEmail,
         'Should pass admin policy': isAdminSession,
         'Appointment user_email': appointmentData.user_email,
-        'Effective user email': effectiveUserEmail
+        'Effective user email': effectiveUserEmail,
+        'Is Admin (calculated)': isAdmin
       });
 
-      // If admin is impersonating, we need to ensure the RLS policy recognizes admin
-      // The policy checks auth.jwt() ->> 'email', which should be admin@bitbeheer.nl
-      // if the session is still the admin session
+      // If admin is impersonating but session doesn't show admin, warn
       if (!isAdminSession && isImpersonating) {
         console.warn('⚠️ Warning: Admin impersonating but session email is not admin@bitbeheer.nl');
-        console.warn('⚠️ This may cause RLS policy to fail');
         console.warn('⚠️ Session email:', sessionUserEmail, 'Expected: admin@bitbeheer.nl');
+        console.warn('⚠️ This may cause RLS policy to fail unless the JWT contains admin email');
+      }
+      
+      // If we don't have an admin session but we're impersonating, 
+      // the RLS policy might fail. Log this clearly.
+      if (!isAdminSession && isImpersonating) {
+        console.error('❌ CRITICAL: Admin impersonation but Supabase session is not admin');
+        console.error('❌ RLS policy requires: auth.jwt() ->> email = admin@bitbeheer.nl');
+        console.error('❌ Actual session email:', sessionUserEmail);
       }
 
       const { data, error } = await supabase
@@ -266,8 +279,22 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
             isAdminFromContext: user?.email === 'admin@bitbeheer.nl',
             isAdminFromSession: sessionUserEmail === 'admin@bitbeheer.nl',
             'Expected JWT email for RLS': sessionUserEmail,
-            'Should match admin policy': sessionUserEmail === 'admin@bitbeheer.nl'
+            'Should match admin policy': sessionUserEmail === 'admin@bitbeheer.nl',
+            'Error Code': error.code,
+            'Error Message': error.message,
+            'Error Details': error.details,
+            'Error Hint': error.hint
           });
+          
+          // If session is not admin but we're impersonating, this is the root cause
+          if (isImpersonating && sessionUserEmail !== 'admin@bitbeheer.nl') {
+            console.error('💥 ROOT CAUSE IDENTIFIED:');
+            console.error('💥 - Impersonation is active');
+            console.error('💥 - But Supabase session email is:', sessionUserEmail);
+            console.error('💥 - RLS policy requires: admin@bitbeheer.nl');
+            console.error('💥 SOLUTION: Make sure you are logged in as admin@bitbeheer.nl in Supabase');
+            console.error('💥 SOLUTION: Impersonation should NOT change the Supabase session');
+          }
         }
         
         throw error;
@@ -303,14 +330,27 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
         const isAdminFromSession = sessionEmail === 'admin@bitbeheer.nl';
         
         errorTitle = 'Toegangsrechten probleem';
-        errorDetails = [
-          `Session email: ${sessionEmail || 'onbekend'}`,
-          `Impersonation actief: ${isImpersonating ? 'Ja' : 'Nee'}`,
-          `Effectieve gebruiker: ${effectiveUserEmail || 'geen'}`,
-          `Admin in session: ${isAdminFromSession ? 'Ja' : 'Nee'}`,
-          `RLS Policy verwacht: admin@bitbeheer.nl in JWT`,
-          `Voer het fix-appointments-rls.sql script uit in Supabase om dit te fixen`
-        ];
+        
+        // More helpful error message based on the issue
+        if (isImpersonating && !isAdminFromSession) {
+          errorDetails = [
+            `⚠️ Probleem: Impersonation actief maar Supabase session is geen admin`,
+            `Session email: ${sessionEmail || 'onbekend'}`,
+            `Vereist: admin@bitbeheer.nl in Supabase session`,
+            `Effectieve gebruiker: ${effectiveUserEmail || 'geen'}`,
+            `🔧 Oplossing: Log uit en opnieuw in als admin@bitbeheer.nl`,
+            `🔧 Daarna: Gebruik "Inloggen als" functie voor impersonation`
+          ];
+        } else {
+          errorDetails = [
+            `Session email: ${sessionEmail || 'onbekend'}`,
+            `Impersonation actief: ${isImpersonating ? 'Ja' : 'Nee'}`,
+            `Effectieve gebruiker: ${effectiveUserEmail || 'geen'}`,
+            `Admin in session: ${isAdminFromSession ? 'Ja' : 'Nee'}`,
+            `RLS Policy verwacht: admin@bitbeheer.nl in JWT`,
+            `Voer het fix-appointments-rls.sql script uit in Supabase`
+          ];
+        }
       }
       
       setErrorPopup({
