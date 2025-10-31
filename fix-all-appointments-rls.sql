@@ -53,6 +53,9 @@ CREATE POLICY "Admin can update appointments"
     auth.jwt() ->> 'email' = 'admin@bitbeheer.nl'
   );
 
+-- IMPORTANT: Make sure the admin policy is permissive (allows OR with user policy)
+-- RLS policies are OR-ed together, so admin policy should work even if user policy doesn't match
+
 -- Verify all policies exist
 SELECT 
   schemaname,

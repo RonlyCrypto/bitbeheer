@@ -52,10 +52,12 @@ export default function AdminAppointmentManagement() {
   });
 
   useEffect(() => {
+    console.log('🚀 AdminAppointmentManagement mounted, calling loadData()...');
     loadData();
   }, []);
 
   const loadData = async () => {
+    console.log('🔄 loadData() called');
     setLoading(true);
     try {
       // Check current session to debug
