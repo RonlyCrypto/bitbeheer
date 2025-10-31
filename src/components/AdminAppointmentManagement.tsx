@@ -61,9 +61,9 @@ export default function AdminAppointmentManagement() {
     setLoading(true);
     try {
       // Check current session to debug
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      const sessionEmail = sessionData?.session?.user?.email;
-      const accessToken = sessionData?.session?.access_token;
+      let { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      let sessionEmail = sessionData?.session?.user?.email;
+      let accessToken = sessionData?.session?.access_token;
       
       console.log('🔐 Admin loading data - Session:', {
         email: sessionEmail,
@@ -74,12 +74,41 @@ export default function AdminAppointmentManagement() {
         'Full session': sessionData?.session
       });
       
+      // If no Supabase Auth session, but localStorage says we're admin, try to auto-login
+      if (!sessionEmail && typeof window !== 'undefined') {
+        const localStorageAuth = localStorage.getItem('admin_authenticated');
+        const localStorageUserType = localStorage.getItem('user_type');
+        
+        if (localStorageAuth === 'true' && localStorageUserType === 'admin') {
+          console.log('⚠️ No Supabase Auth session, but localStorage indicates admin. Attempting auto-login...');
+          
+          try {
+            // Try to sign in with admin credentials
+            // Note: This requires the password to be known, which is not ideal
+            // For now, we'll prompt the user to log in via Supabase Auth
+            console.warn('⚠️ Auto-login not possible without password. User must log in via Supabase Auth.');
+            alert('Je bent ingelogd via de oude methode. Log uit en opnieuw in via Supabase Auth (email + wachtwoord) om appointments te kunnen beheren.');
+            setLoading(false);
+            return;
+          } catch (autoLoginError) {
+            console.error('❌ Auto-login failed:', autoLoginError);
+          }
+        }
+      }
+      
       // If not admin session, warn
       if (sessionEmail !== 'admin@bitbeheer.nl') {
         console.error('❌ CRITICAL: Not logged in as admin!');
         console.error('❌ Session email:', sessionEmail);
         console.error('❌ Expected: admin@bitbeheer.nl');
-        alert('Je bent niet ingelogd als admin. Log uit en opnieuw in als admin@bitbeheer.nl');
+        
+        // Check if user is logged in via old method
+        const localStorageAuth = localStorage.getItem('admin_authenticated');
+        if (localStorageAuth === 'true') {
+          alert('Je bent ingelogd via de oude methode (localStorage). Log uit en opnieuw in via Supabase Auth (gebruik de "Login" knop rechtsboven) om appointments te kunnen beheren.');
+        } else {
+          alert('Je bent niet ingelogd als admin. Log uit en opnieuw in als admin@bitbeheer.nl');
+        }
         setLoading(false);
         return;
       }
