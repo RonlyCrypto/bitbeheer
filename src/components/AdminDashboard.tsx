@@ -293,13 +293,18 @@ export default function AdminDashboard() {
                 </button>
                 <button
                   onClick={() => setActiveTab('accounts')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  className={`py-2 px-1 border-b-2 font-medium text-sm relative ${
                     activeTab === 'accounts'
                       ? 'border-orange-500 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
                   Accounts
+                  {metrics.newAccounts > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      {metrics.newAccounts > 9 ? '9+' : metrics.newAccounts}
+                    </span>
+                  )}
                 </button>
                 <button
                   onClick={() => setActiveTab('pages')}

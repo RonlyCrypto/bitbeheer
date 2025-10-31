@@ -37,6 +37,7 @@ import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useProfilePopup } from '../contexts/ProfilePopupContext';
+import AppointmentQuestionsForm from './AppointmentQuestionsForm';
 import { getDisplayName, getDisplayEmail } from '../utils/emailUtils';
 import { supabase } from '../lib/supabase';
 import ProfilePopup from './ProfilePopup';
@@ -467,8 +468,25 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
     apt.status === 'scheduled' && new Date(apt.date) > new Date()
   ).length;
   const [hasWallet, setHasWallet] = useState(false);
-  const [showFirstAppointmentPrompt, setShowFirstAppointmentPrompt] = useState(appointments.length === 0);
+  
+  // Find user's appointment (pending or confirmed)
+  const userAppointment = appointments.find((apt: any) => 
+    apt.status === 'pending' || apt.status === 'confirmed'
+  );
+  const hasAppointment = !!userAppointment;
+  
   const [showWalletForm, setShowWalletForm] = useState(false);
+  const [showQuestionsForm, setShowQuestionsForm] = useState(false);
+  const [questionsData, setQuestionsData] = useState({
+    has_bitcoin_experience: null as boolean | null,
+    knows_hardware_wallet: null as boolean | null,
+    has_crypto_wallet: null as boolean | null,
+    investment_experience: '',
+    monthly_investment_budget: '',
+    main_goal: '',
+    questions_or_concerns: ''
+  });
+  const [isSavingQuestions, setIsSavingQuestions] = useState(false);
   const [walletForm, setWalletForm] = useState({
     address: '',
     name: '',
@@ -528,8 +546,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Overzicht</h2>
 
-      {/* First Appointment Prompt */}
-      {showFirstAppointmentPrompt && (
+      {/* Appointment Status Block */}
+      {!hasAppointment ? (
+        // No appointment - show prompt to book
         <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-xl shadow-lg">
           <div className="flex items-start gap-4">
             <div className="bg-white bg-opacity-20 p-3 rounded-xl">
@@ -543,7 +562,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               </p>
               <button 
                 onClick={() => {
-                  setShowFirstAppointmentPrompt(false);
                   if (onBookAppointment) {
                     onBookAppointment();
                   }
@@ -552,6 +570,142 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               >
                 Plan je afspraak in
               </button>
+            </div>
+          </div>
+        </div>
+      ) : userAppointment.status === 'pending' ? (
+        // Pending appointment - waiting for confirmation
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-xl shadow-lg">
+          <div className="flex items-start gap-4">
+            <div className="bg-white bg-opacity-20 p-3 rounded-xl">
+              <Clock className="w-8 h-8" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold mb-2">Afspraak in afwachting ⏳</h3>
+              <div className="space-y-2 text-orange-100 mb-4">
+                <p>
+                  <strong>Datum:</strong> {new Date(userAppointment.date).toLocaleDateString('nl-NL', { 
+                    weekday: 'long', 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                  })}
+                </p>
+                <p>
+                  <strong>Tijd:</strong> {userAppointment.start_time} - {userAppointment.end_time}
+                </p>
+              </div>
+              <p className="bg-white bg-opacity-20 rounded-lg p-3 text-orange-50">
+                📬 Wacht tot dit bevestigd is door de admin. Je ontvangt een bevestigingsmail zodra de afspraak is goedgekeurd.
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        // Confirmed appointment - show info and questions form
+        <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-xl shadow-lg">
+          <div className="flex items-start gap-4">
+            <div className="bg-white bg-opacity-20 p-3 rounded-xl">
+              <CheckCircle className="w-8 h-8" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold mb-2">Afspraak Bevestigd! ✅</h3>
+              <div className="space-y-2 text-green-100 mb-4">
+                <p>
+                  <strong>Datum:</strong> {new Date(userAppointment.date).toLocaleDateString('nl-NL', { 
+                    weekday: 'long', 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                  })}
+                </p>
+                <p>
+                  <strong>Tijd:</strong> {userAppointment.start_time} - {userAppointment.end_time}
+                </p>
+                <p>
+                  <strong>Duur:</strong> {userAppointment.duration_minutes} minuten
+                </p>
+                {userAppointment.teams_link && (
+                  <div className="mt-3">
+                    <a
+                      href={userAppointment.teams_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 bg-white text-green-600 px-4 py-2 rounded-lg hover:bg-green-50 transition-colors font-medium"
+                    >
+                      <Video className="w-4 h-4" />
+                      Open Microsoft Teams Link
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {!showQuestionsForm ? (
+                <div>
+                  <p className="bg-white bg-opacity-20 rounded-lg p-3 text-green-50 mb-4">
+                    💬 Om ons gesprek goed voor te bereiden, beantwoord graag de volgende vragen:
+                  </p>
+                  <button
+                    onClick={() => setShowQuestionsForm(true)}
+                    className="bg-white text-green-600 px-6 py-3 rounded-lg font-semibold hover:bg-green-50 transition-colors"
+                  >
+                    Beantwoord Vragen
+                  </button>
+                </div>
+              ) : (
+                <AppointmentQuestionsForm
+                  appointmentId={userAppointment.id}
+                  questionsData={questionsData}
+                  setQuestionsData={setQuestionsData}
+                  onClose={() => setShowQuestionsForm(false)}
+                  onSave={async (data) => {
+                    setIsSavingQuestions(true);
+                    try {
+                      const { data: authData } = await supabase.auth.getUser();
+                      const email = authData?.user?.email;
+                      if (!email) throw new Error('Geen gebruiker bekend');
+
+                      // Check if questions already exist
+                      const { data: existing } = await supabase
+                        .from('appointment_questions')
+                        .select('id')
+                        .eq('appointment_id', userAppointment.id)
+                        .single();
+
+                      const questionData = {
+                        appointment_id: userAppointment.id,
+                        user_email: email,
+                        ...data,
+                        updated_at: new Date().toISOString()
+                      };
+
+                      if (existing) {
+                        // Update existing
+                        const { error } = await supabase
+                          .from('appointment_questions')
+                          .update(questionData)
+                          .eq('id', existing.id);
+                        if (error) throw error;
+                      } else {
+                        // Insert new
+                        const { error } = await supabase
+                          .from('appointment_questions')
+                          .insert([questionData]);
+                        if (error) throw error;
+                      }
+
+                      alert('Bedankt! Je antwoorden zijn opgeslagen. We zien elkaar binnenkort!');
+                      setShowQuestionsForm(false);
+                    } catch (error: any) {
+                      console.error('Error saving questions:', error);
+                      alert(`Fout bij opslaan: ${error.message}`);
+                    } finally {
+                      setIsSavingQuestions(false);
+                    }
+                  }}
+                  isSaving={isSavingQuestions}
+                />
+              )}
             </div>
           </div>
         </div>

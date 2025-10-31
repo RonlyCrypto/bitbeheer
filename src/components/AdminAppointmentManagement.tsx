@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Clock, User, Trash2, CheckCircle, XCircle, Edit, Search, Filter, Download, Copy, RefreshCw, ChevronDown, ChevronUp, Video, AlertCircle } from 'lucide-react';
+import { Calendar, Plus, Clock, User, Trash2, CheckCircle, XCircle, Edit, Search, Filter, Download, Copy, RefreshCw, ChevronDown, ChevronUp, Video, AlertCircle, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import TeamsLinkPopup from './TeamsLinkPopup';
 
@@ -22,6 +22,15 @@ interface Appointment {
   notes?: string;
   admin_notes?: string;
   teams_link?: string;
+  questions?: {
+    has_bitcoin_experience: boolean | null;
+    knows_hardware_wallet: boolean | null;
+    has_crypto_wallet: boolean | null;
+    investment_experience: string;
+    monthly_investment_budget: string;
+    main_goal: string;
+    questions_or_concerns: string;
+  };
 }
 
 type ViewMode = 'single' | 'recurring' | 'calendar';
@@ -211,9 +220,25 @@ export default function AdminAppointmentManagement() {
       // Ensure we have valid data
       const validAppointments = (apts || []).filter(apt => apt && apt.id);
       
-      console.log('📊 Valid appointments after filter:', validAppointments.length);
+      // Load questions for each appointment
+      const appointmentsWithQuestions = await Promise.all(
+        validAppointments.map(async (apt: Appointment) => {
+          const { data: questions } = await supabase
+            .from('appointment_questions')
+            .select('*')
+            .eq('appointment_id', apt.id)
+            .single();
+          
+          return {
+            ...apt,
+            questions: questions || null
+          };
+        })
+      );
       
-      setAppointments(validAppointments);
+      console.log('📊 Valid appointments after filter:', appointmentsWithQuestions.length);
+      
+      setAppointments(appointmentsWithQuestions);
       
       if (!validAppointments || validAppointments.length === 0) {
         console.warn('⚠️ No valid appointments found. Raw response:', apts);
@@ -1072,6 +1097,38 @@ export default function AdminAppointmentManagement() {
                             <Video className="w-3 h-3" />
                             Microsoft Teams Link
                           </a>
+                        </div>
+                      )}
+                      {apt.questions && (
+                        <div className="mt-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                          <h4 className="font-semibold text-blue-900 dark:text-blue-200 mb-2 flex items-center gap-2">
+                            <FileText className="w-4 h-4" />
+                            Pre-afspraak Vragen:
+                          </h4>
+                          <div className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
+                            <p><strong>Bitcoin ervaring:</strong> {apt.questions.has_bitcoin_experience ? 'Ja' : 'Nee'}</p>
+                            <p><strong>Kent hardware wallet:</strong> {apt.questions.knows_hardware_wallet ? 'Ja' : 'Nee'}</p>
+                            <p><strong>Heeft crypto wallet:</strong> {apt.questions.has_crypto_wallet ? 'Ja' : 'Nee'}</p>
+                            <p><strong>Investeringservaring:</strong> {
+                              apt.questions.investment_experience === 'beginner' ? 'Beginner' :
+                              apt.questions.investment_experience === 'intermediate' ? 'Gemiddeld' :
+                              apt.questions.investment_experience === 'advanced' ? 'Gevorderd' : '-'
+                            }</p>
+                            <p><strong>Maandelijks budget:</strong> {apt.questions.monthly_investment_budget || '-'}</p>
+                            <p><strong>Hoofddoel:</strong> {
+                              apt.questions.main_goal === 'long_term' ? 'Langetermijn opslag' :
+                              apt.questions.main_goal === 'dca' ? 'DCA strategie' :
+                              apt.questions.main_goal === 'trading' ? 'Handelen' :
+                              apt.questions.main_goal === 'education' ? 'Leren' :
+                              apt.questions.main_goal === 'diversification' ? 'Diversificatie' : '-'
+                            }</p>
+                            {apt.questions.questions_or_concerns && (
+                              <div className="mt-2 pt-2 border-t border-blue-300 dark:border-blue-700">
+                                <p><strong>Vragen/Zorgen:</strong></p>
+                                <p className="italic">{apt.questions.questions_or_concerns}</p>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
