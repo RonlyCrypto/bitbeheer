@@ -70,8 +70,8 @@ export default function WelcomePopup({ userName, onClose }: WelcomePopupProps) {
               <div className="flex items-start space-x-3">
                 <span className="text-orange-500 text-xl">📊</span>
                 <div>
-                  <h5 className="font-medium text-gray-800">Eigen Beheer Opzetten</h5>
-                  <p className="text-sm text-gray-600">Zet je eigen Bitcoin beheer systeem op, volledig onder jouw controle</p>
+                  <h5 className="font-medium text-gray-800">Eigen beheer</h5>
+                  <p className="text-sm text-gray-600">24/7 wallet waarde, verkopen wanneer je wilt, 100% controle</p>
                 </div>
               </div>
               <div className="flex items-start space-x-3">
@@ -104,7 +104,7 @@ export default function WelcomePopup({ userName, onClose }: WelcomePopupProps) {
               Heb je vragen? Giovanni staat klaar om je te helpen!
             </p>
             <div className="flex justify-center space-x-4 text-sm">
-              <span className="text-orange-600 font-medium">📧 update@bitbeheer.nl</span>
+              <span className="text-orange-600 font-medium">📧 info@bitbeheer.nl</span>
               <span className="text-orange-600 font-medium">🌐 bitbeheer.nl</span>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Plus, Clock, User, Trash2, CheckCircle, XCircle, Edit, Search, Filter, Download, Copy, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import TeamsLinkPopup from './TeamsLinkPopup';
 
 interface AvailableSlot {
   id: string;
@@ -20,6 +21,7 @@ interface Appointment {
   status: string;
   notes?: string;
   admin_notes?: string;
+  teams_link?: string;
 }
 
 type ViewMode = 'single' | 'recurring' | 'calendar';
@@ -35,6 +37,8 @@ export default function AdminAppointmentManagement() {
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showTeamsLinkPopup, setShowTeamsLinkPopup] = useState(false);
+  const [confirmingAppointment, setConfirmingAppointment] = useState<Appointment | null>(null);
   const [newSlot, setNewSlot] = useState({
     date: '',
     start_time: '',
@@ -433,7 +437,51 @@ export default function AdminAppointmentManagement() {
     }
   };
 
+  const handleConfirmWithTeamsLink = async (teamsLink: string) => {
+    if (!confirmingAppointment) return;
+
+    try {
+      const updateData: any = { 
+        status: 'confirmed',
+        confirmed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      if (teamsLink) {
+        updateData.teams_link = teamsLink;
+      }
+
+      const { error } = await supabase
+        .from('appointments')
+        .update(updateData)
+        .eq('id', confirmingAppointment.id);
+
+      if (error) throw error;
+      
+      // TODO: Send confirmation email with teams link if provided
+      
+      setShowTeamsLinkPopup(false);
+      setConfirmingAppointment(null);
+      await loadData();
+      alert('Afspraak bevestigd!' + (teamsLink ? ' Teams link toegevoegd.' : ''));
+    } catch (error: any) {
+      console.error('Error confirming appointment:', error);
+      alert(`Fout bij bevestigen: ${error.message}`);
+    }
+  };
+
   const updateAppointmentStatus = async (aptId: string, newStatus: string) => {
+    // If confirming, show teams link popup
+    if (newStatus === 'confirmed') {
+      const appointment = appointments.find(a => a.id === aptId);
+      if (appointment) {
+        setConfirmingAppointment(appointment);
+        setShowTeamsLinkPopup(true);
+        return;
+      }
+    }
+
+    // For other status updates, proceed normally
     try {
       const updateData: any = { status: newStatus, updated_at: new Date().toISOString() };
       if (newStatus === 'confirmed') {
@@ -1034,6 +1082,20 @@ export default function AdminAppointmentManagement() {
           </div>
         )}
       </div>
+
+      {/* Teams Link Popup */}
+      {showTeamsLinkPopup && confirmingAppointment && (
+        <TeamsLinkPopup
+          isOpen={showTeamsLinkPopup}
+          onClose={() => {
+            setShowTeamsLinkPopup(false);
+            setConfirmingAppointment(null);
+          }}
+          onConfirm={handleConfirmWithTeamsLink}
+          appointmentDate={confirmingAppointment.date}
+          appointmentTime={confirmingAppointment.start_time}
+        />
+      )}
     </div>
   );
 }

@@ -28,7 +28,9 @@ import {
   Info,
   Wallet,
   Shield,
-  ArrowLeft
+  ArrowLeft,
+  X,
+  Video
 } from 'lucide-react';
 import { bitcoinPriceService, BitcoinPrice } from '../services/bitcoinPriceService';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
@@ -1209,6 +1211,39 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
     return () => window.removeEventListener('refreshAppointments', handleRefreshAppointments);
   }, []);
 
+  const cancelAppointment = async (aptId: string) => {
+    if (!confirm('Weet je zeker dat je deze afspraak wilt annuleren?')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({ 
+          status: 'cancelled',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', aptId)
+        .eq('status', 'pending'); // Only allow cancel if status is pending
+
+      if (error) {
+        if (error.code === '42501') {
+          alert('Je hebt geen toestemming om deze afspraak te annuleren. Alleen afspraken met status "In Afwachting" kunnen geannuleerd worden.');
+        } else {
+          throw error;
+        }
+        return;
+      }
+
+      // Refresh the appointments list
+      setRefreshKey(prev => prev + 1);
+      alert('Afspraak succesvol geannuleerd');
+    } catch (error: any) {
+      console.error('Error cancelling appointment:', error);
+      alert(`Fout bij annuleren: ${error.message}`);
+    }
+  };
+
   const loadUserAppointments = async () => {
     if (!effectiveUserEmail) {
       console.warn('⚠️ No effectiveUserEmail, cannot load appointments');
@@ -1385,6 +1420,26 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
                        apt.status === 'cancelled' ? '❌ Geannuleerd' :
                        '❓ Onbekend'}
                     </span>
+                    {apt.status === 'pending' && (
+                      <button
+                        onClick={() => cancelAppointment(apt.id)}
+                        className="text-xs px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors flex items-center gap-1"
+                      >
+                        <X className="w-3 h-3" />
+                        Annuleren
+                      </button>
+                    )}
+                    {apt.status === 'confirmed' && apt.teams_link && (
+                      <a
+                        href={apt.teams_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-1"
+                      >
+                        <Video className="w-3 h-3" />
+                        Teams Link
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>
