@@ -27,6 +27,7 @@ import EmailVerificationStatus from './EmailVerificationStatus';
 import AdminProfile from './AdminProfile';
 import AdminSettings from './AdminSettings';
 import AdminAppointmentManagement from './AdminAppointmentManagement';
+import EmailTemplates from './EmailTemplates';
 // import PageManagement from './PageManagement';
 
 export default function AdminDashboard() {
@@ -235,6 +236,16 @@ export default function AdminDashboard() {
                   }`}
                 >
                   Profiel
+                </button>
+                <button
+                  onClick={() => setActiveTab('email-templates')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'email-templates'
+                      ? 'border-orange-500 text-orange-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Email Templates
                 </button>
                 <button
                   onClick={() => setActiveTab('settings')}
@@ -499,6 +510,13 @@ export default function AdminDashboard() {
           {activeTab === 'profile' && (
             <div className="space-y-6">
               <AdminProfile />
+            </div>
+          )}
+
+          {/* Email Templates Tab */}
+          {activeTab === 'email-templates' && (
+            <div className="space-y-6">
+              <EmailTemplates />
             </div>
           )}
 
