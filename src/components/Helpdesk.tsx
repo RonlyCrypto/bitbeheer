@@ -36,12 +36,22 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
 
   const loadMessages = async () => {
     if (!user?.email) return;
+    // Load only messages for this specific user
+    // Messages where:
+    // - User sent message (email = user.email and from_admin = false)
+    // - OR admin replied to this user (email = user.email and from_admin = true)
     const { data, error } = await supabase
       .from('support_messages')
       .select('*')
-      .eq('email', user.email)
+      .eq('email', user.email) // Filter by user email to ensure separate chats
       .order('created_at', { ascending: true });
-    if (!error && data) setMessages(data as any);
+    
+    if (!error && data) {
+      // Double-check that all messages belong to this user
+      // This ensures no mixing of chats
+      const filteredMessages = data.filter((msg: any) => msg.email === user.email);
+      setMessages(filteredMessages as any);
+    }
   };
 
   useEffect(() => {

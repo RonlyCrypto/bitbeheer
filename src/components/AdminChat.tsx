@@ -48,9 +48,11 @@ export default function AdminChat() {
     const { data, error } = await supabase
       .from('support_messages')
       .select('email')
+      .neq('email', 'admin@bitbeheer.nl') // Exclude admin email from customer list
       .order('created_at', { ascending: false });
     if (!error && data) {
-      const unique = Array.from(new Set(data.map((d: any) => d.email)));
+      // Get unique customer emails (exclude admin)
+      const unique = Array.from(new Set(data.map((d: any) => d.email).filter((email: string) => email !== 'admin@bitbeheer.nl')));
       setCustomers(unique);
       if (!selectedEmail && unique.length > 0) setSelectedEmail(unique[0]);
     }
@@ -58,13 +60,20 @@ export default function AdminChat() {
 
   const loadMessages = async () => {
     if (!selectedEmail) return;
+    // Load messages where:
+    // - User sent message (email = selectedEmail and from_admin = false)
+    // - OR admin replied to this user (email = selectedEmail and from_admin = true)
     const { data, error } = await supabase
       .from('support_messages')
       .select('*')
-      .eq('email', selectedEmail)
+      .eq('email', selectedEmail) // Filter by user email to ensure separate chats
       .order('created_at', { ascending: true });
+    
     if (!error && data) {
-      setMessages(data as any);
+      // Double-check that all messages belong to the selected user
+      // This ensures no mixing of chats
+      const filteredMessages = data.filter((msg: any) => msg.email === selectedEmail);
+      setMessages(filteredMessages as any);
       // Mark chat as read when opened
       await markChatAsRead(selectedEmail);
     }
@@ -111,12 +120,23 @@ export default function AdminChat() {
   const sendReply = async () => {
     if (!selectedEmail || !reply.trim()) return;
     try {
+      // Ensure we're sending to the correct user by using selectedEmail
+      const messageData = {
+        email: selectedEmail, // This ensures the message is linked to the correct user's chat
+        body: reply.trim(),
+        from_admin: true,
+        created_at: new Date().toISOString()
+      };
+      
       const { error } = await supabase
         .from('support_messages')
-        .insert([{ email: selectedEmail, body: reply.trim(), from_admin: true, created_at: new Date().toISOString() }]);
+        .insert([messageData]);
+      
       if (error) throw error;
+      
       setReply('');
       await loadMessages();
+      
       // Refresh metrics after sending reply
       if (window.dispatchEvent) {
         window.dispatchEvent(new CustomEvent('refreshMetrics'));
@@ -136,15 +156,27 @@ export default function AdminChat() {
           <button onClick={loadCustomers} className="ml-auto text-gray-500 hover:text-gray-700"><RefreshCw className="w-4 h-4"/></button>
         </div>
         <div className="space-y-2 max-h-96 overflow-y-auto">
-          {customers.map((email) => (
-            <button
-              key={email}
-              onClick={() => setSelectedEmail(email)}
-              className={`w-full text-left px-3 py-2 rounded-lg border ${selectedEmail === email ? 'bg-orange-50 border-orange-200' : 'bg-white hover:bg-gray-50'}`}
-            >
-              {email}
-            </button>
-          ))}
+          {customers.length === 0 ? (
+            <p className="text-gray-500 text-sm text-center py-4">Geen gebruikers met chat berichten</p>
+          ) : (
+            customers.map((email) => (
+              <button
+                key={email}
+                onClick={() => setSelectedEmail(email)}
+                className={`w-full text-left px-3 py-2 rounded-lg border transition-colors ${
+                  selectedEmail === email 
+                    ? 'bg-orange-50 border-orange-300 text-orange-900 font-medium' 
+                    : 'bg-white hover:bg-gray-50 border-gray-200'
+                }`}
+                title={`Chat met ${email}`}
+              >
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${selectedEmail === email ? 'bg-orange-500' : 'bg-gray-300'}`}></div>
+                  <span className="text-sm truncate">{email}</span>
+                </div>
+              </button>
+            ))
+          )}
         </div>
       </div>
       <div className="md:col-span-2 border rounded-xl p-4 bg-white">
