@@ -812,6 +812,12 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             </div>
             <div className="flex-1">
               <h3 className="text-xl font-bold mb-2">Afspraak Bevestigd! ✅</h3>
+              <div className="bg-white bg-opacity-10 rounded-lg p-3 mb-3 text-sm">
+                <p className="font-semibold mb-1">ℹ️ Over dit gesprek:</p>
+                <p className="text-green-50">
+                  Dit is een 20-minuten kennismaking waarbij we bespreken wie jij bent en wie ik ben, wat je doel is en of dat mogelijk is.
+                </p>
+              </div>
               <div className="space-y-2 text-green-100 mb-4">
                 <p>
                   <strong>Datum:</strong> {new Date(userAppointment.date).toLocaleDateString('nl-NL', { 

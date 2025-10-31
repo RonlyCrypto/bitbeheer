@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Clock, User, Trash2, CheckCircle, XCircle, Edit, Search, Filter, Download, Copy, RefreshCw, ChevronDown, ChevronUp, Video, AlertCircle, FileText } from 'lucide-react';
+import { Calendar, Plus, Clock, User, Trash2, CheckCircle, XCircle, Edit, Search, Filter, Download, Copy, RefreshCw, ChevronDown, ChevronUp, Video, AlertCircle, FileText, UserCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import TeamsLinkPopup from './TeamsLinkPopup';
 import AgendaView from './AgendaView';
@@ -1224,6 +1224,49 @@ export default function AdminAppointmentManagement() {
                         >
                           <CheckCircle className="w-3 h-3" />
                           Bevestigen
+                        </button>
+                      )}
+                      {apt.status === 'confirmed' && (
+                        <button
+                          onClick={async () => {
+                            if (!confirm('Weet je zeker dat je dit account wilt goedkeuren? Dit maakt alle tabs beschikbaar voor de gebruiker.')) {
+                              return;
+                            }
+                            try {
+                              // Update account_approved in users table
+                              const { error: userError } = await supabase
+                                .from('users')
+                                .update({ 
+                                  account_approved: true,
+                                  updated_at: new Date().toISOString()
+                                })
+                                .eq('email', apt.user_email);
+
+                              // Also update accounts table if it exists
+                              await supabase
+                                .from('accounts')
+                                .update({ 
+                                  account_approved: true,
+                                  updated_at: new Date().toISOString()
+                                })
+                                .eq('email', apt.user_email);
+
+                              if (userError && userError.code !== 'PGRST116') {
+                                throw userError;
+                              }
+
+                              alert('Account succesvol goedgekeurd! Alle tabs zijn nu beschikbaar voor de gebruiker.');
+                              await loadData();
+                            } catch (error: any) {
+                              console.error('Error approving account:', error);
+                              alert(`Fout bij goedkeuren: ${error.message}`);
+                            }
+                          }}
+                          className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
+                          title="1 op 1 akkoord - Het gesprek ging goed en we zetten dit account open"
+                        >
+                          <UserCheck className="w-3 h-3" />
+                          1 op 1 Akkoord
                         </button>
                       )}
                       <button
