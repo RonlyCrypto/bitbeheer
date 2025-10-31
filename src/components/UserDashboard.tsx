@@ -18,7 +18,8 @@ import {
   ArrowLeft,
   Plus,
   X,
-  Video
+  Video,
+  BookOpen
 } from 'lucide-react';
 import { bitcoinPriceService, BitcoinPrice } from '../services/bitcoinPriceService';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
