@@ -253,16 +253,39 @@ export default function UserDashboard() {
             setHasWallet(false);
           }
 
-          // Load account approval status
-          const { data: userData } = await supabase
-            .from('users')
-            .select('account_approved, first_appointment_completed')
-            .eq('email', user.email)
-            .single();
-          
-          if (userData) {
-            setAccountApproved(userData.account_approved || false);
-            setFirstAppointmentCompleted(userData.first_appointment_completed || false);
+          // Load account approval status - try users table first, then accounts
+          try {
+            const { data: userData, error: userError } = await supabase
+              .from('users')
+              .select('account_approved, first_appointment_completed')
+              .eq('email', user.email)
+              .single();
+            
+            if (userData && !userError) {
+              setAccountApproved(userData.account_approved || false);
+              setFirstAppointmentCompleted(userData.first_appointment_completed || false);
+            } else if (userError?.code === 'PGRST204' || userError?.code === 'PGRST116') {
+              // Column doesn't exist or no row found, try accounts table
+              const { data: accountData } = await supabase
+                .from('accounts')
+                .select('account_approved, first_appointment_completed')
+                .eq('email', user.email)
+                .single();
+              
+              if (accountData) {
+                setAccountApproved(accountData.account_approved || false);
+                setFirstAppointmentCompleted(accountData.first_appointment_completed || false);
+              } else {
+                // Default to false if columns don't exist
+                setAccountApproved(false);
+                setFirstAppointmentCompleted(false);
+              }
+            }
+          } catch (error) {
+            // Silently fail - columns might not exist yet
+            console.warn('Could not load account approval status. Columns may not exist. Run add-users-account-status-columns.sql');
+            setAccountApproved(false);
+            setFirstAppointmentCompleted(false);
           }
 
           // Check for unread admin messages
@@ -582,10 +605,23 @@ export default function UserDashboard() {
               .select('account_approved, first_appointment_completed')
               .eq('email', user.email)
               .single()
-              .then(({ data: userData }) => {
-                if (userData) {
+              .then(({ data: userData, error: userError }) => {
+                if (userData && !userError) {
                   setAccountApproved(userData.account_approved || false);
                   setFirstAppointmentCompleted(userData.first_appointment_completed || false);
+                } else if (userError?.code === 'PGRST204' || userError?.code === 'PGRST116') {
+                  // Try accounts table as fallback
+                  supabase
+                    .from('accounts')
+                    .select('account_approved, first_appointment_completed')
+                    .eq('email', user.email)
+                    .single()
+                    .then(({ data: accountData }) => {
+                      if (accountData) {
+                        setAccountApproved(accountData.account_approved || false);
+                        setFirstAppointmentCompleted(accountData.first_appointment_completed || false);
+                      }
+                    });
                 }
               });
           }

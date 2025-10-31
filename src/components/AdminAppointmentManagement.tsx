@@ -482,22 +482,30 @@ export default function AdminAppointmentManagement() {
 
         if (allUserAppointments && allUserAppointments.length === 1) {
           // This is the first confirmed appointment - mark as completed
-          await supabase
-            .from('users')
-            .update({ 
-              first_appointment_completed: true,
-              updated_at: new Date().toISOString()
-            })
-            .eq('email', confirmingAppointment.user_email);
+          // Try both tables, silently fail if columns don't exist
+          try {
+            await supabase
+              .from('users')
+              .update({ 
+                first_appointment_completed: true,
+                updated_at: new Date().toISOString()
+              })
+              .eq('email', confirmingAppointment.user_email);
+          } catch (e) {
+            // Ignore if column doesn't exist
+          }
           
-          // Also try accounts table if it exists
-          await supabase
-            .from('accounts')
-            .update({ 
-              first_appointment_completed: true,
-              updated_at: new Date().toISOString()
-            })
-            .eq('email', confirmingAppointment.user_email);
+          try {
+            await supabase
+              .from('accounts')
+              .update({ 
+                first_appointment_completed: true,
+                updated_at: new Date().toISOString()
+              })
+              .eq('email', confirmingAppointment.user_email);
+          } catch (e) {
+            // Ignore if column doesn't exist
+          }
         }
       }
       
@@ -1233,7 +1241,22 @@ export default function AdminAppointmentManagement() {
                               return;
                             }
                             try {
-                              // Update account_approved in users table
+                              let updateSuccess = false;
+                              
+                              // Try to update accounts table first (most likely to exist)
+                              const { error: accountsError } = await supabase
+                                .from('accounts')
+                                .update({ 
+                                  account_approved: true,
+                                  updated_at: new Date().toISOString()
+                                })
+                                .eq('email', apt.user_email);
+
+                              if (!accountsError || accountsError.code === 'PGRST116') {
+                                updateSuccess = true;
+                              }
+
+                              // Try to update users table if accounts failed or as additional update
                               const { error: userError } = await supabase
                                 .from('users')
                                 .update({ 
@@ -1242,24 +1265,30 @@ export default function AdminAppointmentManagement() {
                                 })
                                 .eq('email', apt.user_email);
 
-                              // Also update accounts table if it exists
-                              await supabase
-                                .from('accounts')
-                                .update({ 
-                                  account_approved: true,
-                                  updated_at: new Date().toISOString()
-                                })
-                                .eq('email', apt.user_email);
+                              // If both fail with schema errors, inform user about SQL script
+                              if (accountsError && accountsError.code === 'PGRST204' && userError && userError.code === 'PGRST204') {
+                                alert(`De database kolommen ontbreken nog. Voer eerst het SQL script uit:\n\nadd-users-account-status-columns.sql\n\nOf voeg handmatig toe:\n- account_approved BOOLEAN DEFAULT FALSE\n- first_appointment_completed BOOLEAN DEFAULT FALSE\n\naan de 'users' en 'accounts' tabellen.`);
+                                return;
+                              }
 
-                              if (userError && userError.code !== 'PGRST116') {
-                                throw userError;
+                              // If at least one succeeded, we're good
+                              if (!userError || userError.code === 'PGRST116') {
+                                updateSuccess = true;
+                              }
+
+                              if (!updateSuccess) {
+                                throw accountsError || userError;
                               }
 
                               alert('Account succesvol goedgekeurd! Alle tabs zijn nu beschikbaar voor de gebruiker.');
                               await loadData();
                             } catch (error: any) {
                               console.error('Error approving account:', error);
-                              alert(`Fout bij goedkeuren: ${error.message}`);
+                              if (error?.code === 'PGRST204') {
+                                alert(`De 'account_approved' kolom ontbreekt in de database.\n\nVoer eerst het SQL script uit: add-users-account-status-columns.sql\n\nOf voeg handmatig de kolom 'account_approved BOOLEAN DEFAULT FALSE' toe aan de 'users' en 'accounts' tabellen.`);
+                              } else {
+                                alert(`Fout bij goedkeuren: ${error?.message || 'Onbekende fout'}`);
+                              }
                             }
                           }}
                           className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
