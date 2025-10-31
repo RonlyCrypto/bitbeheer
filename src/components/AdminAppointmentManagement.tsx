@@ -58,15 +58,28 @@ export default function AdminAppointmentManagement() {
   const loadData = async () => {
     setLoading(true);
     try {
+      // Check current session to debug
+      const { data: sessionData } = await supabase.auth.getSession();
+      const sessionEmail = sessionData?.session?.user?.email;
+      console.log('🔐 Admin loading data - Session:', {
+        email: sessionEmail,
+        isAdmin: sessionEmail === 'admin@bitbeheer.nl'
+      });
+
       const { data: slots, error: slotsError } = await supabase
         .from('available_slots')
         .select('*')
         .order('date', { ascending: true })
         .order('start_time', { ascending: true });
       
-      if (slotsError) throw slotsError;
+      if (slotsError) {
+        console.error('❌ Error loading slots:', slotsError);
+        throw slotsError;
+      }
       setAvailableSlots(slots || []);
+      console.log('✅ Loaded slots:', slots?.length || 0);
 
+      // Load appointments - admin should be able to read all
       const { data: apts, error: aptsError } = await supabase
         .from('appointments')
         .select('*')
@@ -74,15 +87,35 @@ export default function AdminAppointmentManagement() {
         .order('start_time', { ascending: true });
       
       if (aptsError) {
-        console.error('❌ Error loading appointments:', aptsError);
+        console.error('❌ Error loading appointments:', {
+          error: aptsError,
+          code: aptsError.code,
+          message: aptsError.message,
+          details: aptsError.details,
+          hint: aptsError.hint,
+          sessionEmail
+        });
+        
+        // If RLS error, provide helpful message
+        if (aptsError.code === '42501' || aptsError.message?.includes('row-level security')) {
+          alert(`RLS Policy Error: ${aptsError.message}\n\nVoer fix-appointments-read-rls.sql uit in Supabase SQL Editor.`);
+        }
         throw aptsError;
       }
       
-      console.log('✅ Loaded appointments in admin:', apts?.length || 0, apts);
+      console.log('✅ Loaded appointments in admin:', {
+        count: apts?.length || 0,
+        appointments: apts,
+        sessionEmail
+      });
       setAppointments(apts || []);
+      
+      if (!apts || apts.length === 0) {
+        console.warn('⚠️ No appointments found, but no error. Check RLS policies.');
+      }
     } catch (error) {
-      console.error('Error loading data:', error);
-      alert('Fout bij het laden van gegevens');
+      console.error('❌ Error loading data:', error);
+      alert(`Fout bij het laden van gegevens: ${error instanceof Error ? error.message : 'Onbekende fout'}`);
     } finally {
       setLoading(false);
     }
