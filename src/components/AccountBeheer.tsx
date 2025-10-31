@@ -188,7 +188,55 @@ export default function AccountBeheer() {
       if (accountsResponse.ok) {
         const accountsData = await accountsResponse.json();
         console.log('Accounts refreshed from API:', accountsData.accounts);
-        setUsers(accountsData.accounts || []);
+        
+        // Enrich accounts with approval status from Supabase
+        const enrichedAccounts = await Promise.all((accountsData.accounts || []).map(async (account: any) => {
+          try {
+            // Try to get approval status from users table
+            const { data: userData } = await supabase
+              .from('users')
+              .select('account_approved, first_appointment_completed')
+              .eq('email', account.email)
+              .single();
+            
+            if (userData) {
+              return {
+                ...account,
+                account_approved: userData.account_approved || false,
+                first_appointment_completed: userData.first_appointment_completed || false
+              };
+            }
+            
+            // Fallback to accounts table
+            const { data: accountData } = await supabase
+              .from('accounts')
+              .select('account_approved, first_appointment_completed')
+              .eq('email', account.email)
+              .single();
+            
+            if (accountData) {
+              return {
+                ...account,
+                account_approved: accountData.account_approved || false,
+                first_appointment_completed: accountData.first_appointment_completed || false
+              };
+            }
+            
+            return {
+              ...account,
+              account_approved: false,
+              first_appointment_completed: false
+            };
+          } catch (error) {
+            return {
+              ...account,
+              account_approved: false,
+              first_appointment_completed: false
+            };
+          }
+        }));
+        
+        setUsers(enrichedAccounts);
       } else {
         // Fallback to users API (for notification signups)
         const usersResponse = await fetch('/api/users');
