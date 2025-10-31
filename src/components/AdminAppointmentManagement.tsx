@@ -61,12 +61,28 @@ export default function AdminAppointmentManagement() {
     setLoading(true);
     try {
       // Check current session to debug
-      const { data: sessionData } = await supabase.auth.getSession();
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       const sessionEmail = sessionData?.session?.user?.email;
+      const accessToken = sessionData?.session?.access_token;
+      
       console.log('🔐 Admin loading data - Session:', {
         email: sessionEmail,
-        isAdmin: sessionEmail === 'admin@bitbeheer.nl'
+        isAdmin: sessionEmail === 'admin@bitbeheer.nl',
+        hasSession: !!sessionData?.session,
+        hasToken: !!accessToken,
+        sessionError,
+        'Full session': sessionData?.session
       });
+      
+      // If not admin session, warn
+      if (sessionEmail !== 'admin@bitbeheer.nl') {
+        console.error('❌ CRITICAL: Not logged in as admin!');
+        console.error('❌ Session email:', sessionEmail);
+        console.error('❌ Expected: admin@bitbeheer.nl');
+        alert('Je bent niet ingelogd als admin. Log uit en opnieuw in als admin@bitbeheer.nl');
+        setLoading(false);
+        return;
+      }
 
       const { data: slots, error: slotsError } = await supabase
         .from('available_slots')
@@ -107,8 +123,17 @@ export default function AdminAppointmentManagement() {
         dataLength: queryResult.data?.length || 0,
         isArray: Array.isArray(queryResult.data),
         error: queryResult.error,
-        'Data type': typeof queryResult.data
+        'Data type': typeof queryResult.data,
+        'Raw response': queryResult,
+        'Session email': sessionEmail
       });
+      
+      // If no error but also no data, RLS might be silently blocking
+      if (!aptsError && (!queryResult.data || queryResult.data.length === 0)) {
+        console.warn('⚠️ Query returned no data and no error - RLS might be blocking silently');
+        console.warn('⚠️ This happens when RLS policies don\'t match and return empty result');
+        console.warn('⚠️ Check: Is session email admin@bitbeheer.nl?', sessionEmail === 'admin@bitbeheer.nl');
+      }
       
       if (aptsError) {
         console.error('❌ Query returned error:', aptsError);
