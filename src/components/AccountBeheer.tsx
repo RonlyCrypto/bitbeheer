@@ -170,6 +170,17 @@ export default function AccountBeheer() {
     };
 
     loadAccounts();
+    
+    // Listen for refresh events from other components (e.g., after account approval)
+    const handleRefresh = () => {
+      refreshAccounts();
+    };
+    
+    window.addEventListener('refreshAccounts', handleRefresh);
+    
+    return () => {
+      window.removeEventListener('refreshAccounts', handleRefresh);
+    };
   }, []);
 
   // Refresh accounts function
