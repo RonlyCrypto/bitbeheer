@@ -1067,22 +1067,26 @@ export default function AdminAppointmentManagement() {
         ) : (
           <>
             {getFilteredAppointments().length === 0 ? (
-          <p className="text-gray-500 text-center py-8">Geen afspraken gevonden</p>
-        ) : (
-          <div className="space-y-4">
-            {getFilteredAppointments().map((apt) => {
-              const dateObj = new Date(apt.date);
-              const isSelected = selectedAppointment?.id === apt.id;
-              const appointmentDateTime = new Date(`${apt.date}T${apt.start_time}`);
-              const now = new Date();
-              const hoursUntil = (appointmentDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
-              const isUpcoming = hoursUntil > 0 && hoursUntil <= 24; // Binnen 24 uur
-              const isVerySoon = hoursUntil > 0 && hoursUntil <= 2; // Binnen 2 uur
-              
-              return (
-                <div
-                  key={apt.id}
-                  className={`p-4 rounded-lg border-2 ${
+              <p className="text-gray-500 text-center py-8">Geen afspraken gevonden</p>
+            ) : (
+              <div className="space-y-4">
+                {getFilteredAppointments().map((apt) => {
+                  const dateObj = new Date(apt.date);
+                  const isSelected = selectedAppointment?.id === apt.id;
+                  const appointmentDateTime = new Date(`${apt.date}T${apt.start_time}`);
+                  const now = new Date();
+                  const hoursUntil = (appointmentDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+                  const isUpcoming = hoursUntil > 0 && hoursUntil <= 24; // Binnen 24 uur
+                  const isVerySoon = hoursUntil > 0 && hoursUntil <= 2; // Binnen 2 uur
+                  
+                  return (
+                    <div
+                      id={`appointment-${apt.id}`}
+                      key={apt.id}
+                      onClick={() => setSelectedAppointment(apt)}
+                      className={`p-4 rounded-lg border-2 cursor-pointer hover:shadow-md transition-all ${
+                        isSelected ? 'ring-2 ring-orange-500 border-orange-500' : ''
+                      } ${
                     isVerySoon && apt.status === 'confirmed'
                       ? 'border-red-400 bg-red-50 dark:bg-red-900/30 ring-2 ring-red-300'
                       : isUpcoming && apt.status === 'confirmed'
@@ -1217,9 +1221,11 @@ export default function AdminAppointmentManagement() {
                     </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
         )}
       </div>
 
