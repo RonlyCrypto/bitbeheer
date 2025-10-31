@@ -1221,8 +1221,12 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
         .order('date', { ascending: true })
         .order('start_time', { ascending: true });
       
-      if (error) throw error;
-      console.log('✅ Loaded appointments:', data?.length || 0);
+      if (error) {
+        console.error('❌ Error loading appointments:', error);
+        throw error;
+      }
+      
+      console.log('✅ Loaded appointments:', data?.length || 0, data);
       setUserAppointments(data || []);
       setAppointments(data || []);
     } catch (error) {

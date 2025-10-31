@@ -73,7 +73,12 @@ export default function AdminAppointmentManagement() {
         .order('date', { ascending: true })
         .order('start_time', { ascending: true });
       
-      if (aptsError) throw aptsError;
+      if (aptsError) {
+        console.error('❌ Error loading appointments:', aptsError);
+        throw aptsError;
+      }
+      
+      console.log('✅ Loaded appointments in admin:', apts?.length || 0, apts);
       setAppointments(apts || []);
     } catch (error) {
       console.error('Error loading data:', error);
