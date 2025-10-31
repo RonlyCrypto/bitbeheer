@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Plus, Clock, User, Trash2, CheckCircle, XCircle, Edit, Search, Filter, Download, Copy, RefreshCw, ChevronDown, ChevronUp, Video, AlertCircle, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import TeamsLinkPopup from './TeamsLinkPopup';
+import AgendaView from './AgendaView';
 
 interface AvailableSlot {
   id: string;
@@ -48,6 +49,8 @@ export default function AdminAppointmentManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showTeamsLinkPopup, setShowTeamsLinkPopup] = useState(false);
   const [confirmingAppointment, setConfirmingAppointment] = useState<Appointment | null>(null);
+  const [displayMode, setDisplayMode] = useState<'agenda' | 'list'>('agenda');
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [newSlot, setNewSlot] = useState({
     date: '',
     start_time: '',
@@ -990,26 +993,52 @@ export default function AdminAppointmentManagement() {
             <User className="w-5 h-5 text-orange-600" />
             Geboekte Afspraken ({getFilteredAppointments().length})
           </h3>
-          <div className="flex gap-2 flex-wrap">
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Zoeken..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white"
-              />
+          <div className="flex gap-2 flex-wrap items-center">
+            <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+              <button
+                onClick={() => setDisplayMode('agenda')}
+                className={`px-4 py-2 rounded-md transition-colors ${
+                  displayMode === 'agenda'
+                    ? 'bg-white dark:bg-gray-600 text-orange-600 dark:text-orange-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400'
+                }`}
+              >
+                Agenda
+              </button>
+              <button
+                onClick={() => setDisplayMode('list')}
+                className={`px-4 py-2 rounded-md transition-colors ${
+                  displayMode === 'list'
+                    ? 'bg-white dark:bg-gray-600 text-orange-600 dark:text-orange-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400'
+                }`}
+              >
+                Lijst
+              </button>
             </div>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="all">Alle Status</option>
-              <option value="pending">In Afwachting</option>
-              <option value="confirmed">Bevestigd</option>
-            </select>
+            {displayMode === 'list' && (
+              <>
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Zoeken..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="all">Alle Status</option>
+                  <option value="pending">In Afwachting</option>
+                  <option value="confirmed">Bevestigd</option>
+                </select>
+              </>
+            )}
             <button
               onClick={exportAppointments}
               className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -1019,12 +1048,31 @@ export default function AdminAppointmentManagement() {
             </button>
           </div>
         </div>
-        {getFilteredAppointments().length === 0 ? (
+
+        {displayMode === 'agenda' ? (
+          <AgendaView
+            appointments={getFilteredAppointments()}
+            onAppointmentClick={(apt) => {
+              setSelectedAppointment(apt);
+              setDisplayMode('list');
+              // Scroll to appointment in list
+              setTimeout(() => {
+                const element = document.getElementById(`appointment-${apt.id}`);
+                if (element) {
+                  element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+              }, 100);
+            }}
+          />
+        ) : (
+          <>
+            {getFilteredAppointments().length === 0 ? (
           <p className="text-gray-500 text-center py-8">Geen afspraken gevonden</p>
         ) : (
           <div className="space-y-4">
             {getFilteredAppointments().map((apt) => {
               const dateObj = new Date(apt.date);
+              const isSelected = selectedAppointment?.id === apt.id;
               const appointmentDateTime = new Date(`${apt.date}T${apt.start_time}`);
               const now = new Date();
               const hoursUntil = (appointmentDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
