@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { 
-  User, 
   Target, 
   Calendar, 
   TrendingUp, 
@@ -10,22 +9,10 @@ import {
   PieChart,
   Clock,
   CheckCircle,
-  AlertCircle,
-  Plus,
-  Edit,
-  Trash2,
-  Phone,
   Mail,
-  MapPin,
-  Star,
-  Award,
-  BookOpen,
-  Users,
-  DollarSign,
   Activity,
   ExternalLink,
   Calculator,
-  Info,
   Wallet,
   Shield,
   ArrowLeft,
@@ -638,18 +625,141 @@ export default function UserDashboard() {
 }
 
 // Overview Tab Component
-function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppointment }: any) {
-  const activeGoals = goals.filter((goal: Goal) => goal.status === 'active').length;
-  const upcomingAppointments = appointments.filter((apt: Appointment) => 
-    apt.status === 'scheduled' && new Date(apt.date) > new Date()
+function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppointment, accountApproved }: any) {
+  // Determine goals to display based on account status
+  const displayGoals = accountApproved 
+    ? [
+        {
+          id: 'hw-wallet',
+          title: 'Bestel je hardware wallet',
+          description: 'Kies en bestel een geschikte hardware wallet voor veilige Bitcoin opslag',
+          status: 'active',
+          targetAmount: 0,
+          currentAmount: 0,
+          targetDate: '',
+          category: 'hardware',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 'second-appointment',
+          title: 'Plan je 2de gesprek',
+          description: 'Plan een vervolgafspraak na het ontvangen van je hardware wallet',
+          status: 'active',
+          targetAmount: 0,
+          currentAmount: 0,
+          targetDate: '',
+          category: 'appointment',
+          createdAt: new Date().toISOString()
+        }
+      ]
+    : [
+        {
+          id: 'first-appointment',
+          title: 'Maak een 20min gesprek',
+          description: 'Boek je eerste kennismakingsgesprek van 20 minuten',
+          status: 'active',
+          targetAmount: 0,
+          currentAmount: 0,
+          targetDate: '',
+          category: 'appointment',
+          createdAt: new Date().toISOString()
+        }
+      ];
+  
+  const activeGoals = displayGoals.filter((goal) => (goal.status as string) === 'active').length;
+  // Calculate upcoming appointments from loaded userAppointments
+  const upcomingAppointments = userAppointments.filter((apt: any) => 
+    (apt.status === 'pending' || apt.status === 'confirmed') && new Date(apt.date) > new Date()
   ).length;
   const [hasWallet, setHasWallet] = useState(false);
+  const [userAppointments, setUserAppointments] = useState<any[]>([]);
+  const [appointmentsLoading, setAppointmentsLoading] = useState(true);
   
-  // Find user's appointment (pending or confirmed)
-  const userAppointment = appointments.find((apt: any) => 
-    apt.status === 'pending' || apt.status === 'confirmed'
-  );
-  const hasAppointment = !!userAppointment;
+  // Load appointments from database - do this immediately when component mounts
+  useEffect(() => {
+    const loadAppointments = async () => {
+      setAppointmentsLoading(true);
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        const email = authData?.user?.email;
+        if (!email) {
+          setAppointmentsLoading(false);
+          return;
+        }
+
+        console.log('🔍 Loading appointments for OverviewTab, email:', email);
+
+        const { data, error } = await supabase
+          .from('appointments')
+          .select('*')
+          .eq('user_email', email)
+          .in('status', ['pending', 'confirmed']) // Only load pending and confirmed
+          .order('date', { ascending: true })
+          .order('start_time', { ascending: true });
+
+        if (error) {
+          console.error('❌ Error loading appointments:', error);
+          setAppointmentsLoading(false);
+          return;
+        }
+
+        console.log('✅ Loaded appointments in OverviewTab:', data?.length || 0, data);
+        setUserAppointments(data || []);
+      } catch (error) {
+        console.error('❌ Error loading appointments:', error);
+      } finally {
+        setAppointmentsLoading(false);
+      }
+    };
+
+    // Load immediately
+    loadAppointments();
+
+    // Listen for appointment refresh events
+    const handleRefresh = () => {
+      console.log('🔄 Refresh event received in OverviewTab, reloading appointments...');
+      loadAppointments();
+    };
+    window.addEventListener('refreshAppointments', handleRefresh);
+    
+    // Also refresh when the tab becomes visible
+    const visibilityChangeHandler = () => {
+      if (!document.hidden) {
+        console.log('👁️ Tab became visible, reloading appointments...');
+        loadAppointments();
+      }
+    };
+    document.addEventListener('visibilitychange', visibilityChangeHandler);
+    
+    return () => {
+      window.removeEventListener('refreshAppointments', handleRefresh);
+      document.removeEventListener('visibilitychange', visibilityChangeHandler);
+    };
+  }, []);
+  
+  // Find user's appointment (pending or confirmed) - prioritize confirmed, then pending
+  // Only count appointments that are not cancelled
+  const userAppointment = userAppointments
+    .filter((apt: any) => apt.status !== 'cancelled')
+    .find((apt: any) => apt.status === 'confirmed') 
+    || userAppointments
+      .filter((apt: any) => apt.status !== 'cancelled')
+      .find((apt: any) => apt.status === 'pending');
+  const hasAppointment = !!userAppointment && !appointmentsLoading;
+  
+  // Debug log
+  useEffect(() => {
+    console.log('🔍 OverviewTab appointment check:', {
+      appointmentsLoading,
+      userAppointmentsCount: userAppointments.length,
+      hasAppointment,
+      userAppointment,
+      userAppointments,
+      filteredAppointments: userAppointments.filter((apt: any) => 
+        apt.status === 'pending' || apt.status === 'confirmed'
+      )
+    });
+  }, [userAppointments, hasAppointment, userAppointment, appointmentsLoading]);
   
   const [showWalletForm, setShowWalletForm] = useState(false);
   const [showQuestionsForm, setShowQuestionsForm] = useState(false);
@@ -785,7 +895,18 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
       <h2 className="text-2xl font-bold text-gray-900">Overzicht</h2>
 
       {/* Appointment Status Block */}
-      {!hasAppointment ? (
+      {appointmentsLoading ? (
+        // Loading state - don't show anything while loading
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 shadow-lg animate-pulse">
+          <div className="flex items-center gap-4">
+            <div className="bg-gray-200 rounded-xl w-16 h-16"></div>
+            <div className="flex-1">
+              <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          </div>
+        </div>
+      ) : !hasAppointment ? (
         // No appointment - show prompt to book
         <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-xl shadow-lg">
           <div className="flex items-start gap-4">
@@ -812,15 +933,21 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           </div>
         </div>
       ) : userAppointment.status === 'pending' ? (
-        // Pending appointment - waiting for confirmation
-        <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-xl shadow-lg">
+        // Pending appointment - waiting for confirmation (green block, disabled button)
+        <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-xl shadow-lg">
           <div className="flex items-start gap-4">
             <div className="bg-white bg-opacity-20 p-3 rounded-xl">
               <Clock className="w-8 h-8" />
             </div>
             <div className="flex-1">
-              <h3 className="text-xl font-bold mb-2">Afspraak in afwachting ⏳</h3>
-              <div className="space-y-2 text-orange-100 mb-4">
+              <h3 className="text-xl font-bold mb-2">Afspraak ingepland ⏳</h3>
+              <div className="bg-white bg-opacity-10 rounded-lg p-3 mb-3 text-sm">
+                <p className="font-semibold mb-1">ℹ️ Over dit gesprek:</p>
+                <p className="text-green-50">
+                  Dit is een 20-minuten kennismaking waarbij we bespreken wie jij bent en wie ik ben, wat je doel is en of dat mogelijk is.
+                </p>
+              </div>
+              <div className="space-y-2 text-green-100 mb-4">
                 <p>
                   <strong>Datum:</strong> {new Date(userAppointment.date).toLocaleDateString('nl-NL', { 
                     weekday: 'long', 
@@ -833,7 +960,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   <strong>Tijd:</strong> {userAppointment.start_time} - {userAppointment.end_time}
                 </p>
               </div>
-              <p className="bg-white bg-opacity-20 rounded-lg p-3 text-orange-50">
+              <p className="bg-white bg-opacity-20 rounded-lg p-3 text-green-50">
                 📬 Wacht tot dit bevestigd is door de admin. Je ontvangt een bevestigingsmail zodra de afspraak is goedgekeurd.
               </p>
             </div>
@@ -992,8 +1119,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         </div>
       )}
 
-      {/* Wallet Status */}
-      {!hasWallet && (
+      {/* Wallet Status - Only show if account is approved */}
+      {accountApproved && !hasWallet && (
         <div className={`bg-yellow-50 border border-yellow-200 rounded-xl transition-all duration-500 overflow-hidden ${
           showWalletForm ? 'p-6' : 'p-6'
         }`}>
@@ -1166,24 +1293,43 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Aankomende Afspraken</h3>
           <div className="space-y-3">
-            {appointments.slice(0, 3).map((appointment: Appointment) => (
+            {userAppointments.filter((apt: any) => 
+              (apt.status === 'pending' || apt.status === 'confirmed') && new Date(apt.date) >= new Date()
+            ).slice(0, 3).map((appointment: any) => (
               <div key={appointment.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="bg-orange-100 p-2 rounded-lg">
-                  <Calendar className="w-4 h-4 text-orange-600" />
+                <div className={`p-2 rounded-lg ${
+                  appointment.status === 'confirmed' ? 'bg-green-100' : 'bg-orange-100'
+                }`}>
+                  <Calendar className={`w-4 h-4 ${
+                    appointment.status === 'confirmed' ? 'text-green-600' : 'text-orange-600'
+                  }`} />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-gray-900">{appointment.title}</p>
+                  <p className="font-medium text-gray-900">Eerste Afspraak</p>
                   <p className="text-sm text-gray-600">
-                    {new Date(appointment.date).toLocaleDateString('nl-NL')} om {appointment.time}
+                    {new Date(appointment.date).toLocaleDateString('nl-NL', { 
+                      weekday: 'short', 
+                      day: 'numeric', 
+                      month: 'short' 
+                    })} om {appointment.start_time}
                   </p>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded-full ${
-                  appointment.status === 'scheduled' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                  appointment.status === 'confirmed' 
+                    ? 'bg-green-100 text-green-800' 
+                    : appointment.status === 'pending'
+                    ? 'bg-orange-100 text-orange-800'
+                    : 'bg-gray-100 text-gray-800'
                 }`}>
-                  {appointment.status === 'scheduled' ? 'Gepland' : appointment.status}
+                  {appointment.status === 'confirmed' ? 'Bevestigd' : appointment.status === 'pending' ? 'In Afwachting' : appointment.status}
                 </span>
               </div>
             ))}
+            {userAppointments.filter((apt: any) => 
+              (apt.status === 'pending' || apt.status === 'confirmed') && new Date(apt.date) >= new Date()
+            ).length === 0 && (
+              <p className="text-gray-500 text-center py-4">Geen aankomende afspraken</p>
+            )}
           </div>
         </div>
       </div>

@@ -33,6 +33,7 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess, ac
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [notes, setNotes] = useState('');
+  const [hasExistingAppointment, setHasExistingAppointment] = useState(false);
   const [errorPopup, setErrorPopup] = useState<{ isOpen: boolean; message: string; details?: string[] }>({
     isOpen: false,
     message: '',
@@ -60,6 +61,13 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess, ac
     if (isOpen && effectiveUserEmail) {
       setLoading(true);
       Promise.all([loadAvailableSlots(), loadBookedSlots(), checkExistingAppointment()]).finally(() => setLoading(false));
+    } else if (isOpen && !effectiveUserEmail) {
+      // If popup is open but no user email, show error
+      setErrorPopup({
+        isOpen: true,
+        message: 'Je bent niet ingelogd. Log eerst in om een afspraak te maken.',
+        details: []
+      });
     }
   }, [isOpen, effectiveUserEmail]);
 
@@ -470,7 +478,41 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess, ac
 
   const uniqueDates = Array.from(new Set(availableSlots.map(s => s.date))).sort();
 
+  // If there's already a pending or confirmed appointment and account is not approved, don't allow booking
   if (!isOpen) return null;
+  
+  // Show message if already has appointment and not approved (but only after loading is complete)
+  if (!loading && hasExistingAppointment && !accountApproved && !firstAppointmentCompleted) {
+    return (
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+      >
+        <div 
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-6"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="text-center">
+            <AlertCircle className="w-16 h-16 text-orange-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              Eerste afspraak in afwachting
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Je hebt al een 20-minuten gesprek ingepland. Deze moet eerst door de admin worden goedgekeurd voordat je een nieuwe afspraak kunt maken.
+            </p>
+            <button
+              onClick={onClose}
+              className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+            >
+              Sluiten
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div 
