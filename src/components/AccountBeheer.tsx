@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Users, Eye, LogIn, Mail, Calendar, MessageSquare, Tag, Search, Filter, RefreshCw, Clock, CheckCircle, XCircle, Send, UserCheck, AlertTriangle, UserCog } from 'lucide-react';
 import { impersonationUtils } from '../utils/impersonation';
+import { supabase } from '../lib/supabase';
 
 interface UserAccount {
   id: string;
@@ -24,6 +25,8 @@ interface UserAccount {
   created_at?: string;
   actief?: boolean;
   bevestigd?: boolean;
+  account_approved?: boolean;
+  first_appointment_completed?: boolean;
 }
 
 export default function AccountBeheer() {
@@ -82,7 +85,56 @@ export default function AccountBeheer() {
         if (accountsResponse.ok) {
           const accountsData = await accountsResponse.json();
           console.log('Accounts loaded from API:', accountsData.accounts);
-          setUsers(accountsData.accounts || []);
+          
+          // Enrich accounts with approval status from Supabase
+          const enrichedAccounts = await Promise.all((accountsData.accounts || []).map(async (account: any) => {
+            try {
+              // Try to get approval status from users table
+              const { data: userData } = await supabase
+                .from('users')
+                .select('account_approved, first_appointment_completed')
+                .eq('email', account.email)
+                .single();
+              
+              if (userData) {
+                return {
+                  ...account,
+                  account_approved: userData.account_approved || false,
+                  first_appointment_completed: userData.first_appointment_completed || false
+                };
+              }
+              
+              // Fallback to accounts table
+              const { data: accountData } = await supabase
+                .from('accounts')
+                .select('account_approved, first_appointment_completed')
+                .eq('email', account.email)
+                .single();
+              
+              if (accountData) {
+                return {
+                  ...account,
+                  account_approved: accountData.account_approved || false,
+                  first_appointment_completed: accountData.first_appointment_completed || false
+                };
+              }
+              
+              return {
+                ...account,
+                account_approved: false,
+                first_appointment_completed: false
+              };
+            } catch (error) {
+              // If columns don't exist, default to false
+              return {
+                ...account,
+                account_approved: false,
+                first_appointment_completed: false
+              };
+            }
+          }));
+          
+          setUsers(enrichedAccounts);
           return;
         }
         
@@ -559,7 +611,7 @@ export default function AccountBeheer() {
                                 <span>Logins: {user.loginCount}</span>
                               )}
                             </div>
-                            <div className="mt-2 flex items-center gap-2">
+                            <div className="mt-2 flex items-center gap-2 flex-wrap">
                               {user.isAdmin || user.isTest ? (
                                 <span className="inline-flex items-center gap-1 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                                   <CheckCircle className="w-3 h-3" />
@@ -569,6 +621,20 @@ export default function AccountBeheer() {
                                 <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                                   <CheckCircle className="w-3 h-3" />
                                   Geverifieerd
+                                </span>
+                              )}
+                              {/* First appointment status */}
+                              {user.first_appointment_completed && (
+                                <span className="inline-flex items-center gap-1 text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
+                                  <Calendar className="w-3 h-3" />
+                                  20min Gesprek Voltooid
+                                </span>
+                              )}
+                              {/* Account approval status */}
+                              {user.account_approved && (
+                                <span className="inline-flex items-center gap-1 text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full font-semibold">
+                                  <UserCheck className="w-3 h-3" />
+                                  Dashboard Actief
                                 </span>
                               )}
                               {!user.isAdmin && !user.isTest && (
