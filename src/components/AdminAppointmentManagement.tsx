@@ -240,7 +240,7 @@ export default function AdminAppointmentManagement() {
       
       setAppointments(appointmentsWithQuestions);
       
-      if (!validAppointments || validAppointments.length === 0) {
+      if (!appointmentsWithQuestions || appointmentsWithQuestions.length === 0) {
         console.warn('⚠️ No valid appointments found. Raw response:', apts);
         console.warn('⚠️ This could mean:');
         console.warn('  1. RLS policy is blocking but returning empty array (not error)');
@@ -266,8 +266,8 @@ export default function AdminAppointmentManagement() {
         
         console.log('🧪 Test query (limit 5):', { testData, testError, count: testData?.length });
       } else {
-        console.log('🎉 Successfully loaded and set appointments:', validAppointments.length);
-        console.log('📋 First 3 appointments:', validAppointments.slice(0, 3));
+        console.log('🎉 Successfully loaded and set appointments:', appointmentsWithQuestions.length);
+        console.log('📋 First 3 appointments:', appointmentsWithQuestions.slice(0, 3));
       }
     } catch (error) {
       console.error('❌ Error loading data:', error);

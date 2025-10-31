@@ -494,6 +494,56 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
   });
   const [isAddingWallet, setIsAddingWallet] = useState(false);
 
+  // Load wallet status and questions on mount
+  useEffect(() => {
+    const loadWalletStatus = async () => {
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        const email = authData?.user?.email || null;
+        if (!email) return;
+
+        const { data: wallet } = await supabase
+          .from('wallets')
+          .select('id')
+          .eq('email', email)
+          .limit(1);
+
+        setHasWallet(!!wallet && wallet.length > 0);
+      } catch (error) {
+        console.error('Error loading wallet status:', error);
+      }
+    };
+
+    const loadQuestions = async () => {
+      if (userAppointment && userAppointment.status === 'confirmed') {
+        try {
+          const { data: questions } = await supabase
+            .from('appointment_questions')
+            .select('*')
+            .eq('appointment_id', userAppointment.id)
+            .single();
+
+          if (questions) {
+            setQuestionsData({
+              has_bitcoin_experience: questions.has_bitcoin_experience,
+              knows_hardware_wallet: questions.knows_hardware_wallet,
+              has_crypto_wallet: questions.has_crypto_wallet,
+              investment_experience: questions.investment_experience || '',
+              monthly_investment_budget: questions.monthly_investment_budget || '',
+              main_goal: questions.main_goal || '',
+              questions_or_concerns: questions.questions_or_concerns || ''
+            });
+          }
+        } catch (error) {
+          console.error('Error loading questions:', error);
+        }
+      }
+    };
+
+    loadWalletStatus();
+    loadQuestions();
+  }, [userAppointment]);
+
   const handleAddWallet = async () => {
     if (!walletForm.address.trim()) {
       alert('Voer een geldig wallet adres in');
