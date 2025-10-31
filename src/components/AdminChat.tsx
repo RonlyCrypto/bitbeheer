@@ -63,7 +63,46 @@ export default function AdminChat() {
       .select('*')
       .eq('email', selectedEmail)
       .order('created_at', { ascending: true });
-    if (!error && data) setMessages(data as any);
+    if (!error && data) {
+      setMessages(data as any);
+      // Mark chat as read when opened
+      await markChatAsRead(selectedEmail);
+    }
+  };
+
+  const markChatAsRead = async (userEmail: string) => {
+    try {
+      // Check if read status exists
+      const { data: existing } = await supabase
+        .from('chat_read_status')
+        .select('id')
+        .eq('user_email', userEmail)
+        .eq('admin_email', 'admin@bitbeheer.nl')
+        .single();
+
+      const readStatus = {
+        user_email: userEmail,
+        admin_email: 'admin@bitbeheer.nl',
+        last_read_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      if (existing) {
+        // Update existing
+        await supabase
+          .from('chat_read_status')
+          .update(readStatus)
+          .eq('id', existing.id);
+      } else {
+        // Insert new
+        await supabase
+          .from('chat_read_status')
+          .insert([readStatus]);
+      }
+    } catch (error) {
+      console.error('Error marking chat as read:', error);
+      // Silently fail - table might not exist yet
+    }
   };
 
   useEffect(() => { loadCustomers(); }, []);
@@ -78,6 +117,10 @@ export default function AdminChat() {
       if (error) throw error;
       setReply('');
       await loadMessages();
+      // Refresh metrics after sending reply
+      if (window.dispatchEvent) {
+        window.dispatchEvent(new CustomEvent('refreshMetrics'));
+      }
     } catch (e: any) {
       console.error('Reply send error', e);
       alert(`Antwoord verzenden mislukt: ${e.message || 'Controleer of de support_messages tabel bestaat in Supabase'}`);

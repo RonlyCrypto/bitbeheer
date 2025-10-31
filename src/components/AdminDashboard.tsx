@@ -82,30 +82,60 @@ export default function AdminDashboard() {
     
     // Refresh metrics every 30 seconds
     const interval = setInterval(loadMetrics, 30000);
-    return () => clearInterval(interval);
+    
+    // Listen for refresh events from chat component
+    const handleRefresh = () => {
+      loadMetrics();
+    };
+    window.addEventListener('refreshMetrics', handleRefresh);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('refreshMetrics', handleRefresh);
+    };
   }, []);
 
   const loadMetrics = async () => {
     try {
-      // Load unread chat messages (messages where from_admin = false and not replied)
+      // Load all chat messages from users (non-admin)
       const { data: chatMessages, error: chatError } = await supabase
         .from('support_messages')
-        .select('*')
+        .select('email, created_at')
         .eq('from_admin', false);
+
+      if (chatError) {
+        console.error('Error loading chat messages:', chatError);
+      }
 
       // Get unique emails that sent messages
       const uniqueChatEmails = chatMessages 
-        ? [...new Set(chatMessages.map(m => m.user_email))]
+        ? [...new Set(chatMessages.map(m => m.email))]
         : [];
 
-      // Check if admin has replied to each conversation
-      const { data: adminReplies } = await supabase
-        .from('support_messages')
-        .select('user_email')
-        .eq('from_admin', true);
+      // Load read status for all chats
+      const { data: readStatuses } = await supabase
+        .from('chat_read_status')
+        .select('user_email, last_read_at')
+        .eq('admin_email', 'admin@bitbeheer.nl');
 
-      const repliedEmails = adminReplies ? [...new Set(adminReplies.map(m => m.user_email))] : [];
-      const unreadChats = uniqueChatEmails.filter(email => !repliedEmails.includes(email));
+      // Find unread chats (chats with messages newer than last_read_at or no read status)
+      const unreadChats = uniqueChatEmails.filter(userEmail => {
+        const readStatus = readStatuses?.find(r => r.user_email === userEmail);
+        if (!readStatus) {
+          // No read status = unread
+          return true;
+        }
+        
+        // Check if there are messages newer than last_read_at
+        const userMessages = chatMessages?.filter(m => m.email === userEmail) || [];
+        const hasNewMessages = userMessages.some(msg => {
+          const msgTime = new Date(msg.created_at).getTime();
+          const readTime = new Date(readStatus.last_read_at).getTime();
+          return msgTime > readTime;
+        });
+        
+        return hasNewMessages;
+      });
 
       // Load pending appointments
       const { data: appointments, error: appointmentsError } = await supabase
