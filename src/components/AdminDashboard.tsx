@@ -420,11 +420,6 @@ export default function AdminDashboard() {
                                   <h3 className="text-2xl font-bold text-gray-900">{metrics.newChats}</h3>
                                   <p className="text-gray-600">Nieuwe Chats</p>
                                 </div>
-                                {metrics.newChats > 0 && (
-                                  <div className="bg-orange-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
-                                    {metrics.newChats > 9 ? '9+' : metrics.newChats}
-                                  </div>
-                                )}
                               </div>
                               {metrics.newChats > 0 && (
                                 <button
@@ -445,11 +440,6 @@ export default function AdminDashboard() {
                                   <h3 className="text-2xl font-bold text-gray-900">{metrics.pendingAppointments}</h3>
                                   <p className="text-gray-600">Afspraken in Afwachting</p>
                                 </div>
-                                {metrics.pendingAppointments > 0 && (
-                                  <div className="bg-orange-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
-                                    {metrics.pendingAppointments > 9 ? '9+' : metrics.pendingAppointments}
-                                  </div>
-                                )}
                               </div>
                               {metrics.pendingAppointments > 0 && (
                                 <button
