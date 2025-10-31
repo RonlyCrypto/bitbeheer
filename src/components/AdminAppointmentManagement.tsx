@@ -86,13 +86,32 @@ export default function AdminAppointmentManagement() {
       console.log('📋 Query: SELECT * FROM appointments ORDER BY date, start_time');
       
       // Load all appointments - no filters, just get everything
-      const { data: apts, error: aptsError } = await supabase
+      // Try with explicit columns first
+      console.log('📤 Sending query to Supabase...');
+      
+      let apts: any[] = [];
+      let aptsError: any = null;
+      
+      // Try the query
+      const queryResult = await supabase
         .from('appointments')
         .select('id, user_email, user_name, slot_id, date, start_time, end_time, duration_minutes, status, notes, admin_notes, created_at, updated_at, confirmed_at')
         .order('date', { ascending: true })
         .order('start_time', { ascending: true });
       
+      apts = queryResult.data || [];
+      aptsError = queryResult.error;
+      
+      console.log('📥 Query response received:', {
+        hasData: !!queryResult.data,
+        dataLength: queryResult.data?.length || 0,
+        isArray: Array.isArray(queryResult.data),
+        error: queryResult.error,
+        'Data type': typeof queryResult.data
+      });
+      
       if (aptsError) {
+        console.error('❌ Query returned error:', aptsError);
         console.error('❌ Error loading appointments:', {
           error: aptsError,
           code: aptsError.code,
