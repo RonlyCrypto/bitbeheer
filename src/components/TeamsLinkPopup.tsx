@@ -27,10 +27,13 @@ export default function TeamsLinkPopup({
       return;
     }
 
-    // Basic URL validation
+    // Basic URL validation - more lenient for Teams links
     const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
-    if (!urlPattern.test(teamsLink)) {
-      setError('Voer een geldige URL in');
+    const teamsPattern = /teams\.microsoft\.com|microsoft\.com.*meetup/i;
+    
+    // Allow empty (skip) or valid URL or Teams-specific links
+    if (teamsLink.trim() && !urlPattern.test(teamsLink) && !teamsPattern.test(teamsLink)) {
+      setError('Voer een geldige URL in (bijv. https://teams.microsoft.com/...)');
       return;
     }
 

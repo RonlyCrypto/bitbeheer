@@ -477,6 +477,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
   
   const [showWalletForm, setShowWalletForm] = useState(false);
   const [showQuestionsForm, setShowQuestionsForm] = useState(false);
+  const [questionsAnswered, setQuestionsAnswered] = useState(false);
   const [questionsData, setQuestionsData] = useState({
     has_bitcoin_experience: null as boolean | null,
     knows_hardware_wallet: null as boolean | null,
@@ -524,6 +525,14 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             .single();
 
           if (questions) {
+            // Check if all required questions are answered
+            const hasRequiredAnswers = 
+              questions.has_bitcoin_experience !== null &&
+              questions.knows_hardware_wallet !== null &&
+              questions.main_goal !== '';
+            
+            setQuestionsAnswered(hasRequiredAnswers);
+            
             setQuestionsData({
               has_bitcoin_experience: questions.has_bitcoin_experience,
               knows_hardware_wallet: questions.knows_hardware_wallet,
@@ -533,9 +542,12 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               main_goal: questions.main_goal || '',
               questions_or_concerns: questions.questions_or_concerns || ''
             });
+          } else {
+            setQuestionsAnswered(false);
           }
         } catch (error) {
           console.error('Error loading questions:', error);
+          setQuestionsAnswered(false);
         }
       }
     };
@@ -692,15 +704,30 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 
               {!showQuestionsForm ? (
                 <div>
-                  <p className="bg-white bg-opacity-20 rounded-lg p-3 text-green-50 mb-4">
-                    💬 Om ons gesprek goed voor te bereiden, beantwoord graag de volgende vragen:
-                  </p>
-                  <button
-                    onClick={() => setShowQuestionsForm(true)}
-                    className="bg-white text-green-600 px-6 py-3 rounded-lg font-semibold hover:bg-green-50 transition-colors"
-                  >
-                    Beantwoord Vragen
-                  </button>
+                  {questionsAnswered ? (
+                    <div className="bg-white bg-opacity-20 rounded-lg p-3 text-green-50 mb-4">
+                      <p className="font-semibold mb-2">✅ Vragenlijst is beantwoord</p>
+                      <p className="text-sm mb-3">Je kunt je antwoorden nog steeds bewerken als je wilt.</p>
+                      <button
+                        onClick={() => setShowQuestionsForm(true)}
+                        className="bg-white text-green-600 px-4 py-2 rounded-lg font-medium hover:bg-green-50 transition-colors text-sm"
+                      >
+                        Bewerk Antwoorden
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="bg-white bg-opacity-20 rounded-lg p-3 text-green-50 mb-4">
+                        💬 Om ons gesprek goed voor te bereiden, beantwoord graag de volgende vragen:
+                      </p>
+                      <button
+                        onClick={() => setShowQuestionsForm(true)}
+                        className="bg-white text-green-600 px-6 py-3 rounded-lg font-semibold hover:bg-green-50 transition-colors"
+                      >
+                        Beantwoord Vragen
+                      </button>
+                    </>
+                  )}
                 </div>
               ) : (
                 <AppointmentQuestionsForm
@@ -745,7 +772,29 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                       }
 
                       alert('Bedankt! Je antwoorden zijn opgeslagen. We zien elkaar binnenkort!');
+                      setQuestionsAnswered(true);
                       setShowQuestionsForm(false);
+                      // Reload questions to update state
+                      const loadQuestions = async () => {
+                        try {
+                          const { data: questions } = await supabase
+                            .from('appointment_questions')
+                            .select('*')
+                            .eq('appointment_id', userAppointment.id)
+                            .single();
+
+                          if (questions) {
+                            const hasRequiredAnswers = 
+                              questions.has_bitcoin_experience !== null &&
+                              questions.knows_hardware_wallet !== null &&
+                              questions.main_goal !== '';
+                            setQuestionsAnswered(hasRequiredAnswers);
+                          }
+                        } catch (error) {
+                          console.error('Error reloading questions:', error);
+                        }
+                      };
+                      await loadQuestions();
                     } catch (error: any) {
                       console.error('Error saving questions:', error);
                       alert(`Fout bij opslaan: ${error.message}`);
