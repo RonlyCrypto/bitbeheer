@@ -254,14 +254,6 @@ export default function AdminAppointmentManagement() {
         console.warn('  Raw data type:', typeof apts);
         console.warn('  Raw data:', apts);
         
-        // Try a count query to verify
-        const { count: appointmentCount, error: countError } = await supabase
-          .from('appointments')
-          .select('*', { count: 'exact', head: true });
-        
-        console.log('🧪 Count query result:', { count: appointmentCount, error: countError });
-        
-        // Try a simple select with limit
       } else {
         console.log('🎉 Successfully loaded and set appointments:', appointmentsWithQuestions.length);
         console.log('📋 First 3 appointments:', appointmentsWithQuestions.slice(0, 3));
