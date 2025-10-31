@@ -29,6 +29,7 @@ import {
   Wallet,
   Shield,
   ArrowLeft,
+  Plus,
   X,
   Video
 } from 'lucide-react';
@@ -43,6 +44,7 @@ import { supabase } from '../lib/supabase';
 import ProfilePopup from './ProfilePopup';
 import AppointmentBookingPopup from './AppointmentBookingPopup';
 import Helpdesk from './Helpdesk';
+import AgendaView from './AgendaView';
 
 interface UserProfile {
   id: string;
@@ -1443,6 +1445,8 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
   const [userAppointments, setUserAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [viewMode, setViewMode] = useState<'list' | 'agenda'>('agenda');
+  const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null);
 
   // Get effective user email (impersonated user if impersonating, otherwise real user)
   const effectiveUserEmail = (isImpersonating || contextImpersonating) && (impersonatedUser || contextImpersonatedUser) 
@@ -1571,17 +1575,159 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
     }
   };
 
+  const handleAppointmentClick = (appointment: any) => {
+    setSelectedAppointment(appointment);
+    setViewMode('list');
+    // Scroll to the appointment in the list
+    setTimeout(() => {
+      const element = document.getElementById(`appointment-${appointment.id}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+  };
+
+  // If viewing details, show that instead
+  if (selectedAppointment && viewMode === 'list') {
+    const apt = selectedAppointment;
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => {
+              setSelectedAppointment(null);
+              setViewMode('agenda');
+            }}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Terug naar Agenda
+          </button>
+          <button
+            onClick={onBookAppointment}
+            className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Nieuwe Afspraak
+          </button>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border-2 border-gray-200 dark:border-gray-700">
+          <div className="space-y-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Afspraak Details</h2>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                    <Calendar className="w-5 h-5" />
+                    <span className="font-medium">
+                      {new Date(apt.date).toLocaleDateString('nl-NL', { 
+                        weekday: 'long', 
+                        day: 'numeric', 
+                        month: 'long', 
+                        year: 'numeric' 
+                      })}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                    <Clock className="w-5 h-5" />
+                    <span className="font-medium">
+                      {apt.start_time} - {apt.end_time} ({apt.duration_minutes} minuten)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      apt.status === 'confirmed'
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                        : apt.status === 'pending'
+                        ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                    }`}>
+                      {apt.status === 'confirmed' ? '✅ Bevestigd' :
+                       apt.status === 'pending' ? '⏳ In Afwachting' :
+                       '❌ Geannuleerd'}
+                    </span>
+                  </div>
+                  {apt.notes && (
+                    <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Opmerkingen:</p>
+                      <p className="text-gray-600 dark:text-gray-400">{apt.notes}</p>
+                    </div>
+                  )}
+                  {apt.teams_link && (
+                    <div className="mt-4">
+                      <a
+                        href={apt.teams_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        <Video className="w-4 h-4" />
+                        Open Microsoft Teams Link
+                      </a>
+                    </div>
+                  )}
+                  {apt.status === 'pending' && (
+                    <div className="mt-4">
+                      <button
+                        onClick={() => cancelAppointment(apt.id)}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+                      >
+                        <X className="w-4 h-4" />
+                        Annuleer Afspraak
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Mijn Afspraken</h2>
-        <button
-          onClick={onBookAppointment}
-          className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Afspraak Boeken
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+            <button
+              onClick={() => {
+                setViewMode('agenda');
+                setSelectedAppointment(null);
+              }}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                viewMode === 'agenda'
+                  ? 'bg-white dark:bg-gray-700 text-orange-600 dark:text-orange-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400'
+              }`}
+            >
+              Agenda
+            </button>
+            <button
+              onClick={() => {
+                setViewMode('list');
+                setSelectedAppointment(null);
+              }}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                viewMode === 'list'
+                  ? 'bg-white dark:bg-gray-700 text-orange-600 dark:text-orange-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400'
+              }`}
+            >
+              Lijst
+            </button>
+          </div>
+          <button
+            onClick={onBookAppointment}
+            className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Afspraak Boeken
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -1589,6 +1735,11 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">Afspraken laden...</p>
         </div>
+      ) : viewMode === 'agenda' ? (
+        <AgendaView
+          appointments={userAppointments}
+          onAppointmentClick={handleAppointmentClick}
+        />
       ) : userAppointments.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 border border-gray-200 dark:border-gray-700 text-center">
           <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -1609,8 +1760,10 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
             
             return (
               <div
+                id={`appointment-${apt.id}`}
                 key={apt.id}
-                className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-2 ${
+                onClick={() => handleAppointmentClick(apt)}
+                className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-2 cursor-pointer hover:shadow-md transition-all ${
                   apt.status === 'confirmed'
                     ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/10'
                     : apt.status === 'pending'
