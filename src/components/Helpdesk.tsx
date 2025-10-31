@@ -11,7 +11,11 @@ interface SupportMessage {
   from_admin: boolean;
 }
 
-export default function Helpdesk() {
+interface HelpdeskProps {
+  onMessageRead?: () => Promise<void>;
+}
+
+export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
   const { user } = useSupabaseAuth();
   const [messages, setMessages] = useState<SupportMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -42,10 +46,14 @@ export default function Helpdesk() {
 
   useEffect(() => {
     loadMessages();
+    // Mark messages as read when component mounts
+    if (onMessageRead) {
+      onMessageRead();
+    }
     // Optional: poll every 10s for fresh messages
     const t = setInterval(loadMessages, 10000);
     return () => clearInterval(t);
-  }, [user?.email]);
+  }, [user?.email, onMessageRead]);
 
   const sendMessage = async () => {
     if (!user?.email || !newMessage.trim()) {

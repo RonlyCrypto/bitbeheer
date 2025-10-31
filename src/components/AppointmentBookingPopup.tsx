@@ -16,9 +16,11 @@ interface AppointmentBookingPopupProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  accountApproved?: boolean;
+  firstAppointmentCompleted?: boolean;
 }
 
-export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: AppointmentBookingPopupProps) {
+export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess, accountApproved = false, firstAppointmentCompleted = false }: AppointmentBookingPopupProps) {
   const { user } = useSupabaseAuth();
   const { isImpersonating, impersonatedUser } = usePermissions();
   
@@ -55,11 +57,27 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
   }, [selectedSlot]);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && effectiveUserEmail) {
       setLoading(true);
-      Promise.all([loadAvailableSlots(), loadBookedSlots()]).finally(() => setLoading(false));
+      Promise.all([loadAvailableSlots(), loadBookedSlots(), checkExistingAppointment()]).finally(() => setLoading(false));
     }
-  }, [isOpen]);
+  }, [isOpen, effectiveUserEmail]);
+
+  const checkExistingAppointment = async () => {
+    if (!effectiveUserEmail) return;
+    try {
+      const { data } = await supabase
+        .from('appointments')
+        .select('id, status')
+        .eq('user_email', effectiveUserEmail)
+        .in('status', ['pending', 'confirmed'])
+        .limit(1);
+      
+      setHasExistingAppointment(!!data && data.length > 0);
+    } catch (error) {
+      console.error('Error checking existing appointment:', error);
+    }
+  };
 
   const loadAvailableSlots = async () => {
     try {
@@ -192,6 +210,11 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
         }
       }
 
+      // Determine status: if account is approved and not first appointment, confirm directly
+      // Otherwise, first appointment needs admin approval
+      const isFirstAppointment = !firstAppointmentCompleted && !hasExistingAppointment;
+      const appointmentStatus = (accountApproved && !isFirstAppointment) ? 'confirmed' : 'pending';
+
       const appointmentData = {
         user_email: effectiveUserEmail,
         user_name: userName,
@@ -200,8 +223,9 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
         start_time: slot.start_time,
         end_time: endTimeStr,
         duration_minutes: slot.duration_minutes,
-        status: 'pending',
+        status: appointmentStatus,
         notes: notes.trim() || null,
+        confirmed_at: appointmentStatus === 'confirmed' ? new Date().toISOString() : null,
       };
 
       console.log('💾 Inserting appointment:', appointmentData);
@@ -610,9 +634,23 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess }: 
               });
               handleSubmit();
             }}
-            disabled={submitting || !selectedSlot || !effectiveUserEmail}
-            className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
-            title={!effectiveUserEmail ? 'Je bent niet ingelogd' : !selectedSlot ? 'Selecteer eerst een tijd' : submitting ? 'Bezig met boeken...' : ''}
+            disabled={submitting || !selectedSlot || !effectiveUserEmail || (!accountApproved && hasExistingAppointment && !firstAppointmentCompleted)}
+            className={`px-6 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+              (!accountApproved && hasExistingAppointment && !firstAppointmentCompleted)
+                ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                : 'bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed'
+            }`}
+            title={
+              (!accountApproved && hasExistingAppointment && !firstAppointmentCompleted)
+                ? 'Je eerste afspraak moet eerst door de admin worden goedgekeurd voordat je een nieuwe afspraak kunt maken.'
+                : !effectiveUserEmail 
+                ? 'Je bent niet ingelogd' 
+                : !selectedSlot 
+                ? 'Selecteer eerst een tijd' 
+                : submitting 
+                ? 'Bezig met boeken...' 
+                : ''
+            }
           >
             {submitting ? (
               <>

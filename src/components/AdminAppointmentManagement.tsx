@@ -486,6 +486,35 @@ export default function AdminAppointmentManagement() {
 
       if (error) throw error;
       
+      // Check if this is the user's first confirmed appointment
+      if (confirmingAppointment.user_email) {
+        const { data: allUserAppointments } = await supabase
+          .from('appointments')
+          .select('id')
+          .eq('user_email', confirmingAppointment.user_email)
+          .eq('status', 'confirmed');
+
+        if (allUserAppointments && allUserAppointments.length === 1) {
+          // This is the first confirmed appointment - mark as completed
+          await supabase
+            .from('users')
+            .update({ 
+              first_appointment_completed: true,
+              updated_at: new Date().toISOString()
+            })
+            .eq('email', confirmingAppointment.user_email);
+          
+          // Also try accounts table if it exists
+          await supabase
+            .from('accounts')
+            .update({ 
+              first_appointment_completed: true,
+              updated_at: new Date().toISOString()
+            })
+            .eq('email', confirmingAppointment.user_email);
+        }
+      }
+      
       // TODO: Send confirmation email with teams link if provided
       
       setShowTeamsLinkPopup(false);

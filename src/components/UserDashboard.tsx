@@ -134,6 +134,9 @@ export default function UserDashboard() {
   });
   const [isAddingWallet, setIsAddingWallet] = useState(false);
   const [showAppointmentPopup, setShowAppointmentPopup] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const [accountApproved, setAccountApproved] = useState(false);
+  const [firstAppointmentCompleted, setFirstAppointmentCompleted] = useState(false);
   const [bitcoinGoal, setBitcoinGoal] = useState({
     targetAmount: 0,
     currentAmount: 0,
@@ -271,6 +274,47 @@ export default function UserDashboard() {
           } else {
             setHasWallet(false);
           }
+
+          // Load account approval status
+          const { data: userData } = await supabase
+            .from('users')
+            .select('account_approved, first_appointment_completed')
+            .eq('email', user.email)
+            .single();
+          
+          if (userData) {
+            setAccountApproved(userData.account_approved || false);
+            setFirstAppointmentCompleted(userData.first_appointment_completed || false);
+          }
+
+          // Check for unread admin messages
+          const { data: adminMessages } = await supabase
+            .from('support_messages')
+            .select('created_at')
+            .eq('email', user.email)
+            .eq('from_admin', true)
+            .order('created_at', { ascending: false });
+
+          const { data: readStatus } = await supabase
+            .from('user_chat_read_status')
+            .select('last_read_at')
+            .eq('user_email', user.email)
+            .single();
+
+          if (adminMessages && adminMessages.length > 0) {
+            const lastReadTime = readStatus?.last_read_at 
+              ? new Date(readStatus.last_read_at).getTime()
+              : 0;
+            
+            const unreadCount = adminMessages.filter(msg => {
+              const msgTime = new Date(msg.created_at).getTime();
+              return msgTime > lastReadTime;
+            }).length;
+            
+            setUnreadChatCount(unreadCount);
+          } else {
+            setUnreadChatCount(0);
+          }
         }
 
       } catch (error) {
@@ -281,6 +325,43 @@ export default function UserDashboard() {
     };
 
     loadUserData();
+    
+    // Poll for unread messages every 30 seconds
+    const interval = setInterval(() => {
+      if (user?.email) {
+        supabase
+          .from('support_messages')
+          .select('created_at')
+          .eq('email', user.email)
+          .eq('from_admin', true)
+          .order('created_at', { ascending: false })
+          .then(({ data: adminMessages }) => {
+            supabase
+              .from('user_chat_read_status')
+              .select('last_read_at')
+              .eq('user_email', user.email)
+              .single()
+              .then(({ data: readStatus }) => {
+                if (adminMessages && adminMessages.length > 0) {
+                  const lastReadTime = readStatus?.last_read_at 
+                    ? new Date(readStatus.last_read_at).getTime()
+                    : 0;
+                  
+                  const unreadCount = adminMessages.filter(msg => {
+                    const msgTime = new Date(msg.created_at).getTime();
+                    return msgTime > lastReadTime;
+                  }).length;
+                  
+                  setUnreadChatCount(unreadCount);
+                } else {
+                  setUnreadChatCount(0);
+                }
+              });
+          });
+      }
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, [user]);
 
   const handleAddWallet = async () => {
@@ -387,26 +468,52 @@ export default function UserDashboard() {
           <div className="lg:w-64">
             <nav className="space-y-2">
               {[
-                { id: 'overview', label: 'Overzicht', icon: BarChart3 },
-                { id: 'goals', label: 'Doelen', icon: Target },
-                { id: 'portfolio', label: 'Portfolio', icon: PieChart },
-                { id: 'appointments', label: 'Afspraken', icon: Calendar },
-                    { id: 'education', label: 'Educatie', icon: BookOpen },
-                    { id: 'helpdesk', label: 'Helpdesk', icon: Mail },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
-                    activeTab === tab.id
-                      ? 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 font-medium'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                  }`}
-                >
-                  <tab.icon className="w-5 h-5" />
-                  {tab.label}
-                </button>
-              ))}
+                { id: 'overview', label: 'Overzicht', icon: BarChart3, alwaysEnabled: true },
+                { id: 'goals', label: 'Doelen', icon: Target, alwaysEnabled: false },
+                { id: 'portfolio', label: 'Portfolio', icon: PieChart, alwaysEnabled: false },
+                { id: 'appointments', label: 'Afspraken', icon: Calendar, alwaysEnabled: true },
+                { id: 'education', label: 'Educatie', icon: BookOpen, alwaysEnabled: false },
+                { id: 'helpdesk', label: 'Helpdesk', icon: Mail, alwaysEnabled: false, badge: unreadChatCount },
+              ].map((tab) => {
+                const isEnabled = tab.alwaysEnabled || accountApproved;
+                const tooltipText = !isEnabled 
+                  ? "Je moet eerst een 20-minuten afspraak maken. Na deze afspraak bepalen we of we verder met elkaar gaan en dan kan de admin je account volledig open stellen."
+                  : null;
+                
+                return (
+                  <div key={tab.id} className="relative group">
+                    <button
+                      onClick={() => {
+                        if (isEnabled) {
+                          setActiveTab(tab.id);
+                        }
+                      }}
+                      disabled={!isEnabled}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors relative ${
+                        !isEnabled
+                          ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
+                          : activeTab === tab.id
+                          ? 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 font-medium'
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      }`}
+                    >
+                      <tab.icon className="w-5 h-5" />
+                      <span className="flex-1">{tab.label}</span>
+                      {tab.badge && tab.badge > 0 && (
+                        <span className="bg-orange-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                          {tab.badge > 9 ? '9+' : tab.badge}
+                        </span>
+                      )}
+                    </button>
+                    {!isEnabled && tooltipText && (
+                      <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 w-64 z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        {tooltipText}
+                        <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </nav>
           </div>
 
@@ -419,17 +526,54 @@ export default function UserDashboard() {
               portfolio={portfolio}
               onBookAppointment={() => setShowAppointmentPopup(true)}
             />}
-            {activeTab === 'goals' && <GoalsTab goals={goals} setGoals={setGoals} />}
-            {activeTab === 'portfolio' && <PortfolioTab portfolio={portfolio} setPortfolio={setPortfolio} />}
+            {activeTab === 'goals' && accountApproved && <GoalsTab goals={goals} setGoals={setGoals} />}
+            {activeTab === 'portfolio' && accountApproved && <PortfolioTab portfolio={portfolio} setPortfolio={setPortfolio} />}
             {activeTab === 'appointments' && <AppointmentsTab 
               appointments={appointments} 
               setAppointments={setAppointments}
               onBookAppointment={() => setShowAppointmentPopup(true)}
               isImpersonating={isImpersonating}
               impersonatedUser={impersonatedUser}
+              accountApproved={accountApproved}
+              firstAppointmentCompleted={firstAppointmentCompleted}
             />}
-                {activeTab === 'education' && <EducationTab />}
-                {activeTab === 'helpdesk' && <Helpdesk />}
+            {activeTab === 'education' && accountApproved && <EducationTab />}
+            {activeTab === 'helpdesk' && (
+              <Helpdesk 
+                onMessageRead={async () => {
+                  // Mark messages as read when helpdesk is opened
+                  if (user?.email) {
+                    try {
+                      const { data: existing } = await supabase
+                        .from('user_chat_read_status')
+                        .select('id')
+                        .eq('user_email', user.email)
+                        .single();
+
+                      const readStatus = {
+                        user_email: user.email,
+                        last_read_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                      };
+
+                      if (existing) {
+                        await supabase
+                          .from('user_chat_read_status')
+                          .update(readStatus)
+                          .eq('id', existing.id);
+                      } else {
+                        await supabase
+                          .from('user_chat_read_status')
+                          .insert([readStatus]);
+                      }
+                      setUnreadChatCount(0);
+                    } catch (error) {
+                      console.error('Error marking messages as read:', error);
+                    }
+                  }
+                }}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -453,11 +597,27 @@ export default function UserDashboard() {
           setShowAppointmentPopup(false);
           setShowFirstAppointmentPrompt(false);
           setActiveTab('appointments');
+          // Reload account status to check if approved
+          if (user?.email) {
+            supabase
+              .from('users')
+              .select('account_approved, first_appointment_completed')
+              .eq('email', user.email)
+              .single()
+              .then(({ data: userData }) => {
+                if (userData) {
+                  setAccountApproved(userData.account_approved || false);
+                  setFirstAppointmentCompleted(userData.first_appointment_completed || false);
+                }
+              });
+          }
           // Trigger refresh of appointments list
           setTimeout(() => {
             window.dispatchEvent(new CustomEvent('refreshAppointments'));
           }, 500); // Small delay to ensure appointment is saved
         }}
+        accountApproved={accountApproved}
+        firstAppointmentCompleted={firstAppointmentCompleted}
       />
     </div>
   );
