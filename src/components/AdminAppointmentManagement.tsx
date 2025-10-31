@@ -262,12 +262,6 @@ export default function AdminAppointmentManagement() {
         console.log('🧪 Count query result:', { count: appointmentCount, error: countError });
         
         // Try a simple select with limit
-        const { data: testData, error: testError } = await supabase
-          .from('appointments')
-          .select('id, user_email, date, status')
-          .limit(5);
-        
-        console.log('🧪 Test query (limit 5):', { testData, testError, count: testData?.length });
       } else {
         console.log('🎉 Successfully loaded and set appointments:', appointmentsWithQuestions.length);
         console.log('📋 First 3 appointments:', appointmentsWithQuestions.slice(0, 3));

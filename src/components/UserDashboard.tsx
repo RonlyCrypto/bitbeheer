@@ -233,31 +233,9 @@ export default function UserDashboard() {
           }
         }
 
-        // Load goals - using mock data for now
-        setGoals([
-          {
-            id: '1',
-            title: 'Bitcoin Emergency Fund',
-            description: 'Build a 6-month emergency fund in Bitcoin',
-            targetAmount: 50000,
-            currentAmount: 15000,
-            targetDate: '2024-12-31',
-            status: 'active',
-            category: 'emergency',
-            createdAt: '2024-01-15'
-          },
-          {
-            id: '2',
-            title: 'House Down Payment',
-            description: 'Save for house down payment using DCA strategy',
-            targetAmount: 100000,
-            currentAmount: 25000,
-            targetDate: '2025-06-30',
-            status: 'active',
-            category: 'house',
-            createdAt: '2024-02-01'
-          }
-        ]);
+        // Load goals from database (if goals table exists)
+        // TODO: Implement goals table and load real goals
+        setGoals([]);
 
         // Load appointments/goals/portfolio from DB — TODO: implement when schema is ready
         setShowFirstAppointmentPrompt(false);

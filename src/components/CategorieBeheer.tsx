@@ -52,44 +52,13 @@ export default function CategorieBeheer() {
       
       if (error) {
         console.error('Failed to load categories:', error);
-        // Fallback to default categories
-        setCategories([
-          {
-            id: '1',
-            name: 'Livegang Notificaties',
-            description: 'Notificaties voor wanneer de website live gaat',
-            tag: 'livegang',
-            is_active: true,
-            email_notifications: true,
-            notification_email: 'update@bitbeheer.nl',
-            created_at: new Date().toISOString(),
-            form_fields: [
-              { id: '1', name: 'Naam', type: 'text', required: false, placeholder: 'Je naam (optioneel)', order: 1 },
-              { id: '2', name: 'E-mail', type: 'email', required: true, placeholder: 'Je e-mailadres *', order: 2 },
-              { id: '3', name: 'Bericht', type: 'textarea', required: false, placeholder: 'Extra bericht (optioneel)', order: 3 }
-            ]
-          },
-          {
-            id: '2',
-            name: 'Opening Website',
-            description: 'Formulier voor opening van de website',
-            tag: 'opening_website',
-            is_active: true,
-            email_notifications: true,
-            notification_email: 'update@bitbeheer.nl',
-            created_at: new Date().toISOString(),
-            form_fields: [
-              { id: '1', name: 'Naam', type: 'text', required: false, placeholder: 'Je naam (optioneel)', order: 1 },
-              { id: '2', name: 'E-mail', type: 'email', required: true, placeholder: 'Je e-mailadres *', order: 2 },
-              { id: '3', name: 'Bericht', type: 'textarea', required: false, placeholder: 'Extra bericht (optioneel)', order: 3 }
-            ]
-          }
-        ]);
+        setCategories([]);
       } else {
-        setCategories(data);
+        setCategories(data || []);
       }
     } catch (error) {
       console.error('Error loading categories:', error);
+      setCategories([]);
     } finally {
       setLoading(false);
     }
