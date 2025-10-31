@@ -1,36 +1,46 @@
 import { useState } from 'react';
-import { Lock, Eye, EyeOff, LogOut, User } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { Lock, Eye, EyeOff, LogOut, User, Mail } from 'lucide-react';
+import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 
 export default function AdminLogin() {
+  const [email, setEmail] = useState('admin@bitbeheer.nl');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const { isAuthenticated, userType, login, logout } = useAuth();
+  const { signIn, signOut, isAuthenticated, isAdmin, user } = useSupabaseAuth();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
     
-    if (login(password)) {
-      setPassword('');
-      setIsOpen(false);
-    } else {
-      setError('Onjuist wachtwoord');
+    try {
+      const result = await signIn(email, password);
+      if (result.success) {
+        setPassword('');
+        setIsOpen(false);
+      } else {
+        setError(result.error || 'Onjuist wachtwoord');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Er is een fout opgetreden');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await signOut();
     setIsOpen(false);
   };
 
-  if (isAuthenticated) {
+  if (isAuthenticated && (isAdmin || user?.email === 'admin@bitbeheer.nl')) {
     return (
       <div className="flex items-center gap-2">
         <span className="text-sm text-gray-300">
-          {userType === 'admin' ? 'Admin ingelogd' : 'Test gebruiker ingelogd'}
+          {user?.email === 'admin@bitbeheer.nl' ? 'Admin ingelogd' : 'Ingelogd'}
         </span>
         <button
           onClick={handleLogout}
@@ -63,15 +73,35 @@ export default function AdminLogin() {
           <form onSubmit={handleLogin} className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="email"
+                  name="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  placeholder="admin@bitbeheer.nl"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Wachtwoord
               </label>
               <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  name="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  placeholder="Admin of test wachtwoord"
+                  className="w-full pl-10 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  placeholder="Wachtwoord"
                   required
                 />
                 <button
@@ -85,8 +115,8 @@ export default function AdminLogin() {
             </div>
 
             <div className="text-xs text-gray-500 space-y-1">
-              <p><strong>Admin:</strong> Volledige toegang tot alle functies</p>
-              <p><strong>Test:</strong> Beperkte toegang voor testen</p>
+              <p><strong>Admin:</strong> admin@bitbeheer.nl</p>
+              <p>Log in met je Supabase Auth account</p>
             </div>
 
             {error && (
@@ -96,9 +126,10 @@ export default function AdminLogin() {
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="flex-1 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                disabled={isLoading}
+                className="flex-1 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
               >
-                Inloggen
+                {isLoading ? 'Inloggen...' : 'Inloggen'}
               </button>
               <button
                 type="button"
