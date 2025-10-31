@@ -146,7 +146,9 @@ export default function UserDashboard() {
             // Fetch user profile from accounts table
             const response = await fetch('/api/accounts');
             if (response.ok) {
-              const accounts = await response.json();
+              const accountsData = await response.json();
+              // Ensure accounts is an array
+              const accounts = Array.isArray(accountsData) ? accountsData : (accountsData?.accounts || []);
               const userAccount = accounts.find((account: any) => account.email === user.email);
               
               if (userAccount) {
@@ -667,13 +669,14 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         }
       ];
   
+  const [hasWallet, setHasWallet] = useState(false);
+  const [userAppointments, setUserAppointments] = useState<any[]>([]);
+  
   const activeGoals = displayGoals.filter((goal) => (goal.status as string) === 'active').length;
   // Calculate upcoming appointments from loaded userAppointments
   const upcomingAppointments = userAppointments.filter((apt: any) => 
     (apt.status === 'pending' || apt.status === 'confirmed') && new Date(apt.date) > new Date()
   ).length;
-  const [hasWallet, setHasWallet] = useState(false);
-  const [userAppointments, setUserAppointments] = useState<any[]>([]);
   const [appointmentsLoading, setAppointmentsLoading] = useState(true);
   
   // Load appointments from database - do this immediately when component mounts
