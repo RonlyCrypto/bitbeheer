@@ -591,14 +591,14 @@ export default function AccountBeheer() {
           </div>
 
 
-          {/* Active Accounts Section */}
+          {/* Active Accounts Section - Only accounts with account_approved = true */}
           <div className="bg-white rounded-lg shadow-lg mb-6">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">Actieve Accounts</h2>
                   <p className="text-gray-600 mt-1">
-                    {filteredUsers.filter(user => user.email_verified || user.isAdmin || user.isTest).length} van {users.filter(user => user.email_verified || user.isAdmin || user.isTest).length} actieve accounts
+                    {filteredUsers.filter(user => (user.account_approved === true) || user.isAdmin || user.isTest).length} van {users.filter(user => (user.account_approved === true) || user.isAdmin || user.isTest).length} actieve accounts (Dashboard 100% actief)
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -610,15 +610,15 @@ export default function AccountBeheer() {
             </div>
 
             <div className="divide-y divide-gray-200">
-              {filteredUsers.filter(user => user.email_verified || user.isAdmin || user.isTest).length === 0 ? (
+              {filteredUsers.filter(user => (user.account_approved === true) || user.isAdmin || user.isTest).length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
                   <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-300" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Geen actieve accounts</h3>
-                  <p className="text-gray-600">Alle accounts wachten op verificatie</p>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Geen volledig actieve accounts</h3>
+                  <p className="text-gray-600">Geen accounts met volledige dashboard toegang</p>
                 </div>
               ) : (
                 filteredUsers
-                  .filter(user => user.email_verified || user.isAdmin || user.isTest)
+                  .filter(user => (user.account_approved === true) || user.isAdmin || user.isTest)
                   .map((user) => (
                     <div key={user.id} className="p-6 hover:bg-gray-50 transition-colors">
                       <div className="flex items-center justify-between">
@@ -696,6 +696,113 @@ export default function AccountBeheer() {
                                   <option value="inactief">🔴 Inactief</option>
                                 </select>
                               )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleViewUser(user)}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                            Bekijken
+                          </button>
+                          <button
+                            onClick={() => {
+                              handleLoginAsUser(user);
+                              handleUpdateUserLogin(user.id);
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                          >
+                            <LogIn className="w-4 h-4" />
+                            Inloggen als
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+              )}
+            </div>
+          </div>
+
+          {/* Verified but No Appointment Section */}
+          <div className="bg-white rounded-lg shadow-lg mb-6">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <Calendar className="w-6 h-6 text-orange-600" />
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Geverifieerd - Wachtend op 20min Gesprek</h2>
+                  <p className="text-gray-600 mt-1">
+                    {filteredUsers.filter(user => 
+                      (user.email_verified || user.isAdmin || user.isTest) && 
+                      !user.first_appointment_completed && 
+                      !user.account_approved && 
+                      !user.isAdmin && 
+                      !user.isTest
+                    ).length} accounts hebben email bevestigd maar nog geen eerste afspraak gehad
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="divide-y divide-gray-200">
+              {filteredUsers.filter(user => 
+                (user.email_verified || user.isAdmin || user.isTest) && 
+                !user.first_appointment_completed && 
+                !user.account_approved && 
+                !user.isAdmin && 
+                !user.isTest
+              ).length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-300" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Geen accounts in deze categorie</h3>
+                  <p className="text-gray-600">Alle geverifieerde accounts hebben een gesprek gehad of zijn goedgekeurd</p>
+                </div>
+              ) : (
+                filteredUsers
+                  .filter(user => 
+                    (user.email_verified || user.isAdmin || user.isTest) && 
+                    !user.first_appointment_completed && 
+                    !user.account_approved && 
+                    !user.isAdmin && 
+                    !user.isTest
+                  )
+                  .map((user) => (
+                    <div key={user.id} className="p-6 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="font-medium text-gray-900">{user.email}</span>
+                              <span className="text-sm text-gray-500">•</span>
+                              <span className="text-sm text-gray-600">{user.name}</span>
+                              {user.category && (
+                                <>
+                                  <span className="text-sm text-gray-500">•</span>
+                                  <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
+                                    {user.category}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                            {user.message && user.message !== 'Geen bericht' && (
+                              <p className="text-sm text-gray-600 mb-2">{user.message}</p>
+                            )}
+                            <div className="flex items-center gap-4 text-xs text-gray-400">
+                              <span>Aangemeld: {user.registrationDate || user.date}</span>
+                              {user.lastLogin && (
+                                <span>Laatste login: {user.lastLogin}</span>
+                              )}
+                            </div>
+                            <div className="mt-2 flex items-center gap-2 flex-wrap">
+                              <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                <CheckCircle className="w-3 h-3" />
+                                Geverifieerd
+                              </span>
+                              <span className="inline-flex items-center gap-1 text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
+                                <Clock className="w-3 h-3" />
+                                Wacht op 20min Gesprek
+                              </span>
                             </div>
                           </div>
                         </div>

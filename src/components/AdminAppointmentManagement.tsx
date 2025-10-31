@@ -1281,6 +1281,12 @@ export default function AdminAppointmentManagement() {
                               }
 
                               alert('Account succesvol goedgekeurd! Alle tabs zijn nu beschikbaar voor de gebruiker.');
+                              
+                              // Trigger refresh of accounts list in AccountBeheer
+                              if (window.dispatchEvent) {
+                                window.dispatchEvent(new CustomEvent('refreshAccounts'));
+                              }
+                              
                               await loadData();
                             } catch (error: any) {
                               console.error('Error approving account:', error);
