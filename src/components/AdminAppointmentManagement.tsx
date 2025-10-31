@@ -80,9 +80,15 @@ export default function AdminAppointmentManagement() {
       console.log('✅ Loaded slots:', slots?.length || 0);
 
       // Load appointments - admin should be able to read all
-      const { data: apts, error: aptsError } = await supabase
+      // First try without filter to see if RLS blocks it
+      console.log('🔍 Attempting to load ALL appointments (no filter)...');
+      
+      let query = supabase
         .from('appointments')
-        .select('*')
+        .select('*');
+      
+      // Try to load all appointments first
+      const { data: apts, error: aptsError, count } = await query
         .order('date', { ascending: true })
         .order('start_time', { ascending: true });
       
@@ -93,25 +99,53 @@ export default function AdminAppointmentManagement() {
           message: aptsError.message,
           details: aptsError.details,
           hint: aptsError.hint,
-          sessionEmail
+          sessionEmail,
+          'RLS Error?': aptsError.code === '42501' || aptsError.message?.includes('row-level security')
         });
         
-        // If RLS error, provide helpful message
+        // If RLS error, try alternative: query with explicit admin check
         if (aptsError.code === '42501' || aptsError.message?.includes('row-level security')) {
-          alert(`RLS Policy Error: ${aptsError.message}\n\nVoer fix-appointments-read-rls.sql uit in Supabase SQL Editor.`);
+          console.warn('⚠️ RLS blocked query. Trying alternative approach...');
+          
+          // Try a count query first to see if that works
+          const { count: appointmentCount, error: countError } = await supabase
+            .from('appointments')
+            .select('*', { count: 'exact', head: true });
+          
+          console.log('📊 Appointment count query result:', { count: appointmentCount, error: countError });
+          
+          alert(`RLS Policy Error: ${aptsError.message}\n\nVoer fix-all-appointments-rls.sql uit in Supabase SQL Editor.\n\nCount query result: ${appointmentCount || 'failed'}`);
         }
         throw aptsError;
       }
       
       console.log('✅ Loaded appointments in admin:', {
         count: apts?.length || 0,
+        hasData: !!apts,
         appointments: apts,
-        sessionEmail
+        sessionEmail,
+        'First appointment': apts?.[0]
       });
+      
       setAppointments(apts || []);
       
       if (!apts || apts.length === 0) {
-        console.warn('⚠️ No appointments found, but no error. Check RLS policies.');
+        console.warn('⚠️ No appointments found, but no error. This could mean:');
+        console.warn('  1. RLS policy is blocking but not throwing error');
+        console.warn('  2. There are truly no appointments in the database');
+        console.warn('  3. The session email does not match admin@bitbeheer.nl');
+        console.warn('  Session email:', sessionEmail);
+        console.warn('  Expected: admin@bitbeheer.nl');
+        
+        // Try a direct query to verify
+        const { data: testData, error: testError } = await supabase
+          .from('appointments')
+          .select('id, user_email, date')
+          .limit(1);
+        
+        console.log('🧪 Test query result:', { testData, testError });
+      } else {
+        console.log('🎉 Successfully loaded appointments:', apts.length);
       }
     } catch (error) {
       console.error('❌ Error loading data:', error);
