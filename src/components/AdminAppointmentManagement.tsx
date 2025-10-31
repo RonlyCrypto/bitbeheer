@@ -80,15 +80,13 @@ export default function AdminAppointmentManagement() {
       console.log('✅ Loaded slots:', slots?.length || 0);
 
       // Load appointments - admin should be able to read all
-      // First try without filter to see if RLS blocks it
-      console.log('🔍 Attempting to load ALL appointments (no filter)...');
+      console.log('🔍 Attempting to load ALL appointments...');
+      console.log('📋 Query: SELECT * FROM appointments ORDER BY date, start_time');
       
-      let query = supabase
+      // Load all appointments - no filters, just get everything
+      const { data: apts, error: aptsError } = await supabase
         .from('appointments')
-        .select('*');
-      
-      // Try to load all appointments first
-      const { data: apts, error: aptsError, count } = await query
+        .select('id, user_email, user_name, slot_id, date, start_time, end_time, duration_minutes, status, notes, admin_notes, created_at, updated_at, confirmed_at')
         .order('date', { ascending: true })
         .order('start_time', { ascending: true });
       
@@ -122,30 +120,50 @@ export default function AdminAppointmentManagement() {
       console.log('✅ Loaded appointments in admin:', {
         count: apts?.length || 0,
         hasData: !!apts,
+        isArray: Array.isArray(apts),
         appointments: apts,
         sessionEmail,
-        'First appointment': apts?.[0]
+        'First appointment': apts?.[0],
+        'All appointment IDs': apts?.map(a => a?.id),
+        'All appointment emails': apts?.map(a => a?.user_email),
+        'All appointment statuses': apts?.map(a => a?.status)
       });
       
-      setAppointments(apts || []);
+      // Ensure we have valid data
+      const validAppointments = (apts || []).filter(apt => apt && apt.id);
       
-      if (!apts || apts.length === 0) {
-        console.warn('⚠️ No appointments found, but no error. This could mean:');
-        console.warn('  1. RLS policy is blocking but not throwing error');
+      console.log('📊 Valid appointments after filter:', validAppointments.length);
+      
+      setAppointments(validAppointments);
+      
+      if (!validAppointments || validAppointments.length === 0) {
+        console.warn('⚠️ No valid appointments found. Raw response:', apts);
+        console.warn('⚠️ This could mean:');
+        console.warn('  1. RLS policy is blocking but returning empty array (not error)');
         console.warn('  2. There are truly no appointments in the database');
         console.warn('  3. The session email does not match admin@bitbeheer.nl');
         console.warn('  Session email:', sessionEmail);
         console.warn('  Expected: admin@bitbeheer.nl');
+        console.warn('  Raw data type:', typeof apts);
+        console.warn('  Raw data:', apts);
         
-        // Try a direct query to verify
+        // Try a count query to verify
+        const { count: appointmentCount, error: countError } = await supabase
+          .from('appointments')
+          .select('*', { count: 'exact', head: true });
+        
+        console.log('🧪 Count query result:', { count: appointmentCount, error: countError });
+        
+        // Try a simple select with limit
         const { data: testData, error: testError } = await supabase
           .from('appointments')
-          .select('id, user_email, date')
-          .limit(1);
+          .select('id, user_email, date, status')
+          .limit(5);
         
-        console.log('🧪 Test query result:', { testData, testError });
+        console.log('🧪 Test query (limit 5):', { testData, testError, count: testData?.length });
       } else {
-        console.log('🎉 Successfully loaded appointments:', apts.length);
+        console.log('🎉 Successfully loaded and set appointments:', validAppointments.length);
+        console.log('📋 First 3 appointments:', validAppointments.slice(0, 3));
       }
     } catch (error) {
       console.error('❌ Error loading data:', error);
