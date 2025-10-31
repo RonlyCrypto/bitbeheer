@@ -17,8 +17,15 @@ import {
   Lock,
   ToggleLeft,
   ToggleRight,
-  Bell // Added for notifications
+  Bell, // Added for notifications
+  MessageSquare,
+  Calendar,
+  Clock,
+  AlertCircle,
+  ExternalLink,
+  User
 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import NotificatieBeheer from './NotificatieBeheer';
 import AccountBeheer from './AccountBeheer';
 import AdminChat from './AdminChat';
@@ -34,6 +41,12 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [isSoonOnlineMode, setIsSoonOnlineMode] = useState(true);
   const [users, setUsers] = useState<any[]>([]);
+  const [metrics, setMetrics] = useState({
+    newChats: 0,
+    pendingAppointments: 0,
+    upcomingAppointment: null as any,
+    newAccounts: 0
+  });
 
   useEffect(() => {
     // Check current soon online mode status
@@ -65,7 +78,78 @@ export default function AdminDashboard() {
     };
 
     loadUsers();
+    loadMetrics();
+    
+    // Refresh metrics every 30 seconds
+    const interval = setInterval(loadMetrics, 30000);
+    return () => clearInterval(interval);
   }, []);
+
+  const loadMetrics = async () => {
+    try {
+      // Load unread chat messages (messages where from_admin = false and not replied)
+      const { data: chatMessages, error: chatError } = await supabase
+        .from('support_messages')
+        .select('*')
+        .eq('from_admin', false);
+
+      // Get unique emails that sent messages
+      const uniqueChatEmails = chatMessages 
+        ? [...new Set(chatMessages.map(m => m.user_email))]
+        : [];
+
+      // Check if admin has replied to each conversation
+      const { data: adminReplies } = await supabase
+        .from('support_messages')
+        .select('user_email')
+        .eq('from_admin', true);
+
+      const repliedEmails = adminReplies ? [...new Set(adminReplies.map(m => m.user_email))] : [];
+      const unreadChats = uniqueChatEmails.filter(email => !repliedEmails.includes(email));
+
+      // Load pending appointments
+      const { data: appointments, error: appointmentsError } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('status', 'pending')
+        .order('date', { ascending: true })
+        .order('start_time', { ascending: true });
+
+      // Find upcoming appointment (next confirmed appointment within 48 hours)
+      const { data: allAppointments } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('status', 'confirmed')
+        .order('date', { ascending: true })
+        .order('start_time', { ascending: true });
+
+      const now = new Date();
+      const upcomingAppt = allAppointments?.find(apt => {
+        const aptDateTime = new Date(`${apt.date}T${apt.start_time}`);
+        const hoursUntil = (aptDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+        return hoursUntil > 0 && hoursUntil <= 48;
+      }) || null;
+
+      // Load new accounts (created in last 7 days)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const { data: accounts, error: accountsError } = await supabase
+        .from('accounts')
+        .select('*')
+        .gte('created_at', sevenDaysAgo.toISOString())
+        .neq('email', 'admin@bitbeheer.nl');
+
+      setMetrics({
+        newChats: unreadChats.length,
+        pendingAppointments: appointments?.length || 0,
+        upcomingAppointment: upcomingAppt,
+        newAccounts: accounts?.length || 0
+      });
+    } catch (error) {
+      console.error('Error loading metrics:', error);
+    }
+  };
 
   const toggleSoonOnlineMode = () => {
     const newMode = !isSoonOnlineMode;
@@ -169,23 +253,33 @@ export default function AdminDashboard() {
                 </button>
                 <button
                   onClick={() => setActiveTab('chat')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  className={`py-2 px-1 border-b-2 font-medium text-sm relative ${
                     activeTab === 'chat'
                       ? 'border-orange-500 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
                   Chat
+                  {metrics.newChats > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      {metrics.newChats > 9 ? '9+' : metrics.newChats}
+                    </span>
+                  )}
                 </button>
                 <button
                   onClick={() => setActiveTab('appointments')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  className={`py-2 px-1 border-b-2 font-medium text-sm relative ${
                     activeTab === 'appointments'
                       ? 'border-orange-500 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
                   Afspraken
+                  {metrics.pendingAppointments > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      {metrics.pendingAppointments > 9 ? '9+' : metrics.pendingAppointments}
+                    </span>
+                  )}
                 </button>
                 <button
                   onClick={() => setActiveTab('notifications')}
@@ -316,43 +410,173 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-                          <div className="grid md:grid-cols-3 gap-6">
-                            <div className="bg-white rounded-xl p-6 shadow-lg">
-                              <div className="flex items-center gap-4">
-                                <div className="bg-blue-100 p-3 rounded-xl">
-                                  <Users className="w-8 h-8 text-blue-600" />
-                                </div>
-                                <div>
-                                  <h3 className="text-2xl font-bold text-gray-900">{users.length}</h3>
-                                  <p className="text-gray-600">Nieuwe Aanmeldingen</p>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="bg-white rounded-xl p-6 shadow-lg">
-                              <div className="flex items-center gap-4">
-                                <div className="bg-green-100 p-3 rounded-xl">
-                                  <TrendingUp className="w-8 h-8 text-green-600" />
-                                </div>
-                                <div>
-                                  <h3 className="text-2xl font-bold text-gray-900">{users.filter(u => u.category === 'account_aanmelden' || u.category === 'nieuwe_gebruiker').length}</h3>
-                                  <p className="text-gray-600">Account Aanmeldingen</p>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="bg-white rounded-xl p-6 shadow-lg">
+                          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="bg-white rounded-xl p-6 shadow-lg border-2 border-orange-200">
                               <div className="flex items-center gap-4">
                                 <div className="bg-orange-100 p-3 rounded-xl">
-                                  <BarChart3 className="w-8 h-8 text-orange-600" />
+                                  <MessageSquare className="w-8 h-8 text-orange-600" />
                                 </div>
-                                <div>
-                                  <h3 className="text-2xl font-bold text-gray-900">{users.filter(u => u.category === 'opening_website').length}</h3>
-                                  <p className="text-gray-600">Notificatie Aanmeldingen</p>
+                                <div className="flex-1">
+                                  <h3 className="text-2xl font-bold text-gray-900">{metrics.newChats}</h3>
+                                  <p className="text-gray-600">Nieuwe Chats</p>
+                                </div>
+                                {metrics.newChats > 0 && (
+                                  <div className="bg-orange-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
+                                    {metrics.newChats > 9 ? '9+' : metrics.newChats}
+                                  </div>
+                                )}
+                              </div>
+                              {metrics.newChats > 0 && (
+                                <button
+                                  onClick={() => setActiveTab('chat')}
+                                  className="mt-4 w-full text-sm text-orange-600 hover:text-orange-700 font-medium"
+                                >
+                                  Bekijk chats →
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="bg-white rounded-xl p-6 shadow-lg border-2 border-orange-200">
+                              <div className="flex items-center gap-4">
+                                <div className="bg-orange-100 p-3 rounded-xl">
+                                  <Calendar className="w-8 h-8 text-orange-600" />
+                                </div>
+                                <div className="flex-1">
+                                  <h3 className="text-2xl font-bold text-gray-900">{metrics.pendingAppointments}</h3>
+                                  <p className="text-gray-600">Afspraken in Afwachting</p>
+                                </div>
+                                {metrics.pendingAppointments > 0 && (
+                                  <div className="bg-orange-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
+                                    {metrics.pendingAppointments > 9 ? '9+' : metrics.pendingAppointments}
+                                  </div>
+                                )}
+                              </div>
+                              {metrics.pendingAppointments > 0 && (
+                                <button
+                                  onClick={() => setActiveTab('appointments')}
+                                  className="mt-4 w-full text-sm text-orange-600 hover:text-orange-700 font-medium"
+                                >
+                                  Bekijk afspraken →
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="bg-white rounded-xl p-6 shadow-lg border-2 border-green-200">
+                              <div className="flex items-center gap-4">
+                                <div className="bg-green-100 p-3 rounded-xl">
+                                  <Users className="w-8 h-8 text-green-600" />
+                                </div>
+                                <div className="flex-1">
+                                  <h3 className="text-2xl font-bold text-gray-900">{metrics.newAccounts}</h3>
+                                  <p className="text-gray-600">Nieuwe Accounts (7 dagen)</p>
+                                </div>
+                              </div>
+                              {metrics.newAccounts > 0 && (
+                                <button
+                                  onClick={() => setActiveTab('accounts')}
+                                  className="mt-4 w-full text-sm text-green-600 hover:text-green-700 font-medium"
+                                >
+                                  Bekijk accounts →
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="bg-white rounded-xl p-6 shadow-lg border-2 border-blue-200">
+                              <div className="flex items-center gap-4">
+                                <div className="bg-blue-100 p-3 rounded-xl">
+                                  <Clock className="w-8 h-8 text-blue-600" />
+                                </div>
+                                <div className="flex-1">
+                                  <h3 className="text-lg font-bold text-gray-900">
+                                    {metrics.upcomingAppointment ? 'Binnenkort' : 'Geen'}
+                                  </h3>
+                                  <p className="text-gray-600">
+                                    {metrics.upcomingAppointment 
+                                      ? `${new Date(metrics.upcomingAppointment.date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })} ${metrics.upcomingAppointment.start_time}`
+                                      : 'Volgende afspraak'
+                                    }
+                                  </p>
+                                </div>
+                              </div>
+                              {metrics.upcomingAppointment && (
+                                <div className="mt-4 space-y-2">
+                                  <p className="text-sm text-gray-700">
+                                    <strong>Met:</strong> {metrics.upcomingAppointment.user_name || metrics.upcomingAppointment.user_email}
+                                  </p>
+                                  <Link
+                                    to={`/admin?tab=accounts&email=${encodeURIComponent(metrics.upcomingAppointment.user_email)}`}
+                                    className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                                  >
+                                    Bekijk account <ExternalLink className="w-3 h-3" />
+                                  </Link>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Upcoming Appointment Detail Card */}
+                          {metrics.upcomingAppointment && (
+                            <div className="bg-gradient-to-r from-orange-50 to-orange-100 border-2 border-orange-300 rounded-xl p-6 shadow-lg">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start gap-4">
+                                  <div className="bg-orange-500 p-3 rounded-xl">
+                                    <AlertCircle className="w-8 h-8 text-white" />
+                                  </div>
+                                  <div>
+                                    <h3 className="text-xl font-bold text-orange-900 mb-2">
+                                      Binnenkort: Afspraak met {metrics.upcomingAppointment.user_name || metrics.upcomingAppointment.user_email}
+                                    </h3>
+                                    <div className="space-y-1 text-orange-800">
+                                      <div className="flex items-center gap-2">
+                                        <Calendar className="w-4 h-4" />
+                                        <span>
+                                          {new Date(metrics.upcomingAppointment.date).toLocaleDateString('nl-NL', { 
+                                            weekday: 'long', 
+                                            day: 'numeric', 
+                                            month: 'long', 
+                                            year: 'numeric' 
+                                          })}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <Clock className="w-4 h-4" />
+                                        <span>
+                                          {metrics.upcomingAppointment.start_time} - {metrics.upcomingAppointment.end_time}
+                                        </span>
+                                      </div>
+                                      {(() => {
+                                        const aptDateTime = new Date(`${metrics.upcomingAppointment.date}T${metrics.upcomingAppointment.start_time}`);
+                                        const hoursUntil = (aptDateTime.getTime() - new Date().getTime()) / (1000 * 60 * 60);
+                                        return (
+                                          <div className="flex items-center gap-2 mt-2">
+                                            <span className="text-lg font-bold">
+                                              Over {Math.round(hoursUntil * 10) / 10} uur
+                                            </span>
+                                          </div>
+                                        );
+                                      })()}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                  <Link
+                                    to={`/admin?tab=accounts&email=${encodeURIComponent(metrics.upcomingAppointment.user_email)}`}
+                                    className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium"
+                                  >
+                                    <User className="w-4 h-4" />
+                                    Bekijk Account
+                                  </Link>
+                                  <button
+                                    onClick={() => setActiveTab('appointments')}
+                                    className="flex items-center gap-2 px-4 py-2 bg-white text-orange-600 border-2 border-orange-600 rounded-lg hover:bg-orange-50 transition-colors text-sm font-medium"
+                                  >
+                                    <Calendar className="w-4 h-4" />
+                                    Alle Afspraken
+                                  </button>
                                 </div>
                               </div>
                             </div>
-                          </div>
+                          )}
 
               {/* Email Management Section */}
               <div className="bg-white rounded-xl p-6 shadow-lg">

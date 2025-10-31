@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Clock, User, Trash2, CheckCircle, XCircle, Edit, Search, Filter, Download, Copy, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, Plus, Clock, User, Trash2, CheckCircle, XCircle, Edit, Search, Filter, Download, Copy, RefreshCw, ChevronDown, ChevronUp, Video, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import TeamsLinkPopup from './TeamsLinkPopup';
 
@@ -1000,17 +1000,39 @@ export default function AdminAppointmentManagement() {
           <div className="space-y-4">
             {getFilteredAppointments().map((apt) => {
               const dateObj = new Date(apt.date);
+              const appointmentDateTime = new Date(`${apt.date}T${apt.start_time}`);
+              const now = new Date();
+              const hoursUntil = (appointmentDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+              const isUpcoming = hoursUntil > 0 && hoursUntil <= 24; // Binnen 24 uur
+              const isVerySoon = hoursUntil > 0 && hoursUntil <= 2; // Binnen 2 uur
+              
               return (
                 <div
                   key={apt.id}
                   className={`p-4 rounded-lg border-2 ${
-                    apt.status === 'confirmed'
+                    isVerySoon && apt.status === 'confirmed'
+                      ? 'border-red-400 bg-red-50 dark:bg-red-900/30 ring-2 ring-red-300'
+                      : isUpcoming && apt.status === 'confirmed'
+                      ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/30'
+                      : apt.status === 'confirmed'
                       ? 'border-green-300 bg-green-50 dark:bg-green-900/20'
                       : 'border-orange-300 bg-orange-50 dark:bg-orange-900/20'
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
+                      {isVerySoon && apt.status === 'confirmed' && (
+                        <div className="mb-3 flex items-center gap-2 px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg">
+                          <AlertCircle className="w-4 h-4" />
+                          <span className="font-semibold text-sm">⚠️ BINNENKORT: Over {Math.round(hoursUntil * 10) / 10} uur</span>
+                        </div>
+                      )}
+                      {isUpcoming && apt.status === 'confirmed' && !isVerySoon && (
+                        <div className="mb-3 flex items-center gap-2 px-3 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded-lg">
+                          <Clock className="w-4 h-4" />
+                          <span className="font-semibold text-sm">Binnen {Math.round(hoursUntil * 10) / 10} uur</span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-2 mb-2">
                         <Calendar className="w-4 h-4 text-gray-500" />
                         <span className="font-semibold text-gray-900 dark:text-white">
@@ -1037,6 +1059,19 @@ export default function AdminAppointmentManagement() {
                       {apt.admin_notes && (
                         <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 p-2 rounded">
                           <strong>Admin Notities:</strong> {apt.admin_notes}
+                        </div>
+                      )}
+                      {apt.teams_link && (
+                        <div className="mt-2">
+                          <a
+                            href={apt.teams_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
+                          >
+                            <Video className="w-3 h-3" />
+                            Microsoft Teams Link
+                          </a>
                         </div>
                       )}
                     </div>
