@@ -138,7 +138,7 @@ export default function AdminDashboard() {
       });
 
       // Load pending appointments
-      const { data: appointments, error: appointmentsError } = await supabase
+      const { data: appointments } = await supabase
         .from('appointments')
         .select('*')
         .eq('status', 'pending')
@@ -164,7 +164,7 @@ export default function AdminDashboard() {
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       
-      const { data: accounts, error: accountsError } = await supabase
+      const { data: accounts } = await supabase
         .from('accounts')
         .select('*')
         .gte('created_at', sevenDaysAgo.toISOString())
