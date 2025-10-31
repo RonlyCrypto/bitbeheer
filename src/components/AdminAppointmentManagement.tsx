@@ -370,10 +370,21 @@ export default function AdminAppointmentManagement() {
   };
 
   const getFilteredAppointments = () => {
+    console.log('🔍 getFilteredAppointments called:', {
+      totalAppointments: appointments.length,
+      appointments: appointments,
+      filterStatus,
+      searchQuery,
+      'Appointment statuses': appointments.map(a => a.status)
+    });
+    
     let filtered = appointments.filter(a => ['pending', 'confirmed'].includes(a.status));
+    
+    console.log('📊 After status filter (pending/confirmed):', filtered.length);
     
     if (filterStatus !== 'all') {
       filtered = filtered.filter(a => a.status === filterStatus);
+      console.log('📊 After filterStatus filter:', filtered.length);
     }
     
     if (searchQuery) {
@@ -384,8 +395,10 @@ export default function AdminAppointmentManagement() {
         (a.date.includes(query)) ||
         (a.notes?.toLowerCase().includes(query))
       );
+      console.log('📊 After searchQuery filter:', filtered.length);
     }
     
+    console.log('✅ Final filtered appointments:', filtered.length, filtered);
     return filtered;
   };
 
