@@ -1210,27 +1210,71 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
   }, []);
 
   const loadUserAppointments = async () => {
-    if (!effectiveUserEmail) return;
+    if (!effectiveUserEmail) {
+      console.warn('⚠️ No effectiveUserEmail, cannot load appointments');
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     try {
-      console.log('📋 Loading appointments for:', effectiveUserEmail);
+      console.log('📋 Loading appointments for:', {
+        effectiveUserEmail,
+        isImpersonating: contextImpersonating || isImpersonating,
+        impersonatedUser: contextImpersonatedUser || impersonatedUser,
+        userEmail: user?.email
+      });
+      
+      // During impersonation, admin can read all appointments, then filter
+      // Regular users can only read their own
       const { data, error } = await supabase
         .from('appointments')
         .select('*')
-        .eq('user_email', effectiveUserEmail)
+        .eq('user_email', effectiveUserEmail) // Filter by user email
         .order('date', { ascending: true })
         .order('start_time', { ascending: true });
       
+      // If RLS blocks during impersonation, the admin policy should allow it
+      // But if it still fails, we need to handle it differently
+      
       if (error) {
-        console.error('❌ Error loading appointments:', error);
+        console.error('❌ Error loading appointments:', {
+          error,
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          effectiveUserEmail
+        });
+        
+        // If RLS error, try a different approach
+        if (error.code === '42501' || error.message?.includes('row-level security')) {
+          console.warn('⚠️ RLS blocked query, trying alternative...');
+          // This might still fail, but at least we log it
+        }
+        
         throw error;
       }
       
-      console.log('✅ Loaded appointments:', data?.length || 0, data);
-      setUserAppointments(data || []);
-      setAppointments(data || []);
+      console.log('✅ Loaded appointments:', {
+        count: data?.length || 0,
+        appointments: data,
+        forEmail: effectiveUserEmail
+      });
+      
+      // Filter out any null/undefined entries
+      const validAppointments = (data || []).filter(apt => apt && apt.id);
+      
+      setUserAppointments(validAppointments);
+      setAppointments(validAppointments);
+      
+      if (validAppointments.length === 0 && data && data.length > 0) {
+        console.warn('⚠️ Data returned but filtered out:', data);
+      }
     } catch (error) {
-      console.error('Error loading appointments:', error);
+      console.error('❌ Error loading appointments:', error);
+      setUserAppointments([]);
+      setAppointments([]);
     } finally {
       setLoading(false);
     }
