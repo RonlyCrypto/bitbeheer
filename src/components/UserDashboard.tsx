@@ -1225,17 +1225,20 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
         userEmail: user?.email
       });
       
-      // During impersonation, admin can read all appointments, then filter
-      // Regular users can only read their own
-      const { data, error } = await supabase
+      // During impersonation, admin can read all appointments
+      // We need to filter by user_email in the query or in the frontend
+      let query = supabase
         .from('appointments')
-        .select('*')
-        .eq('user_email', effectiveUserEmail) // Filter by user email
-        .order('date', { ascending: true })
-        .order('start_time', { ascending: true });
+        .select('*');
       
-      // If RLS blocks during impersonation, the admin policy should allow it
-      // But if it still fails, we need to handle it differently
+      // Filter by user email - this should work for both regular users and admin during impersonation
+      query = query.eq('user_email', effectiveUserEmail);
+      
+      // Order results
+      query = query.order('date', { ascending: true })
+                   .order('start_time', { ascending: true });
+      
+      const { data, error } = await query;
       
       if (error) {
         console.error('❌ Error loading appointments:', {
