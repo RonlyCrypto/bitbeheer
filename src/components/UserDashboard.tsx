@@ -99,7 +99,6 @@ interface Portfolio {
 }
 
 export default function UserDashboard() {
-  console.log('🎯 UserDashboard component loaded');
   const { user } = useSupabaseAuth();
   const { theme } = useTheme();
   const { isImpersonating, impersonatedUser } = usePermissions();
@@ -286,11 +285,12 @@ export default function UserDashboard() {
             .eq('from_admin', true)
             .order('created_at', { ascending: false });
 
-          const { data: readStatus } = await supabase
+          // Get read status (404 is normal if no record exists yet)
+          const { data: readStatus, error: readStatusError } = await supabase
             .from('user_chat_read_status')
             .select('last_read_at')
             .eq('user_email', user.email)
-            .single();
+            .maybeSingle(); // Use maybeSingle instead of single to avoid 404 errors
 
           if (adminMessages && adminMessages.length > 0) {
             const lastReadTime = readStatus?.last_read_at 
@@ -331,7 +331,7 @@ export default function UserDashboard() {
               .from('user_chat_read_status')
               .select('last_read_at')
               .eq('user_email', user.email)
-              .single()
+              .maybeSingle() // Use maybeSingle to avoid 404 errors when no record exists
               .then(({ data: readStatus }) => {
                 if (adminMessages && adminMessages.length > 0) {
                   const lastReadTime = readStatus?.last_read_at 
@@ -537,7 +537,7 @@ export default function UserDashboard() {
                         .from('user_chat_read_status')
                         .select('id')
                         .eq('user_email', user.email)
-                        .single();
+                        .maybeSingle(); // Use maybeSingle to avoid 404 errors
 
                       const readStatus = {
                         user_email: user.email,
@@ -685,7 +685,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           return;
         }
 
-        console.log('🔍 Loading appointments for OverviewTab, email:', email);
 
         const { data, error } = await supabase
           .from('appointments')
@@ -696,15 +695,20 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           .order('start_time', { ascending: true });
 
         if (error) {
-          console.error('❌ Error loading appointments:', error);
+          // Only log real errors
+          if (error.code !== 'PGRST116' && error.code !== 'PGRST204') {
+            console.error('Error loading appointments:', error);
+          }
           setAppointmentsLoading(false);
           return;
         }
 
-        console.log('✅ Loaded appointments in OverviewTab:', data?.length || 0, data);
         setUserAppointments(data || []);
       } catch (error) {
-        console.error('❌ Error loading appointments:', error);
+        // Only log real errors
+        if (error instanceof Error && !error.message.includes('PGRST')) {
+          console.error('Error loading appointments:', error);
+        }
       } finally {
         setAppointmentsLoading(false);
       }
@@ -715,7 +719,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 
     // Listen for appointment refresh events
     const handleRefresh = () => {
-      console.log('🔄 Refresh event received in OverviewTab, reloading appointments...');
       loadAppointments();
     };
     window.addEventListener('refreshAppointments', handleRefresh);
@@ -723,7 +726,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
     // Also refresh when the tab becomes visible
     const visibilityChangeHandler = () => {
       if (!document.hidden) {
-        console.log('👁️ Tab became visible, reloading appointments...');
         loadAppointments();
       }
     };
@@ -759,25 +761,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
   // Calculate upcoming appointments count
   const upcomingAppointments = futureValidAppointments.length;
   
-  // Debug log
-  useEffect(() => {
-    console.log('🔍 OverviewTab appointment check:', {
-      appointmentsLoading,
-      userAppointmentsCount: userAppointments.length,
-      allValidAppointmentsCount: allValidAppointments.length,
-      futureValidAppointmentsCount: futureValidAppointments.length,
-      hasAppointment,
-      userAppointment,
-      userAppointments: userAppointments.map((apt: any) => ({
-        id: apt.id,
-        date: apt.date,
-        status: apt.status,
-        start_time: apt.start_time,
-        end_time: apt.end_time
-      })),
-      upcomingAppointments
-    });
-  }, [userAppointments, hasAppointment, userAppointment, appointmentsLoading, allValidAppointments.length, futureValidAppointments.length, upcomingAppointments]);
   
   const [showWalletForm, setShowWalletForm] = useState(false);
   const [showQuestionsForm, setShowQuestionsForm] = useState(false);
@@ -1811,7 +1794,6 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
   // Expose refresh function via window event
   useEffect(() => {
     const handleRefreshAppointments = () => {
-      console.log('🔄 Refreshing appointments list...');
       setRefreshKey(prev => prev + 1);
     };
 
@@ -1854,19 +1836,12 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
 
   const loadUserAppointments = async () => {
     if (!effectiveUserEmail) {
-      console.warn('⚠️ No effectiveUserEmail, cannot load appointments');
       setLoading(false);
       return;
     }
     
     setLoading(true);
     try {
-      console.log('📋 Loading appointments for:', {
-        effectiveUserEmail,
-        isImpersonating: contextImpersonating || isImpersonating,
-        impersonatedUser: contextImpersonatedUser || impersonatedUser,
-        userEmail: user?.email
-      });
       
       // During impersonation, admin can read all appointments
       // We need to filter by user_email in the query or in the frontend
@@ -1884,29 +1859,12 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
       const { data, error } = await query;
       
       if (error) {
-        console.error('❌ Error loading appointments:', {
-          error,
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          effectiveUserEmail
-        });
-        
-        // If RLS error, try a different approach
-        if (error.code === '42501' || error.message?.includes('row-level security')) {
-          console.warn('⚠️ RLS blocked query, trying alternative...');
-          // This might still fail, but at least we log it
+        // Only log real errors, not expected cases
+        if (error.code !== 'PGRST116' && error.code !== 'PGRST204') {
+          console.error('Error loading appointments:', error);
         }
-        
         throw error;
       }
-      
-      console.log('✅ Loaded appointments:', {
-        count: data?.length || 0,
-        appointments: data,
-        forEmail: effectiveUserEmail
-      });
       
       // Filter out any null/undefined entries
       const validAppointments = (data || []).filter(apt => apt && apt.id);
@@ -1914,11 +1872,11 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
       setUserAppointments(validAppointments);
       setAppointments(validAppointments);
       
-      if (validAppointments.length === 0 && data && data.length > 0) {
-        console.warn('⚠️ Data returned but filtered out:', data);
-      }
     } catch (error) {
-      console.error('❌ Error loading appointments:', error);
+      // Only log real errors, not expected empty results
+      if (error instanceof Error && !error.message.includes('PGRST')) {
+        console.error('Error loading appointments:', error);
+      }
       setUserAppointments([]);
       setAppointments([]);
     } finally {
