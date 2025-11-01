@@ -673,10 +673,18 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
   const [userAppointments, setUserAppointments] = useState<any[]>([]);
   
   const activeGoals = displayGoals.filter((goal) => (goal.status as string) === 'active').length;
+  
   // Calculate upcoming appointments from loaded userAppointments
-  const upcomingAppointments = userAppointments.filter((apt: any) => 
-    (apt.status === 'pending' || apt.status === 'confirmed') && new Date(apt.date) > new Date()
-  ).length;
+  // Count appointments that are pending or confirmed and haven't passed yet
+  const upcomingAppointments = userAppointments.filter((apt: any) => {
+    if (apt.status !== 'pending' && apt.status !== 'confirmed') return false;
+    
+    // Combine date and time to check if appointment is in the future
+    const appointmentDateTime = new Date(`${apt.date}T${apt.end_time || apt.start_time || '23:59:59'}`);
+    const now = new Date();
+    
+    return appointmentDateTime >= now;
+  }).length;
   const [appointmentsLoading, setAppointmentsLoading] = useState(true);
   
   // Load appointments from database - do this immediately when component mounts
@@ -742,13 +750,20 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
   }, []);
   
   // Find user's appointment (pending or confirmed) - prioritize confirmed, then pending
-  // Only count appointments that are not cancelled
-  const userAppointment = userAppointments
-    .filter((apt: any) => apt.status !== 'cancelled')
-    .find((apt: any) => apt.status === 'confirmed') 
-    || userAppointments
-      .filter((apt: any) => apt.status !== 'cancelled')
-      .find((apt: any) => apt.status === 'pending');
+  // Only count appointments that are not cancelled and haven't passed yet
+  const validAppointments = userAppointments.filter((apt: any) => {
+    if (apt.status === 'cancelled') return false;
+    if (apt.status !== 'pending' && apt.status !== 'confirmed') return false;
+    
+    // Check if appointment is in the future (combine date and time)
+    const appointmentDateTime = new Date(`${apt.date}T${apt.end_time || apt.start_time || '23:59:59'}`);
+    const now = new Date();
+    
+    return appointmentDateTime >= now;
+  });
+  
+  const userAppointment = validAppointments.find((apt: any) => apt.status === 'confirmed') 
+    || validAppointments.find((apt: any) => apt.status === 'pending');
   const hasAppointment = !!userAppointment && !appointmentsLoading;
   
   // Debug log
@@ -756,14 +771,13 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
     console.log('🔍 OverviewTab appointment check:', {
       appointmentsLoading,
       userAppointmentsCount: userAppointments.length,
+      validAppointmentsCount: validAppointments.length,
       hasAppointment,
       userAppointment,
       userAppointments,
-      filteredAppointments: userAppointments.filter((apt: any) => 
-        apt.status === 'pending' || apt.status === 'confirmed'
-      )
+      upcomingAppointments
     });
-  }, [userAppointments, hasAppointment, userAppointment, appointmentsLoading]);
+  }, [userAppointments, hasAppointment, userAppointment, appointmentsLoading, validAppointments.length, upcomingAppointments]);
   
   const [showWalletForm, setShowWalletForm] = useState(false);
   const [showQuestionsForm, setShowQuestionsForm] = useState(false);
@@ -910,7 +924,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             </div>
           </div>
         </div>
-      ) : !hasAppointment ? (
+      ) : !userAppointment ? (
         // No appointment - show prompt to book
         <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-xl shadow-lg">
           <div className="flex items-start gap-4">
@@ -936,8 +950,10 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             </div>
           </div>
         </div>
-      ) : userAppointment.status === 'pending' ? (
-        // Pending appointment - waiting for confirmation (green block, disabled button)
+      ) : userAppointment ? (
+        // Any appointment (pending or confirmed) - show green block
+        userAppointment.status === 'pending' ? (
+        // Pending appointment - waiting for confirmation (green block)
         <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-xl shadow-lg">
           <div className="flex items-start gap-4">
             <div className="bg-white bg-opacity-20 p-3 rounded-xl">
@@ -970,7 +986,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             </div>
           </div>
         </div>
-      ) : (
+        ) : (
         // Confirmed appointment - show info and questions form
         <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-xl shadow-lg">
           <div className="flex items-start gap-4">
@@ -1121,7 +1137,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             </div>
           </div>
         </div>
-      )}
+        )
+      ) : null}
 
       {/* Wallet Status - Only show if account is approved */}
       {accountApproved && !hasWallet && (
@@ -1297,9 +1314,13 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Aankomende Afspraken</h3>
           <div className="space-y-3">
-            {userAppointments.filter((apt: any) => 
-              (apt.status === 'pending' || apt.status === 'confirmed') && new Date(apt.date) >= new Date()
-            ).slice(0, 3).map((appointment: any) => (
+            {userAppointments.filter((apt: any) => {
+              if (apt.status !== 'pending' && apt.status !== 'confirmed') return false;
+              // Combine date and time to check if appointment is in the future
+              const appointmentDateTime = new Date(`${apt.date}T${apt.end_time || apt.start_time || '23:59:59'}`);
+              const now = new Date();
+              return appointmentDateTime >= now;
+            }).slice(0, 3).map((appointment: any) => (
               <div key={appointment.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                 <div className={`p-2 rounded-lg ${
                   appointment.status === 'confirmed' ? 'bg-green-100' : 'bg-orange-100'
