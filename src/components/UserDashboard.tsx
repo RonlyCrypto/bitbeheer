@@ -463,7 +463,6 @@ export default function UserDashboard() {
                 { id: 'goals', label: 'Doelen', icon: Target, alwaysEnabled: false },
                 { id: 'portfolio', label: 'Portfolio', icon: PieChart, alwaysEnabled: false },
                 { id: 'appointments', label: 'Afspraken', icon: Calendar, alwaysEnabled: true },
-                { id: 'education', label: 'Educatie', icon: BookOpen, alwaysEnabled: false },
                 { id: 'helpdesk', label: 'Helpdesk', icon: Mail, alwaysEnabled: false, badge: unreadChatCount },
               ].map((tab) => {
                 const isEnabled = tab.alwaysEnabled || accountApproved;
@@ -528,7 +527,6 @@ export default function UserDashboard() {
               accountApproved={accountApproved}
               firstAppointmentCompleted={firstAppointmentCompleted}
             />}
-            {activeTab === 'education' && accountApproved && <EducationTab />}
             {activeTab === 'helpdesk' && (
               <Helpdesk 
                 onMessageRead={async () => {
