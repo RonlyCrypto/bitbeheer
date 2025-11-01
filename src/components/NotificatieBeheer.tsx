@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Mail, Users, Send, CheckCircle, Clock, AlertCircle, Download, Trash2 } from 'lucide-react';
 import { DirectEmailService } from '../services/directEmailService';
+import { supabase } from '../lib/supabase';
 
 interface NotificationUser {
   id: string;
@@ -139,32 +140,40 @@ export default function NotificatieBeheer() {
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (confirm('Weet je zeker dat je deze gebruiker wilt verwijderen?')) {
+    if (!confirm('Weet je zeker dat je deze gebruiker wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.')) {
+      return;
+    }
+
+    try {
+      // Delete from Supabase database first
+      const { error: deleteError } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', userId);
+
+      if (deleteError) {
+        console.error('Error deleting user from database:', deleteError);
+        alert(`Fout bij verwijderen uit database: ${deleteError.message}`);
+        return;
+      }
+
+      // If database delete successful, update local state
+      const updatedUsers = users.filter(user => user.id !== userId);
+      setUsers(updatedUsers);
+      setSelectedUsers(prev => prev.filter(id => id !== userId));
+      
+      // Also try API endpoint as backup (though it shouldn't be needed now)
       try {
-        const response = await fetch(`/api/users/${userId}`, {
+        await fetch(`/api/users/${userId}`, {
           method: 'DELETE'
         });
-        
-        if (response.ok) {
-          const updatedUsers = users.filter(user => user.id !== userId);
-          setUsers(updatedUsers);
-          setSelectedUsers(prev => prev.filter(id => id !== userId));
-        } else {
-          console.error('Failed to delete user:', response.statusText);
-          // Fallback to localStorage for development
-          const updatedUsers = users.filter(user => user.id !== userId);
-          setUsers(updatedUsers);
-          localStorage.setItem('bitbeheer_emails', JSON.stringify(updatedUsers));
-          setSelectedUsers(prev => prev.filter(id => id !== userId));
-        }
-      } catch (error) {
-        console.error('Error deleting user:', error);
-        // Fallback to localStorage for development
-        const updatedUsers = users.filter(user => user.id !== userId);
-        setUsers(updatedUsers);
-        localStorage.setItem('bitbeheer_emails', JSON.stringify(updatedUsers));
-        setSelectedUsers(prev => prev.filter(id => id !== userId));
+      } catch (apiError) {
+        // Ignore API errors if database delete was successful
+        console.warn('API delete failed (non-critical):', apiError);
       }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      alert(`Fout bij verwijderen: ${error instanceof Error ? error.message : 'Onbekende fout'}`);
     }
   };
 

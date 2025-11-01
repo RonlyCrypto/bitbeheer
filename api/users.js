@@ -176,23 +176,55 @@ module.exports = async (req, res) => {
         });
 
       case 'DELETE':
-        // Delete user
+        // Delete user from Supabase database
         if (!userId) {
           return res.status(400).json({ error: 'User ID is required' });
         }
 
-        const deleteIndex = users.findIndex(user => user.id === userId);
-        if (deleteIndex === -1) {
-          return res.status(404).json({ error: 'User not found' });
+        try {
+          const { createClient } = require('@supabase/supabase-js');
+          const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+          const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+          
+          if (!supabaseUrl || !supabaseKey) {
+            console.error('Missing Supabase credentials for user deletion!');
+            return res.status(500).json({
+              success: false,
+              error: 'Database not configured'
+            });
+          }
+
+          const supabase = createClient(supabaseUrl, supabaseKey);
+          
+          // Delete from database
+          const { error: deleteError } = await supabase
+            .from('users')
+            .delete()
+            .eq('id', userId);
+          
+          if (deleteError) {
+            console.error('Error deleting user from Supabase:', deleteError);
+            return res.status(500).json({
+              success: false,
+              error: 'Failed to delete user from database',
+              details: deleteError.message
+            });
+          }
+
+          console.log('User deleted from Supabase successfully:', userId);
+
+          return res.status(200).json({ 
+            success: true, 
+            message: 'User deleted successfully from database' 
+          });
+        } catch (supabaseError) {
+          console.error('Supabase delete error:', supabaseError);
+          return res.status(500).json({
+            success: false,
+            error: 'Database delete failed',
+            details: supabaseError.message
+          });
         }
-
-        users.splice(deleteIndex, 1);
-        process.env.STORED_USERS = JSON.stringify(users);
-
-        return res.status(200).json({ 
-          success: true, 
-          message: 'User deleted successfully' 
-        });
 
       default:
         return res.status(405).json({ error: 'Method not allowed' });
