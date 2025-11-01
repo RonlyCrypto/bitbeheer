@@ -673,18 +673,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
   const [userAppointments, setUserAppointments] = useState<any[]>([]);
   
   const activeGoals = displayGoals.filter((goal) => (goal.status as string) === 'active').length;
-  
-  // Calculate upcoming appointments from loaded userAppointments
-  // Count appointments that are pending or confirmed and haven't passed yet
-  const upcomingAppointments = userAppointments.filter((apt: any) => {
-    if (apt.status !== 'pending' && apt.status !== 'confirmed') return false;
-    
-    // Combine date and time to check if appointment is in the future
-    const appointmentDateTime = new Date(`${apt.date}T${apt.end_time || apt.start_time || '23:59:59'}`);
-    const now = new Date();
-    
-    return appointmentDateTime >= now;
-  }).length;
   const [appointmentsLoading, setAppointmentsLoading] = useState(true);
   
   // Load appointments from database - do this immediately when component mounts
@@ -705,7 +693,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           .from('appointments')
           .select('*')
           .eq('user_email', email)
-          .in('status', ['pending', 'confirmed']) // Only load pending and confirmed
+          // Load ALL appointments, not just pending/confirmed - we filter in the frontend
           .order('date', { ascending: true })
           .order('start_time', { ascending: true });
 
@@ -750,34 +738,48 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
   }, []);
   
   // Find user's appointment (pending or confirmed) - prioritize confirmed, then pending
-  // Only count appointments that are not cancelled and haven't passed yet
-  const validAppointments = userAppointments.filter((apt: any) => {
+  // For the green block: show ANY pending/confirmed appointment (regardless of date)
+  // For the counter: only count future appointments
+  const allValidAppointments = userAppointments.filter((apt: any) => {
     if (apt.status === 'cancelled') return false;
-    if (apt.status !== 'pending' && apt.status !== 'confirmed') return false;
-    
+    return apt.status === 'pending' || apt.status === 'confirmed';
+  });
+  
+  // Find any pending or confirmed appointment for the block (no date restriction)
+  const userAppointment = allValidAppointments.find((apt: any) => apt.status === 'confirmed') 
+    || allValidAppointments.find((apt: any) => apt.status === 'pending');
+  const hasAppointment = !!userAppointment && !appointmentsLoading;
+  
+  // For upcoming appointments counter: only count future appointments
+  const futureValidAppointments = allValidAppointments.filter((apt: any) => {
     // Check if appointment is in the future (combine date and time)
     const appointmentDateTime = new Date(`${apt.date}T${apt.end_time || apt.start_time || '23:59:59'}`);
     const now = new Date();
-    
     return appointmentDateTime >= now;
   });
   
-  const userAppointment = validAppointments.find((apt: any) => apt.status === 'confirmed') 
-    || validAppointments.find((apt: any) => apt.status === 'pending');
-  const hasAppointment = !!userAppointment && !appointmentsLoading;
+  // Calculate upcoming appointments count
+  const upcomingAppointments = futureValidAppointments.length;
   
   // Debug log
   useEffect(() => {
     console.log('🔍 OverviewTab appointment check:', {
       appointmentsLoading,
       userAppointmentsCount: userAppointments.length,
-      validAppointmentsCount: validAppointments.length,
+      allValidAppointmentsCount: allValidAppointments.length,
+      futureValidAppointmentsCount: futureValidAppointments.length,
       hasAppointment,
       userAppointment,
-      userAppointments,
+      userAppointments: userAppointments.map((apt: any) => ({
+        id: apt.id,
+        date: apt.date,
+        status: apt.status,
+        start_time: apt.start_time,
+        end_time: apt.end_time
+      })),
       upcomingAppointments
     });
-  }, [userAppointments, hasAppointment, userAppointment, appointmentsLoading, validAppointments.length, upcomingAppointments]);
+  }, [userAppointments, hasAppointment, userAppointment, appointmentsLoading, allValidAppointments.length, futureValidAppointments.length, upcomingAppointments]);
   
   const [showWalletForm, setShowWalletForm] = useState(false);
   const [showQuestionsForm, setShowQuestionsForm] = useState(false);
