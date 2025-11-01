@@ -76,21 +76,8 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
                       localStorage.setItem('hasSeenWelcome', 'true');
                     }
 
-                    // Send login confirmation email
-                    try {
-                      const { DirectEmailService } = await import('../services/directEmailService');
-                      await DirectEmailService.sendLoginConfirmation(
-                        session.user.email || '',
-                        session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Gebruiker',
-                        new Date().toLocaleString('nl-NL'),
-                        // Note: IP address and user agent would need to be passed from the login component
-                        undefined, // IP address
-                        navigator.userAgent // User agent
-                      );
-                    } catch (emailError) {
-                      console.error('Error sending login confirmation email:', emailError);
-                      // Don't fail login if email fails
-                    }
+                    // Login confirmation email is now handled via database trigger
+                    // No need to send from frontend - avoids CORS issues and is more secure
                   }
                 }
               );
