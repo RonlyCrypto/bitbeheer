@@ -45,7 +45,8 @@ export default function AdminDashboard() {
     newChats: 0,
     pendingAppointments: 0,
     upcomingAppointment: null as any,
-    newAccounts: 0
+    newAccounts: 0,
+    newNotifications: 0
   });
 
   useEffect(() => {
@@ -170,11 +171,27 @@ export default function AdminDashboard() {
         .gte('created_at', sevenDaysAgo.toISOString())
         .neq('email', 'admin@bitbeheer.nl');
 
+      // Load new notification signups (users in users table created in last 7 days or with email_sent = false/null)
+      const { data: allNotificationUsers } = await supabase
+        .from('users')
+        .select('id, created_at, email_sent')
+        .order('created_at', { ascending: false });
+
+      // Count new notification signups (recent within 7 days OR email not sent yet)
+      const newNotificationsCount = allNotificationUsers?.filter(user => {
+        if (!user.created_at) return false;
+        const userDate = new Date(user.created_at);
+        const isRecent = userDate >= sevenDaysAgo;
+        const notSent = user.email_sent === false || user.email_sent === null;
+        return isRecent || notSent;
+      }).length || 0;
+
       setMetrics({
         newChats: unreadChats.length,
         pendingAppointments: appointments?.length || 0,
         upcomingAppointment: upcomingAppt,
-        newAccounts: accounts?.length || 0
+        newAccounts: accounts?.length || 0,
+        newNotifications: newNotificationsCount
       });
     } catch (error) {
       console.error('Error loading metrics:', error);
@@ -313,13 +330,18 @@ export default function AdminDashboard() {
                 </button>
                 <button
                   onClick={() => setActiveTab('notifications')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  className={`py-2 px-1 border-b-2 font-medium text-sm relative ${
                     activeTab === 'notifications'
                       ? 'border-orange-500 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
                   Notificaties
+                  {metrics.newNotifications > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      {metrics.newNotifications > 9 ? '9+' : metrics.newNotifications}
+                    </span>
+                  )}
                 </button>
                 <button
                   onClick={() => setActiveTab('accounts')}
