@@ -86,48 +86,48 @@ export default function AccountBeheer() {
           const accountsData = await accountsResponse.json();
           console.log('Accounts loaded from API:', accountsData.accounts);
           
+          // Remove duplicates based on email (keep first occurrence)
+          const uniqueAccounts = (accountsData.accounts || []).reduce((acc: any[], account: any) => {
+            if (!acc.find(a => a.email === account.email)) {
+              acc.push(account);
+            }
+            return acc;
+          }, []);
+          
           // Enrich accounts with approval status from Supabase
-          const enrichedAccounts = await Promise.all((accountsData.accounts || []).map(async (account: any) => {
+          const enrichedAccounts = await Promise.all(uniqueAccounts.map(async (account: any) => {
             try {
-              // Try to get approval status from users table
+              // Get all data from both tables
               const { data: userData } = await supabase
                 .from('users')
-                .select('account_approved, first_appointment_completed')
+                .select('email_verified, verified_at, actief, account_approved, first_appointment_completed')
                 .eq('email', account.email)
-                .single();
+                .maybeSingle();
               
-              if (userData) {
-                return {
-                  ...account,
-                  account_approved: userData.account_approved || false,
-                  first_appointment_completed: userData.first_appointment_completed || false
-                };
-              }
-              
-              // Fallback to accounts table
               const { data: accountData } = await supabase
                 .from('accounts')
-                .select('account_approved, first_appointment_completed')
+                .select('email_verified, verified_at, actief, account_approved, first_appointment_completed')
                 .eq('email', account.email)
-                .single();
+                .maybeSingle();
               
-              if (accountData) {
-                return {
-                  ...account,
-                  account_approved: accountData.account_approved || false,
-                  first_appointment_completed: accountData.first_appointment_completed || false
-                };
-              }
+              // Prefer data from accounts table, fallback to users table
+              const finalData = accountData || userData || {};
               
               return {
                 ...account,
-                account_approved: false,
-                first_appointment_completed: false
+                // Use verified status from database (accounts or users table)
+                email_verified: finalData.email_verified ?? account.email_verified ?? false,
+                verified_at: finalData.verified_at ?? account.verified_at,
+                actief: finalData.actief !== undefined ? finalData.actief : (account.actief !== undefined ? account.actief : true),
+                account_approved: finalData.account_approved || false,
+                first_appointment_completed: finalData.first_appointment_completed || false
               };
             } catch (error) {
               // If columns don't exist, default to false
               return {
                 ...account,
+                email_verified: account.email_verified || false,
+                actief: account.actief !== undefined ? account.actief : true,
                 account_approved: false,
                 first_appointment_completed: false
               };
@@ -349,44 +349,70 @@ export default function AccountBeheer() {
   // Manually verify account as admin - set status to 'actief' when verified
   const handleManualVerify = async (user: UserAccount) => {
     try {
-      const response = await fetch('/api/save-user-profile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: user.email,
-          userData: {
+      const now = new Date().toISOString();
+      
+      // Update both accounts and users tables in Supabase
+      try {
+        // Update accounts table
+        const { error: accountsError } = await supabase
+          .from('accounts')
+          .update({ 
             email_verified: true,
-            verified_at: new Date().toISOString(),
-            actief: true // Set status to actief when verified
-          }
-        }),
-      });
-
-      if (response.ok) {
-        // Also update status in accounts/users table
-        try {
-          await supabase
-            .from('accounts')
-            .update({ actief: true })
-            .eq('email', user.email);
-        } catch (dbError) {
-          // Silently continue if update fails
+            verified_at: now,
+            actief: true,
+            updated_at: now
+          })
+          .eq('email', user.email);
+        
+        if (accountsError) {
+          console.error('Error updating accounts table:', accountsError);
         }
-
-        // Update local state
-        setUsers(users.map(u => 
-          u.id === user.id 
-            ? { ...u, email_verified: true, verified_at: new Date().toISOString(), actief: true }
-            : u
-        ));
-        // Account manually verified (silent)
-      } else {
-        console.error('Failed to verify account');
+        
+        // Update users table
+        const { error: usersError } = await supabase
+          .from('users')
+          .update({ 
+            email_verified: true,
+            verified_at: now,
+            actief: true,
+            updated_at: now
+          })
+          .eq('email', user.email);
+        
+        if (usersError) {
+          console.error('Error updating users table:', usersError);
+        }
+      } catch (dbError) {
+        console.error('Database update error:', dbError);
       }
+
+      // Also call the API endpoint as backup
+      try {
+        await fetch('/api/save-user-profile', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: user.email,
+            userData: {
+              email_verified: true,
+              verified_at: now,
+              actief: true
+            }
+          }),
+        });
+      } catch (apiError) {
+        console.error('API update error:', apiError);
+      }
+
+      // Refresh accounts to get updated data from database
+      await refreshAccounts();
+      
+      alert('Account succesvol geverifieerd en geactiveerd!');
     } catch (error) {
       console.error('Error verifying account:', error);
+      alert('Fout bij het verifiëren van het account. Probeer het opnieuw.');
     }
   };
 
