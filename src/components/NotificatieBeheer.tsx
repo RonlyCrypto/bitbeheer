@@ -183,12 +183,26 @@ export default function NotificatieBeheer() {
         fromEmail: 'update@bitbeheer.nl'
       };
 
-      // Use direct email service
+      // Get body_content from template if available
+      let templateBodyContent: string | undefined;
+      if (template) {
+        // Try to get body_content from database
+        const { data: templateData } = await supabase
+          .from('email_templates')
+          .select('body_content')
+          .eq('id', template.id)
+          .maybeSingle();
+        
+        templateBodyContent = templateData?.body_content || template.content;
+      }
+
+      // Use direct email service with template body content
       const result = await DirectEmailService.sendBulkEmail(
         selectedUserData,
         emailData.subject,
         emailData.message,
-        emailData.fromEmail
+        emailData.fromEmail,
+        templateBodyContent
       );
 
       if (result.success) {

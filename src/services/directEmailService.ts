@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { wrapEmailBody, htmlToPlainText, replaceVariables, EmailVariables } from '../utils/emailLayout';
 
 interface EmailData {
   to: string;
