@@ -319,12 +319,13 @@ export default function UserDashboard() {
     
     // Listen for account refresh events (when admin approves account)
     const handleAccountRefresh = async () => {
-      if (user?.email) {
+      const currentUser = user;
+      if (currentUser?.email) {
         try {
           const { data: userData, error: userError } = await supabase
             .from('users')
             .select('account_approved, first_appointment_completed')
-            .eq('email', user.email)
+            .eq('email', currentUser.email)
             .single();
           
           if (userData && !userError) {
@@ -335,7 +336,7 @@ export default function UserDashboard() {
             const { data: accountData } = await supabase
               .from('accounts')
               .select('account_approved, first_appointment_completed')
-              .eq('email', user.email)
+              .eq('email', currentUser.email)
               .single();
             
             if (accountData) {
