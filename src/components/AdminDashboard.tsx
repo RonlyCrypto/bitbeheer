@@ -167,6 +167,21 @@ export default function AdminDashboard() {
         .select('email, email_verified, first_appointment_completed, account_approved, is_admin, is_test, created_at')
         .neq('email', 'admin@bitbeheer.nl');
       
+      // Also get data from users table for first_appointment_completed and account_approved
+      const { data: allUsers } = await supabase
+        .from('users')
+        .select('email, first_appointment_completed, account_approved')
+        .neq('email', 'admin@bitbeheer.nl');
+      
+      // Create a map for quick lookup
+      const usersMap = new Map<string, { first_appointment_completed?: boolean; account_approved?: boolean }>();
+      allUsers?.forEach((user: any) => {
+        usersMap.set(user.email, {
+          first_appointment_completed: user.first_appointment_completed || false,
+          account_approved: user.account_approved || false
+        });
+      });
+      
       // Count accounts that need attention:
       // 1. Wachtend op Verificatie: email_verified = false AND not expired (created within 5 days)
       // 2. Geverifieerd - Wachtend op 20min Gesprek: email_verified = true AND first_appointment_completed = false AND account_approved = false
@@ -176,6 +191,10 @@ export default function AdminDashboard() {
       const accountsNeedingAttention = allAccounts?.filter((account: any) => {
         // Skip admin and test accounts
         if (account.is_admin || account.is_test) return false;
+        
+        const userData = usersMap.get(account.email);
+        const firstAppointmentCompleted = userData?.first_appointment_completed ?? account.first_appointment_completed ?? false;
+        const accountApproved = userData?.account_approved ?? account.account_approved ?? false;
         
         // Section 1: Wachtend op Verificatie
         if (!account.email_verified) {
@@ -188,8 +207,8 @@ export default function AdminDashboard() {
         
         // Section 2: Geverifieerd - Wachtend op 20min Gesprek
         if (account.email_verified && 
-            !account.first_appointment_completed && 
-            !account.account_approved) {
+            !firstAppointmentCompleted && 
+            !accountApproved) {
           return true;
         }
         
