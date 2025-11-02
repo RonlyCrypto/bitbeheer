@@ -21,6 +21,12 @@ CREATE INDEX IF NOT EXISTS idx_email_templates_active ON public.email_templates(
 -- Enable RLS (Row Level Security)
 ALTER TABLE public.email_templates ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist (to allow re-running this script)
+DROP POLICY IF EXISTS "Anyone authenticated can view email templates" ON public.email_templates;
+DROP POLICY IF EXISTS "Admins can insert email templates" ON public.email_templates;
+DROP POLICY IF EXISTS "Admins can update email templates" ON public.email_templates;
+DROP POLICY IF EXISTS "Admins can delete email templates" ON public.email_templates;
+
 -- Policy: Authenticated users can read all templates
 CREATE POLICY "Anyone authenticated can view email templates"
   ON public.email_templates
