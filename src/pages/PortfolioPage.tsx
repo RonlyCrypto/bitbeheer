@@ -373,23 +373,29 @@ export default function PortfolioPage() {
             </div>
           </div>
 
-          {/* Controls */}
+          {/* Controls - Only show if no wallets or wallets exist */}
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <button
-              onClick={() => setShowAddWallet(!showAddWallet)}
-              className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              Wallet Toevoegen
-            </button>
+            {/* Only show "Wallet Toevoegen" button if no wallets exist */}
+            {wallets.length === 0 && !loadingWallets && (
+              <button
+                onClick={() => setShowAddWallet(!showAddWallet)}
+                className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 transition-colors"
+              >
+                <Plus className="w-5 h-5" />
+                Wallet Toevoegen
+              </button>
+            )}
 
-            <button
-              onClick={() => setShowBalances(!showBalances)}
-              className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-xl font-semibold hover:bg-gray-700 transition-colors"
-            >
-              {showBalances ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              {showBalances ? 'Verberg Saldi' : 'Toon Saldi'}
-            </button>
+            {/* Only show "Verberg Saldi" button if wallets exist */}
+            {wallets.length > 0 && (
+              <button
+                onClick={() => setShowBalances(!showBalances)}
+                className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-xl font-semibold hover:bg-gray-700 transition-colors"
+              >
+                {showBalances ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showBalances ? 'Verberg Saldi' : 'Toon Saldi'}
+              </button>
+            )}
           </div>
 
           {/* Add Wallet Form */}
