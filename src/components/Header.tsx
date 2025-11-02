@@ -253,29 +253,6 @@ export default function Header() {
                             </Link>
                           )}
 
-                        {/* Theme Toggle - Only for admin */}
-                        {!isImpersonating && (
-                          <button 
-                            onClick={() => {
-                              toggleTheme();
-                              setShowSettingsDropdown(false);
-                            }}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                          >
-                            {theme === 'light' ? (
-                              <>
-                                <Moon className="w-4 h-4" />
-                                Dark Mode
-                              </>
-                            ) : (
-                              <>
-                                <Sun className="w-4 h-4" />
-                                Light Mode
-                              </>
-                            )}
-                          </button>
-                        )}
-
                         <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
                         
                         <button 
@@ -300,7 +277,11 @@ export default function Header() {
                                 window.location.href = '/admin';
                               }
                             } else {
-                              signOut();
+                              const result = await signOut();
+                              if (result.success) {
+                                // Redirect to home page after logout
+                                window.location.href = '/';
+                              }
                             }
                             setShowSettingsDropdown(false);
                           }}

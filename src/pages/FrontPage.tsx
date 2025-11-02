@@ -1,7 +1,9 @@
-import { Bitcoin, Shield, BookOpen, TrendingUp, Users, Target, ArrowRight, CheckCircle } from 'lucide-react';
+import { Bitcoin, Shield, BookOpen, TrendingUp, Users, Target, ArrowRight, CheckCircle, BarChart3, Wallet, Lock, Smartphone, Monitor, Database } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 
 export default function FrontPage() {
+  const { isAuthenticated } = useSupabaseAuth();
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Hero Section */}
@@ -34,81 +36,235 @@ export default function FrontPage() {
         </div>
       </section>
 
-      {/* My Story Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                Mijn Verhaal
-              </h2>
-              <p className="text-xl text-gray-600 leading-relaxed">
-                Waarom ik dit platform heb gemaakt en hoe ik jou kan helpen
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
-              <div>
-                <h3 className="text-3xl font-bold text-gray-900 mb-6">
-                  Hey! Mijn naam is Giovanni
-                </h3>
-                <div className="space-y-6 text-lg text-gray-600 leading-relaxed">
-                  <p>
-                    Ik ben sinds 2017 actief in de wereld van cryptocurrency. In de afgelopen jaren heb ik van alles voorbij zien komen: 
-                    Bitcoin, altcoins, NFT's, memecoins, noem het maar op. Ik heb meegemaakt hoe de markt piekte, 
-                    instortte en weer opkrabbelde. En ja… ook de scams, hypes en fabels zijn me niet bespaard gebleven.
-                  </p>
-                  <p>
-                    Wat me al een hele tijd opvalt, is dat steeds meer mensen bij het horen van "Bitcoin" of "crypto" meteen aan oplichting denken. 
-                    Dat vind ik jammer, want cryptocurrency heeft daar vaak helemaal niets mee te maken. In veel gevallen gaat het om 
-                    gewone oplichting met fiatgeld, waarbij crypto alleen als excuus wordt gebruikt.
-                  </p>
-                  <p>
-                    <strong>Daarom ben ik deze website gestart.</strong> Ik wil mensen helpen die interesse hebben in het investeren in Bitcoin, 
-                    maar niet goed weten waar ze moeten beginnen of waar ze op moeten letten. Met de juiste kennis kun je jezelf 
-                    beschermen, slimme keuzes maken en met vertrouwen de cryptowereld instappen.
-                  </p>
-                  <p className="text-orange-600 font-semibold">
-                    Mijn doel is simpel: anderen helpen begrijpen hoe je veilig Bitcoin aankoopt en in eigen beheer bewaart, 
-                    zonder poespas, zonder hype, gewoon eerlijk en duidelijk.
-                  </p>
-                </div>
+      {/* My Story Section - Only for logged in users */}
+      {isAuthenticated && (
+        <section className="py-20 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-16">
+                <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                  Mijn Verhaal
+                </h2>
+                <p className="text-xl text-gray-600 leading-relaxed">
+                  Waarom ik dit platform heb gemaakt en hoe ik jou kan helpen
+                </p>
               </div>
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="bg-orange-500 p-3 rounded-xl">
-                    <Shield className="w-8 h-8 text-white" />
+
+              <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
+                <div>
+                  <h3 className="text-3xl font-bold text-gray-900 mb-6">
+                    Hey! Mijn naam is Giovanni
+                  </h3>
+                  <div className="space-y-6 text-lg text-gray-600 leading-relaxed">
+                    <p>
+                      Ik ben sinds 2017 actief in de wereld van cryptocurrency. In de afgelopen jaren heb ik van alles voorbij zien komen: 
+                      Bitcoin, altcoins, NFT's, memecoins, noem het maar op. Ik heb meegemaakt hoe de markt piekte, 
+                      instortte en weer opkrabbelde. En ja… ook de scams, hypes en fabels zijn me niet bespaard gebleven.
+                    </p>
+                    <p>
+                      Wat me al een hele tijd opvalt, is dat steeds meer mensen bij het horen van "Bitcoin" of "crypto" meteen aan oplichting denken. 
+                      Dat vind ik jammer, want cryptocurrency heeft daar vaak helemaal niets mee te maken. In veel gevallen gaat het om 
+                      gewone oplichting met fiatgeld, waarbij crypto alleen als excuus wordt gebruikt.
+                    </p>
+                    <p>
+                      <strong>Daarom ben ik deze website gestart.</strong> Ik wil mensen helpen die interesse hebben in het investeren in Bitcoin, 
+                      maar niet goed weten waar ze moeten beginnen of waar ze op moeten letten. Met de juiste kennis kun je jezelf 
+                      beschermen, slimme keuzes maken en met vertrouwen de cryptowereld instappen.
+                    </p>
+                    <p className="text-orange-600 font-semibold">
+                      Mijn doel is simpel: anderen helpen begrijpen hoe je veilig Bitcoin aankoopt en in eigen beheer bewaart, 
+                      zonder poespas, zonder hype, gewoon eerlijk en duidelijk.
+                    </p>
                   </div>
-                  <h4 className="text-2xl font-bold text-gray-900">Waar We Je Mee Helpen</h4>
                 </div>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                    <span className="text-gray-700">Veilig Bitcoin aankopen en bewaren in eigen beheer</span>
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="bg-orange-500 p-3 rounded-xl">
+                      <Shield className="w-8 h-8 text-white" />
+                    </div>
+                    <h4 className="text-2xl font-bold text-gray-900">Waar We Je Mee Helpen</h4>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                    <span className="text-gray-700">Altijd toegang tot je portfolio en waarde</span>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                      <span className="text-gray-700">Veilig Bitcoin aankopen en bewaren in eigen beheer</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                      <span className="text-gray-700">Altijd toegang tot je portfolio en waarde</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                      <span className="text-gray-700">100% eigen beheer - not your keys, not your crypto</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                      <span className="text-gray-700">Wanneer het slim is om te kopen en waarom</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                    <span className="text-gray-700">100% eigen beheer - not your keys, not your crypto</span>
+                  <div className="mt-6 p-4 bg-white rounded-lg">
+                    <p className="text-sm text-gray-600 italic">
+                      "Met de juiste kennis kun je jezelf beschermen, slimme keuzes maken en met vertrouwen de cryptowereld instappen."
+                    </p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                    <span className="text-gray-700">Wanneer het slim is om te kopen en waarom</span>
-                  </div>
-                </div>
-                <div className="mt-6 p-4 bg-white rounded-lg">
-                  <p className="text-sm text-gray-600 italic">
-                    "Met de juiste kennis kun je jezelf beschermen, slimme keuzes maken en met vertrouwen de cryptowereld instappen."
-                  </p>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
+
+      {/* Why We Started Section - Only for NOT logged in users */}
+      {!isAuthenticated && (
+        <>
+          <section className="py-20 bg-white">
+            <div className="container mx-auto px-4">
+              <div className="max-w-4xl mx-auto">
+                <div className="text-center mb-16">
+                  <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                    Waarom We Dit Platform Hebben Gestart
+                  </h2>
+                  <p className="text-xl text-gray-600 leading-relaxed max-w-3xl mx-auto">
+                    Bitcoin investeren kan overweldigend zijn. Wij helpen je stap voor stap om veilig te beginnen.
+                  </p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
+                  <div>
+                    <h3 className="text-3xl font-bold text-gray-900 mb-6">
+                      De Uitdaging
+                    </h3>
+                    <div className="space-y-6 text-lg text-gray-600 leading-relaxed">
+                      <p>
+                        Steeds meer mensen willen investeren in Bitcoin, maar weten niet waar ze moeten beginnen. 
+                        Er is zoveel informatie beschikbaar, maar veel ervan is verwarrend, misleidend of gericht op hype.
+                      </p>
+                      <p>
+                        Veel beginners verliezen geld door:
+                      </p>
+                      <ul className="list-disc list-inside space-y-2 ml-4">
+                        <li>Niet weten welke exchanges betrouwbaar zijn</li>
+                        <li>Bitcoin bewaren op exchanges in plaats van eigen beheer</li>
+                        <li>Gevallen voor scams en oplichting</li>
+                        <li>Niet begrijpen van de risico's</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8">
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="bg-orange-500 p-3 rounded-xl">
+                        <Target className="w-8 h-8 text-white" />
+                      </div>
+                      <h4 className="text-2xl font-bold text-gray-900">Onze Oplossing</h4>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                        <span className="text-gray-700">Persoonlijke 1-op-1 begeleiding</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                        <span className="text-gray-700">Veilig Bitcoin kopen en bewaren leren</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                        <span className="text-gray-700">Eigen beheer opzetten met hardware wallet</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                        <span className="text-gray-700">Portfolio monitoring en beheer tools</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Tools Preview Section */}
+          <section className="py-20 bg-gray-50">
+            <div className="container mx-auto px-4">
+              <div className="max-w-6xl mx-auto">
+                <div className="text-center mb-16">
+                  <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                    Wat We Je Bieden
+                  </h2>
+                  <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Een compleet platform om je Bitcoin reis te begeleiden en monitoren
+                  </p>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-8 mb-12">
+                  <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all">
+                    <div className="bg-orange-100 p-4 rounded-xl w-fit mb-6">
+                      <BarChart3 className="w-8 h-8 text-orange-600" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4">Portfolio Dashboard</h3>
+                    <p className="text-gray-600 leading-relaxed mb-4">
+                      Bekijk je Bitcoin portfolio, transacties en waarde ontwikkeling over tijd. Altijd up-to-date en veilig.
+                    </p>
+                    <div className="bg-gray-100 rounded-lg p-4 h-32 flex items-center justify-center">
+                      <Monitor className="w-12 h-12 text-gray-400" />
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all">
+                    <div className="bg-orange-100 p-4 rounded-xl w-fit mb-6">
+                      <Wallet className="w-8 h-8 text-orange-600" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4">Wallet Beheer</h3>
+                    <p className="text-gray-600 leading-relaxed mb-4">
+                      Voeg je Bitcoin wallets toe en volg ze automatisch. Zie je balans, transacties en geschiedenis.
+                    </p>
+                    <div className="bg-gray-100 rounded-lg p-4 h-32 flex items-center justify-center">
+                      <Lock className="w-12 h-12 text-gray-400" />
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all">
+                    <div className="bg-orange-100 p-4 rounded-xl w-fit mb-6">
+                      <TrendingUp className="w-8 h-8 text-orange-600" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4">Prijs Monitoring</h3>
+                    <p className="text-gray-600 leading-relaxed mb-4">
+                      Volg Bitcoin prijzen in real-time en bekijk historische data. Begrijp markt trends en cycles.
+                    </p>
+                    <div className="bg-gray-100 rounded-lg p-4 h-32 flex items-center justify-center">
+                      <BarChart3 className="w-12 h-12 text-gray-400" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div className="bg-white rounded-2xl p-8 shadow-lg">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="bg-blue-100 p-3 rounded-xl">
+                        <Smartphone className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <h4 className="text-xl font-bold text-gray-900">Mobiel & Desktop</h4>
+                    </div>
+                    <p className="text-gray-600">
+                      Toegang tot je portfolio en tools vanaf elk apparaat. Responsive design voor optimale ervaring.
+                    </p>
+                  </div>
+
+                  <div className="bg-white rounded-2xl p-8 shadow-lg">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="bg-green-100 p-3 rounded-xl">
+                        <Database className="w-6 h-6 text-green-600" />
+                      </div>
+                      <h4 className="text-xl font-bold text-gray-900">Veilig & Privé</h4>
+                    </div>
+                    <p className="text-gray-600">
+                      Alle data wordt veilig opgeslagen. Jij houdt volledige controle over je informatie en wallets.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </>
+      )}
 
       {/* What We Offer Section */}
       <section className="py-20 bg-gray-50">

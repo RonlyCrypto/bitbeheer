@@ -1,7 +1,56 @@
 import { Shield, Heart } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import AdminLogin from './AdminLogin';
 
+interface ReferralLink {
+  id: string;
+  title: string;
+  url: string;
+  section_title: string;
+  order_index: number;
+}
+
 export default function Footer() {
+  const [referralLinks, setReferralLinks] = useState<ReferralLink[]>([]);
+  const [sectionTitle, setSectionTitle] = useState('Belangrijke Links');
+
+  useEffect(() => {
+    const loadReferralLinks = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('referral_links')
+          .select('*')
+          .eq('is_active', true)
+          .order('order_index', { ascending: true });
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          setReferralLinks(data);
+          // Use the section_title from the first link (all should have the same)
+          setSectionTitle(data[0].section_title || 'Belangrijke Links');
+        } else {
+          // Fallback to default links if database is empty
+          setReferralLinks([
+            { id: '1', title: 'Bitcoin.org - Officiële Site', url: 'https://bitcoin.org', section_title: 'Belangrijke Links', order_index: 1 },
+            { id: '2', title: 'CoinGecko - Prijsdata', url: 'https://www.coingecko.com', section_title: 'Belangrijke Links', order_index: 2 },
+            { id: '3', title: 'Blockchain Explorer', url: 'https://www.blockchain.com/explorer', section_title: 'Belangrijke Links', order_index: 3 }
+          ]);
+        }
+      } catch (error) {
+        console.error('Error loading referral links:', error);
+        // Fallback to default links
+        setReferralLinks([
+          { id: '1', title: 'Bitcoin.org - Officiële Site', url: 'https://bitcoin.org', section_title: 'Belangrijke Links', order_index: 1 },
+          { id: '2', title: 'CoinGecko - Prijsdata', url: 'https://www.coingecko.com', section_title: 'Belangrijke Links', order_index: 2 },
+          { id: '3', title: 'Blockchain Explorer', url: 'https://www.blockchain.com/explorer', section_title: 'Belangrijke Links', order_index: 3 }
+        ]);
+      }
+    };
+
+    loadReferralLinks();
+  }, []);
   return (
     <footer className="bg-gray-900 text-gray-300 mt-16">
       <div className="container mx-auto px-4 py-12">
@@ -15,23 +64,20 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-white font-bold text-lg mb-4">Belangrijke Links</h3>
+            <h3 className="text-white font-bold text-lg mb-4">{sectionTitle}</h3>
             <ul className="space-y-2 text-sm">
-              <li>
-                <a href="https://bitcoin.org" target="_blank" rel="noopener noreferrer" className="hover:text-orange-400 transition-colors">
-                  Bitcoin.org - Officiële Site
-                </a>
-              </li>
-              <li>
-                <a href="https://www.coingecko.com" target="_blank" rel="noopener noreferrer" className="hover:text-orange-400 transition-colors">
-                  CoinGecko - Prijsdata
-                </a>
-              </li>
-              <li>
-                <a href="https://www.blockchain.com/explorer" target="_blank" rel="noopener noreferrer" className="hover:text-orange-400 transition-colors">
-                  Blockchain Explorer
-                </a>
-              </li>
+              {referralLinks.map((link) => (
+                <li key={link.id}>
+                  <a 
+                    href={link.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="hover:text-orange-400 transition-colors"
+                  >
+                    {link.title}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
 
