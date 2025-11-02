@@ -19,7 +19,8 @@ import {
   Plus,
   X,
   Video,
-  BookOpen
+  BookOpen,
+  Copy
 } from 'lucide-react';
 import { bitcoinPriceService, BitcoinPrice } from '../services/bitcoinPriceService';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
@@ -34,6 +35,7 @@ import AppointmentBookingPopup from './AppointmentBookingPopup';
 import Helpdesk from './Helpdesk';
 import AgendaView from './AgendaView';
 import PortfolioPage from '../pages/PortfolioPage';
+import { bitcoinApiService } from '../services/bitcoinApiService';
 
 interface UserProfile {
   id: string;
@@ -911,6 +913,24 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
     type: 'bitcoin'
   });
   const [isAddingWallet, setIsAddingWallet] = useState(false);
+  const [walletData, setWalletData] = useState<any>(null);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [bitcoinPrice, setBitcoinPrice] = useState<number>(96640);
+
+  // Load Bitcoin price
+  useEffect(() => {
+    const loadPrice = async () => {
+      try {
+        const price = await bitcoinApiService.getCurrentPrice();
+        setBitcoinPrice(price);
+      } catch (error) {
+        console.error('Error loading Bitcoin price:', error);
+      }
+    };
+    loadPrice();
+    const interval = setInterval(loadPrice, 60000); // Update elke minuut
+    return () => clearInterval(interval);
+  }, []);
 
   // Load wallet status and questions on mount
   useEffect(() => {
@@ -929,11 +949,17 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 
         const { data: wallet } = await supabase
           .from('wallets')
-          .select('id')
+          .select('*')
           .eq('email', email)
           .limit(1);
 
-        setHasWallet(!!wallet && wallet.length > 0);
+        if (wallet && wallet.length > 0) {
+          setHasWallet(true);
+          setWalletData(wallet[0]);
+        } else {
+          setHasWallet(false);
+          setWalletData(null);
+        }
       } catch (error) {
         console.error('Error loading wallet status:', error);
       }
@@ -986,6 +1012,12 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
       return;
     }
 
+    // Validate Bitcoin address
+    if (!bitcoinApiService.validateBitcoinAddress(walletForm.address.trim())) {
+      alert('Ongeldig Bitcoin adres. Controleer het adres en probeer opnieuw.');
+      return;
+    }
+
     setIsAddingWallet(true);
     try {
       // Get effective user email (considering impersonation)
@@ -1013,22 +1045,63 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         return;
       }
 
-      const { error: insertErr } = await supabase
+      // Fetch wallet data from Bitcoin API
+      const walletApiData = await bitcoinApiService.getWalletData(walletForm.address.trim());
+      
+      // Get current Bitcoin price
+      const currentBtcPrice = await bitcoinApiService.getCurrentPrice();
+      setBitcoinPrice(currentBtcPrice);
+
+      // Get last transaction
+      const lastTx = walletApiData.transactions && walletApiData.transactions.length > 0
+        ? walletApiData.transactions[0]
+        : null;
+
+      // Insert wallet with portfolio data
+      const { data: newWallet, error: insertErr } = await supabase
         .from('wallets')
-        .insert([{ email, address: walletForm.address.trim(), name: walletForm.name?.trim() || null, type: walletForm.type, created_at: new Date().toISOString() }]);
+        .insert([{
+          email,
+          address: walletForm.address.trim(),
+          name: walletForm.name?.trim() || null,
+          type: walletForm.type,
+          balance: walletApiData.balance,
+          transaction_count: walletApiData.transactionCount,
+          total_received: walletApiData.totalReceived,
+          total_sent: walletApiData.totalSent,
+          first_seen: walletApiData.firstSeen ? new Date(walletApiData.firstSeen) : null,
+          last_seen: walletApiData.lastSeen ? new Date(walletApiData.lastSeen) : new Date(),
+          last_transaction_hash: lastTx?.hash || null,
+          last_transaction_time: lastTx?.time ? new Date(lastTx.time * 1000) : null,
+          wallet_data: walletApiData.transactions ? { transactions: walletApiData.transactions } : null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
       if (insertErr) throw insertErr;
 
+      // Update state
       setHasWallet(true);
+      setWalletData(newWallet);
+      setShowSuccessMessage(true);
+      
+      // Hide success message after 5 seconds
+      setTimeout(() => {
+        setShowSuccessMessage(false);
+      }, 5000);
       
       // Close form after success
       setTimeout(() => {
         setShowWalletForm(false);
         setWalletForm({ address: '', name: '', type: 'bitcoin' });
-      }, 1000);
+      }, 2000);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding wallet:', error);
-      alert('Fout bij het toevoegen van wallet');
+      const errorMessage = error?.message || 'Fout bij het toevoegen van wallet';
+      alert(errorMessage);
     } finally {
       setIsAddingWallet(false);
     }
@@ -1357,8 +1430,100 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         </div>
       )}
 
-      {/* Wallet Success - Shows when wallet is being added */}
-      {hasWallet && (
+      {/* Wallet Success Message */}
+      {showSuccessMessage && (
+        <div className="bg-green-50 border border-green-200 p-6 rounded-xl">
+          <div className="flex items-center gap-4">
+            <div className="bg-green-100 p-3 rounded-xl">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-green-800 mb-1">Wallet succesvol toegevoegd!</h3>
+              <p className="text-green-700">Je wallet is gekoppeld en je portfolio wordt bijgewerkt.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Wallet Overview Block - Shows wallet details */}
+      {hasWallet && walletData && !showSuccessMessage && (
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 shadow-lg">
+          <div className="flex items-start gap-4 mb-4">
+            <div className="bg-blue-100 p-3 rounded-xl">
+              <Wallet className="w-8 h-8 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {walletData.name || 'Mijn Bitcoin Wallet'}
+              </h3>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-sm text-gray-600 font-mono">
+                  {walletData.address ? 
+                    `${walletData.address.slice(0, 8)}...${walletData.address.slice(-8)}` : 
+                    '***'}
+                </span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(walletData.address);
+                  }}
+                  className="text-blue-600 hover:text-blue-800 text-xs"
+                  title="Kopieer adres"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+              </div>
+              
+              {/* Portfolio Summary */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white rounded-lg p-4 border border-blue-100">
+                  <div className="text-sm text-gray-600 mb-1">Wallet Waarde</div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    €{((walletData.balance || 0) * bitcoinPrice).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {walletData.balance?.toFixed(8) || '0.00000000'} BTC
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-lg p-4 border border-blue-100">
+                  <div className="text-sm text-gray-600 mb-1">Totaal BTC</div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {walletData.balance?.toFixed(4) || '0.0000'}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {walletData.transaction_count || 0} transacties
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-lg p-4 border border-blue-100">
+                  <div className="text-sm text-gray-600 mb-1">Laatste Transactie</div>
+                  {walletData.last_transaction_time ? (
+                    <>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {new Date(walletData.last_transaction_time).toLocaleDateString('nl-NL', { 
+                          day: '2-digit', 
+                          month: '2-digit', 
+                          year: 'numeric' 
+                        })}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1 font-mono">
+                        {walletData.last_transaction_hash ? 
+                          `${walletData.last_transaction_hash.slice(0, 8)}...${walletData.last_transaction_hash.slice(-8)}` : 
+                          'Geen transacties'}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-sm text-gray-500">Geen transacties</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Wallet Success - Shows when wallet is being added (old fallback) */}
+      {hasWallet && !walletData && !showSuccessMessage && (
         <div className="bg-green-50 border border-green-200 p-6 rounded-xl animate-pulse">
           <div className="flex items-center gap-4">
             <div className="bg-green-100 p-3 rounded-xl">
