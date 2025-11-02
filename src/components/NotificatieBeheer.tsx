@@ -43,10 +43,51 @@ export default function NotificatieBeheer() {
   useEffect(() => {
     const loadUsers = async () => {
       try {
+        // First try to load from Supabase directly to get email_sent status
+        const { data: supabaseUsers, error: supabaseError } = await supabase
+          .from('users')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (!supabaseError && supabaseUsers) {
+          // Map Supabase data to NotificationUser format
+          const mappedUsers = supabaseUsers.map((user: any) => ({
+            id: user.id,
+            email: user.email,
+            name: user.name || 'Niet opgegeven',
+            message: user.message || 'Geen bericht',
+            category: user.category || 'livegang',
+            date: user.created_at ? new Date(user.created_at).toLocaleDateString('nl-NL') : '',
+            timestamp: user.created_at || '',
+            emailSent: user.email_sent === true,
+            emailSentDate: user.email_sent_date || undefined
+          }));
+          
+          setUsers(mappedUsers);
+          setIsLoading(false);
+          return;
+        }
+        
+        // Fallback to API endpoint
         const response = await fetch('/api/users');
         if (response.ok) {
           const data = await response.json();
-          setUsers(data.users || []);
+          // Ensure emailSent is loaded from database
+          const usersWithEmailStatus = await Promise.all((data.users || []).map(async (user: any) => {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('email_sent, email_sent_date')
+              .eq('id', user.id)
+              .maybeSingle();
+            
+            return {
+              ...user,
+              emailSent: userData?.email_sent === true || user.emailSent === true,
+              emailSentDate: userData?.email_sent_date || user.emailSentDate
+            };
+          }));
+          
+          setUsers(usersWithEmailStatus);
         } else {
           console.error('Failed to load users:', response.statusText);
           // Fallback to localStorage for development
@@ -116,17 +157,45 @@ export default function NotificatieBeheer() {
 
       if (result.success) {
         setSendStatus('sent');
-        // Update users as sent
+        
+        // Update database for each user that received email
+        const now = new Date().toISOString();
+        for (const userId of selectedUsers) {
+          try {
+            const { error: updateError } = await supabase
+              .from('users')
+              .update({
+                email_sent: true,
+                email_sent_date: now,
+                updated_at: now
+              })
+              .eq('id', userId);
+            
+            if (updateError) {
+              console.error(`Error updating user ${userId} in database:`, updateError);
+            }
+          } catch (dbError) {
+            console.error(`Database update error for user ${userId}:`, dbError);
+          }
+        }
+        
+        // Update local state
         setUsers(prevUsers => 
           prevUsers.map(user => 
             selectedUsers.includes(user.id) 
-              ? { ...user, emailSent: true, emailSentDate: new Date().toISOString() }
+              ? { ...user, emailSent: true, emailSentDate: now }
               : user
           )
         );
         setSelectedUsers([]);
         setCustomMessage('');
         setSelectedTemplate('');
+        
+        // Refresh metrics to update badge
+        if (window.dispatchEvent) {
+          window.dispatchEvent(new CustomEvent('refreshMetrics'));
+        }
+        
         console.log(`Bulk email sent: ${result.sent} successful, ${result.failed} failed`);
       } else {
         setSendStatus('error');
