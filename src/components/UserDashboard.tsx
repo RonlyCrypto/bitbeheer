@@ -626,6 +626,7 @@ export default function UserDashboard() {
               accountApproved={accountApproved}
               isImpersonating={isImpersonating}
               impersonatedUser={impersonatedUser}
+              hasApprovedOneOnOne={hasApprovedOneOnOne}
             />}
             {activeTab === 'goals' && (accountApproved || hasApprovedOneOnOne) && <GoalsTab goals={goals} setGoals={setGoals} />}
             {activeTab === 'portfolio' && (accountApproved || hasApprovedOneOnOne) && <PortfolioTab portfolio={portfolio} setPortfolio={setPortfolio} />}
@@ -695,6 +696,8 @@ export default function UserDashboard() {
         onClose={() => setShowAppointmentPopup(false)}
         onSuccess={() => {
           setShowAppointmentPopup(false);
+          // Refresh appointments after booking
+          window.dispatchEvent(new Event('refreshAppointments'));
           setShowFirstAppointmentPrompt(false);
           setActiveTab('appointments');
           // Reload account status to check if approved
@@ -737,7 +740,7 @@ export default function UserDashboard() {
 }
 
 // Overview Tab Component
-function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppointment, accountApproved, isImpersonating, impersonatedUser }: any) {
+function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppointment, accountApproved, isImpersonating, impersonatedUser, hasApprovedOneOnOne }: any) {
   // Determine goals to display based on account status
   const displayGoals = accountApproved 
     ? [
@@ -1035,18 +1038,21 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
       <h2 className="text-2xl font-bold text-gray-900">Overzicht</h2>
 
       {/* Appointment Status Block */}
-      {appointmentsLoading ? (
-        // Loading state - don't show anything while loading
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 shadow-lg animate-pulse">
-          <div className="flex items-center gap-4">
-            <div className="bg-gray-200 rounded-xl w-16 h-16"></div>
-            <div className="flex-1">
-              <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+      {/* Hide appointment block if account is approved/activated OR one-on-one is approved */}
+      {!(accountApproved || hasApprovedOneOnOne) && (
+        <>
+        {appointmentsLoading ? (
+          // Loading state - don't show anything while loading
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 shadow-lg animate-pulse">
+            <div className="flex items-center gap-4">
+              <div className="bg-gray-200 rounded-xl w-16 h-16"></div>
+              <div className="flex-1">
+                <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              </div>
             </div>
           </div>
-        </div>
-      ) : !userAppointment ? (
+        ) : !userAppointment ? (
         // No appointment - show prompt to book
         <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-xl shadow-lg">
           <div className="flex items-start gap-4">
@@ -1072,7 +1078,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             </div>
           </div>
         </div>
-      ) : userAppointment ? (
+      ) : (
         // Any appointment (pending or confirmed)
         userAppointment.status === 'pending' ? (
         // Pending appointment - waiting for confirmation (orange block)
@@ -1273,10 +1279,12 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           </div>
         </div>
         )
-      ) : null}
+      )}
+        </>
+      )}
 
       {/* Wallet Status - Only show if account is approved */}
-      {accountApproved && !hasWallet && (
+      {(accountApproved || hasApprovedOneOnOne) && !hasWallet && (
         <div className={`bg-yellow-50 border border-yellow-200 rounded-xl transition-all duration-500 overflow-hidden ${
           showWalletForm ? 'p-6' : 'p-6'
         }`}>
