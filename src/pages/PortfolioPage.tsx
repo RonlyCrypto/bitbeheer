@@ -16,6 +16,9 @@ import {
 import PortfolioChart from '../components/PortfolioChart';
 import TransactionBlock from '../components/TransactionBlock';
 import { bitcoinApiService, BitcoinWallet, BitcoinTransaction } from '../services/bitcoinApiService';
+import { supabase } from '../lib/supabase';
+import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 
 interface WalletData {
   id: string;
@@ -28,6 +31,8 @@ interface WalletData {
 }
 
 export default function PortfolioPage() {
+  const { user } = useSupabaseAuth();
+  const { isImpersonating, impersonatedUser } = usePermissions();
   const [wallets, setWallets] = useState<WalletData[]>([]);
   const [showAddWallet, setShowAddWallet] = useState(false);
   const [newWalletAddress, setNewWalletAddress] = useState('');
@@ -35,9 +40,114 @@ export default function PortfolioPage() {
   const [showBalances, setShowBalances] = useState(true);
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingWallets, setLoadingWallets] = useState(true);
   const [currentPrice, setCurrentPrice] = useState<number>(96640);
   const [allTransactions, setAllTransactions] = useState<BitcoinTransaction[]>([]);
   const [selectedTransaction, setSelectedTransaction] = useState<BitcoinTransaction | null>(null);
+
+  // Get effective user email (considering impersonation)
+  const effectiveUserEmail = (isImpersonating && impersonatedUser) 
+    ? impersonatedUser 
+    : user?.email;
+
+  // Load wallets from Supabase (wallets added in OverviewTab)
+  useEffect(() => {
+    const loadWallets = async () => {
+      if (!effectiveUserEmail) {
+        setLoadingWallets(false);
+        return;
+      }
+
+      try {
+        setLoadingWallets(true);
+        const { data: walletsData, error } = await supabase
+          .from('wallets')
+          .select('*')
+          .eq('email', effectiveUserEmail)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error loading wallets:', error);
+          setWallets([]);
+          setLoadingWallets(false);
+          return;
+        }
+
+        if (walletsData && walletsData.length > 0) {
+          // Convert Supabase wallet data to WalletData format
+          const walletsList: WalletData[] = await Promise.all(
+            walletsData.map(async (wallet: any) => {
+              // If wallet_data exists with transactions, use it; otherwise fetch fresh data
+              let realData: BitcoinWallet | undefined;
+              
+              if (wallet.wallet_data?.transactions && wallet.wallet_data.transactions.length > 0) {
+                // Use stored transaction data if available
+                realData = {
+                  address: wallet.address,
+                  balance: wallet.balance || 0,
+                  totalReceived: wallet.total_received || 0,
+                  totalSent: wallet.total_sent || 0,
+                  transactionCount: wallet.transaction_count || 0,
+                  firstSeen: wallet.first_seen ? new Date(wallet.first_seen).getTime() : Date.now(),
+                  lastSeen: wallet.last_seen ? new Date(wallet.last_seen).getTime() : Date.now(),
+                  transactions: wallet.wallet_data.transactions || []
+                };
+              } else {
+                // Fetch fresh data from API if no stored transactions
+                try {
+                  realData = await bitcoinApiService.getWalletData(wallet.address);
+                } catch (error) {
+                  console.error('Error fetching wallet data from API:', error);
+                  // Fallback: use basic data from database
+                  realData = {
+                    address: wallet.address,
+                    balance: wallet.balance || 0,
+                    totalReceived: wallet.total_received || 0,
+                    totalSent: wallet.total_sent || 0,
+                    transactionCount: wallet.transaction_count || 0,
+                    firstSeen: wallet.first_seen ? new Date(wallet.first_seen).getTime() : Date.now(),
+                    lastSeen: wallet.last_seen ? new Date(wallet.last_seen).getTime() : Date.now(),
+                    transactions: []
+                  };
+                }
+              }
+
+              return {
+                id: wallet.id,
+                name: wallet.name || 'Mijn Bitcoin Wallet',
+                address: wallet.address,
+                balance: wallet.balance || 0,
+                transactions: wallet.transaction_count || 0,
+                firstSeen: wallet.first_seen ? new Date(wallet.first_seen).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                realData
+              };
+            })
+          );
+
+          setWallets(walletsList);
+        } else {
+          setWallets([]);
+        }
+      } catch (error) {
+        console.error('Error loading wallets:', error);
+        setWallets([]);
+      } finally {
+        setLoadingWallets(false);
+      }
+    };
+
+    loadWallets();
+
+    // Listen for wallet updates from OverviewTab
+    const handleWalletUpdate = () => {
+      loadWallets();
+    };
+    window.addEventListener('walletUpdated', handleWalletUpdate);
+
+    return () => {
+      window.removeEventListener('walletUpdated', handleWalletUpdate);
+    };
+  }, [effectiveUserEmail]);
 
   // Haal huidige Bitcoin prijs op
   useEffect(() => {
