@@ -23,7 +23,7 @@ export const impersonationUtils = {
       // Store in localStorage for persistence
       localStorage.setItem(IMPERSONATION_KEY, JSON.stringify(impersonationData));
       
-      console.log('Started impersonation:', userEmail);
+      // Started impersonation (no email in logs)
       
       // Dispatch custom event to notify other components
       window.dispatchEvent(new CustomEvent('impersonationStarted', { detail: impersonationData }));

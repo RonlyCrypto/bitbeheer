@@ -97,7 +97,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
-      console.log('Attempting to sign in with:', email);
+      // Attempting to sign in (no email in logs)
       const result = await signInUser(email, password);
       console.log('Sign in result:', result);
       return result;

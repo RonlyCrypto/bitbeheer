@@ -22,11 +22,7 @@ export default function ProfilePopup({
   isImpersonating, 
   impersonatedUser 
 }: ProfilePopupProps) {
-  console.log('🎭 ProfilePopup - isOpen:', isOpen);
-  console.log('🎭 ProfilePopup - userProfile:', userProfile);
-  console.log('🎭 ProfilePopup - user:', user);
-  console.log('🎭 ProfilePopup - isImpersonating:', isImpersonating);
-  console.log('🎭 ProfilePopup - impersonatedUser:', impersonatedUser);
+  // ProfilePopup logging removed (no sensitive data in console)
   const [isEditing, setIsEditing] = useState(false);
 
   // Block body scroll when popup is open

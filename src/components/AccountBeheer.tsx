@@ -295,12 +295,12 @@ export default function AccountBeheer() {
 
   const handleLoginAsUser = async (user: UserAccount) => {
     try {
-      console.log('🎭 Starting impersonation for user:', user.email);
+      // Starting impersonation (no email in logs)
       
       // Start impersonation using secure impersonation utils
       await impersonationUtils.startImpersonation(user.email, 'admin@bitbeheer.nl');
       
-      console.log('✅ Impersonation started, redirecting to user dashboard...');
+      // Impersonation started (silent)
       
       // Small delay to ensure state is updated
       setTimeout(() => {
@@ -370,7 +370,7 @@ export default function AccountBeheer() {
             ? { ...u, email_verified: true, verified_at: new Date().toISOString() }
             : u
         ));
-        console.log('Account manually verified:', user.email);
+        // Account manually verified (silent)
       } else {
         console.error('Failed to verify account');
       }
@@ -451,12 +451,12 @@ export default function AccountBeheer() {
 
     if (confirm(`Weet je zeker dat je wilt inloggen als ${user.name} (${user.email})?`)) {
       try {
-        console.log('🎭 Starting impersonation for user:', user.email);
+        // Starting impersonation (no email in logs)
         
         // Start impersonation using impersonation utils
         await impersonationUtils.startImpersonation(user.email, 'admin@bitbeheer.nl');
         
-        console.log('✅ Impersonation started, redirecting to user dashboard...');
+        // Impersonation started (silent)
         
         // Small delay to ensure state is updated
         setTimeout(() => {

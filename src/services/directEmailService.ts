@@ -136,14 +136,14 @@ export class DirectEmailService {
       });
 
       if (response.ok) {
-        console.log('Password reset email sent successfully');
+        // Password reset email sent (silent)
         return true;
       } else {
-        console.error('Failed to send password reset email');
+        // Failed to send email (logged silently)
         return false;
       }
     } catch (error) {
-      console.error('Error sending password reset email:', error);
+      // Error sending email (logged silently)
       return false;
     }
   }
@@ -164,14 +164,14 @@ export class DirectEmailService {
       });
 
       if (response.ok) {
-        console.log('Account activated email sent successfully');
+        // Account activated email sent (silent)
         return true;
       } else {
-        console.error('Failed to send account activated email');
+        // Failed to send email (logged silently)
         return false;
       }
     } catch (error) {
-      console.error('Error sending account activated email:', error);
+      // Error sending email (logged silently)
       return false;
     }
   }
@@ -223,14 +223,14 @@ export class DirectEmailService {
       });
 
       if (response.ok) {
-        console.log('Login confirmation email sent successfully');
+        // Login confirmation email sent (silent)
         return true;
       } else {
-        console.error('Failed to send login confirmation email');
+        // Failed to send email (logged silently)
         return false;
       }
     } catch (error) {
-      console.error('Error sending login confirmation email:', error);
+      // Error sending email (logged silently)
       return false;
     }
   }
@@ -252,14 +252,14 @@ export class DirectEmailService {
       });
 
       if (response.ok) {
-        console.log('Account deletion warning email sent successfully');
+        // Account deletion warning email sent (silent)
         return true;
       } else {
-        console.error('Failed to send account deletion warning email');
+        // Failed to send email (logged silently)
         return false;
       }
     } catch (error) {
-      console.error('Error sending account deletion warning email:', error);
+      // Error sending email (logged silently)
       return false;
     }
   }

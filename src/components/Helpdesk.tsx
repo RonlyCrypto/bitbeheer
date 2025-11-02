@@ -73,7 +73,7 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
     setLoading(true);
     const body = newMessage.trim();
     try {
-      console.log('Sending message:', { email: user.email, body });
+      // Sending message (no email in logs)
       
       // Check current session
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();

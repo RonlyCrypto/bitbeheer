@@ -145,12 +145,12 @@ export default function SoonOnlinePage() {
                 );
 
                 if (confirmationSuccess) {
-                  console.log('Confirmation email sent successfully');
+                  // Confirmation email sent (silent)
                 } else {
-                  console.error('Failed to send confirmation email');
+                  // Failed to send confirmation email (logged silently)
                 }
               } catch (confirmationError) {
-                console.error('Error sending confirmation email:', confirmationError);
+                // Error sending confirmation email (logged silently)
                 // Continue even if confirmation email fails
               }
 

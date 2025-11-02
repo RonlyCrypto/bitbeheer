@@ -118,7 +118,7 @@ module.exports = async (req, res) => {
           } else {
             const supabase = createClient(supabaseUrl, supabaseKey);
             
-            console.log('Saving user to Supabase:', newUser);
+            // Saving user to Supabase (silent - no sensitive data in logs)
             
             const { data, error } = await supabase
               .from('users')
@@ -132,7 +132,7 @@ module.exports = async (req, res) => {
                 error: 'Failed to save user to database'
               });
             } else {
-              console.log('User saved to Supabase successfully:', data);
+              // User saved to Supabase successfully (silent)
             }
           }
         } catch (supabaseError) {

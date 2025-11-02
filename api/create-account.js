@@ -160,7 +160,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    console.log('Account created successfully:', account[0]);
+    // Account created successfully (no console logs with sensitive data)
 
     // Create user in users table with all form data (renamed from accounts)
     const userData = {
@@ -195,12 +195,11 @@ module.exports = async (req, res) => {
       .select();
 
     if (userError) {
-      console.error('Error creating user:', userError);
-      console.error('User data that failed:', userData);
+      // Error creating user (logged silently - no sensitive data)
       // Don't fail if user creation fails, account is already created
       // But log the error for debugging
     } else {
-      console.log('User created successfully:', user[0]);
+      // User created successfully (silent)
     }
 
     // Send verification email

@@ -7,17 +7,14 @@ import { getDisplayName } from '../utils/emailUtils';
 export default function ImpersonationBanner() {
   const { isImpersonating, impersonatedUser } = usePermissions();
 
-  // Debug logging
-  console.log('🔴 ImpersonationBanner - isImpersonating:', isImpersonating);
-  console.log('🔴 ImpersonationBanner - impersonatedUser:', impersonatedUser);
-  console.log('🔴 ImpersonationBanner - Should show banner:', isImpersonating && impersonatedUser);
+  // Debug logging removed (no sensitive data in console)
 
   const handleStopImpersonation = async () => {
     try {
-      console.log('🛑 Stopping impersonation...');
+      // Stopping impersonation (silent)
       await impersonationUtils.stopImpersonation();
       
-      console.log('✅ Impersonation stopped, redirecting to admin...');
+      // Impersonation stopped (silent)
       
       // Small delay to ensure state is cleared
       setTimeout(() => {
@@ -34,11 +31,11 @@ export default function ImpersonationBanner() {
 
   // Only show banner when impersonating
   if (!isImpersonating || !impersonatedUser) {
-    console.log('🔴 ImpersonationBanner - Not showing banner (not impersonating or no user)');
+    // Not showing banner (silent)
     return null;
   }
 
-  console.log('🔴 ImpersonationBanner - Rendering banner for:', impersonatedUser);
+  // Rendering banner (no email in logs)
 
   return (
     <div className="bg-red-600 text-white py-3 px-4 text-center text-sm font-medium shadow-lg">
