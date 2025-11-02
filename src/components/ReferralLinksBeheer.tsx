@@ -192,14 +192,18 @@ export default function ReferralLinksBeheer() {
     
     // Update all links with new section_title
     try {
-      const { error } = await supabase
-        .from('referral_links')
-        .update({ section_title: newTitle })
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Update all
-
-      if (error) throw error;
-      
-      await loadLinks();
+      if (links.length > 0) {
+        // Update all links
+        const updates = links.map(link => 
+          supabase
+            .from('referral_links')
+            .update({ section_title: newTitle })
+            .eq('id', link.id)
+        );
+        
+        await Promise.all(updates);
+        await loadLinks();
+      }
     } catch (error: any) {
       console.error('Error updating section title:', error);
     }
