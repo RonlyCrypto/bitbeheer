@@ -43,7 +43,7 @@ export default function AccountBeheer() {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
 
   // Calculate remaining time for verification
-  const getRemainingTime = (user: UserAccount) => {
+  const getRemainingTime = (user: UserAccount): number | null => {
     if (user.email_verified) return null;
     
     const createdDate = new Date(user.created_at || user.timestamp || user.registrationDate || Date.now());
@@ -66,7 +66,7 @@ export default function AccountBeheer() {
   const isInWarningPeriod = (user: UserAccount) => {
     if (user.email_verified) return false;
     const remaining = getRemainingTime(user);
-    return remaining > 0 && remaining <= 2;
+    return remaining !== null && remaining > 0 && remaining <= 2;
   };
 
   // Load accounts from backend API
@@ -110,18 +110,18 @@ export default function AccountBeheer() {
                 .eq('email', account.email)
                 .maybeSingle();
               
-              // Prefer data from accounts table, fallback to users table
-              const finalData = accountData || userData || {};
-              
-              return {
-                ...account,
-                // Use verified status from database (accounts or users table)
-                email_verified: finalData.email_verified ?? account.email_verified ?? false,
-                verified_at: finalData.verified_at ?? account.verified_at,
-                actief: finalData.actief !== undefined ? finalData.actief : (account.actief !== undefined ? account.actief : true),
-                account_approved: finalData.account_approved || false,
-                first_appointment_completed: finalData.first_appointment_completed || false
-              };
+            // Prefer data from accounts table, fallback to users table
+            const finalData: any = accountData || userData || {};
+            
+            return {
+              ...account,
+              // Use verified status from database (accounts or users table)
+              email_verified: finalData.email_verified ?? account.email_verified ?? false,
+              verified_at: finalData.verified_at ?? account.verified_at,
+              actief: finalData.actief !== undefined ? finalData.actief : (account.actief !== undefined ? account.actief : true),
+              account_approved: finalData.account_approved || false,
+              first_appointment_completed: finalData.first_appointment_completed || false
+            };
             } catch (error) {
               // If columns don't exist, default to false
               return {
@@ -200,47 +200,48 @@ export default function AccountBeheer() {
         const accountsData = await accountsResponse.json();
         console.log('Accounts refreshed from API:', accountsData.accounts);
         
+        // Remove duplicates based on email (keep first occurrence)
+        const uniqueAccounts = (accountsData.accounts || []).reduce((acc: any[], account: any) => {
+          if (!acc.find(a => a.email === account.email)) {
+            acc.push(account);
+          }
+          return acc;
+        }, []);
+        
         // Enrich accounts with approval status from Supabase
-        const enrichedAccounts = await Promise.all((accountsData.accounts || []).map(async (account: any) => {
+        const enrichedAccounts = await Promise.all(uniqueAccounts.map(async (account: any) => {
           try {
-            // Try to get approval status from users table
+            // Get all data from both tables
             const { data: userData } = await supabase
               .from('users')
-              .select('account_approved, first_appointment_completed')
+              .select('email_verified, verified_at, actief, account_approved, first_appointment_completed')
               .eq('email', account.email)
-              .single();
+              .maybeSingle();
             
-            if (userData) {
-              return {
-                ...account,
-                account_approved: userData.account_approved || false,
-                first_appointment_completed: userData.first_appointment_completed || false
-              };
-            }
-            
-            // Fallback to accounts table
             const { data: accountData } = await supabase
               .from('accounts')
-              .select('account_approved, first_appointment_completed')
+              .select('email_verified, verified_at, actief, account_approved, first_appointment_completed')
               .eq('email', account.email)
-              .single();
+              .maybeSingle();
             
-            if (accountData) {
-              return {
-                ...account,
-                account_approved: accountData.account_approved || false,
-                first_appointment_completed: accountData.first_appointment_completed || false
-              };
-            }
+            // Prefer data from accounts table, fallback to users table
+            const finalData: any = accountData || userData || {};
             
             return {
               ...account,
-              account_approved: false,
-              first_appointment_completed: false
+              // Use verified status from database (accounts or users table)
+              email_verified: finalData.email_verified ?? account.email_verified ?? false,
+              verified_at: finalData.verified_at ?? account.verified_at,
+              actief: finalData.actief !== undefined ? finalData.actief : (account.actief !== undefined ? account.actief : true),
+              account_approved: finalData.account_approved || false,
+              first_appointment_completed: finalData.first_appointment_completed || false
             };
           } catch (error) {
+            // If columns don't exist, default to false
             return {
               ...account,
+              email_verified: account.email_verified || false,
+              actief: account.actief !== undefined ? account.actief : true,
               account_approved: false,
               first_appointment_completed: false
             };
@@ -1068,7 +1069,7 @@ export default function AccountBeheer() {
                             )}
                             <div className="flex items-center gap-4 text-xs text-gray-400">
                               <span>Aangemeld: {user.registrationDate || user.date}</span>
-                              <span className="text-red-500 font-medium">Verlopen op: {new Date(new Date(user.created_at || user.timestamp || user.registrationDate).getTime() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('nl-NL')}</span>
+                              <span className="text-red-500 font-medium">Verlopen op: {new Date(new Date(user.created_at || user.timestamp || user.registrationDate || Date.now()).getTime() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('nl-NL')}</span>
                             </div>
                             <div className="mt-2 flex items-center gap-2">
                               <span className="inline-flex items-center gap-1 text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">
