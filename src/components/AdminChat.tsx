@@ -68,7 +68,7 @@ export default function AdminChat() {
     return `${day} • ${time}`;
   };
 
-  const loadCustomers = async () => {
+  const loadCustomers = async (preserveSelection: boolean = true) => {
     try {
       // Load all messages first to get unique user emails
       const { data: allMessages, error } = await supabase
@@ -152,16 +152,25 @@ export default function AdminChat() {
         });
         
         setCustomers(customersWithUnread);
-        // Only auto-select first chat if no chat is currently selected AND the currently selected email doesn't exist in the list
-        if (!selectedEmail && customersWithUnread.length > 0) {
-          setSelectedEmail(customersWithUnread[0].email);
-        } else if (selectedEmail && !customersWithUnread.find(c => c.email === selectedEmail)) {
-          // If selected email no longer exists in list, select first one
-          if (customersWithUnread.length > 0) {
+        
+        // Only change selectedEmail if we should (preserveSelection controls this)
+        if (preserveSelection) {
+          // Preserve current selection if it exists in the list
+          const currentSelection = customersWithUnread.find(c => c.email === selectedEmail);
+          if (!currentSelection && selectedEmail) {
+            // Selected email no longer exists, but don't auto-switch - user probably navigated away
+            // Only auto-select if there's no selection at all
+            if (customersWithUnread.length > 0) {
+              setSelectedEmail(customersWithUnread[0].email);
+            }
+          }
+          // If selectedEmail exists in list, keep it - don't change
+        } else {
+          // Initial load or forced refresh - select first if nothing selected
+          if (!selectedEmail && customersWithUnread.length > 0) {
             setSelectedEmail(customersWithUnread[0].email);
           }
         }
-        // Don't change selectedEmail if it's already selected and exists in the list
       }
     } catch (error) {
       console.error('Error in loadCustomers:', error);
@@ -248,9 +257,9 @@ export default function AdminChat() {
         window.dispatchEvent(new CustomEvent('refreshMetrics'));
       }
       
-      // Also reload customers to ensure badge is updated correctly
+      // Also reload customers to ensure badge is updated correctly (preserve selection)
       setTimeout(() => {
-        loadCustomers();
+        loadCustomers(true);
       }, 500);
     } catch (error) {
       console.error('Error marking chat as read:', error);
@@ -259,14 +268,15 @@ export default function AdminChat() {
   };
 
   useEffect(() => { 
-    loadCustomers(); 
+    loadCustomers(false); // Initial load - can auto-select
+    
     // Refresh customer list every 10 seconds to update unread status
     const interval = setInterval(() => {
       // Preserve selectedEmail when refreshing
-      loadCustomers();
+      loadCustomers(true);
     }, 10000);
     return () => clearInterval(interval);
-  }, [selectedEmail]); // Add selectedEmail as dependency to preserve it
+  }, []); // Empty dependency array - only run on mount
   
   useEffect(() => { 
     setEditingMessageId(null);
