@@ -37,7 +37,14 @@ export default function EmailTemplates() {
         .order('template_name', { ascending: true });
 
       if (error) throw error;
-      setTemplates(data || []);
+      
+      // Ensure all templates have properly initialized variables field
+      const normalizedTemplates = (data || []).map(template => ({
+        ...template,
+        variables: template.variables && typeof template.variables === 'object' ? template.variables : {}
+      }));
+      
+      setTemplates(normalizedTemplates);
     } catch (error: any) {
       console.error('Error loading templates:', error);
       alert(`Fout bij laden: ${error.message}`);
@@ -139,6 +146,9 @@ export default function EmailTemplates() {
       ...template,
       id: '', // New ID will be generated
       template_name: `${template.template_name}_copy`,
+      variables: template.variables && typeof template.variables === 'object' ? template.variables : {},
+      text_content: template.text_content || '',
+      description: template.description || '',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     });
@@ -254,7 +264,12 @@ export default function EmailTemplates() {
             <div className="flex gap-2 mt-4">
               <button
                 onClick={() => {
-                  setEditingTemplate(template);
+                  setEditingTemplate({
+                    ...template,
+                    variables: template.variables && typeof template.variables === 'object' ? template.variables : {},
+                    text_content: template.text_content || '',
+                    description: template.description || ''
+                  });
                   setShowNewTemplate(false);
                 }}
                 className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors text-sm"
