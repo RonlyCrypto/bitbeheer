@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Send, Users, RefreshCw } from 'lucide-react';
+import { Send, Users, RefreshCw, Edit2, Trash2 } from 'lucide-react';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 
@@ -22,6 +22,8 @@ interface SupportMessage {
 
 interface CustomerWithUnread {
   email: string;
+  firstName?: string;
+  lastName?: string;
   hasUnread: boolean;
   unreadCount?: number;
 }
@@ -33,6 +35,10 @@ export default function AdminChat() {
   const [customers, setCustomers] = useState<CustomerWithUnread[]>([]);
   const [messages, setMessages] = useState<SupportMessage[]>([]);
   const [reply, setReply] = useState('');
+  const [lastReadTime, setLastReadTime] = useState<Date | null>(null);
+  const [hideNewSeparator, setHideNewSeparator] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
 
   const getInitials = (email: string, isAdmin: boolean) => {
     if (isAdmin) return 'A';
@@ -89,6 +95,21 @@ export default function AdminChat() {
           .select('user_email, last_read_at')
           .eq('admin_email', 'admin@bitbeheer.nl');
         
+        // Load user names from accounts table
+        const { data: accountsData } = await supabase
+          .from('accounts')
+          .select('email, first_name, last_name')
+          .in('email', uniqueEmails);
+        
+        // Create a map for quick lookup
+        const nameMap = new Map<string, { firstName?: string; lastName?: string }>();
+        accountsData?.forEach((acc: any) => {
+          nameMap.set(acc.email, {
+            firstName: acc.first_name || undefined,
+            lastName: acc.last_name || undefined
+          });
+        });
+        
         // Check unread status for each customer
         const customersWithUnread: CustomerWithUnread[] = uniqueEmails.map(email => {
           const readStatus = readStatuses?.find(r => r.user_email === email);
@@ -112,8 +133,12 @@ export default function AdminChat() {
             unreadCount = newMessages.length;
           }
           
+          const nameInfo = nameMap.get(email);
+          
           return {
             email,
+            firstName: nameInfo?.firstName,
+            lastName: nameInfo?.lastName,
             hasUnread,
             unreadCount: unreadCount > 0 ? unreadCount : undefined
           };
@@ -152,8 +177,25 @@ export default function AdminChat() {
       // This ensures no mixing of chats
       const filteredMessages = data.filter((msg: any) => msg.email === selectedEmail);
       setMessages(filteredMessages as any);
+      
+      // Get last read time for this chat
+      const { data: readStatus } = await supabase
+        .from('chat_read_status')
+        .select('last_read_at')
+        .eq('user_email', selectedEmail)
+        .eq('admin_email', 'admin@bitbeheer.nl')
+        .maybeSingle();
+      
+      setLastReadTime(readStatus?.last_read_at ? new Date(readStatus.last_read_at) : null);
+      setHideNewSeparator(false);
+      
       // Mark chat as read when opened
       await markChatAsRead(selectedEmail);
+      
+      // Hide "Nieuw" separator after 4 seconds
+      setTimeout(() => {
+        setHideNewSeparator(true);
+      }, 4000);
     }
   };
 
@@ -212,8 +254,59 @@ export default function AdminChat() {
   }, []);
   
   useEffect(() => { 
+    setEditingMessageId(null);
+    setEditText('');
     loadMessages(); 
   }, [selectedEmail]);
+  
+  const handleEditMessage = (message: SupportMessage) => {
+    if (!message.from_admin) return;
+    setEditingMessageId(message.id);
+    setEditText(message.body);
+  };
+  
+  const handleSaveEdit = async (messageId: string) => {
+    if (!editText.trim()) return;
+    
+    try {
+      const { error } = await supabase
+        .from('support_messages')
+        .update({ body: editText.trim() })
+        .eq('id', messageId);
+      
+      if (error) throw error;
+      
+      setEditingMessageId(null);
+      setEditText('');
+      await loadMessages();
+    } catch (e: any) {
+      console.error('Error updating message:', e);
+      alert(`Bericht bijwerken mislukt: ${e.message}`);
+    }
+  };
+  
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!confirm('Weet je zeker dat je dit bericht wilt verwijderen?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('support_messages')
+        .delete()
+        .eq('id', messageId);
+      
+      if (error) throw error;
+      
+      await loadMessages();
+      
+      // Refresh metrics after deleting message
+      if (window.dispatchEvent) {
+        window.dispatchEvent(new CustomEvent('refreshMetrics'));
+      }
+    } catch (e: any) {
+      console.error('Error deleting message:', e);
+      alert(`Bericht verwijderen mislukt: ${e.message}`);
+    }
+  };
 
   const sendReply = async () => {
     if (!selectedEmail || !reply.trim()) return;
@@ -286,12 +379,12 @@ export default function AdminChat() {
                 onClick={() => setSelectedEmail(customer.email)}
                 className={`w-full text-left px-3 py-2 rounded-lg border transition-all ${
                   selectedEmail === customer.email 
-                    ? 'bg-orange-50 border-orange-300 text-orange-900 font-medium shadow-sm' 
+                    ? 'bg-orange-50 border-orange-300 text-orange-900 shadow-sm' 
                     : customer.hasUnread
-                      ? 'bg-red-50 border-red-200 hover:bg-red-100 font-medium'
+                      ? 'bg-red-50 border-red-200 hover:bg-red-100'
                       : 'bg-white hover:bg-gray-50 border-gray-200'
                 }`}
-                title={`Chat met ${customer.email}${customer.hasUnread ? ` (${customer.unreadCount} ongelezen)` : ''}`}
+                title={`Chat met ${customer.firstName && customer.lastName ? `${customer.firstName} ${customer.lastName}` : customer.email}${customer.hasUnread ? ` (${customer.unreadCount} ongelezen)` : ''}`}
               >
                 <div className="flex items-center gap-2 justify-between">
                   <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -302,7 +395,11 @@ export default function AdminChat() {
                           ? 'bg-red-500 animate-pulse'
                           : 'bg-gray-300'
                     }`}></div>
-                    <span className="text-sm truncate">{customer.email}</span>
+                    <span className={`text-sm truncate ${customer.hasUnread ? 'font-bold' : 'font-normal'}`}>
+                      {customer.firstName && customer.lastName 
+                        ? `${customer.firstName} ${customer.lastName}`
+                        : customer.email}
+                    </span>
                   </div>
                   {customer.hasUnread && (
                     <span className="flex-shrink-0 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
@@ -325,34 +422,111 @@ export default function AdminChat() {
             <p className="text-gray-500">Geen berichten voor deze gebruiker.</p>
           ) : (
             <div className="space-y-3">
-              {messages.map((m) => {
+              {messages.map((m, index) => {
                 const userColor = colorForEmail(m.email);
                 const avatarColor = userColor.bubble.includes('blue') ? 'bg-blue-500' : 
                                    userColor.bubble.includes('green') ? 'bg-green-500' : 
                                    userColor.bubble.includes('purple') ? 'bg-purple-500' : 
                                    userColor.bubble.includes('pink') ? 'bg-pink-500' : 
                                    userColor.bubble.includes('teal') ? 'bg-teal-500' : 'bg-amber-500';
+                
+                // Check if this message is unread (newer than last_read_at)
+                const isUnread = lastReadTime && !hideNewSeparator 
+                  ? new Date(m.created_at).getTime() > lastReadTime.getTime() && !m.from_admin
+                  : false;
+                
+                // Check if we need to show "Nieuw" separator (first unread message)
+                const showNewSeparator = isUnread && index > 0 && 
+                  messages[index - 1].from_admin && 
+                  (!lastReadTime || new Date(messages[index - 1].created_at).getTime() <= lastReadTime.getTime());
+                
+                const isEditing = editingMessageId === m.id;
+                
                 return (
-                  <div key={m.id} className={`flex items-start gap-2 ${m.from_admin ? 'justify-end' : 'justify-start'}`}>
-                    {!m.from_admin && (
-                      <div className={`w-8 h-8 rounded-full text-white flex items-center justify-center text-xs font-semibold flex-shrink-0 ${avatarColor}`}>
-                        {getInitials(m.email, false)}
+                  <React.Fragment key={m.id}>
+                    {showNewSeparator && (
+                      <div className="relative py-2">
+                        <div className="absolute inset-0 flex items-center">
+                          <div className="w-full border-t border-red-300"></div>
+                        </div>
+                        <div className="relative flex justify-center">
+                          <span className="bg-gray-50 px-2 text-xs font-semibold text-red-600">Nieuw</span>
+                        </div>
                       </div>
                     )}
-                    <div className="max-w-[75%]">
-                      <div className={`text-[11px] mb-1 ${m.from_admin ? 'text-right text-gray-500' : `text-left ${userColor.label}`}`}>
-                        {m.from_admin ? 'Admin' : m.email} • {formatStamp(m.created_at)}
+                    <div className={`flex items-start gap-2 ${m.from_admin ? 'justify-end' : 'justify-start'} group`}>
+                      {!m.from_admin && (
+                        <div className={`w-8 h-8 rounded-full text-white flex items-center justify-center text-xs font-semibold flex-shrink-0 ${avatarColor}`}>
+                          {getInitials(m.email, false)}
+                        </div>
+                      )}
+                      <div className="max-w-[75%]">
+                        <div className={`text-[11px] mb-1 ${m.from_admin ? 'text-right text-gray-500' : `text-left ${userColor.label}`}`}>
+                          {m.from_admin ? 'Admin' : m.email} • {formatStamp(m.created_at)}
+                        </div>
+                        {isEditing ? (
+                          <div className="flex gap-2 items-end">
+                            <input
+                              type="text"
+                              value={editText}
+                              onChange={(e) => setEditText(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveEdit(m.id);
+                                if (e.key === 'Escape') {
+                                  setEditingMessageId(null);
+                                  setEditText('');
+                                }
+                              }}
+                              className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                              autoFocus
+                            />
+                            <button
+                              onClick={() => handleSaveEdit(m.id)}
+                              className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                            >
+                              Opslaan
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingMessageId(null);
+                                setEditText('');
+                              }}
+                              className="px-3 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500"
+                            >
+                              Annuleren
+                            </button>
+                          </div>
+                        ) : (
+                          <div className={`px-3 py-2 rounded-lg text-sm shadow-sm relative ${m.from_admin ? 'bg-orange-600 text-white' : `border ${userColor.bubble}`}`}>
+                            <div>{m.body}</div>
+                            {m.from_admin && (
+                              <div className="absolute -right-8 top-0 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                <button
+                                  onClick={() => handleEditMessage(m)}
+                                  className="p-1 bg-gray-700 text-white rounded hover:bg-gray-800"
+                                  title="Bewerken"
+                                >
+                                  <Edit2 className="w-3 h-3" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteMessage(m.id)}
+                                  className="p-1 bg-red-600 text-white rounded hover:bg-red-700"
+                                  title="Verwijderen"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      <div className={`px-3 py-2 rounded-lg text-sm shadow-sm ${m.from_admin ? 'bg-orange-600 text-white' : `border ${userColor.bubble}`}`}>
-                        <div>{m.body}</div>
-                      </div>
+                      {m.from_admin && (
+                        <div className="w-8 h-8 rounded-full bg-orange-600 text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                          A
+                        </div>
+                      )}
                     </div>
-                    {m.from_admin && (
-                      <div className="w-8 h-8 rounded-full bg-orange-600 text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">
-                        A
-                      </div>
-                    )}
-                  </div>
+                  </React.Fragment>
                 );
               })}
             </div>
