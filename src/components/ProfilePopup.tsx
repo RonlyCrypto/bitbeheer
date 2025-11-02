@@ -49,28 +49,51 @@ export default function ProfilePopup({
         const needsFetch = !userProfile?.first_name || !userProfile?.location || !userProfile?.company;
         if (!needsFetch) return;
 
-        const { data, error } = await supabase
+        // First try to get from accounts table (where registration data is stored)
+        const { data: accountData, error: accountError } = await supabase
           .from('accounts')
           .select('*')
           .eq('email', targetEmail)
           .limit(1);
 
-        if (!error && data && data.length > 0) {
-          const acc: any = data[0];
+        // Also try to get from users table (fallback)
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', targetEmail)
+          .limit(1);
+
+        // Prefer accounts table, but fall back to users table
+        const sourceData = accountData && accountData.length > 0 ? accountData[0] : (userData && userData.length > 0 ? userData[0] : null);
+
+        if (sourceData) {
+          const acc: any = sourceData;
+          // Get first_name and last_name from accounts (registration data)
+          // If not in accounts, try to parse from name in users table
+          let firstName = acc.first_name;
+          let lastName = acc.last_name;
+          
+          // If not found in accounts, try to parse from name field
+          if (!firstName && !lastName && acc.name) {
+            const nameParts = acc.name.trim().split(' ');
+            firstName = nameParts[0] || '';
+            lastName = nameParts.slice(1).join(' ') || '';
+          }
+
           setUserProfile({
             ...userProfile,
             id: acc.id || userProfile?.id,
             email: acc.email || targetEmail,
-            name: acc.name || userProfile?.name || targetEmail.split('@')[0],
-            first_name: acc.first_name ?? userProfile?.first_name,
-            last_name: acc.last_name ?? userProfile?.last_name,
+            name: acc.name || `${firstName} ${lastName}`.trim() || userProfile?.name || targetEmail.split('@')[0],
+            first_name: firstName || userProfile?.first_name || '',
+            last_name: lastName || userProfile?.last_name || '',
             phone: acc.phone ?? userProfile?.phone,
-            location: acc.location ?? userProfile?.location,
-            company: acc.company ?? userProfile?.company,
-            investmentGoal: acc.investment_goal ?? userProfile?.investmentGoal,
-            preferredContact: acc.preferred_contact ?? userProfile?.preferredContact,
-            newsletterSubscription: acc.newsletter_subscription ?? userProfile?.newsletterSubscription,
-            marketingConsent: acc.marketing_consent ?? userProfile?.marketingConsent,
+            location: acc.location ?? acc.locatie ?? userProfile?.location,
+            company: acc.company ?? acc.bedrijf ?? userProfile?.company,
+            investmentGoal: acc.investment_goal ?? acc.investeringsdoel ?? userProfile?.investmentGoal,
+            preferredContact: acc.preferred_contact ?? acc.voorkeurContact ?? userProfile?.preferredContact,
+            newsletterSubscription: acc.newsletter_subscription ?? acc.nieuwsbrief ?? userProfile?.newsletterSubscription,
+            marketingConsent: acc.marketing_consent ?? acc.marketingToestemming ?? userProfile?.marketingConsent,
             joinDate: (acc.created_at ? new Date(acc.created_at).toISOString().split('T')[0] : userProfile?.joinDate) || new Date().toISOString().split('T')[0],
             lastLogin: acc.last_login ? new Date(acc.last_login).toISOString() : (userProfile?.lastLogin || new Date().toISOString()),
             totalSessions: acc.login_count ?? (userProfile?.totalSessions || 0)

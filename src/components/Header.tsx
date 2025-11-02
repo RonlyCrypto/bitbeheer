@@ -63,10 +63,31 @@ export default function Header() {
             </div>
           </Link>
           
-          {/* Navigation Menu - Only visible for admin */}
+          {/* Navigation Menu */}
           <nav className="hidden md:flex items-center gap-4">
-            {/* Admin Menu - Only visible when not impersonating */}
-            {!isImpersonating && (
+            {/* Dashboard Link - Visible for all authenticated users */}
+            {isAuthenticated || isImpersonating ? (
+              <Link 
+                to={isImpersonating ? "/user-dashboard" : (canAccessAdmin ? "/admin" : "/user-dashboard")} 
+                className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
+                  (location.pathname === '/admin' || location.pathname === '/user-dashboard') 
+                    ? 'bg-white bg-opacity-30 shadow-lg' 
+                    : 'hover:bg-white hover:bg-opacity-20 hover:shadow-md'
+                }`}
+              >
+                <div className={`p-2 rounded-lg transition-all duration-300 ${
+                  (location.pathname === '/admin' || location.pathname === '/user-dashboard') 
+                    ? 'bg-white bg-opacity-20' 
+                    : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'
+                }`}>
+                  <BarChart3 className="w-5 h-5" />
+                </div>
+                <span className="text-sm font-medium">Dashboard</span>
+              </Link>
+            ) : null}
+            
+            {/* Admin Menu - Only visible when not impersonating and has admin access */}
+            {!isImpersonating && canAccessAdmin && (
               <div className="flex items-center gap-3">
                 <Link 
                   to="/admin" 
@@ -82,8 +103,8 @@ export default function Header() {
                       : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'
                   }`}>
                     <Shield className="w-5 h-5" />
-                  </div>
-                  <span className="text-sm font-medium">Dashboard</span>
+          </div>
+                  <span className="text-sm font-medium">Admin</span>
                 </Link>
 
                 {isMenuVisible('bitcoin_history', 'everyone') && (
@@ -100,7 +121,7 @@ export default function Header() {
                         ? 'bg-white bg-opacity-20' 
                         : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'
                     }`}>
-                      <TrendingUp className="w-5 h-5" />
+            <TrendingUp className="w-5 h-5" />
                     </div>
                     <span className="text-sm font-medium">Bitcoin</span>
                   </Link>
@@ -182,7 +203,7 @@ export default function Header() {
                             <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center">
                               <UserCircle className="w-6 h-6 text-orange-600 dark:text-orange-400" />
                             </div>
-                            <div>
+            <div>
                               <p className="font-medium text-gray-900 dark:text-white">
                                 {getDisplayName(user, isImpersonating, impersonatedUser, null)}
                               </p>
