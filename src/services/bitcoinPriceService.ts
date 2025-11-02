@@ -34,16 +34,14 @@ export class BitcoinPriceService {
       this.lastFetch = now;
       return price;
     } catch (error) {
-      console.error('Error fetching Bitcoin price:', error);
+      // Error fetching Bitcoin price (logged silently)
       
       // Return cached price if available
       if (this.priceCache) {
-        console.log('Using cached Bitcoin price');
         return this.priceCache;
       }
       
       // Return fallback price
-      console.log('Using fallback Bitcoin price');
       const fallbackPrice: BitcoinPrice = {
         price: 97000,
         change24h: 0,
@@ -89,7 +87,7 @@ export class BitcoinPriceService {
         lastUpdated: new Date().toISOString()
       };
     } catch (error) {
-      console.error('CoinGecko API error:', error);
+      // CoinGecko API error (logged silently)
       throw error;
     }
   }

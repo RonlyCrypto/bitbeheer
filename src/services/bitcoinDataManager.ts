@@ -1,3 +1,6 @@
+import { bitcoinPriceDataService } from './bitcoinPriceDataService';
+import logger from '../utils/logger';
+
 interface BitcoinPriceData {
   timestamp: number;
   date: string;
@@ -38,12 +41,7 @@ class BitcoinDataManager {
         const serverData = await this.loadFromServer();
         if (serverData) {
           this.data = serverData;
-          console.log('Bitcoin data loaded from server:', {
-            daily: this.data?.daily.length || 0,
-            hourly: this.data?.hourly.length || 0,
-            minute15: this.data?.minute15.length || 0,
-            lastUpdated: this.data?.lastUpdated
-          });
+          // Data loaded silently from server (no console logs in production)
           return;
         }
       }
@@ -52,26 +50,21 @@ class BitcoinDataManager {
       const stored = localStorage.getItem(this.STORAGE_KEY);
       if (stored) {
         this.data = JSON.parse(stored);
-        console.log('Bitcoin data loaded from localStorage:', {
-          daily: this.data?.daily.length || 0,
-          hourly: this.data?.hourly.length || 0,
-          minute15: this.data?.minute15.length || 0,
-          lastUpdated: this.data?.lastUpdated
-        });
+          // Data loaded from localStorage (no console logs)
       }
     } catch (error) {
-      console.error('Error loading Bitcoin data:', error);
+      // Error logged silently to keep console clean
     }
   }
 
   // Load complete Bitcoin EUR history from CoinGecko CSV
   private async loadCompleteEURHistory(): Promise<BitcoinPriceData[]> {
     try {
-      console.log('Loading complete Bitcoin EUR history...');
+      // Loading EUR history from Supabase (no console logs)
       
       const response = await fetch('/eur/bitcoin-eur-complete-history.csv');
       if (!response.ok) {
-        console.log('Complete EUR history not found, trying Kraken data...');
+        // EUR history not found, trying Kraken data
         return await this.loadKrakenEURData();
       }
       
@@ -104,11 +97,11 @@ class BitcoinDataManager {
       // Sort by date
       data.sort((a, b) => a.timestamp - b.timestamp);
       
-      console.log(`Loaded ${data.length} complete EUR history data points`);
+      // EUR history loaded silently
       return data;
       
     } catch (error) {
-      console.error('Error loading complete EUR history:', error);
+      // Error loading EUR history (silent)
       return await this.loadKrakenEURData();
     }
   }
@@ -116,7 +109,7 @@ class BitcoinDataManager {
   // Load Kraken EUR historical data (fallback)
   private async loadKrakenEURData(): Promise<BitcoinPriceData[]> {
     try {
-      console.log('Loading Kraken EUR historical data...');
+      // Loading Kraken EUR data (fallback)
       
       const response = await fetch('/eur/BTC_EUR_Kraken_Historical_Data.csv');
       if (!response.ok) {
@@ -161,68 +154,26 @@ class BitcoinDataManager {
       // Sort by date
       data.sort((a, b) => a.timestamp - b.timestamp);
       
-      console.log(`Loaded ${data.length} Kraken EUR data points`);
+      // Kraken data loaded silently
       return data;
       
     } catch (error) {
-      console.error('Error loading Kraken EUR data:', error);
+      // Error loading Kraken data (silent)
       return [];
     }
   }
 
-  // Load data from server (CSV files)
+  // Load data from Supabase (backend)
   private async loadFromServer(): Promise<BitcoinDataStructure | null> {
     try {
-      console.log('Loading Bitcoin data from CSV files...');
-      
-      const allData: BitcoinPriceData[] = [];
+      // Load data from Supabase using the new service
       const years = [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
       
-      for (const year of years) {
-        try {
-          const response = await fetch(`/bitcoin-price-history-${year}.csv`);
-          if (response.ok) {
-            const csvText = await response.text();
-            const yearData = this.parseCSVData(csvText, year);
-            if (yearData.length > 0) {
-              allData.push(...yearData);
-              console.log(`Loaded ${yearData.length} data points for ${year}`);
-            }
-          }
-        } catch (error) {
-          console.warn(`Could not load CSV data for year ${year}:`, error);
-        }
-      }
-      
-      // Always load fresh 2025 data from updated bitcoin-price-history-2025.csv
-      if (allData.length > 0) {
-        console.log('Loading fresh 2025 data from bitcoin-price-history-2025.csv...');
-        const fresh2025Data = await this.load2025DataFromLocalCSV();
-        if (fresh2025Data && fresh2025Data.length > 0) {
-          // Remove old 2025 data and add fresh data
-          const filteredData = allData.filter(point => {
-            const year = new Date(point.date).getFullYear();
-            return year !== 2025;
-          });
-          allData.length = 0;
-          allData.push(...filteredData, ...fresh2025Data);
-          console.log(`Updated 2025 data with ${fresh2025Data.length} fresh data points from local CSV`);
-        }
-      }
-      
-      // Load complete EUR history (primary source)
-      const eurHistoryData = await this.loadCompleteEURHistory();
-      if (eurHistoryData.length > 0) {
-        // Use EUR history data as primary source
-        allData.length = 0;
-        allData.push(...eurHistoryData);
-        console.log(`Using complete EUR history with ${eurHistoryData.length} data points`);
-      } else {
-        console.log('No EUR history data found, using existing CSV data');
-      }
+      // Get all data for all years from Supabase
+      const allData = await bitcoinPriceDataService.getDataForYears(years);
       
       if (allData.length > 0) {
-        // Sort by date
+        // Sort by date (should already be sorted, but just in case)
         allData.sort((a, b) => a.timestamp - b.timestamp);
         
         const combinedData: BitcoinDataStructure = {
@@ -236,30 +187,33 @@ class BitcoinDataManager {
           }
         };
         
-        console.log(`Loaded total of ${allData.length} daily data points from ${combinedData.dataRange.start} to ${combinedData.dataRange.end}`);
-        
-        // Debug: Show data distribution by year
-        const yearDistribution: { [year: string]: number } = {};
-        allData.forEach(point => {
-          const year = new Date(point.date).getFullYear().toString();
-          yearDistribution[year] = (yearDistribution[year] || 0) + 1;
-        });
-        console.log('Data distribution by year:', yearDistribution);
-        
+        // Data loaded silently from Supabase (no console logs)
         return combinedData;
       }
       
-      // Fallback to localStorage if no server data
+      // Fallback to localStorage if no Supabase data
       const localData = localStorage.getItem(this.STORAGE_KEY);
       if (localData) {
         const parsedData = JSON.parse(localData);
         if (parsedData.daily && parsedData.daily.length > 0) {
-          console.log('Using localStorage data as fallback');
+          // Using localStorage data as fallback (silent)
           return parsedData;
         }
       }
     } catch (error) {
-      console.error('Error loading from server:', error);
+      logger.error('Error loading Bitcoin data from Supabase:', error);
+      // Fallback to localStorage on error
+      const localData = localStorage.getItem(this.STORAGE_KEY);
+      if (localData) {
+        try {
+          const parsedData = JSON.parse(localData);
+          if (parsedData.daily && parsedData.daily.length > 0) {
+            return parsedData;
+          }
+        } catch (parseError) {
+          // Ignore parse errors
+        }
+      }
     }
     return null;
   }
@@ -727,7 +681,7 @@ class BitcoinDataManager {
   // Load 2025 data from local bitcoin-price-history-2025.csv
   private async load2025DataFromLocalCSV(): Promise<BitcoinPriceData[]> {
     try {
-      console.log('Loading 2025 Bitcoin data from bitcoin-price-history-2025.csv...');
+      // Loading 2025 Bitcoin data from Supabase
       
       // Fetch the local CSV file
       const response = await fetch('/bitcoin-price-history-2025.csv');
@@ -765,12 +719,12 @@ class BitcoinDataManager {
         }
       }
       
-      console.log(`Loaded ${bitcoinData.length} data points for 2025 from local CSV`);
+      // 2025 data loaded silently
       
       return bitcoinData;
       
     } catch (error) {
-      console.error('Error loading 2025 data from local CSV:', error);
+      // Error loading 2025 data (silent)
       return [];
     }
   }
