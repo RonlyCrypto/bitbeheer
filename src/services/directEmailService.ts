@@ -85,28 +85,42 @@ export class DirectEmailService {
     return result.success;
   }
 
-  static async sendBulkEmail(users: any[], subject: string, message: string, fromEmail: string): Promise<{ success: boolean; sent: number; failed: number }> {
+  static async sendBulkEmail(users: any[], subject: string, message: string, fromEmail: string, templateBodyContent?: string): Promise<{ success: boolean; sent: number; failed: number }> {
     let sent = 0;
     let failed = 0;
 
     for (const user of users) {
-      const emailContent = `
-        <h2>${subject}</h2>
-        <p>Beste ${user.name || 'gebruiker'},</p>
-        <div>${message}</div>
-        <p>Met vriendelijke groet,<br>Het BitBeheer team</p>
-        <hr>
-        <p style="font-size: 12px; color: #666;">
-          Dit is een automatische e-mail van BitBeheer. 
-          Voor vragen kun je contact opnemen via info@bitbeheer.nl
-        </p>
-      `;
+      // If template body content is provided, use it with variables
+      // Otherwise, use the plain message
+      let emailBodyContent: string;
+      let variables: EmailVariables = {
+        name: user.name || 'gebruiker',
+        email: user.email,
+        date: new Date().toLocaleDateString('nl-NL')
+      };
+
+      if (templateBodyContent) {
+        // Use template body content with variable replacement
+        emailBodyContent = replaceVariables(templateBodyContent, variables);
+      } else {
+        // Fallback to simple message format
+        emailBodyContent = `
+          <h1 style="color: #f97316; font-size: 24px; margin: 0 0 20px 0;">${subject}</h1>
+          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0;">Beste ${user.name || 'gebruiker'},</p>
+          <div style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0;">${message.replace(/\n/g, '<br>')}</div>
+          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 20px 0 0 0;">Met vriendelijke groet,<br><strong style="color: #1f2937;">Giovanni</strong><br>BitBeheer</p>
+        `;
+      }
+
+      // Wrap body content in base layout
+      const htmlContent = wrapEmailBody(emailBodyContent);
+      const textContent = htmlToPlainText(emailBodyContent);
 
       const result = await this.sendEmail({
         to: user.email,
         subject: subject,
-        htmlContent: emailContent,
-        textContent: `${message}\n\nMet vriendelijke groet,\nHet BitBeheer team\n\nDit is een automatische e-mail. Voor vragen: info@bitbeheer.nl`,
+        htmlContent: htmlContent,
+        textContent: textContent,
         type: 'notification'
       });
 
