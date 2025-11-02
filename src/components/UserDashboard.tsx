@@ -463,7 +463,7 @@ export default function UserDashboard() {
                 { id: 'goals', label: 'Doelen', icon: Target, alwaysEnabled: false },
                 { id: 'portfolio', label: 'Portfolio', icon: PieChart, alwaysEnabled: false },
                 { id: 'appointments', label: 'Afspraken', icon: Calendar, alwaysEnabled: true },
-                { id: 'helpdesk', label: 'Helpdesk', icon: Mail, alwaysEnabled: false, badge: unreadChatCount },
+                { id: 'helpdesk', label: 'Helpdesk', icon: Mail, alwaysEnabled: false, badge: unreadChatCount > 0 ? unreadChatCount : undefined },
               ].map((tab) => {
                 const isEnabled = tab.alwaysEnabled || accountApproved;
                 const tooltipText = !isEnabled 
@@ -488,12 +488,14 @@ export default function UserDashboard() {
                       }`}
                     >
                       <tab.icon className="w-5 h-5" />
-                      <span className="flex-1">{tab.label}</span>
-                      {tab.badge && tab.badge > 0 && (
-                        <span className="bg-orange-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                          {tab.badge > 9 ? '9+' : tab.badge}
-                        </span>
-                      )}
+                      <span className="flex-1 relative">
+                        {tab.label}
+                        {tab.badge && tab.badge > 0 && (
+                          <span className="absolute -top-1 -right-6 bg-orange-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                            {tab.badge > 9 ? '9+' : tab.badge}
+                          </span>
+                        )}
+                      </span>
                     </button>
                     {!isEnabled && tooltipText && (
                       <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 w-64 z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
