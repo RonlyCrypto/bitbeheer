@@ -354,6 +354,8 @@ export default function AdminChat() {
       // Refresh metrics after sending reply
       if (window.dispatchEvent) {
         window.dispatchEvent(new CustomEvent('refreshMetrics'));
+        // Trigger event for user dashboard to update badge
+        window.dispatchEvent(new CustomEvent('newAdminMessage', { detail: { userEmail: selectedEmail } }));
       }
     } catch (e: any) {
       console.error('Reply send error', e);
