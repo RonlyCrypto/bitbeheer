@@ -1118,8 +1118,15 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   onSave={async (data) => {
                     setIsSavingQuestions(true);
                     try {
+                      // Get effective user email (considering impersonation)
                       const { data: authData } = await supabase.auth.getUser();
-                      const email = authData?.user?.email;
+                      const sessionEmail = authData?.user?.email;
+                      
+                      // Use impersonated user email if impersonating, otherwise use session email
+                      const email = (isImpersonating && impersonatedUser) 
+                        ? impersonatedUser 
+                        : (sessionEmail || null);
+                      
                       if (!email) throw new Error('Geen gebruiker bekend');
 
                       // Check if questions already exist
