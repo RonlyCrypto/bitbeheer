@@ -20,7 +20,8 @@ import {
   X,
   Video,
   BookOpen,
-  Copy
+  Copy,
+  CheckCircle2
 } from 'lucide-react';
 import { bitcoinPriceService, BitcoinPrice } from '../services/bitcoinPriceService';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
@@ -1371,7 +1372,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         </>
       )}
 
-      {/* Wallet Status - Only show if account is approved */}
+      {/* Wallet Status - Only show if account is approved AND no wallet exists */}
       {(accountApproved || hasApprovedOneOnOne) && !hasWallet && (
         <div className={`bg-yellow-50 border border-yellow-200 rounded-xl transition-all duration-500 overflow-hidden ${
           showWalletForm ? 'p-6' : 'p-6'
@@ -1389,9 +1390,12 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               {!showWalletForm ? (
                 <button 
                   onClick={() => setShowWalletForm(true)}
-                  className="bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-yellow-700 transition-colors"
+                  className="bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-yellow-700 transition-colors shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                 >
-                  Wallet toevoegen
+                  <span className="flex items-center gap-2">
+                    <Plus className="w-5 h-5" />
+                    Wallet toevoegen
+                  </span>
                 </button>
               ) : (
                 <div className="space-y-4">
@@ -1444,17 +1448,24 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         </div>
       )}
 
-      {/* Wallet Success Message */}
+      {/* Wallet Success Message - Animated entry */}
       {showSuccessMessage && (
-        <div className="bg-green-50 border border-green-200 p-6 rounded-xl">
+        <div className="bg-green-50 border-2 border-green-300 p-6 rounded-xl shadow-lg animate-in fade-in slide-in-from-top-4 duration-500">
           <div className="flex items-center gap-4">
-            <div className="bg-green-100 p-3 rounded-xl">
+            <div className="bg-green-100 p-3 rounded-xl animate-pulse">
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-green-800 mb-1">Wallet succesvol toegevoegd!</h3>
+              <h3 className="text-lg font-semibold text-green-800 mb-1">✓ Wallet succesvol toegevoegd!</h3>
               <p className="text-green-700">Je wallet is gekoppeld en je portfolio wordt bijgewerkt.</p>
             </div>
+            <button
+              onClick={() => setShowSuccessMessage(false)}
+              className="text-green-600 hover:text-green-800 transition-colors"
+              aria-label="Sluiten"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
         </div>
       )}

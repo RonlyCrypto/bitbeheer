@@ -16,9 +16,6 @@ import {
 import PortfolioChart from '../components/PortfolioChart';
 import TransactionBlock from '../components/TransactionBlock';
 import { bitcoinApiService, BitcoinWallet, BitcoinTransaction } from '../services/bitcoinApiService';
-import { supabase } from '../lib/supabase';
-import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
-import { usePermissions } from '../contexts/PermissionsContext';
 
 interface WalletData {
   id: string;
@@ -31,8 +28,6 @@ interface WalletData {
 }
 
 export default function PortfolioPage() {
-  const { user } = useSupabaseAuth();
-  const { isImpersonating, impersonatedUser } = usePermissions();
   const [wallets, setWallets] = useState<WalletData[]>([]);
   const [showAddWallet, setShowAddWallet] = useState(false);
   const [newWalletAddress, setNewWalletAddress] = useState('');
@@ -40,98 +35,9 @@ export default function PortfolioPage() {
   const [showBalances, setShowBalances] = useState(true);
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [loadingWallets, setLoadingWallets] = useState(true);
   const [currentPrice, setCurrentPrice] = useState<number>(96640);
   const [allTransactions, setAllTransactions] = useState<BitcoinTransaction[]>([]);
   const [selectedTransaction, setSelectedTransaction] = useState<BitcoinTransaction | null>(null);
-
-  // Get effective user email (considering impersonation)
-  const effectiveUserEmail = (isImpersonating && impersonatedUser) 
-    ? impersonatedUser 
-    : user?.email;
-
-  // Load wallets from Supabase
-  useEffect(() => {
-    const loadWallets = async () => {
-      if (!effectiveUserEmail) {
-        setLoadingWallets(false);
-        return;
-      }
-
-      try {
-        setLoadingWallets(true);
-        const { data: walletsData, error } = await supabase
-          .from('wallets')
-          .select('*')
-          .eq('email', effectiveUserEmail)
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        if (walletsData && walletsData.length > 0) {
-          // Convert Supabase wallet data to WalletData format
-          const walletsList: WalletData[] = await Promise.all(
-            walletsData.map(async (wallet: any) => {
-              // If wallet_data exists, use it; otherwise fetch fresh data
-              let realData: BitcoinWallet | undefined;
-              
-              if (wallet.wallet_data?.transactions) {
-                // Use stored transaction data if available
-                realData = {
-                  address: wallet.address,
-                  balance: wallet.balance || 0,
-                  totalReceived: wallet.total_received || 0,
-                  totalSent: wallet.total_sent || 0,
-                  transactionCount: wallet.transaction_count || 0,
-                  firstSeen: wallet.first_seen ? new Date(wallet.first_seen).getTime() : 0,
-                  lastSeen: wallet.last_seen ? new Date(wallet.last_seen).getTime() : Date.now(),
-                  transactions: wallet.wallet_data.transactions || []
-                };
-              } else {
-                // Fetch fresh data from API
-                try {
-                  realData = await bitcoinApiService.getWalletData(wallet.address);
-                } catch (error) {
-                  console.error('Error fetching wallet data:', error);
-                }
-              }
-
-              return {
-                id: wallet.id,
-                name: wallet.name || 'Mijn Bitcoin Wallet',
-                address: wallet.address,
-                balance: wallet.balance || 0,
-                transactions: wallet.transaction_count || 0,
-                firstSeen: wallet.first_seen ? new Date(wallet.first_seen).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-                realData
-              };
-            })
-          );
-
-          setWallets(walletsList);
-        } else {
-          setWallets([]);
-        }
-      } catch (error) {
-        console.error('Error loading wallets:', error);
-        setWallets([]);
-      } finally {
-        setLoadingWallets(false);
-      }
-    };
-
-    loadWallets();
-
-    // Listen for wallet updates
-    const handleWalletUpdate = () => {
-      loadWallets();
-    };
-    window.addEventListener('walletUpdated', handleWalletUpdate);
-
-    return () => {
-      window.removeEventListener('walletUpdated', handleWalletUpdate);
-    };
-  }, [effectiveUserEmail]);
 
   // Haal huidige Bitcoin prijs op
   useEffect(() => {
@@ -165,126 +71,43 @@ export default function PortfolioPage() {
   }, [wallets]);
 
   const addWallet = async () => {
-    if (!newWalletAddress.trim() || !newWalletName.trim()) {
-      alert('Voer een wallet naam en adres in');
-      return;
-    }
-
-    if (!effectiveUserEmail) {
-      alert('Je moet ingelogd zijn om wallets toe te voegen');
-      return;
-    }
-
-    // Validate Bitcoin address
-    if (!bitcoinApiService.validateBitcoinAddress(newWalletAddress.trim())) {
-      alert('Ongeldig Bitcoin adres. Controleer het adres en probeer opnieuw.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Check existing wallet
-      const { data: existing } = await supabase
-        .from('wallets')
-        .select('id')
-        .eq('email', effectiveUserEmail)
-        .limit(1);
-
-      if (existing && existing.length > 0) {
-        alert('Je kunt maar één wallet koppelen aan je account.');
-        setLoading(false);
+    if (newWalletAddress && newWalletName) {
+      // Valideer Bitcoin adres
+      if (!bitcoinApiService.validateBitcoinAddress(newWalletAddress)) {
+        alert('Ongeldig Bitcoin adres');
         return;
       }
 
-      // Fetch wallet data from Bitcoin API
-      const walletApiData = await bitcoinApiService.getWalletData(newWalletAddress.trim());
-      
-      // Get current Bitcoin price
-      const currentBtcPrice = await bitcoinApiService.getCurrentPrice();
-      setCurrentPrice(currentBtcPrice);
-
-      // Get last transaction
-      const lastTx = walletApiData.transactions && walletApiData.transactions.length > 0
-        ? walletApiData.transactions[0]
-        : null;
-
-      // Insert wallet with portfolio data into Supabase
-      const { data: newWallet, error: insertErr } = await supabase
-        .from('wallets')
-        .insert([{
-          email: effectiveUserEmail,
-          address: newWalletAddress.trim(),
-          name: newWalletName.trim(),
-          type: 'bitcoin',
-          balance: walletApiData.balance,
-          transaction_count: walletApiData.transactionCount,
-          total_received: walletApiData.totalReceived,
-          total_sent: walletApiData.totalSent,
-          first_seen: walletApiData.firstSeen ? new Date(walletApiData.firstSeen) : null,
-          last_seen: walletApiData.lastSeen ? new Date(walletApiData.lastSeen) : new Date(),
-          last_transaction_hash: lastTx?.hash || null,
-          last_transaction_time: lastTx?.time ? new Date(lastTx.time * 1000) : null,
-          wallet_data: walletApiData.transactions ? { transactions: walletApiData.transactions } : null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }])
-        .select()
-        .single();
-
-      if (insertErr) throw insertErr;
-
-      // Trigger wallet update event to refresh OverviewTab
-      window.dispatchEvent(new CustomEvent('walletUpdated'));
-
-      // Reload wallets
-      const walletsList: WalletData[] = [{
-        id: newWallet.id,
-        name: newWallet.name || 'Mijn Bitcoin Wallet',
-        address: newWallet.address,
-        balance: newWallet.balance || 0,
-        transactions: newWallet.transaction_count || 0,
-        firstSeen: newWallet.first_seen ? new Date(newWallet.first_seen).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-        realData: walletApiData
-      }];
-      
-      setWallets(walletsList);
-      setNewWalletAddress('');
-      setNewWalletName('');
-      setShowAddWallet(false);
-      
-      alert('Wallet succesvol toegevoegd!');
-    } catch (error: any) {
-      console.error('Error adding wallet:', error);
-      const errorMessage = error?.message || 'Fout bij het toevoegen van wallet';
-      alert(errorMessage);
-    } finally {
-      setLoading(false);
+      setLoading(true);
+      try {
+        // Haal echte wallet data op
+        const realData = await bitcoinApiService.getWalletData(newWalletAddress);
+        
+        const newWallet: WalletData = {
+          id: Date.now().toString(),
+          name: newWalletName,
+          address: newWalletAddress,
+          balance: realData.balance,
+          transactions: realData.transactionCount,
+          firstSeen: new Date(realData.firstSeen).toISOString().split('T')[0],
+          realData: realData
+        };
+        
+        setWallets([...wallets, newWallet]);
+        setNewWalletAddress('');
+        setNewWalletName('');
+        setShowAddWallet(false);
+      } catch (error) {
+        console.error('Error fetching wallet data:', error);
+        alert('Kon wallet data niet ophalen. Controleer het adres en probeer opnieuw.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const removeWallet = async (id: string) => {
-    if (!confirm('Weet je zeker dat je deze wallet wilt verwijderen?')) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('wallets')
-        .delete()
-        .eq('id', id)
-        .eq('email', effectiveUserEmail);
-
-      if (error) throw error;
-
-      // Trigger wallet update event
-      window.dispatchEvent(new CustomEvent('walletUpdated'));
-      
-      // Update local state
-      setWallets(wallets.filter(wallet => wallet.id !== id));
-    } catch (error) {
-      console.error('Error removing wallet:', error);
-      alert('Fout bij het verwijderen van wallet');
-    }
+  const removeWallet = (id: string) => {
+    setWallets(wallets.filter(wallet => wallet.id !== id));
   };
 
   const copyAddress = (address: string) => {
@@ -438,12 +261,7 @@ export default function PortfolioPage() {
           )}
 
           {/* Wallets List */}
-          {loadingWallets ? (
-            <div className="bg-white rounded-xl p-12 text-center shadow-lg">
-              <Loader2 className="w-8 h-8 animate-spin text-orange-600 mx-auto mb-4" />
-              <p className="text-gray-600">Wallets laden...</p>
-            </div>
-          ) : wallets.length === 0 ? (
+          {wallets.length === 0 ? (
             <div className="bg-white rounded-xl p-12 text-center shadow-lg">
               <Wallet className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Geen Wallets Gekoppeld</h3>
