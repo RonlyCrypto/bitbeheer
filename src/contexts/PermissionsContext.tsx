@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { impersonationUtils } from '../utils/impersonation';
 import { useSupabaseAuth } from './SupabaseAuthContext';
+import logger from '../utils/logger';
 
 export type AccountType = 'admin' | 'user' | 'test' | 'premium' | 'basic';
 
@@ -93,47 +94,35 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const checkImpersonation = () => {
       // Check impersonation state from localStorage
       const impersonationData = impersonationUtils.getCurrentImpersonation();
-      console.log('🔍 Checking impersonation (from localStorage):', impersonationData);
       
       if (impersonationData && impersonationData.isImpersonating) {
         setIsImpersonating(true);
         setImpersonatedUser(impersonationData.impersonatedUser);
         // When impersonating, user has basic permissions (not admin)
         setAccountType('user');
-        console.log('🎭 Impersonating user:', impersonationData.impersonatedUser);
-        console.log('🎭 User will see regular user interface');
       } else {
         setIsImpersonating(false);
         setImpersonatedUser(null);
         
-        // Wait for auth to finish initializing before logging/setting state
+        // Wait for auth to finish initializing before setting state
         if (loading) {
           return;
         }
 
         // Check if user is logged in via Supabase
         if (user) {
-          console.log('👤 Supabase user detected:', user);
-          console.log('📧 User email:', user.email);
-          console.log('🏷️ User metadata:', user.user_metadata);
-          
           // Check if user is admin based on email or metadata
           if (user.email === 'admin@bitbeheer.nl' || user.user_metadata?.is_admin) {
             setAccountType('admin');
-            console.log('👑 Admin user detected via email or metadata');
           } else if (user.user_metadata?.is_test) {
             setAccountType('test');
-            console.log('🧪 Test user detected');
           } else if (user.user_metadata?.is_premium) {
             setAccountType('premium');
-            console.log('⭐ Premium user detected');
           } else {
             setAccountType('user');
-            console.log('👤 Regular user detected');
           }
         } else {
           setAccountType('user');
-          console.log('❌ No user logged in');
         }
       }
     };
@@ -142,12 +131,10 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     
     // Listen for impersonation events
     const handleImpersonationStarted = () => {
-      console.log('Impersonation started event received');
       checkImpersonation();
     };
     
     const handleImpersonationStopped = () => {
-      console.log('Impersonation stopped event received');
       checkImpersonation();
     };
     
@@ -170,12 +157,6 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const canAccessAdmin = hasPermission('admin.dashboard');
   const canAccessPremium = hasPermission('premium.features');
   const canAccessBasic = hasPermission('user.dashboard');
-  
-  // Debug logging
-  console.log('🎭 PermissionsContext - isImpersonating:', isImpersonating);
-  console.log('🎭 PermissionsContext - impersonatedUser:', impersonatedUser);
-  console.log('🎭 PermissionsContext - accountType:', accountType);
-  console.log('🎭 PermissionsContext - Should show banner:', isImpersonating && impersonatedUser);
   
 
   return (

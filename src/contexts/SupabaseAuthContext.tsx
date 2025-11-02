@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, signUpUser, signInUser, signOutUser, getCurrentUser } from '../lib/supabase';
 import type { User } from '@supabase/supabase-js';
+import logger from '../utils/logger';
 
 interface SupabaseAuthContextType {
   user: User | null;
@@ -23,34 +24,31 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
   const [showWelcomePopup, setShowWelcomePopup] = useState(false);
 
   useEffect(() => {
-    // Test Supabase connection first
+    // Test Supabase connection first (only in dev)
     const testSupabaseConnection = async () => {
       try {
-        console.log('🔍 Testing Supabase connection...');
+        logger.log('Testing Supabase connection...');
         const { data, error } = await supabase.from('accounts').select('count').limit(1);
         if (error) {
-          console.error('❌ Supabase connection error:', error);
+          logger.error('Supabase connection error:', error);
         } else {
-          console.log('✅ Supabase connection successful:', data);
+          logger.log('Supabase connection successful');
         }
       } catch (error) {
-        console.error('❌ Supabase connection test failed:', error);
+        logger.error('Supabase connection test failed:', error);
       }
     };
 
     // Get initial session
     const getInitialSession = async () => {
       try {
-        console.log('🔍 Getting initial Supabase session...');
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
-          console.error('❌ Error getting session:', error);
+          logger.error('Error getting session:', error);
         }
-        console.log('📊 Initial session:', session);
-        console.log('👤 Initial user:', session?.user);
         setUser(session?.user ?? null);
       } catch (error) {
-        console.error('Error getting initial session:', error);
+        logger.error('Error getting initial session:', error);
       } finally {
         setLoading(false);
       }
@@ -62,9 +60,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
               // Listen for auth changes
               const { data: { subscription } } = supabase.auth.onAuthStateChange(
                 async (event, session) => {
-                  console.log('🔄 Auth state change:', event, session);
-                  console.log('👤 User from session:', session?.user);
-                  console.log('🔐 Is authenticated:', !!session?.user);
+                  logger.log('Auth state change:', event);
                   setUser(session?.user ?? null);
                   setLoading(false);
                   
@@ -91,7 +87,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       const result = await signUpUser(email, password, userData);
       return result;
     } catch (error) {
-      console.error('Sign up error:', error);
+      logger.error('Sign up error:', error);
       return { success: false, error: 'Er is een fout opgetreden bij het aanmelden' };
     } finally {
       setLoading(false);
