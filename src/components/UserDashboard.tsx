@@ -936,10 +936,10 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           </div>
         </div>
       ) : userAppointment ? (
-        // Any appointment (pending or confirmed) - show green block
+        // Any appointment (pending or confirmed)
         userAppointment.status === 'pending' ? (
-        // Pending appointment - waiting for confirmation (green block)
-        <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-xl shadow-lg">
+        // Pending appointment - waiting for confirmation (orange block)
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-xl shadow-lg">
           <div className="flex items-start gap-4">
             <div className="bg-white bg-opacity-20 p-3 rounded-xl">
               <Clock className="w-8 h-8" />
@@ -948,11 +948,11 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               <h3 className="text-xl font-bold mb-2">Afspraak ingepland ⏳</h3>
               <div className="bg-white bg-opacity-10 rounded-lg p-3 mb-3 text-sm">
                 <p className="font-semibold mb-1">ℹ️ Over dit gesprek:</p>
-                <p className="text-green-50">
+                <p className="text-orange-50">
                   Dit is een 20-minuten kennismaking waarbij we bespreken wie jij bent en wie ik ben, wat je doel is en of dat mogelijk is.
                 </p>
               </div>
-              <div className="space-y-2 text-green-100 mb-4">
+              <div className="space-y-2 text-orange-100 mb-4">
                 <p>
                   <strong>Datum:</strong> {new Date(userAppointment.date).toLocaleDateString('nl-NL', { 
                     weekday: 'long', 
@@ -965,7 +965,13 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   <strong>Tijd:</strong> {userAppointment.start_time} - {userAppointment.end_time}
                 </p>
               </div>
-              <p className="bg-white bg-opacity-20 rounded-lg p-3 text-green-50">
+              <button 
+                disabled
+                className="bg-white bg-opacity-30 text-white px-6 py-3 rounded-lg font-semibold cursor-not-allowed opacity-75"
+              >
+                Wacht op goedkeuring
+              </button>
+              <p className="bg-white bg-opacity-20 rounded-lg p-3 mt-3 text-orange-50 text-sm">
                 📬 Wacht tot dit bevestigd is door de admin. Je ontvangt een bevestigingsmail zodra de afspraak is goedgekeurd.
               </p>
             </div>
