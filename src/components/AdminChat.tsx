@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Send, Users, RefreshCw } from 'lucide-react';
+import { usePermissions } from '../contexts/PermissionsContext';
+import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 
 interface SupportMessage {
   id: string;
@@ -8,9 +10,19 @@ interface SupportMessage {
   body: string;
   created_at: string;
   from_admin: boolean;
+  user_id?: string;
+  user_name?: string;
+  user_lastname?: string;
+  admin_email?: string;
+  admin_name?: string;
+  sent_by_account?: string;
+  is_read?: boolean;
+  read_at?: string;
 }
 
 export default function AdminChat() {
+  const { user } = useSupabaseAuth();
+  const { isImpersonating, impersonatedUser } = usePermissions();
   const [selectedEmail, setSelectedEmail] = useState<string>('');
   const [customers, setCustomers] = useState<string[]>([]);
   const [messages, setMessages] = useState<SupportMessage[]>([]);
@@ -120,12 +132,35 @@ export default function AdminChat() {
   const sendReply = async () => {
     if (!selectedEmail || !reply.trim()) return;
     try {
+      // Get user info for selected email
+      const { data: userData } = await supabase
+        .from('users')
+        .select('id, email, first_name, last_name')
+        .eq('email', selectedEmail)
+        .maybeSingle();
+      
+      // Determine which account is sending (impersonated user or admin)
+      const sentByAccount = isImpersonating && impersonatedUser ? impersonatedUser : (user?.email || 'admin@bitbeheer.nl');
+      
+      // Get admin info
+      const adminEmail = user?.email || 'admin@bitbeheer.nl';
+      const adminName = user?.user_metadata?.name || user?.user_metadata?.first_name || 'Admin';
+      
       // Ensure we're sending to the correct user by using selectedEmail
       const messageData = {
         email: selectedEmail, // This ensures the message is linked to the correct user's chat
         body: reply.trim(),
         from_admin: true,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        user_id: userData?.id || null,
+        user_name: userData?.first_name || null,
+        user_lastname: userData?.last_name || null,
+        admin_email: adminEmail,
+        admin_name: adminName,
+        sent_by_account: sentByAccount, // Track which account sent it (for impersonation)
+        is_read: false,
+        message_type: 'support',
+        priority: 'normal'
       };
       
       const { error } = await supabase

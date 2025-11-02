@@ -90,9 +90,30 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
       setMessages((prev) => [...prev, optimistic]);
       setNewMessage('');
 
+      // Get user info from users or accounts table
+      const { data: userData } = await supabase
+        .from('users')
+        .select('id, email, first_name, last_name')
+        .eq('email', user.email)
+        .maybeSingle();
+      
+      const messageData = {
+        email: user.email,
+        body,
+        from_admin: false,
+        created_at: optimistic.created_at,
+        user_id: userData?.id || null,
+        user_name: userData?.first_name || user.user_metadata?.first_name || null,
+        user_lastname: userData?.last_name || user.user_metadata?.last_name || null,
+        sent_by_account: user.email, // Track which account sent it
+        is_read: false,
+        message_type: 'support',
+        priority: 'normal'
+      };
+
       const { data, error } = await supabase
         .from('support_messages')
-        .insert([{ email: user.email, body, from_admin: false, created_at: optimistic.created_at }])
+        .insert([messageData])
         .select();
       
       console.log('Insert result:', { data, error });

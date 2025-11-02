@@ -2007,7 +2007,7 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
       // We need to filter by user_email in the query or in the frontend
       let query = supabase
         .from('appointments')
-        .select('*');
+        .select('*, one_on_one_approved');
       
       // Filter by user email - this should work for both regular users and admin during impersonation
       query = query.eq('user_email', effectiveUserEmail);
@@ -2116,6 +2116,11 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
                        apt.status === 'pending' ? '⏳ In Afwachting' :
                        '❌ Geannuleerd'}
                     </span>
+                    {apt.one_on_one_approved && (
+                      <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                        ✓ 1 op 1 Goedgekeurd
+                      </span>
+                    )}
                   </div>
                   {apt.notes && (
                     <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
@@ -2270,6 +2275,24 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
                           <Clock className="w-4 h-4" />
                           {apt.start_time} - {apt.end_time} ({apt.duration_minutes} minuten)
                         </div>
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          apt.status === 'confirmed'
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                            : apt.status === 'pending'
+                            ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                            : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                        }`}>
+                          {apt.status === 'confirmed' ? '✅ Bevestigd' :
+                           apt.status === 'pending' ? '⏳ In Afwachting' :
+                           '❌ Geannuleerd'}
+                        </span>
+                        {apt.one_on_one_approved && (
+                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                            ✓ 1 op 1 Goedgekeurd
+                          </span>
+                        )}
                       </div>
                       {apt.notes && (
                         <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
