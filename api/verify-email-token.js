@@ -127,8 +127,8 @@ module.exports = async (req, res) => {
           'Authorization': `Bearer ${supabaseKey}`,
         },
         body: JSON.stringify({
-          email: user.email,
-          name: user.name
+          email: account.email,
+          name: account.name
         })
       });
 

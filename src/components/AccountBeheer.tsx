@@ -915,7 +915,7 @@ export default function AccountBeheer() {
                                 <span>Laatste login: {user.lastLogin}</span>
                               )}
                             </div>
-                            <div className="mt-2 flex items-center gap-2">
+                            <div className="mt-2 flex items-center gap-2 flex-wrap">
                               <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full ${
                                 isInWarningPeriod(user) 
                                   ? 'bg-red-100 text-red-800' 
@@ -924,6 +924,18 @@ export default function AccountBeheer() {
                                 <Clock className="w-3 h-3" />
                                 {getRemainingTime(user)} dagen resterend
                               </span>
+                              {/* Status dropdown - default to actief for verified accounts */}
+                              {user.email_verified && (
+                                <select
+                                  value={user.actief !== false ? 'actief' : 'inactief'}
+                                  onChange={(e) => handleUpdateAccountStatus(user.id, e.target.value === 'actief')}
+                                  disabled={isUpdatingStatus === user.id}
+                                  className="text-xs px-2 py-1 rounded-full border border-gray-300 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 disabled:opacity-50"
+                                >
+                                  <option value="actief">🟢 Actief</option>
+                                  <option value="inactief">🔴 Inactief</option>
+                                </select>
+                              )}
                               <div className="flex gap-1">
                                 <button
                                   onClick={() => handleManualVerify(user)}
