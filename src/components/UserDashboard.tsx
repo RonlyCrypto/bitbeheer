@@ -555,6 +555,9 @@ export default function UserDashboard() {
               appointments={appointments} 
               portfolio={portfolio}
               onBookAppointment={() => setShowAppointmentPopup(true)}
+              accountApproved={accountApproved}
+              isImpersonating={isImpersonating}
+              impersonatedUser={impersonatedUser}
             />}
             {activeTab === 'goals' && accountApproved && <GoalsTab goals={goals} setGoals={setGoals} />}
             {activeTab === 'portfolio' && accountApproved && <PortfolioTab portfolio={portfolio} setPortfolio={setPortfolio} />}
@@ -666,7 +669,7 @@ export default function UserDashboard() {
 }
 
 // Overview Tab Component
-function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppointment, accountApproved }: any) {
+function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppointment, accountApproved, isImpersonating, impersonatedUser }: any) {
   // Determine goals to display based on account status
   const displayGoals = accountApproved 
     ? [
@@ -718,18 +721,24 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
     const loadAppointments = async () => {
       setAppointmentsLoading(true);
       try {
+        // Get effective user email (considering impersonation)
         const { data: authData } = await supabase.auth.getUser();
-        const email = authData?.user?.email;
-        if (!email) {
+        const sessionEmail = authData?.user?.email;
+        
+        // Use impersonated user email if impersonating, otherwise use session email
+        const effectiveEmail = (isImpersonating && impersonatedUser) 
+          ? impersonatedUser 
+          : sessionEmail;
+        
+        if (!effectiveEmail) {
           setAppointmentsLoading(false);
           return;
         }
 
-
         const { data, error } = await supabase
           .from('appointments')
           .select('*')
-          .eq('user_email', email)
+          .eq('user_email', effectiveEmail)
           // Load ALL appointments, not just pending/confirmed - we filter in the frontend
           .order('date', { ascending: true })
           .order('start_time', { ascending: true });
@@ -775,7 +784,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
       window.removeEventListener('refreshAppointments', handleRefresh);
       document.removeEventListener('visibilitychange', visibilityChangeHandler);
     };
-  }, []);
+  }, [isImpersonating, impersonatedUser]);
   
   // Find user's appointment (pending or confirmed) - prioritize confirmed, then pending
   // For the green block: show ANY pending/confirmed appointment (regardless of date)
@@ -826,8 +835,15 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
   useEffect(() => {
     const loadWalletStatus = async () => {
       try {
+        // Get effective user email (considering impersonation)
         const { data: authData } = await supabase.auth.getUser();
-        const email = authData?.user?.email || null;
+        const sessionEmail = authData?.user?.email;
+        
+        // Use impersonated user email if impersonating, otherwise use session email
+        const email = (isImpersonating && impersonatedUser) 
+          ? impersonatedUser 
+          : (sessionEmail || null);
+        
         if (!email) return;
 
         const { data: wallet } = await supabase
@@ -881,7 +897,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 
     loadWalletStatus();
     loadQuestions();
-  }, [userAppointment]);
+  }, [userAppointment, isImpersonating, impersonatedUser]);
 
   const handleAddWallet = async () => {
     if (!walletForm.address.trim()) {
@@ -891,9 +907,15 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 
     setIsAddingWallet(true);
     try {
-      // Get current user email
+      // Get effective user email (considering impersonation)
       const { data: authData } = await supabase.auth.getUser();
-      const email = authData?.user?.email || null;
+      const sessionEmail = authData?.user?.email;
+      
+      // Use impersonated user email if impersonating, otherwise use session email
+      const email = (isImpersonating && impersonatedUser) 
+        ? impersonatedUser 
+        : (sessionEmail || null);
+      
       if (!email) throw new Error('Geen gebruiker bekend');
 
       // Check existing wallet
