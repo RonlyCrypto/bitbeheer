@@ -503,7 +503,8 @@ export default function UserDashboard() {
                 { id: 'appointments', label: 'Afspraken', icon: Calendar, alwaysEnabled: true },
                 { id: 'helpdesk', label: 'Helpdesk', icon: Mail, alwaysEnabled: false, badge: unreadChatCount > 0 ? unreadChatCount : undefined },
               ].map((tab) => {
-                const isEnabled = tab.alwaysEnabled || accountApproved;
+                // Tab is enabled if always enabled OR account is approved OR one-on-one is approved
+                const isEnabled = tab.alwaysEnabled || accountApproved || hasApprovedOneOnOne;
                 const tooltipText = !isEnabled 
                   ? "Je moet eerst een 20-minuten afspraak maken. Na deze afspraak bepalen we of we verder met elkaar gaan en dan kan de admin je account volledig open stellen."
                   : null;
@@ -737,7 +738,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 
         const { data, error } = await supabase
           .from('appointments')
-          .select('*')
+          .select('*, one_on_one_approved')
           .eq('user_email', effectiveEmail)
           // Load ALL appointments, not just pending/confirmed - we filter in the frontend
           .order('date', { ascending: true })
@@ -788,6 +789,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
   
   // Find user's appointment (pending or confirmed) - prioritize confirmed, then pending
   // For the green block: show ANY pending/confirmed appointment (regardless of date)
+  // BUT: Don't show if one_on_one_approved is true (appointment is completed and approved)
   // For the counter: only count future appointments
   const allValidAppointments = userAppointments.filter((apt: any) => {
     if (apt.status === 'cancelled') return false;
@@ -795,9 +797,40 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
   });
   
   // Find any pending or confirmed appointment for the block (no date restriction)
-  const userAppointment = allValidAppointments.find((apt: any) => apt.status === 'confirmed') 
-    || allValidAppointments.find((apt: any) => apt.status === 'pending');
+  // BUT: Hide block if one_on_one_approved is true (the 20min conversation is done and approved)
+  const userAppointment = allValidAppointments
+    .filter((apt: any) => !apt.one_on_one_approved) // Hide if already approved
+    .find((apt: any) => apt.status === 'confirmed') 
+    || allValidAppointments
+      .filter((apt: any) => !apt.one_on_one_approved) // Hide if already approved
+      .find((apt: any) => apt.status === 'pending');
   const hasAppointment = !!userAppointment && !appointmentsLoading;
+  
+  // Check if user has any appointment with one_on_one_approved = true
+  // This means the 20min conversation is done and approved, so unlock full dashboard
+  const hasApprovedOneOnOne = allValidAppointments.some((apt: any) => apt.one_on_one_approved === true);
+  
+  // If one_on_one_approved, ensure accountApproved is also true (for tab unlocking)
+  // Note: This should already be set by the admin button, but we check as backup
+  useEffect(() => {
+    if (hasApprovedOneOnOne && !accountApproved) {
+      // One-on-one is approved but accountApproved is not set - this shouldn't happen
+      // but we'll trigger a refresh of account status
+      if (user?.email) {
+        supabase
+          .from('users')
+          .select('account_approved, first_appointment_completed')
+          .eq('email', user.email)
+          .single()
+          .then(({ data: userData }) => {
+            if (userData) {
+              setAccountApproved(userData.account_approved || false);
+              setFirstAppointmentCompleted(userData.first_appointment_completed || false);
+            }
+          });
+      }
+    }
+  }, [hasApprovedOneOnOne, accountApproved, user?.email]);
   
   // For upcoming appointments counter: only count future appointments
   const futureValidAppointments = allValidAppointments.filter((apt: any) => {
