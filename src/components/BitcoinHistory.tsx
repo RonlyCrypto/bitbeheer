@@ -326,7 +326,7 @@ export default function BitcoinHistory() {
   const loadAllPriceData = async () => {
     setLoading(true);
     try {
-      console.log('Loading complete Bitcoin price data from 2009 to present...');
+      // Loading Bitcoin price data from Supabase (no console logs)
       
       // Check if we have complete data from the new manager
       const completeData = bitcoinDataManager.getData(currency);
