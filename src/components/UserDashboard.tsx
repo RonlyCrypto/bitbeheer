@@ -1003,7 +1003,18 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
     };
 
     loadWalletStatus();
+
+    // Listen for wallet updates
+    const handleWalletUpdate = () => {
+      loadWalletStatus();
+    };
+    window.addEventListener('walletUpdated', handleWalletUpdate);
+
     loadQuestions();
+    
+    return () => {
+      window.removeEventListener('walletUpdated', handleWalletUpdate);
+    };
   }, [userAppointment, isImpersonating, impersonatedUser]);
 
   const handleAddWallet = async () => {
@@ -1086,6 +1097,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
       setHasWallet(true);
       setWalletData(newWallet);
       setShowSuccessMessage(true);
+      
+      // Trigger wallet update event to refresh PortfolioPage
+      window.dispatchEvent(new CustomEvent('walletUpdated'));
       
       // Hide success message after 5 seconds
       setTimeout(() => {

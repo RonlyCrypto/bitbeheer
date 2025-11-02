@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Send, MessageSquare, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 
 interface SupportMessage {
   id: string;
