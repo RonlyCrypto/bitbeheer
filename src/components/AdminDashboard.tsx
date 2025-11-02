@@ -215,22 +215,16 @@ export default function AdminDashboard() {
         return false;
       }) || [];
 
-      // Load new notification signups (users in users table created in last 7 days or with email_sent = false/null)
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
+      // Count notifications that still need to be sent (email_sent = false or null)
       const { data: allNotificationUsers } = await supabase
         .from('users')
-        .select('id, created_at, email_sent')
+        .select('id, email_sent')
         .order('created_at', { ascending: false });
 
-      // Count new notification signups (recent within 7 days OR email not sent yet)
+      // Count only users where email has NOT been sent yet
       const newNotificationsCount = allNotificationUsers?.filter(user => {
-        if (!user.created_at) return false;
-        const userDate = new Date(user.created_at);
-        const isRecent = userDate >= sevenDaysAgo;
-        const notSent = user.email_sent === false || user.email_sent === null;
-        return isRecent || notSent;
+        // Count users where email_sent is false, null, or undefined
+        return user.email_sent === false || user.email_sent === null || user.email_sent === undefined;
       }).length || 0;
 
       setMetrics({
@@ -384,11 +378,11 @@ export default function AdminDashboard() {
                   }`}
                 >
                   Notificaties
-                  {metrics.newNotifications > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {metrics.newNotifications > 0 ? (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
                       {metrics.newNotifications > 9 ? '9+' : metrics.newNotifications}
                     </span>
-                  )}
+                  ) : null}
                 </button>
                 <button
                   onClick={() => setActiveTab('accounts')}
