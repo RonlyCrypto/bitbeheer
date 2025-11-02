@@ -161,15 +161,40 @@ export default function AdminDashboard() {
         return hoursUntil > 0 && hoursUntil <= 48;
       }) || null;
 
-      // Load new accounts (created in last 7 days)
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
-      const { data: accounts } = await supabase
+      // Load all accounts (to count accounts in specific sections)
+      const { data: allAccounts } = await supabase
         .from('accounts')
-        .select('*')
-        .gte('created_at', sevenDaysAgo.toISOString())
+        .select('email, email_verified, first_appointment_completed, account_approved, is_admin, is_test, created_at')
         .neq('email', 'admin@bitbeheer.nl');
+      
+      // Count accounts that need attention:
+      // 1. Wachtend op Verificatie: email_verified = false AND not expired (created within 5 days)
+      // 2. Geverifieerd - Wachtend op 20min Gesprek: email_verified = true AND first_appointment_completed = false AND account_approved = false
+      const fiveDaysAgo = new Date();
+      fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+      
+      const accountsNeedingAttention = allAccounts?.filter((account: any) => {
+        // Skip admin and test accounts
+        if (account.is_admin || account.is_test) return false;
+        
+        // Section 1: Wachtend op Verificatie
+        if (!account.email_verified) {
+          const createdDate = new Date(account.created_at);
+          const daysSinceCreation = (Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
+          if (daysSinceCreation <= 5) {
+            return true; // Account is waiting for verification and not expired
+          }
+        }
+        
+        // Section 2: Geverifieerd - Wachtend op 20min Gesprek
+        if (account.email_verified && 
+            !account.first_appointment_completed && 
+            !account.account_approved) {
+          return true;
+        }
+        
+        return false;
+      }) || [];
 
       // Load new notification signups (users in users table created in last 7 days or with email_sent = false/null)
       const { data: allNotificationUsers } = await supabase
@@ -190,7 +215,7 @@ export default function AdminDashboard() {
         newChats: unreadChats.length,
         pendingAppointments: appointments?.length || 0,
         upcomingAppointment: upcomingAppt,
-        newAccounts: accounts?.length || 0,
+        newAccounts: accountsNeedingAttention.length,
         newNotifications: newNotificationsCount
       });
     } catch (error) {
@@ -352,11 +377,11 @@ export default function AdminDashboard() {
                   }`}
                 >
                   Accounts
-                  {metrics.newAccounts > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {metrics.newAccounts > 0 ? (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
                       {metrics.newAccounts > 9 ? '9+' : metrics.newAccounts}
                     </span>
-                  )}
+                  ) : null}
                 </button>
                 <button
                   onClick={() => setActiveTab('pages')}
@@ -515,7 +540,7 @@ export default function AdminDashboard() {
                                 </div>
                                 <div className="flex-1">
                                   <h3 className="text-2xl font-bold text-gray-900">{metrics.newAccounts}</h3>
-                                  <p className="text-gray-600">Nieuwe Accounts (7 dagen)</p>
+                                  <p className="text-gray-600">Accounts die aandacht nodig hebben</p>
                                 </div>
                               </div>
                               {metrics.newAccounts > 0 && (
