@@ -108,7 +108,7 @@ export default function SoonOnlinePage() {
                   const existingEmails = JSON.parse(localStorage.getItem('bitbeheer_emails') || '[]');
                   existingEmails.push(emailData);
                   localStorage.setItem('bitbeheer_emails', JSON.stringify(existingEmails));
-                  console.log('User saved to localStorage fallback');
+                  // User saved to localStorage (silent)
                 } catch (fallbackError) {
                   console.error('Fallback save failed:', fallbackError);
                   setSubmitStatus('error');
@@ -116,7 +116,7 @@ export default function SoonOnlinePage() {
                   return;
                 }
               } else {
-                console.log('User saved to Supabase:', user);
+                // User saved to Supabase (silent - no sensitive data)
               }
 
               // Send notification email to admin using direct service
@@ -128,12 +128,12 @@ export default function SoonOnlinePage() {
                 );
 
                 if (emailSuccess) {
-                  console.log('Notification email sent successfully');
+                  // Notification email sent (silent)
                 } else {
-                  console.error('Failed to send notification email');
+                  // Failed to send notification email (logged silently)
                 }
               } catch (emailError) {
-                console.error('Error sending notification email:', emailError);
+                // Error sending notification email (logged silently)
                 // Continue even if email fails
               }
 
