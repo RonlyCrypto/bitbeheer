@@ -216,15 +216,18 @@ export default function AdminDashboard() {
       }) || [];
 
       // Count notifications that still need to be sent (email_sent = false or null)
+      // This should match exactly what "Nog Te Verzenden" shows in NotificatieBeheer
       const { data: allNotificationUsers } = await supabase
         .from('users')
-        .select('id, email_sent')
+        .select('id, email_sent, category')
         .order('created_at', { ascending: false });
 
       // Count only users where email has NOT been sent yet
+      // Use same logic as NotificatieBeheer: !user.emailSent (emailSent = false, null, or undefined)
       const newNotificationsCount = allNotificationUsers?.filter(user => {
-        // Count users where email_sent is false, null, or undefined
-        return user.email_sent === false || user.email_sent === null || user.email_sent === undefined;
+        // Only count if email_sent is explicitly false, null, or undefined (not true)
+        // This matches the logic in NotificatieBeheer: filteredUsers.filter(user => !user.emailSent)
+        return user.email_sent !== true;
       }).length || 0;
 
       setMetrics({
