@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Mail, Edit, Trash2, Plus, Save, X, Eye, Copy } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { wrapEmailBody, htmlToPlainText, replaceVariables as replaceTemplateVariables } from '../utils/emailLayout';
 
 interface EmailTemplate {
   id: string;
@@ -8,6 +9,7 @@ interface EmailTemplate {
   subject: string;
   html_content: string;
   text_content: string;
+  body_content?: string;
   description: string;
   variables: any;
   is_active: boolean;
@@ -39,10 +41,21 @@ export default function EmailTemplates() {
       if (error) throw error;
       
       // Ensure all templates have properly initialized variables field
-      const normalizedTemplates = (data || []).map(template => ({
-        ...template,
-        variables: template.variables && typeof template.variables === 'object' ? template.variables : {}
-      }));
+      // If body_content exists, generate html_content from it with base layout
+      const normalizedTemplates = (data || []).map(template => {
+        let htmlContent = template.html_content || '';
+        
+        // If body_content exists, use it to generate html_content with base layout
+        if (template.body_content) {
+          htmlContent = wrapEmailBody(template.body_content);
+        }
+        
+        return {
+          ...template,
+          html_content: htmlContent,
+          variables: template.variables && typeof template.variables === 'object' ? template.variables : {}
+        };
+      });
       
       setTemplates(normalizedTemplates);
     } catch (error: any) {
@@ -56,22 +69,40 @@ export default function EmailTemplates() {
   const handleSave = async () => {
     if (!editingTemplate) return;
 
-    if (!editingTemplate.template_name || !editingTemplate.subject || !editingTemplate.html_content) {
-      alert('Vul alle verplichte velden in (naam, onderwerp, HTML content)');
+    if (!editingTemplate.template_name || !editingTemplate.subject) {
+      alert('Vul alle verplichte velden in (naam, onderwerp)');
       return;
     }
 
     try {
-      const updateData = {
+      // If editing body_content, extract it from html_content by removing base layout
+      // Otherwise, use html_content as-is for backwards compatibility
+      let bodyContent = editingTemplate.body_content;
+      let htmlContent = editingTemplate.html_content;
+      
+      // Generate html_content from body_content if body_content exists
+      if (bodyContent && bodyContent.trim()) {
+        htmlContent = wrapEmailBody(bodyContent);
+      }
+      
+      // Generate text_content from html_content if not provided
+      const textContent = editingTemplate.text_content || htmlToPlainText(bodyContent || htmlContent);
+
+      const updateData: any = {
         template_name: editingTemplate.template_name,
         subject: editingTemplate.subject,
-        html_content: editingTemplate.html_content,
-        text_content: editingTemplate.text_content || '',
+        html_content: htmlContent,
+        text_content: textContent,
         description: editingTemplate.description || '',
         variables: editingTemplate.variables || {},
         is_active: editingTemplate.is_active,
         updated_at: new Date().toISOString()
       };
+      
+      // Include body_content if it exists
+      if (bodyContent !== undefined) {
+        updateData.body_content = bodyContent;
+      }
 
       const { error } = await supabase
         .from('email_templates')
@@ -92,23 +123,41 @@ export default function EmailTemplates() {
   const handleCreate = async () => {
     if (!editingTemplate) return;
 
-    if (!editingTemplate.template_name || !editingTemplate.subject || !editingTemplate.html_content) {
-      alert('Vul alle verplichte velden in (naam, onderwerp, HTML content)');
+    if (!editingTemplate.template_name || !editingTemplate.subject) {
+      alert('Vul alle verplichte velden in (naam, onderwerp)');
       return;
     }
 
     try {
+      // Generate html_content from body_content if body_content exists
+      let htmlContent = editingTemplate.html_content || '';
+      const bodyContent = editingTemplate.body_content;
+      
+      if (bodyContent && bodyContent.trim()) {
+        htmlContent = wrapEmailBody(bodyContent);
+      }
+      
+      // Generate text_content from html_content if not provided
+      const textContent = editingTemplate.text_content || htmlToPlainText(bodyContent || htmlContent);
+
+      const insertData: any = {
+        template_name: editingTemplate.template_name,
+        subject: editingTemplate.subject,
+        html_content: htmlContent,
+        text_content: textContent,
+        description: editingTemplate.description || '',
+        variables: editingTemplate.variables || {},
+        is_active: editingTemplate.is_active ?? true
+      };
+      
+      // Include body_content if it exists
+      if (bodyContent !== undefined && bodyContent.trim()) {
+        insertData.body_content = bodyContent;
+      }
+
       const { error } = await supabase
         .from('email_templates')
-        .insert([{
-          template_name: editingTemplate.template_name,
-          subject: editingTemplate.subject,
-          html_content: editingTemplate.html_content,
-          text_content: editingTemplate.text_content || '',
-          description: editingTemplate.description || '',
-          variables: editingTemplate.variables || {},
-          is_active: editingTemplate.is_active ?? true
-        }]);
+        .insert([insertData]);
 
       if (error) throw error;
 
@@ -164,16 +213,16 @@ export default function EmailTemplates() {
     );
   };
 
-  const replaceVariables = (content: string) => {
-    // Replace common variables with example values
-    return content
-      .replace(/\{\{name\}\}/g, 'Giovanni')
-      .replace(/\{\{email\}\}/g, 'gebruiker@example.com')
-      .replace(/\{\{date\}\}/g, new Date().toLocaleDateString('nl-NL'))
-      .replace(/\{\{verification_link\}\}/g, 'https://bitbeheer.nl/verify?token=example')
-      .replace(/\{\{teams_link\}\}/g, 'https://teams.microsoft.com/l/meetup-join/...')
-      .replace(/\{\{#if teams_link\}\}/g, '')
-      .replace(/\{\{\/if\}\}/g, '');
+  const replaceVariablesForPreview = (content: string) => {
+    // Use the emailLayout utility function
+    return replaceTemplateVariables(content, {
+      name: 'Giovanni',
+      email: 'gebruiker@example.com',
+      date: new Date().toLocaleDateString('nl-NL'),
+      verification_link: 'https://bitbeheer.nl/verify?token=example',
+      teams_link: 'https://teams.microsoft.com/l/meetup-join/...',
+      activation_deadline: '5 dagen'
+    });
   };
 
   if (loading) {
@@ -202,6 +251,7 @@ export default function EmailTemplates() {
               subject: '',
               html_content: '',
               text_content: '',
+              body_content: '',
               description: '',
               variables: {},
               is_active: true,
@@ -372,18 +422,29 @@ export default function EmailTemplates() {
                 />
               </div>
 
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+                <p className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">📧 Email Basis Layout</p>
+                <p className="text-xs text-blue-800 dark:text-blue-300">
+                  Alle emails gebruiken automatisch dezelfde basis layout (header, footer, styling). 
+                  Je hoeft hier alleen de <strong>inhoud</strong> van de email in te voeren. De basis layout wordt automatisch toegevoegd.
+                </p>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  HTML Content *
+                  Email Inhoud (Body Content) *
                   <span className="text-xs text-gray-500 ml-2">Gebruik {'{{'}variable{'}}'} voor variabelen</span>
                 </label>
                 <textarea
-                  value={editingTemplate.html_content}
-                  onChange={(e) => setEditingTemplate({ ...editingTemplate, html_content: e.target.value })}
+                  value={editingTemplate.body_content || editingTemplate.html_content || ''}
+                  onChange={(e) => setEditingTemplate({ ...editingTemplate, body_content: e.target.value, html_content: '' })}
                   rows={15}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white font-mono text-sm"
-                  placeholder="<html>...</html>"
+                  placeholder="<h1>Jouw Titel</h1>&#10;<p>Jouw bericht hier...</p>"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Voer alleen de email inhoud in. Header, footer en styling worden automatisch toegevoegd.
+                </p>
               </div>
 
               <div>
@@ -466,12 +527,16 @@ export default function EmailTemplates() {
             <div className="p-6">
               <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-4 mb-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1"><strong>Onderwerp:</strong></p>
-                <p className="text-gray-900 dark:text-white">{replaceVariables(previewTemplate.subject)}</p>
+                <p className="text-gray-900 dark:text-white">{replaceVariablesForPreview(previewTemplate.subject)}</p>
               </div>
 
               <div 
                 className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
-                dangerouslySetInnerHTML={{ __html: replaceVariables(previewTemplate.html_content) }}
+                dangerouslySetInnerHTML={{ 
+                  __html: previewTemplate.body_content 
+                    ? wrapEmailBody(replaceVariablesForPreview(previewTemplate.body_content))
+                    : replaceVariablesForPreview(previewTemplate.html_content)
+                }}
               />
             </div>
           </div>
