@@ -197,6 +197,9 @@ export default function AdminDashboard() {
       }) || [];
 
       // Load new notification signups (users in users table created in last 7 days or with email_sent = false/null)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
       const { data: allNotificationUsers } = await supabase
         .from('users')
         .select('id, created_at, email_sent')
