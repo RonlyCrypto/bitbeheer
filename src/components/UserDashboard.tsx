@@ -1094,6 +1094,29 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 
       if (insertErr) throw insertErr;
 
+      // Save wallet history for admin
+      const { error: historyError } = await supabase
+        .from('wallet_history')
+        .insert([{
+          user_email: email,
+          wallet_id: newWallet.id,
+          wallet_address: walletForm.address.trim(),
+          wallet_name: walletForm.name?.trim() || null,
+          action: 'added',
+          wallet_balance: walletApiData.balance,
+          transaction_count: walletApiData.transactionCount,
+          wallet_data_snapshot: {
+            balance: walletApiData.balance,
+            transactions: walletApiData.transactions || [],
+            transactionCount: walletApiData.transactionCount
+          }
+        }]);
+
+      if (historyError) {
+        console.error('Error saving wallet history:', historyError);
+        // Continue even if history fails
+      }
+
       // Update state
       setHasWallet(true);
       setWalletData(newWallet);

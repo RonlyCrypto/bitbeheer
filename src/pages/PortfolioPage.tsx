@@ -11,7 +11,8 @@ import {
   Check,
   AlertCircle,
   Shield,
-  Loader2
+  Loader2,
+  X
 } from 'lucide-react';
 import PortfolioChart from '../components/PortfolioChart';
 import TransactionBlock from '../components/TransactionBlock';
@@ -233,8 +234,67 @@ export default function PortfolioPage() {
     }
   };
 
-  const removeWallet = (id: string) => {
-    setWallets(wallets.filter(wallet => wallet.id !== id));
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [walletToDelete, setWalletToDelete] = useState<WalletData | null>(null);
+
+  const handleDeleteClick = (wallet: WalletData) => {
+    setWalletToDelete(wallet);
+    setShowDeleteConfirm(true);
+  };
+
+  const removeWallet = async () => {
+    if (!walletToDelete || !effectiveUserEmail) return;
+
+    try {
+      // Get wallet data before deletion for history
+      const walletBeforeDelete = wallets.find(w => w.id === walletToDelete.id);
+      
+      // Insert into wallet_history before deleting
+      const { error: historyError } = await supabase
+        .from('wallet_history')
+        .insert([{
+          user_email: effectiveUserEmail,
+          wallet_id: walletToDelete.id,
+          wallet_address: walletToDelete.address,
+          wallet_name: walletToDelete.name,
+          action: 'removed',
+          wallet_balance: walletToDelete.balance,
+          transaction_count: walletToDelete.transactions,
+          removed_at: new Date().toISOString(),
+          wallet_data_snapshot: walletBeforeDelete?.realData ? {
+            balance: walletBeforeDelete.balance,
+            transactions: walletBeforeDelete.realData.transactions || [],
+            transactionCount: walletBeforeDelete.transactions
+          } : null
+        }]);
+
+      if (historyError) {
+        console.error('Error saving wallet history:', historyError);
+        // Continue with deletion even if history fails
+      }
+
+      // Delete wallet from database
+      const { error: deleteError } = await supabase
+        .from('wallets')
+        .delete()
+        .eq('id', walletToDelete.id)
+        .eq('email', effectiveUserEmail);
+
+      if (deleteError) throw deleteError;
+
+      // Update local state
+      setWallets(wallets.filter(wallet => wallet.id !== walletToDelete.id));
+      
+      // Trigger wallet update event to refresh OverviewTab
+      window.dispatchEvent(new CustomEvent('walletUpdated'));
+      
+      // Close confirmation popup
+      setShowDeleteConfirm(false);
+      setWalletToDelete(null);
+    } catch (error) {
+      console.error('Error removing wallet:', error);
+      alert('Fout bij het verwijderen van wallet');
+    }
   };
 
   const copyAddress = (address: string) => {
@@ -418,8 +478,9 @@ export default function PortfolioPage() {
                       </div>
                     </div>
                     <button
-                      onClick={() => removeWallet(wallet.id)}
+                      onClick={() => handleDeleteClick(wallet)}
                       className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                      title="Wallet verwijderen"
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
@@ -514,6 +575,71 @@ export default function PortfolioPage() {
                       onTransactionClick={setSelectedTransaction}
                     />
                   ))}
+              </div>
+            </div>
+          )}
+
+          {/* Wallet Delete Confirmation Modal */}
+          {showDeleteConfirm && walletToDelete && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-xl p-8 max-w-md w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="bg-red-100 p-3 rounded-xl">
+                    <AlertCircle className="w-8 h-8 text-red-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">Wallet Verwijderen</h3>
+                    <p className="text-gray-600">Weet je zeker dat je deze wallet wilt verwijderen?</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setWalletToDelete(null);
+                    }}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    aria-label="Sluiten"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-red-900 mb-1">{walletToDelete.name}</p>
+                      <p className="text-sm text-red-700 font-mono mb-2">
+                        {walletToDelete.address.slice(0, 12)}...{walletToDelete.address.slice(-12)}
+                      </p>
+                      <p className="text-sm text-red-700">
+                        Saldo: <span className="font-semibold">{walletToDelete.balance.toFixed(4)} BTC</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-sm text-gray-600 mb-6">
+                  Deze actie kan niet ongedaan gemaakt worden. De wallet wordt permanent verwijderd uit je account, maar blijft beschikbaar in de blockchain.
+                </p>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={removeWallet}
+                    className="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                    Ja, ik weet het zeker
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setWalletToDelete(null);
+                    }}
+                    className="flex-1 px-6 py-3 bg-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
+                  >
+                    Annuleren
+                  </button>
+                </div>
               </div>
             </div>
           )}
