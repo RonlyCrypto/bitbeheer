@@ -74,9 +74,11 @@ export default function PortfolioPage() {
         }
 
         if (walletsData && walletsData.length > 0) {
+          console.log('📦 Loaded wallets from Supabase:', walletsData.length);
           // Convert Supabase wallet data to WalletData format
           const walletsList: WalletData[] = await Promise.all(
             walletsData.map(async (wallet: any) => {
+              console.log('🔍 Processing wallet:', { id: wallet.id, address: wallet.address, hasBalance: wallet.balance !== null, hasWalletData: !!wallet.wallet_data });
               // If wallet_data exists with transactions, use it; otherwise fetch fresh data
               let realData: BitcoinWallet | undefined;
               
@@ -137,8 +139,10 @@ export default function PortfolioPage() {
             })
           );
 
+          console.log('✅ Processed wallets:', walletsList.length);
           setWallets(walletsList);
         } else {
+          console.log('⚠️ No wallets found in database');
           setWallets([]);
         }
       } catch (error) {
