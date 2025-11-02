@@ -24,20 +24,56 @@ export default function NotificatieBeheer() {
   const [customMessage, setCustomMessage] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
+  const [emailTemplates, setEmailTemplates] = useState<Array<{ id: string; subject: string; content: string }>>([]);
 
-  // Email templates
-  const emailTemplates = [
-    {
-      id: 'live_announcement',
-      subject: 'BitBeheer is nu live! 🚀',
-      content: 'Beste Bitcoin investeerder,\n\nGeweldig nieuws! BitBeheer is nu live en klaar om je te helpen met je Bitcoin reis.\n\n🎯 Wat je nu kunt doen:\n• Persoonlijke 1-op-1 begeleiding boeken\n• Veilig Bitcoin kopen en bewaren leren\n• Eigen beheer van je Bitcoin opzetten\n• Alle tools en resources gebruiken\n\nGa naar: https://bitbeheer.nl\n\nMet vriendelijke groet,\nGiovanni - BitBeheer'
-    },
-    {
-      id: 'welcome',
-      subject: 'Welkom bij BitBeheer!',
-      content: 'Beste Bitcoin investeerder,\n\nWelkom bij BitBeheer! We zijn blij dat je je hebt aangemeld.\n\nWe nemen binnen 24 uur contact met je op voor een kennismakingsgesprek.\n\nMet vriendelijke groet,\nGiovanni - BitBeheer'
-    }
-  ];
+  // Load email templates from database
+  useEffect(() => {
+    const loadTemplates = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('email_templates')
+          .select('id, template_name, subject, html_content, text_content')
+          .eq('is_active', true)
+          .order('template_name', { ascending: true });
+
+        if (error) throw error;
+
+        // Helper function to strip HTML tags
+        const stripHtml = (html: string): string => {
+          if (typeof window === 'undefined') return html;
+          const tmp = document.createElement('DIV');
+          tmp.innerHTML = html;
+          return tmp.textContent || tmp.innerText || '';
+        };
+
+        // Convert database templates to format used in NotificatieBeheer
+        const templates = (data || []).map(template => ({
+          id: template.id,
+          subject: template.subject,
+          content: template.text_content || stripHtml(template.html_content || '') || 'Geen content'
+        }));
+
+        setEmailTemplates(templates);
+      } catch (error) {
+        console.error('Error loading email templates:', error);
+        // Fallback to default templates if database load fails
+        setEmailTemplates([
+          {
+            id: 'live_announcement',
+            subject: 'BitBeheer is nu live! 🚀',
+            content: 'Beste Bitcoin investeerder,\n\nGeweldig nieuws! BitBeheer is nu live en klaar om je te helpen met je Bitcoin reis.\n\n🎯 Wat je nu kunt doen:\n• Persoonlijke 1-op-1 begeleiding boeken\n• Veilig Bitcoin kopen en bewaren leren\n• Eigen beheer van je Bitcoin opzetten\n• Alle tools en resources gebruiken\n\nGa naar: https://bitbeheer.nl\n\nMet vriendelijke groet,\nGiovanni - BitBeheer'
+          },
+          {
+            id: 'welcome',
+            subject: 'Welkom bij BitBeheer!',
+            content: 'Beste Bitcoin investeerder,\n\nWelkom bij BitBeheer! We zijn blij dat je je hebt aangemeld.\n\nWe nemen binnen 24 uur contact met je op voor een kennismakingsgesprek.\n\nMet vriendelijke groet,\nGiovanni - BitBeheer'
+          }
+        ]);
+      }
+    };
+
+    loadTemplates();
+  }, []);
 
   // Load users from backend API
   useEffect(() => {

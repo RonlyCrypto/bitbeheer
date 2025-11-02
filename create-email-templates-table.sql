@@ -81,6 +81,36 @@ CREATE TRIGGER update_email_templates_updated_at
 INSERT INTO public.email_templates (template_name, subject, html_content, text_content, description, is_active)
 VALUES
   (
+    'live_announcement',
+    'BitBeheer is nu live! 🚀',
+    '<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <h1 style="color: #f97316;">BitBeheer is nu live! 🚀</h1>
+  <p>Beste Bitcoin investeerder,</p>
+  <p>Geweldig nieuws! BitBeheer is nu live en klaar om je te helpen met je Bitcoin reis.</p>
+  <p><strong>🎯 Wat je nu kunt doen:</strong></p>
+  <ul>
+    <li>Persoonlijke 1-op-1 begeleiding boeken</li>
+    <li>Veilig Bitcoin kopen en bewaren leren</li>
+    <li>Eigen beheer van je Bitcoin opzetten</li>
+    <li>Alle tools en resources gebruiken</li>
+  </ul>
+  <p style="text-align: center; margin: 30px 0;">
+    <a href="https://bitbeheer.nl" style="background-color: #f97316; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Ga naar BitBeheer</a>
+  </p>
+  <p>Met vriendelijke groet,<br>Giovanni - BitBeheer</p>
+</body>
+</html>',
+    'Beste Bitcoin investeerder,\n\nGeweldig nieuws! BitBeheer is nu live en klaar om je te helpen met je Bitcoin reis.\n\n🎯 Wat je nu kunt doen:\n• Persoonlijke 1-op-1 begeleiding boeken\n• Veilig Bitcoin kopen en bewaren leren\n• Eigen beheer van je Bitcoin opzetten\n• Alle tools en resources gebruiken\n\nGa naar: https://bitbeheer.nl\n\nMet vriendelijke groet,\nGiovanni - BitBeheer',
+    'Live aankondiging template voor nieuwe gebruikers',
+    true
+  ),
+  (
     'welcome',
     'Welkom bij BitBeheer!',
     '<!DOCTYPE html>
