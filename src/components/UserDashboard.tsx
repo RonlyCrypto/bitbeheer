@@ -631,6 +631,7 @@ export default function UserDashboard() {
               isImpersonating={isImpersonating}
               impersonatedUser={impersonatedUser}
               hasApprovedOneOnOne={hasApprovedOneOnOne}
+              onNavigateToPortfolio={() => setActiveTab('portfolio')}
             />}
             {activeTab === 'goals' && (accountApproved || hasApprovedOneOnOne) && <GoalsTab goals={goals} setGoals={setGoals} />}
             {activeTab === 'portfolio' && (accountApproved || hasApprovedOneOnOne) && <PortfolioPage />}
@@ -744,7 +745,7 @@ export default function UserDashboard() {
 }
 
 // Overview Tab Component
-function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppointment, accountApproved, isImpersonating, impersonatedUser, hasApprovedOneOnOne }: any) {
+function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppointment, accountApproved, isImpersonating, impersonatedUser, hasApprovedOneOnOne, onNavigateToPortfolio }: any) {
   // Determine goals to display based on account status
   const displayGoals = accountApproved 
     ? [
@@ -956,7 +957,14 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 
         if (wallet && wallet.length > 0) {
           setHasWallet(true);
-          setWalletData(wallet[0]);
+          // Load wallet_data to get transactions if needed
+          const walletRecord = wallet[0];
+          // If wallet_data exists, parse it to get last transaction
+          let lastTransaction = null;
+          if (walletRecord.wallet_data?.transactions && Array.isArray(walletRecord.wallet_data.transactions) && walletRecord.wallet_data.transactions.length > 0) {
+            lastTransaction = walletRecord.wallet_data.transactions[0]; // Most recent transaction
+          }
+          setWalletData({ ...walletRecord, lastTransaction });
         } else {
           setHasWallet(false);
           setWalletData(null);
@@ -1544,21 +1552,51 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 </div>
                 
                 <div className="bg-white rounded-lg p-4 border border-blue-100">
-                  <div className="text-sm text-gray-600 mb-1">Laatste Transactie</div>
-                  {walletData.last_transaction_time ? (
+                  <div className="text-sm text-gray-600 mb-2">Laatste Transactie</div>
+                  {walletData.last_transaction_time || (walletData.lastTransaction && walletData.lastTransaction.time) ? (
                     <>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {new Date(walletData.last_transaction_time).toLocaleDateString('nl-NL', { 
-                          day: '2-digit', 
-                          month: '2-digit', 
-                          year: 'numeric' 
-                        })}
+                      <div className="text-sm font-semibold text-gray-900 mb-1">
+                        {walletData.lastTransaction?.time 
+                          ? new Date(walletData.lastTransaction.time * 1000).toLocaleDateString('nl-NL', { 
+                              day: '2-digit', 
+                              month: '2-digit', 
+                              year: 'numeric' 
+                            })
+                          : new Date(walletData.last_transaction_time).toLocaleDateString('nl-NL', { 
+                              day: '2-digit', 
+                              month: '2-digit', 
+                              year: 'numeric' 
+                            })}
                       </div>
-                      <div className="text-xs text-gray-500 mt-1 font-mono">
-                        {walletData.last_transaction_hash ? 
-                          `${walletData.last_transaction_hash.slice(0, 8)}...${walletData.last_transaction_hash.slice(-8)}` : 
-                          'Geen transacties'}
+                      <div className="text-xs text-gray-500 mb-2">
+                        {walletData.lastTransaction?.time
+                          ? new Date(walletData.lastTransaction.time * 1000).toLocaleTimeString('nl-NL', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })
+                          : walletData.last_transaction_time 
+                            ? new Date(walletData.last_transaction_time).toLocaleTimeString('nl-NL', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })
+                            : null}
                       </div>
+                      <div className="text-xs text-gray-500 mb-2 font-mono">
+                        {walletData.lastTransaction?.hash 
+                          ? `${walletData.lastTransaction.hash.slice(0, 8)}...${walletData.lastTransaction.hash.slice(-8)}`
+                          : walletData.last_transaction_hash ? 
+                            `${walletData.last_transaction_hash.slice(0, 8)}...${walletData.last_transaction_hash.slice(-8)}` : 
+                            'Geen hash'}
+                      </div>
+                      {onNavigateToPortfolio && (
+                        <button
+                          onClick={() => onNavigateToPortfolio()}
+                          className="w-full mt-2 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          Naar Portfolio
+                        </button>
+                      )}
                     </>
                   ) : (
                     <div className="text-sm text-gray-500">Geen transacties</div>
