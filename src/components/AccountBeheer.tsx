@@ -59,7 +59,8 @@ export default function AccountBeheer() {
     if (user.email_verified) return false;
     // Admin and test accounts are always active
     if (user.isAdmin || user.isTest) return false;
-    return getRemainingTime(user) <= 0;
+    const remaining = getRemainingTime(user);
+    return remaining !== null && remaining <= 0;
   };
 
   // Check if account is in warning period (last 2 days)
