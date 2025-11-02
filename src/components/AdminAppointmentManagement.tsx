@@ -23,6 +23,7 @@ interface Appointment {
   notes?: string;
   admin_notes?: string;
   teams_link?: string;
+  one_on_one_approved?: boolean;
   questions?: {
     has_bitcoin_experience: boolean | null;
     knows_hardware_wallet: boolean | null;
@@ -156,7 +157,7 @@ export default function AdminAppointmentManagement() {
       // Try the query
       const queryResult = await supabase
         .from('appointments')
-        .select('id, user_email, user_name, slot_id, date, start_time, end_time, duration_minutes, status, notes, admin_notes, created_at, updated_at, confirmed_at')
+        .select('id, user_email, user_name, slot_id, date, start_time, end_time, duration_minutes, status, notes, admin_notes, one_on_one_approved, created_at, updated_at, confirmed_at')
         .order('date', { ascending: true })
         .order('start_time', { ascending: true });
       
@@ -1237,11 +1238,29 @@ export default function AdminAppointmentManagement() {
                       {apt.status === 'confirmed' && (
                         <button
                           onClick={async () => {
+                            // If already approved, don't ask for confirmation again
+                            if (apt.one_on_one_approved) {
+                              return;
+                            }
+                            
                             if (!confirm('Weet je zeker dat je dit account wilt goedkeuren? Dit maakt alle tabs beschikbaar voor de gebruiker.')) {
                               return;
                             }
                             try {
                               let updateSuccess = false;
+                              
+                              // Update appointment with one_on_one_approved status
+                              const { error: appointmentError } = await supabase
+                                .from('appointments')
+                                .update({ 
+                                  one_on_one_approved: true,
+                                  updated_at: new Date().toISOString()
+                                })
+                                .eq('id', apt.id);
+
+                              if (appointmentError && appointmentError.code !== 'PGRST116') {
+                                console.error('Error updating appointment:', appointmentError);
+                              }
                               
                               // Try to update accounts table first (most likely to exist)
                               const { error: accountsError } = await supabase
@@ -1299,11 +1318,28 @@ export default function AdminAppointmentManagement() {
                               }
                             }
                           }}
-                          className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
-                          title="1 op 1 akkoord - Het gesprek ging goed en we zetten dit account open"
+                          className={`flex items-center gap-1 px-3 py-1 rounded text-xs transition-colors ${
+                            apt.one_on_one_approved
+                              ? 'bg-green-600 text-white cursor-default'
+                              : 'bg-blue-600 text-white hover:bg-blue-700'
+                          }`}
+                          title={apt.one_on_one_approved 
+                            ? "1 op 1 akkoord - Account is goedgekeurd en volledig actief" 
+                            : "1 op 1 akkoord - Het gesprek ging goed en we zetten dit account open"
+                          }
+                          disabled={apt.one_on_one_approved}
                         >
-                          <UserCheck className="w-3 h-3" />
-                          1 op 1 Akkoord
+                          {apt.one_on_one_approved ? (
+                            <>
+                              <CheckCircle className="w-3 h-3" />
+                              1 op 1 Akkoord ✓
+                            </>
+                          ) : (
+                            <>
+                              <UserCheck className="w-3 h-3" />
+                              1 op 1 Akkoord
+                            </>
+                          )}
                         </button>
                       )}
                       <button
