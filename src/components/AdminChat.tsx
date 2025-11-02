@@ -20,11 +20,17 @@ interface SupportMessage {
   read_at?: string;
 }
 
+interface CustomerWithUnread {
+  email: string;
+  hasUnread: boolean;
+  unreadCount?: number;
+}
+
 export default function AdminChat() {
   const { user } = useSupabaseAuth();
   const { isImpersonating, impersonatedUser } = usePermissions();
   const [selectedEmail, setSelectedEmail] = useState<string>('');
-  const [customers, setCustomers] = useState<string[]>([]);
+  const [customers, setCustomers] = useState<CustomerWithUnread[]>([]);
   const [messages, setMessages] = useState<SupportMessage[]>([]);
   const [reply, setReply] = useState('');
 
@@ -59,9 +65,9 @@ export default function AdminChat() {
   const loadCustomers = async () => {
     try {
       // Load all messages first to get unique user emails
-      const { data, error } = await supabase
+      const { data: allMessages, error } = await supabase
         .from('support_messages')
-        .select('email, from_admin')
+        .select('email, from_admin, created_at')
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -69,17 +75,60 @@ export default function AdminChat() {
         return;
       }
       
-      if (data) {
-        // Get unique customer emails (exclude admin email and only users who sent messages)
-        // Include both messages from users (from_admin = false) and admin replies to users
-        const userEmails = data
-          .filter((msg: any) => msg.email !== 'admin@bitbeheer.nl') // Exclude admin email
+      if (allMessages) {
+        // Get unique customer emails (exclude admin email)
+        const userEmails = allMessages
+          .filter((msg: any) => msg.email !== 'admin@bitbeheer.nl')
           .map((msg: any) => msg.email);
         
-        const unique = Array.from(new Set(userEmails));
-        setCustomers(unique);
-        if (!selectedEmail && unique.length > 0) {
-          setSelectedEmail(unique[0]);
+        const uniqueEmails = Array.from(new Set(userEmails));
+        
+        // Load read status for all chats
+        const { data: readStatuses } = await supabase
+          .from('chat_read_status')
+          .select('user_email, last_read_at')
+          .eq('admin_email', 'admin@bitbeheer.nl');
+        
+        // Check unread status for each customer
+        const customersWithUnread: CustomerWithUnread[] = uniqueEmails.map(email => {
+          const readStatus = readStatuses?.find(r => r.user_email === email);
+          const userMessages = allMessages.filter((m: any) => m.email === email && !m.from_admin);
+          
+          let hasUnread = false;
+          let unreadCount = 0;
+          
+          if (!readStatus) {
+            // No read status = all messages are unread
+            hasUnread = userMessages.length > 0;
+            unreadCount = userMessages.length;
+          } else {
+            // Check messages newer than last_read_at
+            const readTime = new Date(readStatus.last_read_at).getTime();
+            const newMessages = userMessages.filter((msg: any) => {
+              const msgTime = new Date(msg.created_at).getTime();
+              return msgTime > readTime;
+            });
+            hasUnread = newMessages.length > 0;
+            unreadCount = newMessages.length;
+          }
+          
+          return {
+            email,
+            hasUnread,
+            unreadCount: unreadCount > 0 ? unreadCount : undefined
+          };
+        });
+        
+        // Sort: unread first, then by most recent message
+        customersWithUnread.sort((a, b) => {
+          if (a.hasUnread && !b.hasUnread) return -1;
+          if (!a.hasUnread && b.hasUnread) return 1;
+          return 0;
+        });
+        
+        setCustomers(customersWithUnread);
+        if (!selectedEmail && customersWithUnread.length > 0) {
+          setSelectedEmail(customersWithUnread[0].email);
         }
       }
     } catch (error) {
@@ -116,7 +165,7 @@ export default function AdminChat() {
         .select('id')
         .eq('user_email', userEmail)
         .eq('admin_email', 'admin@bitbeheer.nl')
-        .single();
+        .maybeSingle();
 
       const readStatus = {
         user_email: userEmail,
@@ -137,14 +186,34 @@ export default function AdminChat() {
           .from('chat_read_status')
           .insert([readStatus]);
       }
+      
+      // Update local state to remove unread indicator
+      setCustomers(prev => prev.map(c => 
+        c.email === userEmail 
+          ? { ...c, hasUnread: false, unreadCount: undefined }
+          : c
+      ));
+      
+      // Refresh metrics in AdminDashboard
+      if (window.dispatchEvent) {
+        window.dispatchEvent(new CustomEvent('refreshMetrics'));
+      }
     } catch (error) {
       console.error('Error marking chat as read:', error);
       // Silently fail - table might not exist yet
     }
   };
 
-  useEffect(() => { loadCustomers(); }, []);
-  useEffect(() => { loadMessages(); }, [selectedEmail]);
+  useEffect(() => { 
+    loadCustomers(); 
+    // Refresh customer list every 10 seconds to update unread status
+    const interval = setInterval(loadCustomers, 10000);
+    return () => clearInterval(interval);
+  }, []);
+  
+  useEffect(() => { 
+    loadMessages(); 
+  }, [selectedEmail]);
 
   const sendReply = async () => {
     if (!selectedEmail || !reply.trim()) return;
@@ -211,20 +280,35 @@ export default function AdminChat() {
           {customers.length === 0 ? (
             <p className="text-gray-500 text-sm text-center py-4">Geen gebruikers met chat berichten</p>
           ) : (
-            customers.map((email) => (
+            customers.map((customer) => (
               <button
-                key={email}
-                onClick={() => setSelectedEmail(email)}
-                className={`w-full text-left px-3 py-2 rounded-lg border transition-colors ${
-                  selectedEmail === email 
-                    ? 'bg-orange-50 border-orange-300 text-orange-900 font-medium' 
-                    : 'bg-white hover:bg-gray-50 border-gray-200'
+                key={customer.email}
+                onClick={() => setSelectedEmail(customer.email)}
+                className={`w-full text-left px-3 py-2 rounded-lg border transition-all ${
+                  selectedEmail === customer.email 
+                    ? 'bg-orange-50 border-orange-300 text-orange-900 font-medium shadow-sm' 
+                    : customer.hasUnread
+                      ? 'bg-red-50 border-red-200 hover:bg-red-100 font-medium'
+                      : 'bg-white hover:bg-gray-50 border-gray-200'
                 }`}
-                title={`Chat met ${email}`}
+                title={`Chat met ${customer.email}${customer.hasUnread ? ` (${customer.unreadCount} ongelezen)` : ''}`}
               >
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${selectedEmail === email ? 'bg-orange-500' : 'bg-gray-300'}`}></div>
-                  <span className="text-sm truncate">{email}</span>
+                <div className="flex items-center gap-2 justify-between">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                      selectedEmail === customer.email 
+                        ? 'bg-orange-500' 
+                        : customer.hasUnread
+                          ? 'bg-red-500 animate-pulse'
+                          : 'bg-gray-300'
+                    }`}></div>
+                    <span className="text-sm truncate">{customer.email}</span>
+                  </div>
+                  {customer.hasUnread && (
+                    <span className="flex-shrink-0 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                      {customer.unreadCount && customer.unreadCount > 0 ? customer.unreadCount : '!'}
+                    </span>
+                  )}
                 </div>
               </button>
             ))
