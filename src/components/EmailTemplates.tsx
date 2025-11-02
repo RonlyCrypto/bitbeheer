@@ -375,7 +375,7 @@ export default function EmailTemplates() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   HTML Content *
-                  <span className="text-xs text-gray-500 ml-2">Gebruik {{variable}} voor variabelen</span>
+                  <span className="text-xs text-gray-500 ml-2">Gebruik {'{{'}variable{'}}'} voor variabelen</span>
                 </label>
                 <textarea
                   value={editingTemplate.html_content}
