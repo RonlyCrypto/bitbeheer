@@ -17,9 +17,13 @@ interface HelpdeskProps {
 
 export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
   const { user } = useSupabaseAuth();
+  const { isImpersonating, impersonatedUser } = usePermissions();
   const [messages, setMessages] = useState<SupportMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  // Get effective user email (impersonated user if impersonating, otherwise real user)
+  const effectiveUserEmail = isImpersonating && impersonatedUser ? impersonatedUser : user?.email;
 
   const getInitials = (email: string, isAdmin: boolean) => {
     if (isAdmin) return 'A';
@@ -35,21 +39,21 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
   };
 
   const loadMessages = async () => {
-    if (!user?.email) return;
-    // Load only messages for this specific user
+    if (!effectiveUserEmail) return;
+    // Load only messages for this specific user (using effective email for impersonation)
     // Messages where:
-    // - User sent message (email = user.email and from_admin = false)
-    // - OR admin replied to this user (email = user.email and from_admin = true)
+    // - User sent message (email = effectiveUserEmail and from_admin = false)
+    // - OR admin replied to this user (email = effectiveUserEmail and from_admin = true)
     const { data, error } = await supabase
       .from('support_messages')
       .select('*')
-      .eq('email', user.email) // Filter by user email to ensure separate chats
+      .eq('email', effectiveUserEmail) // Filter by effective user email to ensure separate chats
       .order('created_at', { ascending: true });
     
     if (!error && data) {
       // Double-check that all messages belong to this user
       // This ensures no mixing of chats
-      const filteredMessages = data.filter((msg: any) => msg.email === user.email);
+      const filteredMessages = data.filter((msg: any) => msg.email === effectiveUserEmail);
       setMessages(filteredMessages as any);
     }
   };
@@ -63,11 +67,11 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
     // Optional: poll every 10s for fresh messages
     const t = setInterval(loadMessages, 10000);
     return () => clearInterval(t);
-  }, [user?.email, onMessageRead]);
+  }, [effectiveUserEmail, onMessageRead]);
 
   const sendMessage = async () => {
-    if (!user?.email || !newMessage.trim()) {
-      console.warn('Cannot send: no user email or empty message', { user: user?.email, message: newMessage.trim() });
+    if (!effectiveUserEmail || !newMessage.trim()) {
+      console.warn('Cannot send: no user email or empty message', { email: effectiveUserEmail, message: newMessage.trim() });
       return;
     }
     setLoading(true);
@@ -82,7 +86,7 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
       // Optimistic update
       const optimistic: SupportMessage = {
         id: `temp-${Date.now()}`,
-        email: user.email,
+        email: effectiveUserEmail,
         body,
         created_at: new Date().toISOString(),
         from_admin: false
@@ -90,22 +94,22 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
       setMessages((prev) => [...prev, optimistic]);
       setNewMessage('');
 
-      // Get user info from users or accounts table
+      // Get user info from users or accounts table (use effective email for impersonation)
       const { data: userData } = await supabase
         .from('users')
         .select('id, email, first_name, last_name')
-        .eq('email', user.email)
+        .eq('email', effectiveUserEmail)
         .maybeSingle();
       
       const messageData = {
-        email: user.email,
+        email: effectiveUserEmail, // Use effective email (impersonated user if impersonating)
         body,
-        from_admin: false,
+        from_admin: false, // Always false for user messages
         created_at: optimistic.created_at,
         user_id: userData?.id || null,
-        user_name: userData?.first_name || user.user_metadata?.first_name || null,
-        user_lastname: userData?.last_name || user.user_metadata?.last_name || null,
-        sent_by_account: user.email, // Track which account sent it
+        user_name: userData?.first_name || user?.user_metadata?.first_name || null,
+        user_lastname: userData?.last_name || user?.user_metadata?.last_name || null,
+        sent_by_account: effectiveUserEmail, // Track which account sent it (impersonated user if impersonating)
         is_read: false,
         message_type: 'support',
         priority: 'normal'

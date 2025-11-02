@@ -65,18 +65,39 @@ export default function Header() {
           
           {/* Navigation Menu */}
           <nav className="hidden md:flex items-center gap-4">
-            {/* Dashboard Link - Visible for all authenticated users */}
-            {isAuthenticated || isImpersonating ? (
+            {/* Admin Dashboard - Only visible for admins when not impersonating */}
+            {!isImpersonating && canAccessAdmin && (
               <Link 
-                to={isImpersonating ? "/user-dashboard" : (canAccessAdmin ? "/admin" : "/user-dashboard")} 
+                to="/admin" 
                 className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
-                  (location.pathname === '/admin' || location.pathname === '/user-dashboard') 
+                  location.pathname === '/admin' 
                     ? 'bg-white bg-opacity-30 shadow-lg' 
                     : 'hover:bg-white hover:bg-opacity-20 hover:shadow-md'
                 }`}
               >
                 <div className={`p-2 rounded-lg transition-all duration-300 ${
-                  (location.pathname === '/admin' || location.pathname === '/user-dashboard') 
+                  location.pathname === '/admin' 
+                    ? 'bg-white bg-opacity-20' 
+                    : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'
+                }`}>
+                  <Shield className="w-5 h-5" />
+                </div>
+                <span className="text-sm font-medium">Admin</span>
+              </Link>
+            )}
+            
+            {/* User Dashboard - Visible when impersonating or for regular users */}
+            {(isImpersonating || (isAuthenticated && !canAccessAdmin)) && (
+              <Link 
+                to="/user-dashboard" 
+                className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
+                  location.pathname === '/user-dashboard' 
+                    ? 'bg-white bg-opacity-30 shadow-lg' 
+                    : 'hover:bg-white hover:bg-opacity-20 hover:shadow-md'
+                }`}
+              >
+                <div className={`p-2 rounded-lg transition-all duration-300 ${
+                  location.pathname === '/user-dashboard' 
                     ? 'bg-white bg-opacity-20' 
                     : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'
                 }`}>
@@ -84,28 +105,11 @@ export default function Header() {
                 </div>
                 <span className="text-sm font-medium">Dashboard</span>
               </Link>
-            ) : null}
+            )}
             
-            {/* Admin Menu - Only visible when not impersonating and has admin access */}
+            {/* Admin-only menu items - Only visible when not impersonating and has admin access */}
             {!isImpersonating && canAccessAdmin && (
               <div className="flex items-center gap-3">
-                <Link 
-                  to="/admin" 
-                  className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
-                    location.pathname === '/admin' 
-                      ? 'bg-white bg-opacity-30 shadow-lg' 
-                      : 'hover:bg-white hover:bg-opacity-20 hover:shadow-md'
-                  }`}
-                >
-                  <div className={`p-2 rounded-lg transition-all duration-300 ${
-                    location.pathname === '/admin' 
-                      ? 'bg-white bg-opacity-20' 
-                      : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'
-                  }`}>
-                    <Shield className="w-5 h-5" />
-          </div>
-                  <span className="text-sm font-medium">Admin</span>
-                </Link>
 
                 {isMenuVisible('bitcoin_history', 'everyone') && (
                   <Link 

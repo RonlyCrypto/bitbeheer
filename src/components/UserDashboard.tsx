@@ -33,6 +33,7 @@ import ProfilePopup from './ProfilePopup';
 import AppointmentBookingPopup from './AppointmentBookingPopup';
 import Helpdesk from './Helpdesk';
 import AgendaView from './AgendaView';
+import PortfolioPage from '../pages/PortfolioPage';
 
 interface UserProfile {
   id: string;
@@ -629,7 +630,7 @@ export default function UserDashboard() {
               hasApprovedOneOnOne={hasApprovedOneOnOne}
             />}
             {activeTab === 'goals' && (accountApproved || hasApprovedOneOnOne) && <GoalsTab goals={goals} setGoals={setGoals} />}
-            {activeTab === 'portfolio' && (accountApproved || hasApprovedOneOnOne) && <PortfolioTab portfolio={portfolio} setPortfolio={setPortfolio} />}
+            {activeTab === 'portfolio' && (accountApproved || hasApprovedOneOnOne) && <PortfolioPage />}
             {activeTab === 'appointments' && <AppointmentsTab 
               appointments={appointments} 
               setAppointments={setAppointments}

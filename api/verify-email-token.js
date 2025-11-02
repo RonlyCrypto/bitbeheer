@@ -81,13 +81,14 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Update account to verified
+    // Update account to verified and set status to actief
     const { error: updateError } = await supabase
       .from('accounts')
       .update({
         email_verified: true,
         verified_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        actief: true // Set status to actief when email is verified
       })
       .eq('id', account.id);
 
@@ -99,13 +100,14 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Update user record as well
+    // Update user record as well and set status to actief
     const { error: userUpdateError } = await supabase
       .from('users')
       .update({
         email_verified: true,
         verified_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        actief: true // Set status to actief when email is verified
       })
       .eq('email', email.toLowerCase().trim());
 

@@ -57,16 +57,33 @@ export default function AdminChat() {
   };
 
   const loadCustomers = async () => {
-    const { data, error } = await supabase
-      .from('support_messages')
-      .select('email')
-      .neq('email', 'admin@bitbeheer.nl') // Exclude admin email from customer list
-      .order('created_at', { ascending: false });
-    if (!error && data) {
-      // Get unique customer emails (exclude admin)
-      const unique = Array.from(new Set(data.map((d: any) => d.email).filter((email: string) => email !== 'admin@bitbeheer.nl')));
-      setCustomers(unique);
-      if (!selectedEmail && unique.length > 0) setSelectedEmail(unique[0]);
+    try {
+      // Load all messages first to get unique user emails
+      const { data, error } = await supabase
+        .from('support_messages')
+        .select('email, from_admin')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error loading customers:', error);
+        return;
+      }
+      
+      if (data) {
+        // Get unique customer emails (exclude admin email and only users who sent messages)
+        // Include both messages from users (from_admin = false) and admin replies to users
+        const userEmails = data
+          .filter((msg: any) => msg.email !== 'admin@bitbeheer.nl') // Exclude admin email
+          .map((msg: any) => msg.email);
+        
+        const unique = Array.from(new Set(userEmails));
+        setCustomers(unique);
+        if (!selectedEmail && unique.length > 0) {
+          setSelectedEmail(unique[0]);
+        }
+      }
+    } catch (error) {
+      console.error('Error in loadCustomers:', error);
     }
   };
 

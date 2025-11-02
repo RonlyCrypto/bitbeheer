@@ -346,7 +346,7 @@ export default function AccountBeheer() {
     }
   };
 
-  // Manually verify account as admin
+  // Manually verify account as admin - set status to 'actief' when verified
   const handleManualVerify = async (user: UserAccount) => {
     try {
       const response = await fetch('/api/save-user-profile', {
@@ -358,16 +358,27 @@ export default function AccountBeheer() {
           email: user.email,
           userData: {
             email_verified: true,
-            verified_at: new Date().toISOString()
+            verified_at: new Date().toISOString(),
+            actief: true // Set status to actief when verified
           }
         }),
       });
 
       if (response.ok) {
+        // Also update status in accounts/users table
+        try {
+          await supabase
+            .from('accounts')
+            .update({ actief: true })
+            .eq('email', user.email);
+        } catch (dbError) {
+          // Silently continue if update fails
+        }
+
         // Update local state
         setUsers(users.map(u => 
           u.id === user.id 
-            ? { ...u, email_verified: true, verified_at: new Date().toISOString() }
+            ? { ...u, email_verified: true, verified_at: new Date().toISOString(), actief: true }
             : u
         ));
         // Account manually verified (silent)
@@ -698,10 +709,10 @@ export default function AccountBeheer() {
                               )}
                               {!user.isAdmin && !user.isTest && (
                                 <select
-                                  value={user.actief ? 'actief' : 'inactief'}
+                                  value={user.actief !== false ? 'actief' : 'inactief'}
                                   onChange={(e) => handleUpdateAccountStatus(user.id, e.target.value === 'actief')}
                                   disabled={isUpdatingStatus === user.id}
-                                  className="text-xs px-2 py-1 rounded-full border border-gray-300 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 disabled:opacity-50"
+                                  className="text-xs px-2 py-1 rounded-full border border-gray-300 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 disabled:opacity-50 bg-green-50"
                                 >
                                   <option value="actief">🟢 Actief</option>
                                   <option value="inactief">🔴 Inactief</option>
@@ -814,6 +825,16 @@ export default function AccountBeheer() {
                                 <Clock className="w-3 h-3" />
                                 Wacht op 20min Gesprek
                               </span>
+                              {/* Status dropdown - default to actief for verified accounts */}
+                              <select
+                                value={user.actief !== false ? 'actief' : 'inactief'}
+                                onChange={(e) => handleUpdateAccountStatus(user.id, e.target.value === 'actief')}
+                                disabled={isUpdatingStatus === user.id}
+                                className="text-xs px-2 py-1 rounded-full border border-gray-300 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 disabled:opacity-50"
+                              >
+                                <option value="actief">🟢 Actief</option>
+                                <option value="inactief">🔴 Inactief</option>
+                              </select>
                             </div>
                           </div>
                         </div>
