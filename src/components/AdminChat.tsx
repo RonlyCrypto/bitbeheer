@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { Send, Users, RefreshCw, Edit2, Trash2 } from 'lucide-react';
 import { usePermissions } from '../contexts/PermissionsContext';
@@ -32,6 +32,7 @@ export default function AdminChat() {
   const { user } = useSupabaseAuth();
   const { isImpersonating, impersonatedUser } = usePermissions();
   const [selectedEmail, setSelectedEmail] = useState<string>('');
+  const selectedEmailRef = useRef<string>('');
   const [customers, setCustomers] = useState<CustomerWithUnread[]>([]);
   const [messages, setMessages] = useState<SupportMessage[]>([]);
   const [reply, setReply] = useState('');
@@ -154,21 +155,21 @@ export default function AdminChat() {
         setCustomers(customersWithUnread);
         
         // Only change selectedEmail if we should (preserveSelection controls this)
+        const currentSelectedEmail = selectedEmailRef.current;
         if (preserveSelection) {
           // Preserve current selection if it exists in the list
-          const currentSelection = customersWithUnread.find(c => c.email === selectedEmail);
-          if (!currentSelection && selectedEmail) {
+          const currentSelection = customersWithUnread.find(c => c.email === currentSelectedEmail);
+          if (!currentSelection && currentSelectedEmail) {
             // Selected email no longer exists, but don't auto-switch - user probably navigated away
             // Only auto-select if there's no selection at all
-            if (customersWithUnread.length > 0) {
-              setSelectedEmail(customersWithUnread[0].email);
-            }
+            // Don't change - keep current selection
           }
           // If selectedEmail exists in list, keep it - don't change
         } else {
           // Initial load or forced refresh - select first if nothing selected
-          if (!selectedEmail && customersWithUnread.length > 0) {
+          if (!currentSelectedEmail && customersWithUnread.length > 0) {
             setSelectedEmail(customersWithUnread[0].email);
+            selectedEmailRef.current = customersWithUnread[0].email;
           }
         }
       }
@@ -277,6 +278,11 @@ export default function AdminChat() {
     }, 10000);
     return () => clearInterval(interval);
   }, []); // Empty dependency array - only run on mount
+  
+  // Keep ref in sync with state
+  useEffect(() => {
+    selectedEmailRef.current = selectedEmail;
+  }, [selectedEmail]);
   
   useEffect(() => { 
     setEditingMessageId(null);
