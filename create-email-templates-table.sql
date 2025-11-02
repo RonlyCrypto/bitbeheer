@@ -78,6 +78,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Drop existing trigger if it exists (to allow re-running this script)
+DROP TRIGGER IF EXISTS update_email_templates_updated_at ON public.email_templates;
+
 CREATE TRIGGER update_email_templates_updated_at
   BEFORE UPDATE ON public.email_templates
   FOR EACH ROW
