@@ -435,10 +435,12 @@ export default function AdminChat() {
                   ? new Date(m.created_at).getTime() > lastReadTime.getTime() && !m.from_admin
                   : false;
                 
-                // Check if we need to show "Nieuw" separator (first unread message)
-                const showNewSeparator = isUnread && index > 0 && 
-                  messages[index - 1].from_admin && 
-                  (!lastReadTime || new Date(messages[index - 1].created_at).getTime() <= lastReadTime.getTime());
+                // Check if we need to show "Nieuw" separator (first unread user message after admin message or start)
+                const showNewSeparator = !hideNewSeparator && isUnread && (
+                  index === 0 || // First message in chat
+                  messages[index - 1].from_admin || // Previous message was from admin
+                  (lastReadTime && new Date(messages[index - 1].created_at).getTime() <= lastReadTime.getTime()) // Previous message was read
+                );
                 
                 const isEditing = editingMessageId === m.id;
                 
