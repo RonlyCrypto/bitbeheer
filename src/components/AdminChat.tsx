@@ -152,9 +152,16 @@ export default function AdminChat() {
         });
         
         setCustomers(customersWithUnread);
+        // Only auto-select first chat if no chat is currently selected AND the currently selected email doesn't exist in the list
         if (!selectedEmail && customersWithUnread.length > 0) {
           setSelectedEmail(customersWithUnread[0].email);
+        } else if (selectedEmail && !customersWithUnread.find(c => c.email === selectedEmail)) {
+          // If selected email no longer exists in list, select first one
+          if (customersWithUnread.length > 0) {
+            setSelectedEmail(customersWithUnread[0].email);
+          }
         }
+        // Don't change selectedEmail if it's already selected and exists in the list
       }
     } catch (error) {
       console.error('Error in loadCustomers:', error);
@@ -236,10 +243,15 @@ export default function AdminChat() {
           : c
       ));
       
-      // Refresh metrics in AdminDashboard
+      // Immediately refresh metrics in AdminDashboard to update badge
       if (window.dispatchEvent) {
         window.dispatchEvent(new CustomEvent('refreshMetrics'));
       }
+      
+      // Also reload customers to ensure badge is updated correctly
+      setTimeout(() => {
+        loadCustomers();
+      }, 500);
     } catch (error) {
       console.error('Error marking chat as read:', error);
       // Silently fail - table might not exist yet
@@ -249,9 +261,12 @@ export default function AdminChat() {
   useEffect(() => { 
     loadCustomers(); 
     // Refresh customer list every 10 seconds to update unread status
-    const interval = setInterval(loadCustomers, 10000);
+    const interval = setInterval(() => {
+      // Preserve selectedEmail when refreshing
+      loadCustomers();
+    }, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedEmail]); // Add selectedEmail as dependency to preserve it
   
   useEffect(() => { 
     setEditingMessageId(null);
