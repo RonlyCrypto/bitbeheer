@@ -80,8 +80,9 @@ export default function PortfolioPage() {
               // If wallet_data exists with transactions, use it; otherwise fetch fresh data
               let realData: BitcoinWallet | undefined;
               
-              if (wallet.wallet_data?.transactions && wallet.wallet_data.transactions.length > 0) {
-                // Use stored transaction data if available
+              // Always try to use stored wallet_data first, then fallback to API
+              if (wallet.wallet_data?.transactions && Array.isArray(wallet.wallet_data.transactions) && wallet.wallet_data.transactions.length > 0) {
+                // Use stored transaction data
                 realData = {
                   address: wallet.address,
                   balance: wallet.balance || 0,
@@ -92,8 +93,20 @@ export default function PortfolioPage() {
                   lastSeen: wallet.last_seen ? new Date(wallet.last_seen).getTime() : Date.now(),
                   transactions: wallet.wallet_data.transactions || []
                 };
+              } else if (wallet.balance !== null && wallet.balance !== undefined) {
+                // Use database data even if no transactions
+                realData = {
+                  address: wallet.address,
+                  balance: wallet.balance || 0,
+                  totalReceived: wallet.total_received || 0,
+                  totalSent: wallet.total_sent || 0,
+                  transactionCount: wallet.transaction_count || 0,
+                  firstSeen: wallet.first_seen ? new Date(wallet.first_seen).getTime() : Date.now(),
+                  lastSeen: wallet.last_seen ? new Date(wallet.last_seen).getTime() : Date.now(),
+                  transactions: []
+                };
               } else {
-                // Fetch fresh data from API if no stored transactions
+                // Only fetch from API if we don't have balance data
                 try {
                   realData = await bitcoinApiService.getWalletData(wallet.address);
                 } catch (error) {
@@ -101,12 +114,12 @@ export default function PortfolioPage() {
                   // Fallback: use basic data from database
                   realData = {
                     address: wallet.address,
-                    balance: wallet.balance || 0,
-                    totalReceived: wallet.total_received || 0,
-                    totalSent: wallet.total_sent || 0,
-                    transactionCount: wallet.transaction_count || 0,
-                    firstSeen: wallet.first_seen ? new Date(wallet.first_seen).getTime() : Date.now(),
-                    lastSeen: wallet.last_seen ? new Date(wallet.last_seen).getTime() : Date.now(),
+                    balance: 0,
+                    totalReceived: 0,
+                    totalSent: 0,
+                    transactionCount: 0,
+                    firstSeen: Date.now(),
+                    lastSeen: Date.now(),
                     transactions: []
                   };
                 }
