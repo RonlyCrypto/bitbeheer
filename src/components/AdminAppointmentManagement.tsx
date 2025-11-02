@@ -1248,6 +1248,7 @@ export default function AdminAppointmentManagement() {
                                 .from('accounts')
                                 .update({ 
                                   account_approved: true,
+                                  first_appointment_completed: true, // Mark appointment as completed
                                   updated_at: new Date().toISOString()
                                 })
                                 .eq('email', apt.user_email);
@@ -1261,6 +1262,7 @@ export default function AdminAppointmentManagement() {
                                 .from('users')
                                 .update({ 
                                   account_approved: true,
+                                  first_appointment_completed: true, // Mark appointment as completed
                                   updated_at: new Date().toISOString()
                                 })
                                 .eq('email', apt.user_email);

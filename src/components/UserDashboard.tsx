@@ -317,6 +317,40 @@ export default function UserDashboard() {
 
     loadUserData();
     
+    // Listen for account refresh events (when admin approves account)
+    const handleAccountRefresh = async () => {
+      if (user?.email) {
+        try {
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('account_approved, first_appointment_completed')
+            .eq('email', user.email)
+            .single();
+          
+          if (userData && !userError) {
+            setAccountApproved(userData.account_approved || false);
+            setFirstAppointmentCompleted(userData.first_appointment_completed || false);
+          } else if (userError?.code === 'PGRST204' || userError?.code === 'PGRST116') {
+            // Try accounts table as fallback
+            const { data: accountData } = await supabase
+              .from('accounts')
+              .select('account_approved, first_appointment_completed')
+              .eq('email', user.email)
+              .single();
+            
+            if (accountData) {
+              setAccountApproved(accountData.account_approved || false);
+              setFirstAppointmentCompleted(accountData.first_appointment_completed || false);
+            }
+          }
+        } catch (error) {
+          // Silently fail
+        }
+      }
+    };
+    
+    window.addEventListener('refreshAccounts', handleAccountRefresh);
+    
     // Poll for unread messages every 30 seconds
     const interval = setInterval(() => {
       if (user?.email) {
@@ -352,7 +386,10 @@ export default function UserDashboard() {
       }
     }, 30000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('refreshAccounts', handleAccountRefresh);
+    };
   }, [user]);
 
   const handleAddWallet = async () => {
