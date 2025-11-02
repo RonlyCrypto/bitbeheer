@@ -124,6 +124,8 @@ export default function UserDashboard() {
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [accountApproved, setAccountApproved] = useState(false);
   const [firstAppointmentCompleted, setFirstAppointmentCompleted] = useState(false);
+  const [hasApprovedOneOnOne, setHasApprovedOneOnOne] = useState(false);
+  const [allUserAppointments, setAllUserAppointments] = useState<any[]>([]);
   const [bitcoinGoal, setBitcoinGoal] = useState({
     targetAmount: 0,
     currentAmount: 0,
@@ -277,6 +279,45 @@ export default function UserDashboard() {
             setFirstAppointmentCompleted(false);
           }
 
+          // Load appointments to check for one_on_one_approved status
+          // Get effective user email (considering impersonation)
+          const effectiveEmail = (isImpersonating && impersonatedUser) 
+            ? impersonatedUser 
+            : (user.email || null);
+          
+          if (effectiveEmail) {
+            const { data: userAppts } = await supabase
+              .from('appointments')
+              .select('id, status, one_on_one_approved')
+              .eq('user_email', effectiveEmail);
+            
+            if (userAppts) {
+              setAllUserAppointments(userAppts);
+              // Check if any appointment has one_on_one_approved = true
+              const hasApproved = userAppts.some((apt: any) => 
+                (apt.status === 'pending' || apt.status === 'confirmed') && apt.one_on_one_approved === true
+              );
+              setHasApprovedOneOnOne(hasApproved);
+              
+              // If one_on_one_approved, also ensure accountApproved is true
+              if (hasApproved && !accountApproved) {
+                // Trigger a refresh to get latest account status
+                // (accountApproved should already be set by admin button, but check as backup)
+                supabase
+                  .from('users')
+                  .select('account_approved, first_appointment_completed')
+                  .eq('email', effectiveEmail)
+                  .single()
+                  .then(({ data: userData }) => {
+                    if (userData) {
+                      setAccountApproved(userData.account_approved || false);
+                      setFirstAppointmentCompleted(userData.first_appointment_completed || false);
+                    }
+                  });
+              }
+            }
+          }
+
           // Check for unread admin messages
           const { data: adminMessages } = await supabase
             .from('support_messages')
@@ -322,10 +363,17 @@ export default function UserDashboard() {
       const currentUser = user;
       if (currentUser?.email) {
         try {
+          // Get effective user email (considering impersonation)
+          const effectiveEmail = (isImpersonating && impersonatedUser) 
+            ? impersonatedUser 
+            : (currentUser.email || null);
+          
+          if (!effectiveEmail) return;
+          
           const { data: userData, error: userError } = await supabase
             .from('users')
             .select('account_approved, first_appointment_completed')
-            .eq('email', currentUser.email)
+            .eq('email', effectiveEmail)
             .single();
           
           if (userData && !userError) {
@@ -336,12 +384,31 @@ export default function UserDashboard() {
             const { data: accountData } = await supabase
               .from('accounts')
               .select('account_approved, first_appointment_completed')
-              .eq('email', currentUser.email)
+              .eq('email', effectiveEmail)
               .single();
             
             if (accountData) {
               setAccountApproved(accountData.account_approved || false);
               setFirstAppointmentCompleted(accountData.first_appointment_completed || false);
+            }
+          }
+          
+          // Also refresh appointments to check one_on_one_approved status
+          const { data: userAppts } = await supabase
+            .from('appointments')
+            .select('id, status, one_on_one_approved')
+            .eq('user_email', effectiveEmail);
+          
+          if (userAppts) {
+            setAllUserAppointments(userAppts);
+            const hasApproved = userAppts.some((apt: any) => 
+              (apt.status === 'pending' || apt.status === 'confirmed') && apt.one_on_one_approved === true
+            );
+            setHasApprovedOneOnOne(hasApproved);
+            
+            // If one_on_one_approved but accountApproved is false, refresh account status
+            if (hasApproved && !accountApproved) {
+              // This should already be set, but refresh as backup
             }
           }
         } catch (error) {
@@ -391,7 +458,7 @@ export default function UserDashboard() {
       clearInterval(interval);
       window.removeEventListener('refreshAccounts', handleAccountRefresh);
     };
-  }, [user]);
+  }, [user, isImpersonating, impersonatedUser]);
 
   const handleAddWallet = async () => {
     if (!walletForm.address.trim()) {
@@ -560,8 +627,8 @@ export default function UserDashboard() {
               isImpersonating={isImpersonating}
               impersonatedUser={impersonatedUser}
             />}
-            {activeTab === 'goals' && accountApproved && <GoalsTab goals={goals} setGoals={setGoals} />}
-            {activeTab === 'portfolio' && accountApproved && <PortfolioTab portfolio={portfolio} setPortfolio={setPortfolio} />}
+            {activeTab === 'goals' && (accountApproved || hasApprovedOneOnOne) && <GoalsTab goals={goals} setGoals={setGoals} />}
+            {activeTab === 'portfolio' && (accountApproved || hasApprovedOneOnOne) && <PortfolioTab portfolio={portfolio} setPortfolio={setPortfolio} />}
             {activeTab === 'appointments' && <AppointmentsTab 
               appointments={appointments} 
               setAppointments={setAppointments}
@@ -806,31 +873,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
       .find((apt: any) => apt.status === 'pending');
   const hasAppointment = !!userAppointment && !appointmentsLoading;
   
-  // Check if user has any appointment with one_on_one_approved = true
-  // This means the 20min conversation is done and approved, so unlock full dashboard
-  const hasApprovedOneOnOne = allValidAppointments.some((apt: any) => apt.one_on_one_approved === true);
-  
-  // If one_on_one_approved, ensure accountApproved is also true (for tab unlocking)
-  // Note: This should already be set by the admin button, but we check as backup
-  useEffect(() => {
-    if (hasApprovedOneOnOne && !accountApproved) {
-      // One-on-one is approved but accountApproved is not set - this shouldn't happen
-      // but we'll trigger a refresh of account status
-      if (user?.email) {
-        supabase
-          .from('users')
-          .select('account_approved, first_appointment_completed')
-          .eq('email', user.email)
-          .single()
-          .then(({ data: userData }) => {
-            if (userData) {
-              setAccountApproved(userData.account_approved || false);
-              setFirstAppointmentCompleted(userData.first_appointment_completed || false);
-            }
-          });
-      }
-    }
-  }, [hasApprovedOneOnOne, accountApproved, user?.email]);
+  // Note: hasApprovedOneOnOne is now calculated in the parent UserDashboard component
+  // This ensures tabs are unlocked even if accountApproved is not yet set
   
   // For upcoming appointments counter: only count future appointments
   const futureValidAppointments = allValidAppointments.filter((apt: any) => {
