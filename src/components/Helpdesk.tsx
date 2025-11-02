@@ -25,9 +25,18 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
   
   // Get effective user email (impersonated user if impersonating, otherwise real user)
   const effectiveUserEmail = isImpersonating && impersonatedUser ? impersonatedUser : user?.email;
+  const [userProfile, setUserProfile] = useState<{ first_name?: string; last_name?: string; name?: string } | null>(null);
 
-  const getInitials = (email: string, isAdmin: boolean) => {
+  const getInitials = (email: string, firstName?: string, lastName?: string, isAdmin: boolean = false) => {
     if (isAdmin) return 'A';
+    // Use first_name and last_name if available
+    if (firstName && lastName) {
+      return (firstName[0] + lastName[0]).toUpperCase().slice(0, 2);
+    }
+    if (firstName) {
+      return firstName.substring(0, 2).toUpperCase();
+    }
+    // Fallback to email parsing
     const parts = email.split('@')[0].split(/[._-]/);
     return parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase().slice(0, 2) : email[0].toUpperCase();
   };
@@ -58,6 +67,50 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
       setMessages(filteredMessages as any);
     }
   };
+
+  // Load user profile for initials/name display
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (!effectiveUserEmail) return;
+      
+      try {
+        // First try accounts table (where registration data is stored)
+        const { data: accountData } = await supabase
+          .from('accounts')
+          .select('first_name, last_name, name')
+          .eq('email', effectiveUserEmail)
+          .maybeSingle();
+        
+        if (accountData) {
+          setUserProfile({
+            first_name: accountData.first_name || null,
+            last_name: accountData.last_name || null,
+            name: accountData.name || null
+          });
+          return;
+        }
+        
+        // Fallback to users table
+        const { data: userData } = await supabase
+          .from('users')
+          .select('first_name, last_name, name')
+          .eq('email', effectiveUserEmail)
+          .maybeSingle();
+        
+        if (userData) {
+          setUserProfile({
+            first_name: userData.first_name || null,
+            last_name: userData.last_name || null,
+            name: userData.name || null
+          });
+        }
+      } catch (error) {
+        console.error('Error loading user profile for Helpdesk:', error);
+      }
+    };
+    
+    loadUserProfile();
+  }, [effectiveUserEmail]);
 
   useEffect(() => {
     loadMessages();
@@ -161,7 +214,7 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
               <div key={m.id} className={`flex items-start gap-2 ${m.from_admin ? 'justify-end' : 'justify-start'}`}>
                 {!m.from_admin && (
                   <div className="w-8 h-8 rounded-full bg-orange-600 text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">
-                    {getInitials(user?.email || '', false)}
+                    {getInitials(effectiveUserEmail || '', userProfile?.first_name || undefined, userProfile?.last_name || undefined, false)}
                   </div>
                 )}
                 <div className="max-w-[75%]">

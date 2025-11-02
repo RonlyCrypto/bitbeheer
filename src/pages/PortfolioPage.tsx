@@ -128,13 +128,46 @@ export default function PortfolioPage() {
                 }
               }
 
+              // Format firstSeen date safely
+              let firstSeenDate = new Date().toISOString().split('T')[0];
+              if (wallet.first_seen) {
+                try {
+                  const date = new Date(wallet.first_seen);
+                  if (!isNaN(date.getTime())) {
+                    firstSeenDate = date.toISOString().split('T')[0];
+                  } else if (wallet.created_at) {
+                    const fallbackDate = new Date(wallet.created_at);
+                    if (!isNaN(fallbackDate.getTime())) {
+                      firstSeenDate = fallbackDate.toISOString().split('T')[0];
+                    }
+                  }
+                } catch (e) {
+                  // Use created_at as fallback
+                  if (wallet.created_at) {
+                    try {
+                      const fallbackDate = new Date(wallet.created_at);
+                      if (!isNaN(fallbackDate.getTime())) {
+                        firstSeenDate = fallbackDate.toISOString().split('T')[0];
+                      }
+                    } catch {}
+                  }
+                }
+              } else if (wallet.created_at) {
+                try {
+                  const date = new Date(wallet.created_at);
+                  if (!isNaN(date.getTime())) {
+                    firstSeenDate = date.toISOString().split('T')[0];
+                  }
+                } catch {}
+              }
+
               return {
                 id: wallet.id,
                 name: wallet.name || 'Mijn Bitcoin Wallet',
                 address: wallet.address,
                 balance: wallet.balance || 0,
                 transactions: wallet.transaction_count || 0,
-                firstSeen: wallet.first_seen ? new Date(wallet.first_seen).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                firstSeen: firstSeenDate,
                 realData
               };
             })
@@ -483,17 +516,44 @@ export default function PortfolioPage() {
                         <p className="text-sm text-gray-600">
                           Toegevoegd op {(() => {
                             try {
-                              const date = wallet.firstSeen ? new Date(wallet.firstSeen) : new Date();
+                              // firstSeen should be a date string in format YYYY-MM-DD
+                              if (!wallet.firstSeen) {
+                                // Try to use created_at from database if available
+                                const walletWithCreatedAt = wallets.find(w => w.id === wallet.id);
+                                if (walletWithCreatedAt && (walletWithCreatedAt as any).created_at) {
+                                  const date = new Date((walletWithCreatedAt as any).created_at);
+                                  if (!isNaN(date.getTime())) {
+                                    return date.toLocaleDateString('nl-NL', {
+                                      day: '2-digit',
+                                      month: '2-digit',
+                                      year: 'numeric'
+                                    });
+                                  }
+                                }
+                                return 'Onbekend';
+                              }
+                              
+                              // If firstSeen is already a valid date string (YYYY-MM-DD), use it directly
+                              let date: Date;
+                              if (typeof wallet.firstSeen === 'string' && wallet.firstSeen.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                                // Already in YYYY-MM-DD format
+                                date = new Date(wallet.firstSeen + 'T00:00:00');
+                              } else {
+                                date = new Date(wallet.firstSeen);
+                              }
+                              
                               if (isNaN(date.getTime())) {
                                 return wallet.firstSeen || 'Onbekend';
                               }
+                              
                               return date.toLocaleDateString('nl-NL', {
                                 day: '2-digit',
                                 month: '2-digit',
                                 year: 'numeric'
                               });
-                            } catch {
-                              return wallet.firstSeen || 'Onbekend';
+                            } catch (e) {
+                              console.error('Error formatting date:', e, wallet.firstSeen);
+                              return 'Onbekend';
                             }
                           })()}
                         </p>
