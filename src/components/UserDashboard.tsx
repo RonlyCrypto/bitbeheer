@@ -1553,54 +1553,77 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 
                 <div className="bg-white rounded-lg p-4 border border-blue-100">
                   <div className="text-sm text-gray-600 mb-2">Laatste Transactie</div>
-                  {walletData.last_transaction_time || (walletData.lastTransaction && walletData.lastTransaction.time) ? (
-                    <>
-                      <div className="text-sm font-semibold text-gray-900 mb-1">
-                        {walletData.lastTransaction?.time 
-                          ? new Date(walletData.lastTransaction.time * 1000).toLocaleDateString('nl-NL', { 
-                              day: '2-digit', 
-                              month: '2-digit', 
-                              year: 'numeric' 
-                            })
-                          : new Date(walletData.last_transaction_time).toLocaleDateString('nl-NL', { 
-                              day: '2-digit', 
-                              month: '2-digit', 
-                              year: 'numeric' 
-                            })}
-                      </div>
-                      <div className="text-xs text-gray-500 mb-2">
-                        {walletData.lastTransaction?.time
-                          ? new Date(walletData.lastTransaction.time * 1000).toLocaleTimeString('nl-NL', {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })
-                          : walletData.last_transaction_time 
-                            ? new Date(walletData.last_transaction_time).toLocaleTimeString('nl-NL', {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })
-                            : null}
-                      </div>
-                      <div className="text-xs text-gray-500 mb-2 font-mono">
-                        {walletData.lastTransaction?.hash 
-                          ? `${walletData.lastTransaction.hash.slice(0, 8)}...${walletData.lastTransaction.hash.slice(-8)}`
-                          : walletData.last_transaction_hash ? 
-                            `${walletData.last_transaction_hash.slice(0, 8)}...${walletData.last_transaction_hash.slice(-8)}` : 
-                            'Geen hash'}
-                      </div>
-                      {onNavigateToPortfolio && (
-                        <button
-                          onClick={() => onNavigateToPortfolio()}
-                          className="w-full mt-2 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                          Naar Portfolio
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <div className="text-sm text-gray-500">Geen transacties</div>
-                  )}
+                  {(() => {
+                    const hasLastTx = walletData.last_transaction_time || (walletData.lastTransaction && walletData.lastTransaction.time);
+                    if (!hasLastTx) {
+                      return <div className="text-sm text-gray-500">Geen transacties</div>;
+                    }
+
+                    let txDate: Date | null = null;
+                    let txTime: string | null = null;
+                    let txHash: string | null = null;
+
+                    // Try to get date from lastTransaction first
+                    if (walletData.lastTransaction?.time) {
+                      try {
+                        txDate = new Date(walletData.lastTransaction.time * 1000);
+                        if (!isNaN(txDate.getTime())) {
+                          txTime = txDate.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+                        }
+                        txHash = walletData.lastTransaction.hash || null;
+                      } catch (e) {
+                        console.error('Error parsing lastTransaction time:', e);
+                      }
+                    }
+
+                    // Fallback to last_transaction_time
+                    if (!txDate && walletData.last_transaction_time) {
+                      try {
+                        txDate = new Date(walletData.last_transaction_time);
+                        if (!isNaN(txDate.getTime())) {
+                          txTime = txDate.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+                        }
+                        txHash = walletData.last_transaction_hash || null;
+                      } catch (e) {
+                        console.error('Error parsing last_transaction_time:', e);
+                      }
+                    }
+
+                    if (!txDate || isNaN(txDate.getTime())) {
+                      return <div className="text-sm text-gray-500">Geen transacties</div>;
+                    }
+
+                    return (
+                      <>
+                        <div className="text-sm font-semibold text-gray-900 mb-1">
+                          {txDate.toLocaleDateString('nl-NL', { 
+                            day: '2-digit', 
+                            month: '2-digit', 
+                            year: 'numeric' 
+                          })}
+                        </div>
+                        {txTime && (
+                          <div className="text-xs text-gray-500 mb-2">
+                            {txTime}
+                          </div>
+                        )}
+                        {txHash && (
+                          <div className="text-xs text-gray-500 mb-2 font-mono">
+                            {txHash.length > 16 ? `${txHash.slice(0, 8)}...${txHash.slice(-8)}` : txHash}
+                          </div>
+                        )}
+                        {onNavigateToPortfolio && (
+                          <button
+                            onClick={() => onNavigateToPortfolio()}
+                            className="w-full mt-2 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            Naar Portfolio
+                          </button>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             </div>

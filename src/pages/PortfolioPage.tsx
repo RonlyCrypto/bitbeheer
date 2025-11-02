@@ -481,11 +481,21 @@ export default function PortfolioPage() {
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">{wallet.name}</h3>
                         <p className="text-sm text-gray-600">
-                          Toegevoegd op {new Date(wallet.firstSeen).toLocaleDateString('nl-NL', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric'
-                          })}
+                          Toegevoegd op {(() => {
+                            try {
+                              const date = wallet.firstSeen ? new Date(wallet.firstSeen) : new Date();
+                              if (isNaN(date.getTime())) {
+                                return wallet.firstSeen || 'Onbekend';
+                              }
+                              return date.toLocaleDateString('nl-NL', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric'
+                              });
+                            } catch {
+                              return wallet.firstSeen || 'Onbekend';
+                            }
+                          })()}
                         </p>
                       </div>
                     </div>
