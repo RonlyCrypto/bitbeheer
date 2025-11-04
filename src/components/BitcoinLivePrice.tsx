@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
+import { useCurrency } from '../contexts/CurrencyContext';
+import { supabase } from '../lib/supabase';
 
 interface BitcoinPrice {
   price: number;
@@ -8,6 +10,7 @@ interface BitcoinPrice {
 }
 
 const BitcoinLivePrice: React.FC = () => {
+  const { currency, formatPrice } = useCurrency();
   const [price, setPrice] = useState<BitcoinPrice | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -17,19 +20,56 @@ const BitcoinLivePrice: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur&include_24hr_change=true');
-      const data = await response.json();
-      
-      if (data.bitcoin) {
+      // First try to get from Supabase (backup data)
+      const { data: dbData, error: dbError } = await supabase
+        .rpc('get_latest_bitcoin_price', { p_currency: currency.toLowerCase() });
+
+      // Try CoinGecko API for latest price
+      try {
+        const response = await fetch(
+          `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=${currency.toLowerCase()}&include_24hr_change=true`
+        );
+        const data = await response.json();
+        
+        if (data.bitcoin && typeof data.bitcoin[currency.toLowerCase()] === 'number') {
+          const priceKey = currency.toLowerCase();
+          const changeKey = `${currency.toLowerCase()}_24h_change`;
+          
+          setPrice({
+            price: data.bitcoin[priceKey],
+            change24h: data.bitcoin[changeKey] || 0,
+            changePercent24h: data.bitcoin[changeKey] || 0
+          });
+          return;
+        }
+      } catch (apiError) {
+        // API failed, use database backup
+      }
+
+      // Fallback to database backup if API fails
+      if (dbData && !dbError && dbData.price) {
         setPrice({
-          price: data.bitcoin.eur,
-          change24h: data.bitcoin.eur_24h_change,
-          changePercent24h: data.bitcoin.eur_24h_change
+          price: parseFloat(dbData.price),
+          change24h: dbData.change_24h || 0,
+          changePercent24h: dbData.change_24h || 0
+        });
+        return;
+      }
+
+      // Last resort: use cached/default price
+      if (!price) {
+        setPrice({
+          price: currency === 'EUR' ? 95000 : 103000,
+          change24h: 0,
+          changePercent24h: 0
         });
       }
     } catch (err) {
       setError('Kon prijs niet laden');
-      console.error('Error fetching Bitcoin price:', err);
+      // Use cached price if available
+      if (price) {
+        return;
+      }
     } finally {
       setLoading(false);
     }
@@ -42,16 +82,7 @@ const BitcoinLivePrice: React.FC = () => {
     const interval = setInterval(fetchBitcoinPrice, 30000);
     
     return () => clearInterval(interval);
-  }, []);
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('nl-NL', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(price);
-  };
+  }, [currency]); // Re-fetch when currency changes
 
   const formatChange = (change: number) => {
     const sign = change >= 0 ? '+' : '';

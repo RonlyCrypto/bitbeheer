@@ -10,6 +10,7 @@ import { useProfilePopup } from '../contexts/ProfilePopupContext';
 import { impersonationUtils } from '../utils/impersonation';
 import { getDisplayName, getDisplayEmail } from '../utils/emailUtils';
 import BitcoinLivePrice from './BitcoinLivePrice';
+import CurrencyToggle from './CurrencyToggle';
 import LoginRegister from './LoginRegister';
 
 export default function Header() {
@@ -178,6 +179,7 @@ export default function Header() {
             {/* Bitcoin Live Price */}
             <div className="hidden md:block">
               <BitcoinLivePrice />
+              <CurrencyToggle />
             </div>
             
             {/* Settings Menu or Login/Register */}

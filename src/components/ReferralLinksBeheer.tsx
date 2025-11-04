@@ -75,6 +75,10 @@ export default function ReferralLinksBeheer() {
 
       await loadLinks();
       setEditingLink(null);
+      
+      // Notify Footer to reload links
+      window.dispatchEvent(new CustomEvent('referralLinksUpdated'));
+      
       alert('Link succesvol bijgewerkt!');
     } catch (error: any) {
       console.error('Error saving link:', error);
@@ -111,6 +115,10 @@ export default function ReferralLinksBeheer() {
       await loadLinks();
       setEditingLink(null);
       setShowNewLink(false);
+      
+      // Notify Footer to reload links
+      window.dispatchEvent(new CustomEvent('referralLinksUpdated'));
+      
       alert('Link succesvol aangemaakt!');
     } catch (error: any) {
       console.error('Error creating link:', error);
@@ -130,6 +138,10 @@ export default function ReferralLinksBeheer() {
       if (error) throw error;
 
       await loadLinks();
+      
+      // Notify Footer to reload links
+      window.dispatchEvent(new CustomEvent('referralLinksUpdated'));
+      
       alert('Link succesvol verwijderd!');
     } catch (error: any) {
       console.error('Error deleting link:', error);
@@ -156,6 +168,9 @@ export default function ReferralLinksBeheer() {
         .eq('id', prevLink.id);
 
       await loadLinks();
+      
+      // Notify Footer to reload links
+      window.dispatchEvent(new CustomEvent('referralLinksUpdated'));
     } catch (error: any) {
       console.error('Error moving link:', error);
       alert(`Fout bij verplaatsen: ${error.message}`);
@@ -181,6 +196,9 @@ export default function ReferralLinksBeheer() {
         .eq('id', nextLink.id);
 
       await loadLinks();
+      
+      // Notify Footer to reload links
+      window.dispatchEvent(new CustomEvent('referralLinksUpdated'));
     } catch (error: any) {
       console.error('Error moving link:', error);
       alert(`Fout bij verplaatsen: ${error.message}`);
@@ -203,6 +221,9 @@ export default function ReferralLinksBeheer() {
         
         await Promise.all(updates);
         await loadLinks();
+        
+        // Notify Footer to reload links
+        window.dispatchEvent(new CustomEvent('referralLinksUpdated'));
       }
     } catch (error: any) {
       console.error('Error updating section title:', error);

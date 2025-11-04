@@ -50,6 +50,21 @@ export default function Footer() {
     };
 
     loadReferralLinks();
+
+    // Listen for referral links updates
+    const handleReferralLinksUpdate = () => {
+      loadReferralLinks();
+    };
+
+    window.addEventListener('referralLinksUpdated', handleReferralLinksUpdate);
+
+    // Also poll every 5 seconds to catch external updates
+    const interval = setInterval(loadReferralLinks, 5000);
+
+    return () => {
+      window.removeEventListener('referralLinksUpdated', handleReferralLinksUpdate);
+      clearInterval(interval);
+    };
   }, []);
   return (
     <footer className="bg-gray-900 text-gray-300 mt-16">
