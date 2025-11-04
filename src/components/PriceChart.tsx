@@ -131,23 +131,33 @@ export default function PriceChart({
     onZoomChange?.(phase.start, phase.end);
   };
 
-  // Update zoom range when data changes or when cycle changes (but not during manual zoom)
+  // Update zoom range when data changes or when cycle changes (but not during manual zoom or dragging)
+  // Use a ref to track if we're in the middle of a drag operation
+  const isDraggingRef = useRef(false);
+  
   useEffect(() => {
-    if (!isManualZoom && data.length > 0) {
-      setZoomRange({ start: 0, end: 100 });
+    isDraggingRef.current = isDragging !== null;
+  }, [isDragging]);
+  
+  useEffect(() => {
+    // Only reset if we're not in manual zoom mode and not dragging
+    if (!isManualZoom && !isDraggingRef.current && data.length > 0) {
+      const newRange = { start: 0, end: 100 };
+      setZoomRange(newRange);
+      zoomRangeRef.current = newRange;
     }
   }, [data, isManualZoom]);
 
-  // Update zoom range when cycle phases change
+  // Update zoom range when cycle phases change (but not during dragging)
   useEffect(() => {
-    if (cyclePhases && cyclePhases.length > 0 && data.length > 0) {
+    if (cyclePhases && cyclePhases.length > 0 && data.length > 0 && !isDragging) {
       // Set cycle zoom state (not manual zoom, but also not "all" view)
       setIsManualZoom(true); // This will make "Alles" button gray
       
       // Reset zoom slider to full range (0-100%) for manual zooming within cycle
       setZoomRange({ start: 0, end: 100 });
     }
-  }, [cyclePhases, data]);
+  }, [cyclePhases, data, isDragging]);
 
   // Function to generate dynamic x-axis labels based on zoom level
   const generateXAxisLabels = (data: PriceData[], chartWidth: number) => {
@@ -729,6 +739,14 @@ export default function PriceChart({
 
   // Store initial drag position for smooth range dragging
   const dragStartRef = useRef<{ startPercent: number; rangeStart: number; rangeEnd: number } | null>(null);
+  
+  // Store zoomRange in ref to prevent reset during re-renders
+  const zoomRangeRef = useRef<{ start: number; end: number }>({ start: 0, end: 100 });
+  
+  // Sync ref with state
+  useEffect(() => {
+    zoomRangeRef.current = zoomRange;
+  }, [zoomRange]);
 
   // Mouse event handlers for zoom slider - support all three operations
   const handleSliderMouseMove = (e: MouseEvent | React.MouseEvent) => {
@@ -739,49 +757,64 @@ export default function PriceChart({
     const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
     
     if (isDragging === 'start') {
-      setZoomRange(prev => {
-        const newStart = Math.min(percentage, prev.end - 2); // Minimum 2% range
-        return {
-          start: newStart,
-          end: prev.end
-        };
-      });
+      const currentRange = zoomRangeRef.current;
+      const newStart = Math.min(percentage, currentRange.end - 2); // Minimum 2% range
+      const newRange = {
+        start: newStart,
+        end: currentRange.end
+      };
+      setZoomRange(newRange);
+      zoomRangeRef.current = newRange;
     } else if (isDragging === 'end') {
-      setZoomRange(prev => {
-        const newEnd = Math.max(percentage, prev.start + 2); // Minimum 2% range
-        return {
-          start: prev.start,
-          end: newEnd
-        };
-      });
+      const currentRange = zoomRangeRef.current;
+      const newEnd = Math.max(percentage, currentRange.start + 2); // Minimum 2% range
+      const newRange = {
+        start: currentRange.start,
+        end: newEnd
+      };
+      setZoomRange(newRange);
+      zoomRangeRef.current = newRange;
     } else if (isDragging === 'range') {
       // Range dragging - move the entire selection
+      const currentRange = zoomRangeRef.current;
       if (!dragStartRef.current) {
         // Initialize drag start position
         dragStartRef.current = {
           startPercent: percentage,
-          rangeStart: zoomRange.start,
-          rangeEnd: zoomRange.end
+          rangeStart: currentRange.start,
+          rangeEnd: currentRange.end
         };
       } else {
         // Calculate offset from initial drag position
         const offset = percentage - dragStartRef.current.startPercent;
         const rangeWidth = dragStartRef.current.rangeEnd - dragStartRef.current.rangeStart;
         const newStart = Math.max(0, Math.min(100 - rangeWidth, dragStartRef.current.rangeStart + offset));
-        setZoomRange({
+        const newRange = {
           start: newStart,
           end: newStart + rangeWidth
-        });
+        };
+        setZoomRange(newRange);
+        zoomRangeRef.current = newRange;
       }
     }
   };
 
   const handleSliderMouseUp = () => {
     if (isDragging && data.length > 0) {
-      const startIndex = Math.floor((zoomRange.start / 100) * (data.length - 1));
-      const endIndex = Math.floor((zoomRange.end / 100) * (data.length - 1));
+      // Use the ref to get the most current zoomRange value
+      const currentZoomRange = { ...zoomRangeRef.current };
       
+      const startIndex = Math.max(0, Math.floor((currentZoomRange.start / 100) * (data.length - 1)));
+      const endIndex = Math.min(data.length - 1, Math.floor((currentZoomRange.end / 100) * (data.length - 1)));
+      
+      // Set manual zoom FIRST to prevent useEffect from resetting
       setIsManualZoom(true);
+      
+      // Immediately preserve the zoomRange in both state and ref
+      setZoomRange(currentZoomRange);
+      zoomRangeRef.current = currentZoomRange;
+      
+      // Call onZoomChange
       onZoomChange?.(data[startIndex].date, data[endIndex].date);
     }
     setIsDragging(null);
