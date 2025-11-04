@@ -22,7 +22,6 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { PermissionsProvider } from './contexts/PermissionsContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { ProfilePopupProvider } from './contexts/ProfilePopupContext';
-import { CurrencyProvider } from './contexts/CurrencyContext';
 import ImpersonationBanner from './components/ImpersonationBanner';
 import SystemStatusDebug from './components/SystemStatusDebug';
 

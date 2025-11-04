@@ -12,14 +12,46 @@
 const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
 const path = require('path');
+const readline = require('readline');
+
+// Try to load .env file if it exists
+const envPath = path.join(process.cwd(), '.env');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf-8');
+  envContent.split('\n').forEach(line => {
+    const match = line.match(/^([^=]+)=(.*)$/);
+    if (match) {
+      const key = match[1].trim();
+      const value = match[2].trim().replace(/^["']|["']$/g, '');
+      if (!process.env[key]) {
+        process.env[key] = value;
+      }
+    }
+  });
+}
 
 // Load environment variables
-const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+let supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
+let supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('❌ Missing Supabase credentials!');
-  console.error('Set VITE_SUPABASE_URL (or SUPABASE_URL) and SUPABASE_SERVICE_ROLE_KEY environment variables');
+// If still missing, use hardcoded URL from codebase (found in src/lib/supabase.ts)
+if (!supabaseUrl) {
+  supabaseUrl = 'https://clqbnkvnydlxtimiazqf.supabase.co';
+  console.log('ℹ️  Using Supabase URL from codebase:', supabaseUrl);
+}
+
+if (!supabaseServiceKey) {
+  console.error('❌ Missing SUPABASE_SERVICE_ROLE_KEY!');
+  console.error('');
+  console.error('Please provide your Supabase Service Role Key.');
+  console.error('You can find it in: Supabase Dashboard → Settings → API → service_role key');
+  console.error('');
+  console.error('Option 1: Set environment variable:');
+  console.error('  export SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"');
+  console.error('');
+  console.error('Option 2: Add to .env file:');
+  console.error('  SUPABASE_SERVICE_ROLE_KEY=your-service-role-key');
+  console.error('');
   process.exit(1);
 }
 

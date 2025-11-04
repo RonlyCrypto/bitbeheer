@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TrendingUp, TrendingDown, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import { BitcoinPriceData, BitcoinTransaction } from '../services/bitcoinApiService';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 interface PortfolioChartProps {
   transactions: BitcoinTransaction[];
@@ -9,23 +10,30 @@ interface PortfolioChartProps {
 }
 
 export default function PortfolioChart({ transactions, currentPrice, onTransactionClick }: PortfolioChartProps) {
+  const { currency, formatPrice } = useCurrency();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [priceData, setPriceData] = useState<BitcoinPriceData | null>(null);
   const [showTransactions, setShowTransactions] = useState(true);
   const [hoveredTransaction, setHoveredTransaction] = useState<BitcoinTransaction | null>(null);
 
-  // Simuleer prijs data (in echte implementatie zou je dit van een API halen)
+  // Fetch price data based on selected currency
   useEffect(() => {
     const fetchPriceData = async () => {
       try {
-        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true');
+        const vsCurrency = currency.toLowerCase();
+        const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=${vsCurrency}&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true`);
         const data = await response.json();
+        const priceKey = currency.toLowerCase();
+        const changeKey = `${currency.toLowerCase()}_24h_change`;
+        const marketCapKey = `${currency.toLowerCase()}_market_cap`;
+        const volumeKey = `${currency.toLowerCase()}_24h_vol`;
+        
         setPriceData({
-          price: data.bitcoin.eur,
-          change24h: data.bitcoin.eur_24h_change,
-          changePercent24h: data.bitcoin.eur_24h_change,
-          marketCap: data.bitcoin.eur_market_cap,
-          volume24h: data.bitcoin.eur_24h_vol
+          price: data.bitcoin[priceKey],
+          change24h: data.bitcoin[changeKey] || 0,
+          changePercent24h: data.bitcoin[changeKey] || 0,
+          marketCap: data.bitcoin[marketCapKey] || 0,
+          volume24h: data.bitcoin[volumeKey] || 0
         });
       } catch (error) {
         console.error('Error fetching price data:', error);
@@ -35,7 +43,7 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
     fetchPriceData();
     const interval = setInterval(fetchPriceData, 30000); // Update elke 30 seconden
     return () => clearInterval(interval);
-  }, []);
+  }, [currency]);
 
   // Teken de chart
   useEffect(() => {
@@ -174,7 +182,7 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
           {priceData && (
             <div className="flex items-center gap-2">
               <span className="text-2xl font-bold text-gray-900">
-                €{priceData.price.toLocaleString('nl-NL')}
+                {formatPrice(priceData.price)}
               </span>
               <div className={`flex items-center gap-1 ${
                 priceData.changePercent24h >= 0 ? 'text-green-600' : 'text-red-600'

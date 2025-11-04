@@ -724,11 +724,14 @@ export default function PriceChart({
     setHoveredPoint(null);
   };
 
+  // Store slider track ref for mouse position calculation
+  const sliderTrackRef = useRef<HTMLDivElement>(null);
+
   // Mouse event handlers for zoom slider - support all three operations
-  const handleSliderMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !showZoomSlider) return;
+  const handleSliderMouseMove = (e: MouseEvent | React.MouseEvent) => {
+    if (!isDragging || !showZoomSlider || !sliderTrackRef.current) return;
     
-    const rect = e.currentTarget.getBoundingClientRect();
+    const rect = sliderTrackRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
     
@@ -764,8 +767,29 @@ export default function PriceChart({
     setIsDragging(null);
   };
 
+  // Add document-level event listeners for smooth dragging
+  useEffect(() => {
+    if (!isDragging || !showZoomSlider) return;
+    
+    const handleDocumentMouseMove = (e: MouseEvent) => {
+      handleSliderMouseMove(e);
+    };
+    
+    const handleDocumentMouseUp = () => {
+      handleSliderMouseUp();
+    };
+    
+    document.addEventListener('mousemove', handleDocumentMouseMove);
+    document.addEventListener('mouseup', handleDocumentMouseUp);
+    
+    return () => {
+      document.removeEventListener('mousemove', handleDocumentMouseMove);
+      document.removeEventListener('mouseup', handleDocumentMouseUp);
+    };
+  }, [isDragging, showZoomSlider, zoomRange]);
+
   return (
-    <div className="relative">
+    <div className="relative w-full" style={{ minWidth: '100%' }}>
       <div className="flex items-center justify-between mb-4">
         {title && (
           <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
@@ -853,7 +877,7 @@ export default function PriceChart({
 
       {/* Market Phase Navigator - Only for DCA charts */}
       {showZoomSlider && data.length > 0 && cyclePhases && cyclePhases.length > 0 && (
-        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+        <div className="mt-4 p-3 bg-gray-50 rounded-lg w-full min-w-full">
           <div className="mb-3">
             <label className="text-sm font-medium text-gray-700 mb-2 block">Market Phase Navigator:</label>
             
@@ -986,13 +1010,12 @@ export default function PriceChart({
             </div>
           </div>
           
-          <div className="relative">
+          <div className="relative w-full">
             {/* Background track - smaller for compact design */}
             <div 
+              ref={sliderTrackRef}
               className="w-full h-6 bg-gray-200 rounded-lg relative cursor-pointer"
-              onMouseMove={handleSliderMouseMove} 
-              onMouseUp={handleSliderMouseUp}
-              onMouseLeave={handleSliderMouseUp}
+              style={{ minWidth: '100%' }}
             >
               
               {/* Selected range - non-draggable background */}
@@ -1002,7 +1025,8 @@ export default function PriceChart({
                   left: `${zoomRange.start}%`,
                   width: `${zoomRange.end - zoomRange.start}%`,
                   height: '100%',
-                  minHeight: '24px' // Keep minimum height for better visibility
+                  minHeight: '24px', // Keep minimum height for better visibility
+                  minWidth: '0%' // Allow the range to shrink but container stays same size
                 }}
               ></div>
               
@@ -1012,7 +1036,10 @@ export default function PriceChart({
                 style={{
                   left: `${zoomRange.start}%`
                 }}
-                onMouseDown={() => setIsDragging('start')}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  setIsDragging('start');
+                }}
               >
                 <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -1021,11 +1048,14 @@ export default function PriceChart({
               
               {/* Right resize handle */}
               <div
-                className="absolute top-1/2 right-0 transform translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-blue-600 rounded-full cursor-ew-resize hover:bg-blue-700 transition-colors flex items-center justify-center shadow-lg border-2 border-white"
+                className="absolute top-1/2 left-0 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-blue-600 rounded-full cursor-ew-resize hover:bg-blue-700 transition-colors flex items-center justify-center shadow-lg border-2 border-white"
                 style={{
                   left: `${zoomRange.end}%`
                 }}
-                onMouseDown={() => setIsDragging('end')}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  setIsDragging('end');
+                }}
               >
                 <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -1038,12 +1068,32 @@ export default function PriceChart({
                 style={{
                   left: `${zoomRange.start + (zoomRange.end - zoomRange.start) / 2}%`
                 }}
-                onMouseDown={() => setIsDragging('range')}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  setIsDragging('range');
+                }}
               >
                 <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                 </svg>
               </div>
+              
+              {/* Draggable range area - allows clicking anywhere on the blue bar to drag */}
+              <div
+                className="absolute cursor-move"
+                style={{
+                  left: `${zoomRange.start}%`,
+                  width: `${zoomRange.end - zoomRange.start}%`,
+                  height: '100%'
+                }}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  // Only start range drag if not clicking on a handle
+                  if (e.target === e.currentTarget) {
+                    setIsDragging('range');
+                  }
+                }}
+              />
             </div>
             
             {/* Date labels */}

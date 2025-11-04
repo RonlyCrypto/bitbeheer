@@ -26,8 +26,8 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (savedCurrency === 'EUR' || savedCurrency === 'USD') {
       return savedCurrency;
     }
-    // Default to EUR
-    return 'EUR';
+    // Default to USD
+    return 'USD';
   });
 
   useEffect(() => {

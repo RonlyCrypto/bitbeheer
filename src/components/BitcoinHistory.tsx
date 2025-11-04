@@ -274,10 +274,11 @@ export default function BitcoinHistory() {
   };
 
   useEffect(() => {
-    // Always force reload data on mount to get fresh 2025 data
+    // Reload data when currency changes
     const initializeData = async () => {
-      console.log('Initializing Bitcoin data with fresh 2025 data...');
-      await bitcoinDataManager.forceReloadAllData();
+      console.log(`Initializing Bitcoin data for ${currency}...`);
+      // Load data for current currency
+      await bitcoinDataManager.loadDataForCurrency(currency);
       await loadAllPriceData();
     };
     
@@ -328,11 +329,11 @@ export default function BitcoinHistory() {
     try {
       // Loading Bitcoin price data from Supabase (no console logs)
       
-      // Check if we have complete data from the new manager
+      // Check if we have complete data from the new manager for this currency
       const completeData = bitcoinDataManager.getData(currency);
       
-      if (completeData && !bitcoinDataManager.needsUpdate()) {
-        console.log('Using cached complete Bitcoin data:', {
+      if (completeData && !bitcoinDataManager.getDataInfo(currency).needsUpdate) {
+        console.log(`Using cached complete Bitcoin data for ${currency}:`, {
           daily: completeData.daily.length,
           hourly: completeData.hourly.length,
           minute15: completeData.minute15.length,
@@ -347,14 +348,14 @@ export default function BitcoinHistory() {
         
         setAllPriceData(prices);
       } else {
-        console.log('Fetching complete Bitcoin history from 2009 to present...');
+        console.log(`Fetching complete Bitcoin history from 2009 to present for ${currency}...`);
         
-        // Fetch complete history using the new manager
-        await bitcoinDataManager.fetchCompleteHistory();
+        // Fetch complete history using the new manager for this currency
+        await bitcoinDataManager.fetchCompleteHistory(currency);
         
-        const newData = bitcoinDataManager.getData();
+        const newData = bitcoinDataManager.getData(currency);
         if (newData) {
-          console.log('Complete Bitcoin history fetched successfully:', {
+          console.log(`Complete Bitcoin history fetched successfully for ${currency}:`, {
             daily: newData.daily.length,
             dataRange: newData.dataRange
           });

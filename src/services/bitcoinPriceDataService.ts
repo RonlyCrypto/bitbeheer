@@ -67,18 +67,26 @@ export class BitcoinPriceDataService {
   /**
    * Get Bitcoin price data for a specific year
    */
-  async getDataByYear(year: number): Promise<BitcoinPriceDataPoint[]> {
-    // Check cache first
-    if (this.dataCache.has(year)) {
-      return this.dataCache.get(year)!;
+  async getDataByYear(year: number, currency: 'EUR' | 'USD' = 'USD'): Promise<BitcoinPriceDataPoint[]> {
+    // Check cache first (use currency in cache key)
+    const cacheKey = `${year}_${currency}`;
+    if (this.dataCache.has(cacheKey)) {
+      return this.dataCache.get(cacheKey)!;
     }
 
     try {
+      // Query directly from bitcoin_price_data table with currency filter
+      const priceColumn = currency === 'EUR' ? 'price_eur' : 'price_usd';
+      
       const { data, error } = await supabase
-        .rpc('get_bitcoin_price_by_year', { p_year: year });
+        .from('bitcoin_price_data')
+        .select('date, timestamp, price_eur, price_usd, volume, market_cap')
+        .eq('year', year)
+        .not(priceColumn, 'is', null)
+        .order('date', { ascending: true });
 
       if (error) {
-        logger.error(`Error fetching Bitcoin price data for year ${year}:`, error);
+        logger.error(`Error fetching Bitcoin price data for year ${year} (${currency}):`, error);
         return [];
       }
 
@@ -86,16 +94,16 @@ export class BitcoinPriceDataService {
       const priceData: BitcoinPriceDataPoint[] = (data || []).map((item: any) => ({
         date: item.date,
         timestamp: item.timestamp,
-        price: parseFloat(item.price),
+        price: parseFloat(item[priceColumn]),
         volume: item.volume ? parseFloat(item.volume) : undefined,
         market_cap: item.market_cap ? parseFloat(item.market_cap) : undefined
       }));
 
       // Cache the data
-      this.dataCache.set(year, priceData);
+      this.dataCache.set(cacheKey, priceData);
       return priceData;
     } catch (error) {
-      logger.error(`Error in getDataByYear for year ${year}:`, error);
+      logger.error(`Error in getDataByYear for year ${year} (${currency}):`, error);
       return [];
     }
   }
@@ -133,11 +141,11 @@ export class BitcoinPriceDataService {
   /**
    * Get Bitcoin price data for multiple years
    */
-  async getDataForYears(years: number[]): Promise<BitcoinPriceDataPoint[]> {
+  async getDataForYears(years: number[], currency: 'EUR' | 'USD' = 'USD'): Promise<BitcoinPriceDataPoint[]> {
     const allData: BitcoinPriceDataPoint[] = [];
     
     // Fetch data for all years in parallel
-    const promises = years.map(year => this.getDataByYear(year));
+    const promises = years.map(year => this.getDataByYear(year, currency));
     const results = await Promise.all(promises);
     
     // Combine all data
