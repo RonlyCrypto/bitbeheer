@@ -562,17 +562,32 @@ export default function BitcoinHistory() {
   }, [allPriceData, timeRange, selectedCycle, zoomStartDate, zoomEndDate]);
 
   // Calculate min and max prices for the filtered data
-  // Note: Real Bitcoin ATH is approximately $126,080 (Oct 2025), not $330k
-  // Filter out any obviously incorrect data points (e.g., > $200k)
+  // Note: Real Bitcoin ATH is approximately $126,080 (Oct 6, 2025), not $133k or higher
+  // Filter out any obviously incorrect data points (> $130k)
+  const REAL_BITCOIN_ATH = 126080; // Real ATH from Oct 6, 2025
   const { minPrice, maxPrice, minDate, maxDate } = useMemo(() => {
     if (!filteredData.length) return { minPrice: 0, maxPrice: 0, minDate: '', maxDate: '' };
     
-    // Filter out unrealistic prices (Bitcoin ATH is ~$126k, so anything > $200k is likely incorrect)
-    const validPrices = filteredData.filter(d => d.price > 0 && d.price <= 200000);
+    // Filter out unrealistic prices (Bitcoin ATH is ~$126k, so anything > $130k is likely incorrect)
+    const validPrices = filteredData.filter(d => d.price > 0 && d.price <= 130000);
     const prices = validPrices.length > 0 ? validPrices.map(d => d.price) : filteredData.map(d => d.price);
     
     const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
+    let maxPrice = Math.max(...prices);
+    
+    // Cap maxPrice at real ATH if it's higher (to handle any edge cases)
+    if (maxPrice > REAL_BITCOIN_ATH) {
+      maxPrice = REAL_BITCOIN_ATH;
+      // Use the real ATH date (Oct 6, 2025)
+      const athDate = '2025-10-06';
+      const minData = validPrices.length > 0 ? validPrices.find(d => d.price === minPrice) : filteredData.find(d => d.price === minPrice);
+      return {
+        minPrice,
+        maxPrice: REAL_BITCOIN_ATH,
+        minDate: minData?.date || '',
+        maxDate: athDate
+      };
+    }
     
     // Find data points with valid prices
     const validData = validPrices.length > 0 ? validPrices : filteredData;
