@@ -51,6 +51,9 @@ CREATE POLICY "Bitcoin minute price data is publicly readable"
   FOR SELECT
   USING (true);
 
+-- Drop old function if it exists (no parameters)
+DROP FUNCTION IF EXISTS public.get_latest_bitcoin_price();
+
 -- Function to get latest Bitcoin price (EUR or USD)
 CREATE OR REPLACE FUNCTION public.get_latest_bitcoin_price(p_currency TEXT DEFAULT 'eur')
 RETURNS JSON
