@@ -571,7 +571,7 @@ export default function PriceChart({
               ctx.fillStyle = phaseColor + opacity;
           ctx.fillRect(startX, padding.top, endX - startX, chartHeight);
           
-          // Draw phase border
+          // Draw phase border (top, bottom, left, right)
           ctx.strokeStyle = phaseColor;
           ctx.lineWidth = 1;
           ctx.strokeRect(startX, padding.top, endX - startX, chartHeight);
@@ -588,6 +588,53 @@ export default function PriceChart({
           ctx.fillText(phase.priceRange, labelX, padding.top + chartHeight + 15);
         }
       });
+      
+      // Draw transition lines between phases (to ensure they connect perfectly)
+      // Draw vertical lines at phase boundaries, using the next phase's color
+      if (cyclePhases.length > 1) {
+        // Sort phases by start date
+        const sortedPhases = [...cyclePhases].sort((a, b) => 
+          new Date(a.start).getTime() - new Date(b.start).getTime()
+        );
+        
+        for (let i = 0; i < sortedPhases.length - 1; i++) {
+          const currentPhase = sortedPhases[i];
+          const nextPhase = sortedPhases[i + 1];
+          
+          const currentEndDate = new Date(currentPhase.end);
+          const nextStartDate = new Date(nextPhase.start);
+          
+          // Use the transition point (where current ends and next begins)
+          // If they're the same day, use that. Otherwise use the midpoint
+          let transitionDate: Date;
+          if (currentEndDate.getTime() === nextStartDate.getTime()) {
+            transitionDate = currentEndDate;
+          } else if (currentEndDate.getTime() < nextStartDate.getTime()) {
+            // Gap - use the end of current phase
+            transitionDate = currentEndDate;
+          } else {
+            // Overlap - use the start of next phase
+            transitionDate = nextStartDate;
+          }
+          
+          if (transitionDate >= dataStartDate && transitionDate <= dataEndDate) {
+            const timeDiff = transitionDate.getTime() - dataStartDate.getTime();
+            const totalTime = dataEndDate.getTime() - dataStartDate.getTime();
+            const transitionX = padding.left + (timeDiff / totalTime) * chartWidth;
+            
+            // Use the next phase's color for the transition line
+            const nextPhaseColor = nextPhase.type === 'accumulation' ? '#3b82f6' : 
+                                  nextPhase.type === 'bullRun' ? '#10b981' : '#ef4444';
+            
+            ctx.strokeStyle = nextPhaseColor;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(transitionX, padding.top);
+            ctx.lineTo(transitionX, padding.top + chartHeight);
+            ctx.stroke();
+          }
+        }
+      }
     }
 
     // Draw halving events as vertical lines

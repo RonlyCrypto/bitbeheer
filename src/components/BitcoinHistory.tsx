@@ -162,9 +162,9 @@ const bitcoinCycles = [
     description: 'Accumulatie: $16,000 → $30,000 | Bull: Nov 2023 → midden 2025 | Bear: eind 2025 → 2026',
     halving: '2024-04-19',
     phases: {
-      accumulation: { start: '2023-01', end: '2023-10', priceRange: '$16,000 → $30,000', type: 'accumulation' },
-      bullRun: { start: '2023-11', end: '2025-12', priceRange: 'Verwachte top: midden 2025', type: 'bullRun' },
-      bearMarket: { start: '2025-12', end: '2026-12', priceRange: 'Verwacht eind 2025', type: 'bearMarket' }
+      accumulation: { start: '2023-01-01', end: '2023-10-31', priceRange: '$16,000 → $30,000', type: 'accumulation' },
+      bullRun: { start: '2023-10-31', end: '2025-12-31', priceRange: 'Verwachte top: midden 2025', type: 'bullRun' },
+      bearMarket: { start: '2025-12-31', end: '2026-12-31', priceRange: 'Verwacht eind 2025', type: 'bearMarket' }
     }
   }
 ];
