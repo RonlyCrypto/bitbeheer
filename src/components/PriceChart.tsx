@@ -727,6 +727,9 @@ export default function PriceChart({
   // Store slider track ref for mouse position calculation
   const sliderTrackRef = useRef<HTMLDivElement>(null);
 
+  // Store initial drag position for smooth range dragging
+  const dragStartRef = useRef<{ startPercent: number; rangeStart: number; rangeEnd: number } | null>(null);
+
   // Mouse event handlers for zoom slider - support all three operations
   const handleSliderMouseMove = (e: MouseEvent | React.MouseEvent) => {
     if (!isDragging || !showZoomSlider || !sliderTrackRef.current) return;
@@ -736,23 +739,40 @@ export default function PriceChart({
     const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
     
     if (isDragging === 'start') {
-      setZoomRange(prev => ({
-        start: Math.min(percentage, prev.end - 2), // Minimum 2% range
-        end: prev.end
-      }));
-    } else if (isDragging === 'end') {
-      setZoomRange(prev => ({
-        start: prev.start,
-        end: Math.max(percentage, prev.start + 2) // Minimum 2% range
-      }));
-    } else if (isDragging === 'range') {
-      // Only allow range dragging (moving the entire selection)
-      const rangeWidth = zoomRange.end - zoomRange.start;
-      const newStart = Math.max(0, Math.min(100 - rangeWidth, percentage - rangeWidth / 2));
-      setZoomRange({
-        start: newStart,
-        end: newStart + rangeWidth
+      setZoomRange(prev => {
+        const newStart = Math.min(percentage, prev.end - 2); // Minimum 2% range
+        return {
+          start: newStart,
+          end: prev.end
+        };
       });
+    } else if (isDragging === 'end') {
+      setZoomRange(prev => {
+        const newEnd = Math.max(percentage, prev.start + 2); // Minimum 2% range
+        return {
+          start: prev.start,
+          end: newEnd
+        };
+      });
+    } else if (isDragging === 'range') {
+      // Range dragging - move the entire selection
+      if (!dragStartRef.current) {
+        // Initialize drag start position
+        dragStartRef.current = {
+          startPercent: percentage,
+          rangeStart: zoomRange.start,
+          rangeEnd: zoomRange.end
+        };
+      } else {
+        // Calculate offset from initial drag position
+        const offset = percentage - dragStartRef.current.startPercent;
+        const rangeWidth = dragStartRef.current.rangeEnd - dragStartRef.current.rangeStart;
+        const newStart = Math.max(0, Math.min(100 - rangeWidth, dragStartRef.current.rangeStart + offset));
+        setZoomRange({
+          start: newStart,
+          end: newStart + rangeWidth
+        });
+      }
     }
   };
 
@@ -765,6 +785,7 @@ export default function PriceChart({
       onZoomChange?.(data[startIndex].date, data[endIndex].date);
     }
     setIsDragging(null);
+    dragStartRef.current = null; // Reset drag start position
   };
 
   // Add document-level event listeners for smooth dragging
@@ -1018,82 +1039,83 @@ export default function PriceChart({
               style={{ minWidth: '100%' }}
             >
               
-              {/* Selected range - non-draggable background */}
+              {/* Selected range - draggable background */}
               <div 
-                className="absolute bg-blue-500 rounded-lg border-2 border-blue-600"
+                className="absolute bg-blue-500 rounded-lg border-2 border-blue-600 cursor-move"
                 style={{
                   left: `${zoomRange.start}%`,
                   width: `${zoomRange.end - zoomRange.start}%`,
                   height: '100%',
-                  minHeight: '24px', // Keep minimum height for better visibility
-                  minWidth: '0%' // Allow the range to shrink but container stays same size
+                  minHeight: '24px',
+                  minWidth: '0%',
+                  zIndex: 1
                 }}
-              ></div>
+                onMouseDown={(e) => {
+                  // Check if we clicked on a handle (they are children)
+                  const target = e.target as HTMLElement;
+                  if (target.closest('.slider-handle')) {
+                    return; // Let the handle handle it
+                  }
+                  e.stopPropagation();
+                  e.preventDefault();
+                  dragStartRef.current = null; // Reset for new drag
+                  setIsDragging('range');
+                }}
+              >
+                {/* Draggable center area with left-right drag icon - inside the blue bar */}
+                <div
+                  className="slider-handle absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-blue-600 rounded-full cursor-move hover:bg-blue-700 transition-colors flex items-center justify-center shadow-lg border-2 border-white z-10"
+                  style={{
+                    pointerEvents: 'auto'
+                  }}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  dragStartRef.current = null; // Reset for new drag
+                  setIsDragging('range');
+                }}
+                >
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                </div>
+              </div>
               
-              {/* Left resize handle */}
+              {/* Left resize handle - larger and more accessible */}
               <div
-                className="absolute top-1/2 left-0 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-blue-600 rounded-full cursor-ew-resize hover:bg-blue-700 transition-colors flex items-center justify-center shadow-lg border-2 border-white"
+                className="slider-handle absolute top-1/2 left-0 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-blue-600 rounded-full cursor-ew-resize hover:bg-blue-700 transition-colors flex items-center justify-center shadow-lg border-2 border-white z-20"
                 style={{
-                  left: `${zoomRange.start}%`
+                  left: `${zoomRange.start}%`,
+                  pointerEvents: 'auto'
                 }}
                 onMouseDown={(e) => {
                   e.stopPropagation();
+                  e.preventDefault();
                   setIsDragging('start');
                 }}
               >
-                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </div>
               
-              {/* Right resize handle */}
+              {/* Right resize handle - larger and more accessible */}
               <div
-                className="absolute top-1/2 left-0 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-blue-600 rounded-full cursor-ew-resize hover:bg-blue-700 transition-colors flex items-center justify-center shadow-lg border-2 border-white"
+                className="slider-handle absolute top-1/2 left-0 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-blue-600 rounded-full cursor-ew-resize hover:bg-blue-700 transition-colors flex items-center justify-center shadow-lg border-2 border-white z-20"
                 style={{
-                  left: `${zoomRange.end}%`
+                  left: `${zoomRange.end}%`,
+                  pointerEvents: 'auto'
                 }}
                 onMouseDown={(e) => {
                   e.stopPropagation();
+                  e.preventDefault();
                   setIsDragging('end');
                 }}
               >
-                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </div>
-              
-              {/* Draggable center area with left-right drag icon */}
-              <div
-                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-blue-600 rounded-full cursor-move hover:bg-blue-700 transition-colors flex items-center justify-center shadow-lg border-2 border-white"
-                style={{
-                  left: `${zoomRange.start + (zoomRange.end - zoomRange.start) / 2}%`
-                }}
-                onMouseDown={(e) => {
-                  e.stopPropagation();
-                  setIsDragging('range');
-                }}
-              >
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                </svg>
-              </div>
-              
-              {/* Draggable range area - allows clicking anywhere on the blue bar to drag */}
-              <div
-                className="absolute cursor-move"
-                style={{
-                  left: `${zoomRange.start}%`,
-                  width: `${zoomRange.end - zoomRange.start}%`,
-                  height: '100%'
-                }}
-                onMouseDown={(e) => {
-                  e.stopPropagation();
-                  // Only start range drag if not clicking on a handle
-                  if (e.target === e.currentTarget) {
-                    setIsDragging('range');
-                  }
-                }}
-              />
             </div>
             
             {/* Date labels */}
