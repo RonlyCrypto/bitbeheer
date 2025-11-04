@@ -176,8 +176,8 @@ export default function Header() {
           </nav>
           
           <div className="flex items-center gap-4">
-            {/* Bitcoin Live Price */}
-            <div className="hidden md:block">
+            {/* Bitcoin Live Price and Currency Toggle */}
+            <div className="hidden md:flex items-center gap-3">
               <BitcoinLivePrice />
               <CurrencyToggle />
             </div>
