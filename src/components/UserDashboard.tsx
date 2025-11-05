@@ -36,7 +36,8 @@ import AppointmentBookingPopup from './AppointmentBookingPopup';
 import Helpdesk from './Helpdesk';
 import AgendaView from './AgendaView';
 import PortfolioPage from '../pages/PortfolioPage';
-import { bitcoinApiService } from '../services/bitcoinApiService';
+import { bitcoinApiService, BitcoinTransaction } from '../services/bitcoinApiService';
+import PortfolioChart from './PortfolioChart';
 
 interface UserProfile {
   id: string;
@@ -322,11 +323,11 @@ export default function UserDashboard() {
             }
           }
 
-          // Check for unread admin messages
+          // Check for unread admin messages using effectiveEmail
           const { data: adminMessages } = await supabase
             .from('support_messages')
             .select('created_at')
-            .eq('email', user.email)
+            .eq('email', effectiveEmail || user.email || '')
             .eq('from_admin', true)
             .order('created_at', { ascending: false });
 
@@ -334,7 +335,7 @@ export default function UserDashboard() {
           const { data: readStatus, error: readStatusError } = await supabase
             .from('user_chat_read_status')
             .select('last_read_at')
-            .eq('user_email', user.email)
+            .eq('user_email', effectiveEmail || user.email || '')
             .maybeSingle(); // Use maybeSingle instead of single to avoid 404 errors
 
           if (adminMessages && adminMessages.length > 0) {
@@ -423,44 +424,61 @@ export default function UserDashboard() {
     
     window.addEventListener('refreshAccounts', handleAccountRefresh);
     
-    // Poll for unread messages every 30 seconds
-    const interval = setInterval(() => {
-      if (user?.email) {
-        supabase
+    // Function to check and update unread chat count
+    const checkUnreadMessages = async () => {
+      const effectiveEmail = (isImpersonating && impersonatedUser) 
+        ? impersonatedUser 
+        : (user?.email || null);
+      
+      if (!effectiveEmail) return;
+      
+      try {
+        const { data: adminMessages } = await supabase
           .from('support_messages')
           .select('created_at')
-          .eq('email', user.email)
+          .eq('email', effectiveEmail)
           .eq('from_admin', true)
-          .order('created_at', { ascending: false })
-          .then(({ data: adminMessages }) => {
-            supabase
-              .from('user_chat_read_status')
-              .select('last_read_at')
-              .eq('user_email', user.email)
-              .maybeSingle() // Use maybeSingle to avoid 404 errors when no record exists
-              .then(({ data: readStatus }) => {
-                if (adminMessages && adminMessages.length > 0) {
-                  const lastReadTime = readStatus?.last_read_at 
-                    ? new Date(readStatus.last_read_at).getTime()
-                    : 0;
-                  
-                  const unreadCount = adminMessages.filter(msg => {
-                    const msgTime = new Date(msg.created_at).getTime();
-                    return msgTime > lastReadTime;
-                  }).length;
-                  
-                  setUnreadChatCount(unreadCount);
-                } else {
-                  setUnreadChatCount(0);
-                }
-              });
-          });
+          .order('created_at', { ascending: false });
+        
+        const { data: readStatus } = await supabase
+          .from('user_chat_read_status')
+          .select('last_read_at')
+          .eq('user_email', effectiveEmail)
+          .maybeSingle();
+        
+        if (adminMessages && adminMessages.length > 0) {
+          const lastReadTime = readStatus?.last_read_at 
+            ? new Date(readStatus.last_read_at).getTime()
+            : 0;
+          
+          const unreadCount = adminMessages.filter(msg => {
+            const msgTime = new Date(msg.created_at).getTime();
+            return msgTime > lastReadTime;
+          }).length;
+          
+          setUnreadChatCount(unreadCount);
+        } else {
+          setUnreadChatCount(0);
+        }
+      } catch (error) {
+        console.error('Error checking unread messages:', error);
       }
-    }, 30000);
+    };
+    
+    // Poll for unread messages every 10 seconds (faster updates)
+    checkUnreadMessages(); // Check immediately
+    const interval = setInterval(checkUnreadMessages, 10000);
+    
+    // Listen for new messages event (triggered when admin sends a message)
+    const handleNewMessage = () => {
+      checkUnreadMessages();
+    };
+    window.addEventListener('newAdminMessage', handleNewMessage);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener('refreshAccounts', handleAccountRefresh);
+      window.removeEventListener('newAdminMessage', handleNewMessage);
     };
   }, [user, isImpersonating, impersonatedUser]);
 
@@ -788,6 +806,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
   
   const [hasWallet, setHasWallet] = useState(false);
   const [userAppointments, setUserAppointments] = useState<any[]>([]);
+  const [walletTransactions, setWalletTransactions] = useState<BitcoinTransaction[]>([]);
+  const [currentBitcoinPrice, setCurrentBitcoinPrice] = useState<number>(96640);
+  const [selectedTransaction, setSelectedTransaction] = useState<BitcoinTransaction | null>(null);
   
   const activeGoals = displayGoals.filter((goal) => (goal.status as string) === 'active').length;
   const [appointmentsLoading, setAppointmentsLoading] = useState(true);
@@ -925,6 +946,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
       try {
         const price = await bitcoinApiService.getCurrentPrice();
         setBitcoinPrice(price);
+        setCurrentBitcoinPrice(price);
       } catch (error) {
         console.error('Error loading Bitcoin price:', error);
       }
@@ -961,13 +983,38 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           const walletRecord = wallet[0];
           // If wallet_data exists, parse it to get last transaction
           let lastTransaction = null;
+          let transactions: BitcoinTransaction[] = [];
+          
           if (walletRecord.wallet_data?.transactions && Array.isArray(walletRecord.wallet_data.transactions) && walletRecord.wallet_data.transactions.length > 0) {
             lastTransaction = walletRecord.wallet_data.transactions[0]; // Most recent transaction
+            // Get current price for calculations
+            const currentPrice = await bitcoinApiService.getCurrentPrice().catch(() => currentBitcoinPrice);
+            // Convert wallet_data transactions to BitcoinTransaction format
+            transactions = walletRecord.wallet_data.transactions.map((tx: any) => {
+              const txPrice = tx.price || currentPrice;
+              const txValue = tx.value || 0;
+              const txCurrentValue = tx.currentValue || (txValue ? (txValue / 100000000) * currentPrice : 0);
+              const txProfit = tx.profit !== undefined ? tx.profit : (txCurrentValue - (txValue / 100000000) * txPrice);
+              const txProfitPercent = tx.profitPercent !== undefined ? tx.profitPercent : (txPrice > 0 ? ((currentPrice - txPrice) / txPrice) * 100 : 0);
+              
+              return {
+                hash: tx.hash || '',
+                time: tx.time || Math.floor(new Date(tx.date || Date.now()).getTime() / 1000),
+                value: txValue,
+                price: txPrice,
+                currentValue: txCurrentValue,
+                profit: txProfit,
+                profitPercent: txProfitPercent
+              };
+            });
           }
+          
           setWalletData({ ...walletRecord, lastTransaction });
+          setWalletTransactions(transactions);
         } else {
           setHasWallet(false);
           setWalletData(null);
+          setWalletTransactions([]);
         }
       } catch (error) {
         console.error('Error loading wallet status:', error);
@@ -1649,6 +1696,23 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         </div>
       )}
       
+      {/* Live Bitcoin Chart with Purchase Points */}
+      {hasWallet && walletTransactions.length > 0 && (
+        <div className="mb-6">
+          <PortfolioChart
+            transactions={walletTransactions}
+            currentPrice={currentBitcoinPrice}
+            onTransactionClick={(transaction) => {
+              setSelectedTransaction(transaction);
+              // Navigate to portfolio tab to see full details
+              if (onNavigateToPortfolio) {
+                onNavigateToPortfolio();
+              }
+            }}
+          />
+        </div>
+      )}
+
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">

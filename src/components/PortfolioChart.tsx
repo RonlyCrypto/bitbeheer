@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { TrendingUp, TrendingDown, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import { BitcoinPriceData, BitcoinTransaction } from '../services/bitcoinApiService';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { bitcoinPriceDataService } from '../services/bitcoinPriceDataService';
 
 interface PortfolioChartProps {
   transactions: BitcoinTransaction[];
@@ -15,6 +16,7 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
   const [priceData, setPriceData] = useState<BitcoinPriceData | null>(null);
   const [showTransactions, setShowTransactions] = useState(true);
   const [hoveredTransaction, setHoveredTransaction] = useState<BitcoinTransaction | null>(null);
+  const [historicalPriceData, setHistoricalPriceData] = useState<Array<{ time: number; price: number }>>([]);
 
   // Fetch price data based on selected currency
   useEffect(() => {
@@ -45,6 +47,38 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
     return () => clearInterval(interval);
   }, [currency]);
 
+  // Load historical price data for the last 30 days
+  useEffect(() => {
+    const loadHistoricalData = async () => {
+      try {
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - 30); // Last 30 days
+        
+        // Get historical data from Supabase
+        const data = await bitcoinPriceDataService.getDataForDateRange(
+          startDate.toISOString().split('T')[0],
+          endDate.toISOString().split('T')[0],
+          currency
+        );
+        
+        // Convert to chart format (price is already in correct currency)
+        const chartData = data.map(point => ({
+          time: new Date(point.date).getTime(),
+          price: point.price
+        }));
+        
+        setHistoricalPriceData(chartData);
+      } catch (error) {
+        console.error('Error loading historical data:', error);
+        // Fallback to empty array if data loading fails
+        setHistoricalPriceData([]);
+      }
+    };
+    
+    loadHistoricalData();
+  }, [currency]);
+
   // Teken de chart
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -59,20 +93,35 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
 
-    // Simuleer prijs data voor de laatste 24 uur
+    // Use historical price data if available, otherwise generate sample data
     const now = Date.now();
-    const hours24 = 24 * 60 * 60 * 1000;
-    const pricePoints = [];
+    const days30 = 30 * 24 * 60 * 60 * 1000;
+    let pricePoints: Array<{ time: number; price: number }> = [];
     
-    for (let i = 0; i < 24; i++) {
-      const time = now - (i * 60 * 60 * 1000);
-      const basePrice = currentPrice;
-      const variation = (Math.random() - 0.5) * 0.1; // 10% variatie
-      const price = basePrice * (1 + variation);
-      pricePoints.push({ time, price });
+    if (historicalPriceData.length > 0) {
+      // Use real historical data
+      const startTime = now - days30;
+      pricePoints = historicalPriceData
+        .filter(point => point.time >= startTime && point.time <= now)
+        .sort((a, b) => a.time - b.time);
+    } else {
+      // Fallback: Generate sample data for last 30 days (hourly points)
+      const hours30days = 30 * 24;
+      for (let i = 0; i < hours30days; i++) {
+        const time = now - (i * 60 * 60 * 1000);
+        const basePrice = currentPrice;
+        const variation = (Math.random() - 0.5) * 0.05; // 5% variatie
+        const price = basePrice * (1 + variation);
+        pricePoints.push({ time, price });
+      }
+      pricePoints.reverse();
     }
-
-    pricePoints.reverse();
+    
+    // If we have too many points, sample them for performance
+    if (pricePoints.length > 100) {
+      const step = Math.ceil(pricePoints.length / 100);
+      pricePoints = pricePoints.filter((_, index) => index % step === 0);
+    }
 
     // Teken prijs lijn
     ctx.strokeStyle = '#f97316';
@@ -94,37 +143,46 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
 
     // Teken transactie punten
     if (showTransactions && transactions.length > 0) {
-      transactions.forEach((tx, index) => {
-        const txTime = tx.time * 1000;
-        const hoursAgo = (now - txTime) / (60 * 60 * 1000);
+      const maxPrice = Math.max(...pricePoints.map(p => p.price));
+      const minPrice = Math.min(...pricePoints.map(p => p.price));
+      const priceRange = maxPrice - minPrice;
+      
+    transactions.forEach((tx, index) => {
+      const txTime = tx.time * 1000;
+      const daysAgo = (now - txTime) / (24 * 60 * 60 * 1000);
+      
+      // Show transactions from last 30 days
+      if (daysAgo <= 30 && daysAgo >= 0 && priceRange > 0) {
+        const x = ((30 - daysAgo) / 30) * width;
+        const y = height - ((tx.price - minPrice) / priceRange) * height;
         
-        if (hoursAgo <= 24) {
-          const x = ((24 - hoursAgo) / 24) * width;
-          const y = height - ((tx.price / Math.max(...pricePoints.map(p => p.price))) * height);
-          
-          // Teken cirkel
-          ctx.fillStyle = tx.profit >= 0 ? '#10b981' : '#ef4444';
-          ctx.beginPath();
-          ctx.arc(x, y, 6, 0, 2 * Math.PI);
-          ctx.fill();
-          
-          // Teken nummer
-          ctx.fillStyle = 'white';
-          ctx.font = '10px Arial';
-          ctx.textAlign = 'center';
-          ctx.fillText((index + 1).toString(), x, y + 3);
-        }
-      });
+        // Teken cirkel
+        ctx.fillStyle = tx.profit >= 0 ? '#10b981' : '#ef4444';
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Teken nummer
+        ctx.fillStyle = 'white';
+        ctx.font = '10px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText((index + 1).toString(), x, y + 3);
+      }
+    });
     }
 
     // Teken hover effect
     if (hoveredTransaction) {
-      const txTime = hoveredTransaction.time * 1000;
-      const hoursAgo = (now - txTime) / (60 * 60 * 1000);
+      const maxPrice = Math.max(...pricePoints.map(p => p.price));
+      const minPrice = Math.min(...pricePoints.map(p => p.price));
+      const priceRange = maxPrice - minPrice;
       
-      if (hoursAgo <= 24) {
-        const x = ((24 - hoursAgo) / 24) * width;
-        const y = height - ((hoveredTransaction.price / Math.max(...pricePoints.map(p => p.price))) * height);
+      const txTime = hoveredTransaction.time * 1000;
+      const daysAgo = (now - txTime) / (24 * 60 * 60 * 1000);
+      
+      if (daysAgo <= 30 && daysAgo >= 0 && priceRange > 0) {
+        const x = ((30 - daysAgo) / 30) * width;
+        const y = height - ((hoveredTransaction.price - minPrice) / priceRange) * height;
         
         // Teken highlight cirkel
         ctx.strokeStyle = '#fbbf24';
@@ -135,7 +193,7 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
       }
     }
 
-  }, [transactions, currentPrice, showTransactions, hoveredTransaction]);
+  }, [transactions, currentPrice, showTransactions, hoveredTransaction, historicalPriceData]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -149,13 +207,24 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
     const now = Date.now();
     let foundTransaction = null;
 
+    // Calculate price range from historical data or use current price
+    const pricePoints = historicalPriceData.length > 0 
+      ? historicalPriceData 
+      : [{ time: now, price: currentPrice }];
+    
+    const maxPrice = Math.max(...pricePoints.map(p => p.price), currentPrice);
+    const minPrice = Math.min(...pricePoints.map(p => p.price), currentPrice);
+    const priceRange = maxPrice - minPrice;
+
     transactions.forEach(tx => {
       const txTime = tx.time * 1000;
-      const hoursAgo = (now - txTime) / (60 * 60 * 1000);
+      const daysAgo = (now - txTime) / (24 * 60 * 60 * 1000);
       
-      if (hoursAgo <= 24) {
-        const txX = ((24 - hoursAgo) / 24) * canvas.width;
-        const txY = canvas.height - ((tx.price / currentPrice) * canvas.height);
+      if (daysAgo <= 30 && daysAgo >= 0) {
+        const txX = ((30 - daysAgo) / 30) * canvas.width;
+        const txY = priceRange > 0 
+          ? canvas.height - ((tx.price - minPrice) / priceRange) * canvas.height
+          : canvas.height / 2;
         
         const distance = Math.sqrt((x - txX) ** 2 + (y - txY) ** 2);
         if (distance <= 10) {

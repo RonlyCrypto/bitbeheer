@@ -160,6 +160,42 @@ export class BitcoinPriceDataService {
   }
 
   /**
+   * Get Bitcoin price data for a specific date range
+   */
+  async getDataForDateRange(startDate: string, endDate: string, currency: 'EUR' | 'USD' = 'USD'): Promise<BitcoinPriceDataPoint[]> {
+    try {
+      const priceColumn = currency === 'EUR' ? 'price_eur' : 'price_usd';
+      
+      const { data, error } = await supabase
+        .from('bitcoin_price_data')
+        .select('date, timestamp, price_eur, price_usd, volume, market_cap')
+        .gte('date', startDate)
+        .lte('date', endDate)
+        .not(priceColumn, 'is', null)
+        .order('date', { ascending: true });
+
+      if (error) {
+        logger.error(`Error fetching Bitcoin price data for date range ${startDate} to ${endDate} (${currency}):`, error);
+        return [];
+      }
+
+      // Transform data to match our interface
+      const priceData: BitcoinPriceDataPoint[] = (data || []).map((item: any) => ({
+        date: item.date,
+        timestamp: item.timestamp,
+        price: parseFloat(item[priceColumn]),
+        volume: item.volume ? parseFloat(item.volume) : undefined,
+        market_cap: item.market_cap ? parseFloat(item.market_cap) : undefined
+      }));
+
+      return priceData;
+    } catch (error) {
+      logger.error(`Error in getDataForDateRange for ${startDate} to ${endDate} (${currency}):`, error);
+      return [];
+    }
+  }
+
+  /**
    * Clear cache (useful after updates)
    */
   clearCache(): void {
