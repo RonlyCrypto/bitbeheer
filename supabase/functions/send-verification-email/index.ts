@@ -95,14 +95,6 @@ Let op: Als je deze link niet binnen 5 dagen gebruikt, zal je account automatisc
 
 Met vriendelijke groet,
 BitBeheer
-- Leer veilig Bitcoin kopen en bewaren
-- Eigen beheer van je Bitcoin opzetten
-- Toegang tot alle tools en resources
-- Direct contact met Giovanni voor vragen
-
-Met vriendelijke groet,
-Giovanni
-BitBeheer - Persoonlijke Bitcoin begeleiding
     `
 
     // Send email using Resend
