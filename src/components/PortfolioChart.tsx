@@ -238,12 +238,22 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
     const minPrice = Math.min(...pricePoints.map(p => p.price), currentPrice);
     const priceRange = maxPrice - minPrice;
 
+    // Calculate chart time range for hover detection
+    const pricePointsForHover = historicalPriceData.length > 0 
+      ? historicalPriceData 
+      : [{ time: now, price: currentPrice }];
+    
+    const chartStartTime = pricePointsForHover.length > 0 
+      ? Math.min(...pricePointsForHover.map(p => p.time))
+      : now - (365 * 24 * 60 * 60 * 1000);
+    const chartEndTime = now;
+    const chartTimeRange = chartEndTime - chartStartTime;
+    
     transactions.forEach(tx => {
       const txTime = tx.time * 1000;
-      const daysAgo = (now - txTime) / (24 * 60 * 60 * 1000);
       
-      if (daysAgo <= 30 && daysAgo >= 0) {
-        const txX = ((30 - daysAgo) / 30) * canvas.width;
+      if (txTime >= chartStartTime && txTime <= chartEndTime && chartTimeRange > 0) {
+        const txX = ((txTime - chartStartTime) / chartTimeRange) * canvas.width;
         const txY = priceRange > 0 
           ? canvas.height - ((tx.price - minPrice) / priceRange) * canvas.height
           : canvas.height / 2;
