@@ -286,17 +286,28 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
     const chartEndTime = now;
     const chartTimeRange = chartEndTime - chartStartTime;
     
+    if (chartTimeRange <= 0 || priceRange <= 0) {
+      setHoveredTransaction(null);
+      return;
+    }
+    
     transactions.forEach(tx => {
-      const txTime = tx.time * 1000;
+      // Ensure time is in milliseconds (same logic as drawing)
+      const txTime = tx.time < 10000000000 ? tx.time * 1000 : tx.time;
       
-      if (txTime >= chartStartTime && txTime <= chartEndTime && chartTimeRange > 0) {
+      if (txTime >= chartStartTime && txTime <= chartEndTime) {
         const txX = ((txTime - chartStartTime) / chartTimeRange) * canvas.width;
+        
+        // Use transaction price if available, otherwise use current price
+        const txPrice = tx.price || currentPrice;
+        const clampedPrice = Math.max(minPrice, Math.min(maxPrice, txPrice));
         const txY = priceRange > 0 
-          ? canvas.height - ((tx.price - minPrice) / priceRange) * canvas.height
+          ? canvas.height - ((clampedPrice - minPrice) / priceRange) * canvas.height
           : canvas.height / 2;
         
+        // Increase hover radius for better UX (12px instead of 10px)
         const distance = Math.sqrt((x - txX) ** 2 + (y - txY) ** 2);
-        if (distance <= 10) {
+        if (distance <= 12) {
           foundTransaction = tx;
         }
       }
