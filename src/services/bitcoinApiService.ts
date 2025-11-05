@@ -124,8 +124,8 @@ class BitcoinApiService {
       const coinGeckoResponse = await fetch(
         `https://api.coingecko.com/api/v3/coins/bitcoin/history?date=${dateStr}`
       );
-      const data = await coinGeckoResponse.json();
-      return data.market_data?.current_price?.eur || 50000;
+      const coinGeckoData = await coinGeckoResponse.json();
+      return coinGeckoData.market_data?.current_price?.eur || 50000;
     } catch (error) {
       console.error('Error fetching historical price:', error);
       return 50000; // Fallback prijs
