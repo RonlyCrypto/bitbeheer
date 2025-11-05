@@ -328,7 +328,11 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
 
       {/* Chart Info */}
       <div className="mt-4 text-sm text-gray-600">
-        <p>Hover over de groene/rode punten om transactie details te zien. Klik om meer informatie te bekijken.</p>
+        {transactions.length > 0 ? (
+          <p>Hover over de groene/rode punten om transactie details te zien. Klik om meer informatie te bekijken.</p>
+        ) : (
+          <p>Voeg een wallet toe met transacties om je inkoop punten op de chart te zien.</p>
+        )}
       </div>
     </div>
   );

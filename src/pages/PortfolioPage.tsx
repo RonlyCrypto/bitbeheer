@@ -616,8 +616,8 @@ export default function PortfolioPage() {
             </div>
           )}
 
-          {/* Live Chart Section */}
-          {wallets.length > 0 && allTransactions.length > 0 && (
+          {/* Live Chart Section - Show chart when wallets exist */}
+          {wallets.length > 0 && (
             <div className="mt-12">
               <PortfolioChart 
                 transactions={allTransactions}

@@ -1696,23 +1696,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         </div>
       )}
       
-      {/* Live Bitcoin Chart with Purchase Points */}
-      {hasWallet && walletTransactions.length > 0 && (
-        <div className="mb-6">
-          <PortfolioChart
-            transactions={walletTransactions}
-            currentPrice={currentBitcoinPrice}
-            onTransactionClick={(transaction) => {
-              setSelectedTransaction(transaction);
-              // Navigate to portfolio tab to see full details
-              if (onNavigateToPortfolio) {
-                onNavigateToPortfolio();
-              }
-            }}
-          />
-        </div>
-      )}
-
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
