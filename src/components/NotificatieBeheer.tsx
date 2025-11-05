@@ -80,9 +80,10 @@ export default function NotificatieBeheer() {
     const loadUsers = async () => {
       try {
         // First try to load from Supabase directly to get email_sent status
+        // Also fetch first_name from accounts table for proper email personalization
         const { data: supabaseUsers, error: supabaseError } = await supabase
           .from('users')
-          .select('*')
+          .select('*, accounts(first_name, last_name)')
           .order('created_at', { ascending: false });
         
         if (!supabaseError && supabaseUsers) {
@@ -91,6 +92,7 @@ export default function NotificatieBeheer() {
             id: user.id,
             email: user.email,
             name: user.name || 'Niet opgegeven',
+            first_name: user.accounts?.first_name || user.first_name || null, // Include first_name for email personalization
             message: user.message || 'Geen bericht',
             category: user.category || 'livegang',
             date: user.created_at ? new Date(user.created_at).toLocaleDateString('nl-NL') : '',
