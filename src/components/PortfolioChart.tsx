@@ -18,7 +18,7 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
   const [hoveredTransaction, setHoveredTransaction] = useState<BitcoinTransaction | null>(null);
   const [historicalPriceData, setHistoricalPriceData] = useState<Array<{ time: number; price: number }>>([]);
 
-  // Fetch price data based on selected currency
+  // Fetch price data and save to Supabase
   useEffect(() => {
     const fetchPriceData = async () => {
       try {
@@ -30,13 +30,57 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
         const marketCapKey = `${currency.toLowerCase()}_market_cap`;
         const volumeKey = `${currency.toLowerCase()}_24h_vol`;
         
-        setPriceData({
+        const priceDataResult = {
           price: data.bitcoin[priceKey],
           change24h: data.bitcoin[changeKey] || 0,
           changePercent24h: data.bitcoin[changeKey] || 0,
           marketCap: data.bitcoin[marketCapKey] || 0,
           volume24h: data.bitcoin[volumeKey] || 0
-        });
+        };
+        
+        setPriceData(priceDataResult);
+        
+        // Save current price to Supabase for daily updates
+        try {
+          const { supabase } = await import('../lib/supabase');
+          const today = new Date().toISOString().split('T')[0];
+          const timestamp = Math.floor(Date.now() / 1000);
+          
+          // Check if today's record exists
+          const { data: existingData } = await supabase
+            .from('bitcoin_price_data')
+            .select('id')
+            .eq('date', today)
+            .single();
+          
+          if (existingData) {
+            // Update existing record
+            await supabase
+              .from('bitcoin_price_data')
+              .update({
+                [currency === 'EUR' ? 'price_eur' : 'price_usd']: priceDataResult.price,
+                timestamp: timestamp,
+                updated_at: new Date().toISOString()
+              })
+              .eq('date', today);
+          } else {
+            // Insert new record
+            const year = new Date().getFullYear();
+            await supabase
+              .from('bitcoin_price_data')
+              .insert({
+                date: today,
+                year: year,
+                timestamp: timestamp,
+                [currency === 'EUR' ? 'price_eur' : 'price_usd']: priceDataResult.price,
+                volume: priceDataResult.volume24h || null,
+                market_cap: priceDataResult.marketCap || null
+              });
+          }
+        } catch (saveError) {
+          // Silently fail - price saving is not critical for chart display
+          console.error('Error saving price to Supabase:', saveError);
+        }
       } catch (error) {
         console.error('Error fetching price data:', error);
       }
@@ -184,9 +228,21 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
       // Sort transactions by time to show them in order
       const sortedTransactions = [...transactions].sort((a, b) => (a.time || 0) - (b.time || 0));
       
+      let visibleTransactions = 0;
+      
       sortedTransactions.forEach((tx, index) => {
         // Ensure time is in milliseconds (some APIs return seconds)
         const txTime = tx.time < 10000000000 ? tx.time * 1000 : tx.time;
+        
+        // Debug: Log transaction timing info
+        if (index === 0) {
+          console.log('Chart time range:', {
+            chartStart: new Date(chartStartTime).toISOString(),
+            chartEnd: new Date(chartEndTime).toISOString(),
+            txTime: new Date(txTime).toISOString(),
+            txInRange: txTime >= chartStartTime && txTime <= chartEndTime
+          });
+        }
         
         // Only show transactions within chart time range
         if (txTime >= chartStartTime && txTime <= chartEndTime) {
@@ -202,22 +258,24 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
           
           // Ensure coordinates are within canvas bounds
           if (x >= 0 && x <= width && y >= 0 && y <= height) {
+            visibleTransactions++;
+            
             // Teken cirkel (groen voor winst, rood voor verlies)
             const profit = tx.profit !== undefined ? tx.profit : (tx.currentValue || 0) - (txPrice * (tx.value || 0) / 100000000);
             ctx.fillStyle = profit >= 0 ? '#10b981' : '#ef4444';
             ctx.beginPath();
-            ctx.arc(x, y, 8, 0, 2 * Math.PI);
+            ctx.arc(x, y, 10, 0, 2 * Math.PI); // Larger radius for visibility
             ctx.fill();
             
             // Teken witte border voor betere zichtbaarheid
             ctx.strokeStyle = 'white';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             ctx.stroke();
             
             // Teken nummer (optioneel - alleen als er niet te veel transacties zijn)
             if (sortedTransactions.length <= 20) {
               ctx.fillStyle = 'white';
-              ctx.font = 'bold 10px Arial';
+              ctx.font = 'bold 11px Arial';
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
               ctx.fillText((index + 1).toString(), x, y);
@@ -225,6 +283,17 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
           }
         }
       });
+      
+      // Debug: Log how many transactions were visible
+      if (visibleTransactions === 0 && sortedTransactions.length > 0) {
+        console.warn('No transactions visible on chart:', {
+          totalTransactions: sortedTransactions.length,
+          chartStartTime: new Date(chartStartTime).toISOString(),
+          chartEndTime: new Date(chartEndTime).toISOString(),
+          firstTxTime: new Date(sortedTransactions[0].time < 10000000000 ? sortedTransactions[0].time * 1000 : sortedTransactions[0].time).toISOString(),
+          lastTxTime: new Date(sortedTransactions[sortedTransactions.length - 1].time < 10000000000 ? sortedTransactions[sortedTransactions.length - 1].time * 1000 : sortedTransactions[sortedTransactions.length - 1].time).toISOString()
+        });
+      }
     }
 
     // Teken hover effect

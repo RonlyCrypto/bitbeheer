@@ -88,24 +88,36 @@ class BitcoinApiService {
     }
   }
 
-  // Haal historische Bitcoin prijs op
+  // Haal historische Bitcoin prijs op - gebruik Supabase data
   private async getHistoricalPrice(timestamp: number): Promise<number> {
     try {
       const date = new Date(timestamp * 1000);
       const dateStr = date.toISOString().split('T')[0];
       
-      // Gebruik lokale CSV data als beschikbaar
-      const response = await fetch(`/eur/bitcoin-eur-complete-history.csv`);
-      const csvText = await response.text();
-      const lines = csvText.split('\n');
+      // Try to get price from Supabase first
+      const { supabase } = await import('../lib/supabase');
+      const { data, error } = await supabase
+        .from('bitcoin_price_data')
+        .select('price_eur, price_usd')
+        .eq('date', dateStr)
+        .single();
       
-      // Zoek de dichtstbijzijnde datum
-      for (let i = lines.length - 1; i >= 0; i--) {
-        const line = lines[i];
-        if (line.includes(dateStr)) {
-          const price = parseFloat(line.split(';')[1].replace(',', '.'));
-          return price;
-        }
+      if (!error && data) {
+        // Use EUR price if available, otherwise USD
+        return data.price_eur || data.price_usd || 50000;
+      }
+      
+      // If not found, try to find closest date
+      const { data: closestData } = await supabase
+        .from('bitcoin_price_data')
+        .select('price_eur, price_usd, date')
+        .lte('date', dateStr)
+        .order('date', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (closestData) {
+        return closestData.price_eur || closestData.price_usd || 50000;
       }
       
       // Fallback naar CoinGecko
