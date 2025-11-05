@@ -46,7 +46,7 @@ serve(async (req) => {
           <div class="header">
             <h2>🔐 Login Bevestiging - BitBeheer</h2>
           </div>
-          <p>Beste ${name},</p>
+          <p>Beste ${name || 'gebruiker'},</p>
           <p>Er is zojuist ingelogd op je BitBeheer account. Hier zijn de details:</p>
           
           <div class="info">
@@ -78,8 +78,7 @@ serve(async (req) => {
             <a href="https://www.bitbeheer.nl/user-dashboard" class="button">Ga naar je Dashboard</a>
           </p>
 
-          <p>Met vriendelijke groet,</p>
-          <p>Het BitBeheer Team</p>
+          <p>Met vriendelijke groet,<br>BitBeheer</p>
           <div class="footer">
             <p>&copy; 2026 BitBeheer. Alle rechten voorbehouden.</p>
             <p>Voor vragen: <a href="mailto:info@bitbeheer.nl">info@bitbeheer.nl</a></p>
@@ -92,7 +91,7 @@ serve(async (req) => {
     const textContent = `
       🔐 Login Bevestiging - BitBeheer
 
-      Beste ${name},
+      Beste ${name || 'gebruiker'},
 
       Er is zojuist ingelogd op je BitBeheer account. Hier zijn de details:
 

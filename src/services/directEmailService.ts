@@ -93,8 +93,10 @@ export class DirectEmailService {
       // If template body content is provided, use it with variables
       // Otherwise, use the plain message
       let emailBodyContent: string;
+      // Use first_name from user profile, fallback to name, then 'gebruiker'
+      const firstName = user.first_name || user.name?.split(' ')[0] || 'gebruiker';
       let variables: EmailVariables = {
-        name: user.name || 'gebruiker',
+        name: firstName,
         email: user.email,
         date: new Date().toLocaleDateString('nl-NL')
       };
@@ -106,9 +108,9 @@ export class DirectEmailService {
         // Fallback to simple message format
         emailBodyContent = `
           <h1 style="color: #f97316; font-size: 24px; margin: 0 0 20px 0;">${subject}</h1>
-          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0;">Beste ${user.name || 'gebruiker'},</p>
+          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0;">Beste ${firstName},</p>
           <div style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0;">${message.replace(/\n/g, '<br>')}</div>
-          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 20px 0 0 0;">Met vriendelijke groet,<br><strong style="color: #1f2937;">Giovanni</strong><br>BitBeheer</p>
+          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 20px 0 0 0;">Met vriendelijke groet,<br>BitBeheer</p>
         `;
       }
 

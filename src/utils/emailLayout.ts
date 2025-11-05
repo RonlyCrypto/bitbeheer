@@ -83,8 +83,9 @@ export function replaceVariables(content: string, variables: EmailVariables = {}
   let result = content;
   
   // Replace standard variables
+  // Note: 'name' should be the first name (voornaam) from user profile
   const standardVars = {
-    name: variables.name || 'Beste gebruiker',
+    name: variables.name || 'gebruiker', // This should be first_name, not full name
     email: variables.email || 'gebruiker@example.com',
     date: variables.date || new Date().toLocaleDateString('nl-NL'),
     verification_link: variables.verification_link || 'https://bitbeheer.nl/verify',
