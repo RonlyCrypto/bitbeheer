@@ -47,28 +47,44 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
     return () => clearInterval(interval);
   }, [currency]);
 
-  // Load historical price data for the last 30 days
+  // Load complete historical price data from Supabase (2009 to present)
   useEffect(() => {
     const loadHistoricalData = async () => {
       try {
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - 30); // Last 30 days
+        // Get summary to find available years
+        const summary = await bitcoinPriceDataService.getSummary();
         
-        // Get historical data from Supabase
-        const data = await bitcoinPriceDataService.getDataForDateRange(
-          startDate.toISOString().split('T')[0],
-          endDate.toISOString().split('T')[0],
-          currency
-        );
-        
-        // Convert to chart format (price is already in correct currency)
-        const chartData = data.map(point => ({
-          time: new Date(point.date).getTime(),
-          price: point.price
-        }));
-        
-        setHistoricalPriceData(chartData);
+        if (summary && summary.available_years && summary.available_years.length > 0) {
+          // Fetch data for all available years
+          const data = await bitcoinPriceDataService.getDataForYears(
+            summary.available_years,
+            currency
+          );
+          
+          // Convert to chart format (price is already in correct currency)
+          const chartData = data.map(point => ({
+            time: new Date(point.date).getTime(),
+            price: point.price
+          }));
+          
+          setHistoricalPriceData(chartData);
+        } else {
+          // Fallback: Try to get data from 2009 to current year
+          const currentYear = new Date().getFullYear();
+          const years = [];
+          for (let year = 2009; year <= currentYear; year++) {
+            years.push(year);
+          }
+          
+          const data = await bitcoinPriceDataService.getDataForYears(years, currency);
+          
+          const chartData = data.map(point => ({
+            time: new Date(point.date).getTime(),
+            price: point.price
+          }));
+          
+          setHistoricalPriceData(chartData);
+        }
       } catch (error) {
         console.error('Error loading historical data:', error);
         // Fallback to empty array if data loading fails
@@ -93,19 +109,24 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
 
-    // Use historical price data if available, otherwise generate sample data
+    // Use complete historical price data from Supabase
     const now = Date.now();
-    const days30 = 30 * 24 * 60 * 60 * 1000;
     let pricePoints: Array<{ time: number; price: number }> = [];
     
     if (historicalPriceData.length > 0) {
-      // Use real historical data
-      const startTime = now - days30;
+      // Use complete historical data - show all data points
       pricePoints = historicalPriceData
-        .filter(point => point.time >= startTime && point.time <= now)
+        .filter(point => point.time <= now)
         .sort((a, b) => a.time - b.time);
+      
+      // For performance, sample data if we have too many points (keep max 500 points for smooth rendering)
+      if (pricePoints.length > 500) {
+        const step = Math.ceil(pricePoints.length / 500);
+        pricePoints = pricePoints.filter((_, index) => index % step === 0);
+      }
     } else {
-      // Fallback: Generate sample data for last 30 days (hourly points)
+      // Fallback: Generate sample data for last 30 days if no historical data available
+      const days30 = 30 * 24 * 60 * 60 * 1000;
       const hours30days = 30 * 24;
       for (let i = 0; i < hours30days; i++) {
         const time = now - (i * 60 * 60 * 1000);
@@ -115,12 +136,6 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
         pricePoints.push({ time, price });
       }
       pricePoints.reverse();
-    }
-    
-    // If we have too many points, sample them for performance
-    if (pricePoints.length > 100) {
-      const step = Math.ceil(pricePoints.length / 100);
-      pricePoints = pricePoints.filter((_, index) => index % step === 0);
     }
 
     // Teken prijs lijn
@@ -147,13 +162,17 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
       const minPrice = Math.min(...pricePoints.map(p => p.price));
       const priceRange = maxPrice - minPrice;
       
+    // Calculate the time range of the chart
+    const chartStartTime = pricePoints.length > 0 ? pricePoints[0].time : now - (365 * 24 * 60 * 60 * 1000);
+    const chartEndTime = now;
+    const chartTimeRange = chartEndTime - chartStartTime;
+    
     transactions.forEach((tx, index) => {
       const txTime = tx.time * 1000;
-      const daysAgo = (now - txTime) / (24 * 60 * 60 * 1000);
       
-      // Show transactions from last 30 days
-      if (daysAgo <= 30 && daysAgo >= 0 && priceRange > 0) {
-        const x = ((30 - daysAgo) / 30) * width;
+      // Show all transactions that fall within the chart time range
+      if (txTime >= chartStartTime && txTime <= chartEndTime && priceRange > 0) {
+        const x = ((txTime - chartStartTime) / chartTimeRange) * width;
         const y = height - ((tx.price - minPrice) / priceRange) * height;
         
         // Teken cirkel
@@ -177,11 +196,14 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
       const minPrice = Math.min(...pricePoints.map(p => p.price));
       const priceRange = maxPrice - minPrice;
       
-      const txTime = hoveredTransaction.time * 1000;
-      const daysAgo = (now - txTime) / (24 * 60 * 60 * 1000);
+      const chartStartTime = pricePoints.length > 0 ? pricePoints[0].time : now - (365 * 24 * 60 * 60 * 1000);
+      const chartEndTime = now;
+      const chartTimeRange = chartEndTime - chartStartTime;
       
-      if (daysAgo <= 30 && daysAgo >= 0 && priceRange > 0) {
-        const x = ((30 - daysAgo) / 30) * width;
+      const txTime = hoveredTransaction.time * 1000;
+      
+      if (txTime >= chartStartTime && txTime <= chartEndTime && priceRange > 0) {
+        const x = ((txTime - chartStartTime) / chartTimeRange) * width;
         const y = height - ((hoveredTransaction.price - minPrice) / priceRange) * height;
         
         // Teken highlight cirkel
