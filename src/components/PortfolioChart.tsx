@@ -3,6 +3,7 @@ import { TrendingUp, TrendingDown, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import { BitcoinPriceData, BitcoinTransaction } from '../services/bitcoinApiService';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { bitcoinPriceDataService } from '../services/bitcoinPriceDataService';
+import { supabase } from '../lib/supabase';
 
 interface PortfolioChartProps {
   transactions: BitcoinTransaction[];
@@ -18,78 +19,95 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
   const [hoveredTransaction, setHoveredTransaction] = useState<BitcoinTransaction | null>(null);
   const [historicalPriceData, setHistoricalPriceData] = useState<Array<{ time: number; price: number }>>([]);
 
-  // Fetch price data and save to Supabase
+  // Fetch price data and save to Supabase - use Supabase Edge Function to avoid CORS
   useEffect(() => {
     const fetchPriceData = async () => {
       try {
-        const vsCurrency = currency.toLowerCase();
-        const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=${vsCurrency}&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true`);
-        const data = await response.json();
-        const priceKey = currency.toLowerCase();
-        const changeKey = `${currency.toLowerCase()}_24h_change`;
-        const marketCapKey = `${currency.toLowerCase()}_market_cap`;
-        const volumeKey = `${currency.toLowerCase()}_24h_vol`;
+        // Use Supabase Edge Function to avoid CORS issues
+        const { supabase } = await import('../lib/supabase');
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         
-        const priceDataResult = {
-          price: data.bitcoin[priceKey],
-          change24h: data.bitcoin[changeKey] || 0,
-          changePercent24h: data.bitcoin[changeKey] || 0,
-          marketCap: data.bitcoin[marketCapKey] || 0,
-          volume24h: data.bitcoin[volumeKey] || 0
-        };
-        
-        setPriceData(priceDataResult);
-        
-        // Save current price to Supabase for daily updates
-        try {
-          const { supabase } = await import('../lib/supabase');
-          const today = new Date().toISOString().split('T')[0];
-          const timestamp = Math.floor(Date.now() / 1000);
+        // Try to get latest price from Supabase first
+        const latestPrice = await bitcoinPriceDataService.getLatestPrice();
+        if (latestPrice) {
+          // Use latest price from database
+          const vsCurrency = currency.toLowerCase();
+          const priceKey = currency === 'EUR' ? 'price_eur' : 'price_usd';
           
-          // Check if today's record exists
-          const { data: existingData } = await supabase
+          // Try to get 24h change from Supabase or set to 0
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayStr = yesterday.toISOString().split('T')[0];
+          
+          const { data: yesterdayData } = await supabase
             .from('bitcoin_price_data')
-            .select('id')
-            .eq('date', today)
+            .select(priceKey)
+            .eq('date', yesterdayStr)
             .single();
           
-          if (existingData) {
-            // Update existing record
-            await supabase
-              .from('bitcoin_price_data')
-              .update({
-                [currency === 'EUR' ? 'price_eur' : 'price_usd']: priceDataResult.price,
-                timestamp: timestamp,
-                updated_at: new Date().toISOString()
-              })
-              .eq('date', today);
-          } else {
-            // Insert new record
-            const year = new Date().getFullYear();
-            await supabase
-              .from('bitcoin_price_data')
-              .insert({
-                date: today,
-                year: year,
-                timestamp: timestamp,
-                [currency === 'EUR' ? 'price_eur' : 'price_usd']: priceDataResult.price,
-                volume: priceDataResult.volume24h || null,
-                market_cap: priceDataResult.marketCap || null
+          const yesterdayPrice = yesterdayData?.[priceKey] || latestPrice.price;
+          const change24h = latestPrice.price - yesterdayPrice;
+          const changePercent24h = yesterdayPrice > 0 ? (change24h / yesterdayPrice) * 100 : 0;
+          
+          setPriceData({
+            price: latestPrice.price,
+            change24h: change24h,
+            changePercent24h: changePercent24h,
+            marketCap: latestPrice.market_cap || 0,
+            volume24h: 0 // Volume not stored in latest price
+          });
+        } else {
+          // Fallback: Call Edge Function to fetch and save price
+          try {
+            const response = await fetch(`${supabaseUrl}/functions/v1/update-bitcoin-price`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+              }
+            });
+            
+            if (response.ok) {
+              const result = await response.json();
+              const priceKey = currency.toLowerCase();
+              
+              setPriceData({
+                price: result.data[priceKey],
+                change24h: result.data[`${priceKey}_24h_change`] || 0,
+                changePercent24h: result.data[`${priceKey}_24h_change`] || 0,
+                marketCap: result.data.market_cap || 0,
+                volume24h: result.data.volume_24h || 0
               });
+            }
+          } catch (edgeFunctionError) {
+            console.error('Error calling Edge Function:', edgeFunctionError);
+            // Set fallback price data
+            setPriceData({
+              price: currentPrice,
+              change24h: 0,
+              changePercent24h: 0,
+              marketCap: 0,
+              volume24h: 0
+            });
           }
-        } catch (saveError) {
-          // Silently fail - price saving is not critical for chart display
-          console.error('Error saving price to Supabase:', saveError);
         }
       } catch (error) {
         console.error('Error fetching price data:', error);
+        // Set fallback price data
+        setPriceData({
+          price: currentPrice,
+          change24h: 0,
+          changePercent24h: 0,
+          marketCap: 0,
+          volume24h: 0
+        });
       }
     };
 
     fetchPriceData();
-    const interval = setInterval(fetchPriceData, 30000); // Update elke 30 seconden
+    const interval = setInterval(fetchPriceData, 60000); // Update elke minuut (reduced frequency)
     return () => clearInterval(interval);
-  }, [currency]);
+  }, [currency, currentPrice]);
 
   // Load complete historical price data from Supabase (2009 to present)
   useEffect(() => {
@@ -232,16 +250,34 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
       
       sortedTransactions.forEach((tx, index) => {
         // Ensure time is in milliseconds (some APIs return seconds)
-        const txTime = tx.time < 10000000000 ? tx.time * 1000 : tx.time;
+        let txTime = tx.time < 10000000000 ? tx.time * 1000 : tx.time;
         
-        // Debug: Log transaction timing info
-        if (index === 0) {
-          console.log('Chart time range:', {
-            chartStart: new Date(chartStartTime).toISOString(),
-            chartEnd: new Date(chartEndTime).toISOString(),
-            txTime: new Date(txTime).toISOString(),
-            txInRange: txTime >= chartStartTime && txTime <= chartEndTime
-          });
+        // Validate timestamp - ensure it's a valid number and date
+        if (!txTime || isNaN(txTime) || txTime <= 0) {
+          // Skip invalid timestamps
+          return;
+        }
+        
+        // Ensure timestamp is within reasonable range (not before 2009 or too far in future)
+        const minTimestamp = new Date('2009-01-01').getTime();
+        const maxTimestamp = Date.now() + (365 * 24 * 60 * 60 * 1000); // Max 1 year in future
+        if (txTime < minTimestamp || txTime > maxTimestamp) {
+          // Skip invalid timestamps
+          return;
+        }
+        
+        // Debug: Log transaction timing info (only first valid transaction)
+        if (index === 0 && visibleTransactions === 0) {
+          try {
+            console.log('Chart time range:', {
+              chartStart: new Date(chartStartTime).toISOString(),
+              chartEnd: new Date(chartEndTime).toISOString(),
+              txTime: new Date(txTime).toISOString(),
+              txInRange: txTime >= chartStartTime && txTime <= chartEndTime
+            });
+          } catch (e) {
+            // Skip logging if date is invalid
+          }
         }
         
         // Only show transactions within chart time range
@@ -286,13 +322,22 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
       
       // Debug: Log how many transactions were visible
       if (visibleTransactions === 0 && sortedTransactions.length > 0) {
-        console.warn('No transactions visible on chart:', {
-          totalTransactions: sortedTransactions.length,
-          chartStartTime: new Date(chartStartTime).toISOString(),
-          chartEndTime: new Date(chartEndTime).toISOString(),
-          firstTxTime: new Date(sortedTransactions[0].time < 10000000000 ? sortedTransactions[0].time * 1000 : sortedTransactions[0].time).toISOString(),
-          lastTxTime: new Date(sortedTransactions[sortedTransactions.length - 1].time < 10000000000 ? sortedTransactions[sortedTransactions.length - 1].time * 1000 : sortedTransactions[sortedTransactions.length - 1].time).toISOString()
-        });
+        try {
+          const firstTx = sortedTransactions[0];
+          const lastTx = sortedTransactions[sortedTransactions.length - 1];
+          const firstTxTime = firstTx.time < 10000000000 ? firstTx.time * 1000 : firstTx.time;
+          const lastTxTime = lastTx.time < 10000000000 ? lastTx.time * 1000 : lastTx.time;
+          
+          console.warn('No transactions visible on chart:', {
+            totalTransactions: sortedTransactions.length,
+            chartStartTime: new Date(chartStartTime).toISOString(),
+            chartEndTime: new Date(chartEndTime).toISOString(),
+            firstTxTime: firstTxTime && !isNaN(firstTxTime) ? new Date(firstTxTime).toISOString() : 'Invalid',
+            lastTxTime: lastTxTime && !isNaN(lastTxTime) ? new Date(lastTxTime).toISOString() : 'Invalid'
+          });
+        } catch (e) {
+          // Skip logging if dates are invalid
+        }
       }
     }
 
