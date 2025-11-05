@@ -158,36 +158,73 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
 
     // Teken transactie punten
     if (showTransactions && transactions.length > 0) {
+      if (pricePoints.length === 0) {
+        // No price data available, skip drawing transactions
+        return;
+      }
+      
       const maxPrice = Math.max(...pricePoints.map(p => p.price));
       const minPrice = Math.min(...pricePoints.map(p => p.price));
       const priceRange = maxPrice - minPrice;
       
-    // Calculate the time range of the chart
-    const chartStartTime = pricePoints.length > 0 ? pricePoints[0].time : now - (365 * 24 * 60 * 60 * 1000);
-    const chartEndTime = now;
-    const chartTimeRange = chartEndTime - chartStartTime;
-    
-    transactions.forEach((tx, index) => {
-      const txTime = tx.time * 1000;
-      
-      // Show all transactions that fall within the chart time range
-      if (txTime >= chartStartTime && txTime <= chartEndTime && priceRange > 0) {
-        const x = ((txTime - chartStartTime) / chartTimeRange) * width;
-        const y = height - ((tx.price - minPrice) / priceRange) * height;
-        
-        // Teken cirkel
-        ctx.fillStyle = tx.profit >= 0 ? '#10b981' : '#ef4444';
-        ctx.beginPath();
-        ctx.arc(x, y, 6, 0, 2 * Math.PI);
-        ctx.fill();
-        
-        // Teken nummer
-        ctx.fillStyle = 'white';
-        ctx.font = '10px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText((index + 1).toString(), x, y + 3);
+      if (priceRange <= 0) {
+        // No valid price range, skip drawing
+        return;
       }
-    });
+      
+      // Calculate the time range of the chart
+      const chartStartTime = pricePoints.length > 0 ? pricePoints[0].time : now - (365 * 24 * 60 * 60 * 1000);
+      const chartEndTime = now;
+      const chartTimeRange = chartEndTime - chartStartTime;
+      
+      if (chartTimeRange <= 0) {
+        return;
+      }
+      
+      // Sort transactions by time to show them in order
+      const sortedTransactions = [...transactions].sort((a, b) => (a.time || 0) - (b.time || 0));
+      
+      sortedTransactions.forEach((tx, index) => {
+        // Ensure time is in milliseconds (some APIs return seconds)
+        const txTime = tx.time < 10000000000 ? tx.time * 1000 : tx.time;
+        
+        // Only show transactions within chart time range
+        if (txTime >= chartStartTime && txTime <= chartEndTime) {
+          // Calculate position on chart
+          const x = ((txTime - chartStartTime) / chartTimeRange) * width;
+          
+          // Use transaction price if available, otherwise use current price
+          const txPrice = tx.price || currentPrice;
+          
+          // Ensure price is within chart range
+          const clampedPrice = Math.max(minPrice, Math.min(maxPrice, txPrice));
+          const y = height - ((clampedPrice - minPrice) / priceRange) * height;
+          
+          // Ensure coordinates are within canvas bounds
+          if (x >= 0 && x <= width && y >= 0 && y <= height) {
+            // Teken cirkel (groen voor winst, rood voor verlies)
+            const profit = tx.profit !== undefined ? tx.profit : (tx.currentValue || 0) - (txPrice * (tx.value || 0) / 100000000);
+            ctx.fillStyle = profit >= 0 ? '#10b981' : '#ef4444';
+            ctx.beginPath();
+            ctx.arc(x, y, 8, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Teken witte border voor betere zichtbaarheid
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Teken nummer (optioneel - alleen als er niet te veel transacties zijn)
+            if (sortedTransactions.length <= 20) {
+              ctx.fillStyle = 'white';
+              ctx.font = 'bold 10px Arial';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText((index + 1).toString(), x, y);
+            }
+          }
+        }
+      });
     }
 
     // Teken hover effect
@@ -361,7 +398,22 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
       {/* Chart Info */}
       <div className="mt-4 text-sm text-gray-600">
         {transactions.length > 0 ? (
-          <p>Hover over de groene/rode punten om transactie details te zien. Klik om meer informatie te bekijken.</p>
+          <div className="flex items-center gap-4">
+            <p className="flex-1">Hover over de groene/rode punten om transactie details te zien. Klik om meer informatie te bekijken.</p>
+            <div className="flex items-center gap-4 text-xs">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <span>Winstgevend</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <span>Verliesgevend</span>
+              </div>
+              <div className="text-gray-500">
+                {transactions.length} transactie{transactions.length !== 1 ? 's' : ''} op chart
+              </div>
+            </div>
+          </div>
         ) : (
           <p>Voeg een wallet toe met transacties om je inkoop punten op de chart te zien.</p>
         )}
