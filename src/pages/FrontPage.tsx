@@ -57,23 +57,23 @@ export default function FrontPage() {
                   </h3>
                   <div className="space-y-6 text-lg text-gray-600 leading-relaxed">
                     <p>
-                      BitBeheer is ontstaan uit de behoefte om mensen in Nederland te helpen veilig en verstandig te investeren in Bitcoin. 
-                      Sinds 2017 hebben we gezien hoe de cryptomarkt groeide, maar ook hoe veel beginners verloren door gebrek aan kennis, 
-                      verkeerde keuzes en oplichting. Bitcoin investeren in Nederland kan overweldigend zijn zonder de juiste begeleiding.
+                      BitBeheer is ontstaan uit de wens om mensen in Nederland te helpen veilig en bewust te investeren in Bitcoin. 
+                      Sinds 2017 hebben we de cryptomarkt enorm zien groeien, maar ook veel beginners zien struikelen door gebrek aan kennis, 
+                      verkeerde keuzes of oplichting. Zonder de juiste begeleiding kan investeren in Bitcoin al snel overweldigend zijn.
                     </p>
                     <p>
-                      Steeds meer Nederlanders willen investeren in Bitcoin, maar weten niet waar ze moeten beginnen. Er is veel informatie beschikbaar, 
-                      maar veel ervan is verwarrend, misleidend of gericht op hype. Veel beginners verliezen geld door niet te weten welke exchanges 
-                      betrouwbaar zijn, Bitcoin op exchanges te bewaren in plaats van eigen beheer, of te vallen voor scams en oplichting.
+                      We horen steeds vaker over Bitcoin, maar helaas meestal op een negatieve manier. Veel mensen denken dat investeren in Bitcoin gevaarlijk is, 
+                      omdat ze verhalen horen over oplichting. In werkelijkheid hebben die oplichtingen niets met Bitcoin zelf te maken, maar alles met het misbruiken van onwetendheid. 
+                      Hierdoor denken veel mensen onterecht dat Bitcoin een scam is, terwijl het juist bedoeld is om jou volledige controle over je eigen geld te geven.
                     </p>
                     <p>
-                      <strong>Daarom hebben we BitBeheer opgericht.</strong> We willen Nederlanders helpen die interesse hebben in Bitcoin investeren, 
-                      maar niet goed weten waar ze moeten beginnen. Met persoonlijke 1-op-1 begeleiding, praktische kennis en echte voorbeelden 
-                      helpen we je stap voor stap om veilig Bitcoin te kopen, te bewaren en in eigen beheer te houden.
+                      <strong>Bij BitBeheer willen we dat veranderen.</strong> We helpen mensen die interesse hebben in Bitcoin, maar niet weten waar ze moeten beginnen. 
+                      Met persoonlijke begeleiding, praktische uitleg en duidelijke voorbeelden laten we stap voor stap zien hoe je Bitcoin op de juiste manier koopt, 
+                      veilig bewaart en altijd zelf toegang houdt tot je geld.
                     </p>
                     <p className="text-orange-600 font-semibold">
-                      Ons doel is duidelijk: Nederlanders helpen begrijpen hoe je veilig Bitcoin aankoopt en in eigen beheer bewaart, 
-                      zonder poespas, zonder hype, gewoon eerlijk en duidelijk. Bitcoin voor beginners in Nederland, met Nederlandse begeleiding.
+                      Ons doel is helder: mensen leren hoe ze Bitcoin veilig kunnen aankopen en beheren, zonder poespas, zonder hype, gewoon eerlijk en duidelijk. 
+                      Bitcoin voor beginners, mét begeleiding en 100% controle over je eigen vermogen.
                     </p>
                   </div>
                 </div>
