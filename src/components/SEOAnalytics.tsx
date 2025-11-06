@@ -123,11 +123,21 @@ export default function SEOAnalytics() {
     setIsLoadingAnalytics(true);
     try {
       // Load visitor analytics from database
-      const { data: visits, error } = await supabase
+      // For day view, get data from today only
+      let query = supabase
         .from('visitor_analytics')
         .select('*')
-        .order('visited_at', { ascending: false })
-        .limit(1000);
+        .order('visited_at', { ascending: false });
+      
+      if (timePeriod === 'day') {
+        // Get only today's data
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayStr = today.toISOString();
+        query = query.gte('visited_at', todayStr);
+      }
+      
+      const { data: visits, error } = await query.limit(1000);
 
       if (error) {
         console.error('Error loading analytics:', error);
@@ -184,8 +194,10 @@ export default function SEOAnalytics() {
         // Create time key based on period
         switch (timePeriod) {
           case 'day':
-            // Per dag: groepeer per uur (0-23)
+            // Per dag: groepeer per uur (0-23) - gebruik vandaag als referentie
             const hour = visitDateTime.getHours();
+            // Gebruik de datum van de visit, maar normaliseer naar vandaag voor consistentie
+            // Of gebruik de meest recente dag met data
             const dayStr = visitDateTime.toISOString().split('T')[0];
             timeKey = `${dayStr}-${String(hour).padStart(2, '0')}`; // YYYY-MM-DD-HH
             break;
