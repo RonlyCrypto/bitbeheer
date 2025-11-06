@@ -293,49 +293,65 @@ export default function SEOAnalytics() {
       });
 
       // Convert time series map to array and sort, with proper labels
-      const timeSeriesData = Object.entries(timeSeriesMap)
-        .map(([dateKey, data]) => {
-          let displayDate = dateKey;
-          let sortKey = dateKey;
+      let timeSeriesData: Array<{ date: string; dateKey: string; visitors: number; pageViews: number }> = [];
+      
+      if (timePeriod === 'day') {
+        // For day view: show all 24 hours (00:00 to 23:00)
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        
+        // Initialize all 24 hours
+        for (let hour = 0; hour < 24; hour++) {
+          const hourKey = `${todayStr}-${String(hour).padStart(2, '0')}`;
+          const hourData = timeSeriesMap[hourKey] || { visitors: new Set<string>(), pageViews: 0 };
           
-          // Format display date based on period
-          switch (timePeriod) {
-            case 'day':
-              // Format: "14:00" (uur)
-              const [dayStr, hour] = dateKey.split('-');
-              displayDate = `${hour}:00`;
-              sortKey = `${dayStr}-${hour}`;
-              break;
-            case 'week':
-              // Format: "Maandag", "Dinsdag", etc.
-              const [weekStart, dayIndex] = dateKey.split('-');
-              const dayNames = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'];
-              displayDate = dayNames[parseInt(dayIndex)] || `Dag ${dayIndex}`;
-              sortKey = `${weekStart}-${dayIndex}`;
-              break;
-            case 'month':
-              // Format: "Week 1", "Week 2", etc.
-              const [year, month, week] = dateKey.split('-');
-              displayDate = `Week ${parseInt(week) + 1}`;
-              sortKey = `${year}-${month}-${week}`;
-              break;
-            case 'year':
-              // Format: "Januari", "Februari", etc.
-              const [yearStr, monthStr] = dateKey.split('-');
-              const monthNames = ['Januari', 'Februari', 'Maart', 'April', 'Mei', 'Juni', 'Juli', 'Augustus', 'September', 'Oktober', 'November', 'December'];
-              displayDate = monthNames[parseInt(monthStr) - 1] || `Maand ${monthStr}`;
-              sortKey = dateKey;
-              break;
-          }
-          
-          return {
-            date: displayDate,
-            dateKey: sortKey,
-            visitors: data.visitors.size,
-            pageViews: data.pageViews
-          };
-        })
-        .sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+          timeSeriesData.push({
+            date: `${String(hour).padStart(2, '0')}:00`,
+            dateKey: hourKey,
+            visitors: hourData.visitors.size,
+            pageViews: hourData.pageViews
+          });
+        }
+      } else {
+        // For other periods: use existing logic
+        timeSeriesData = Object.entries(timeSeriesMap)
+          .map(([dateKey, data]) => {
+            let displayDate = dateKey;
+            let sortKey = dateKey;
+            
+            // Format display date based on period
+            switch (timePeriod) {
+              case 'week':
+                // Format: "Maandag", "Dinsdag", etc.
+                const [weekStart, dayIndex] = dateKey.split('-');
+                const dayNames = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'];
+                displayDate = dayNames[parseInt(dayIndex)] || `Dag ${dayIndex}`;
+                sortKey = `${weekStart}-${dayIndex}`;
+                break;
+              case 'month':
+                // Format: "Week 1", "Week 2", etc.
+                const [year, month, week] = dateKey.split('-');
+                displayDate = `Week ${parseInt(week) + 1}`;
+                sortKey = `${year}-${month}-${week}`;
+                break;
+              case 'year':
+                // Format: "Januari", "Februari", etc.
+                const [, monthStr] = dateKey.split('-');
+                const monthNames = ['Januari', 'Februari', 'Maart', 'April', 'Mei', 'Juni', 'Juli', 'Augustus', 'September', 'Oktober', 'November', 'December'];
+                displayDate = monthNames[parseInt(monthStr) - 1] || `Maand ${monthStr}`;
+                sortKey = dateKey;
+                break;
+            }
+            
+            return {
+              date: displayDate,
+              dateKey: sortKey,
+              visitors: data.visitors.size,
+              pageViews: data.pageViews
+            };
+          })
+          .sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+      }
 
       const topPages = Object.entries(pageViewsMap)
         .map(([path, data]) => ({
