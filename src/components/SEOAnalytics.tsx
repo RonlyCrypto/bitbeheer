@@ -124,19 +124,19 @@ export default function SEOAnalytics() {
 
       // Process analytics data
       const uniqueVisitors = new Set(visits?.map((v: any) => v.visitor_id || v.ip_address) || []);
-      const pageViewsMap: Map<string, { views: number; durations: number[] }> = new Map();
-      const referrerMap: Map<string, number> = new Map();
-      const deviceMap: Map<string, number> = new Map();
-      const browserMap: Map<string, number> = new Map();
-      const countryMap: Map<string, { count: number; code: string }> = new Map();
-      const cityMap: Map<string, { count: number; country: string }> = new Map();
-      const languageMap: Map<string, number> = new Map();
-      const hourlyMap: Map<number, { visitors: Set<string>; pageViews: number }> = new Map();
+      const pageViewsMap = new Map<string, { views: number; durations: number[] }>();
+      const referrerMap = new Map<string, number>();
+      const deviceMap = new Map<string, number>();
+      const browserMap = new Map<string, number>();
+      const countryMap = new Map<string, { count: number; code: string }>();
+      const cityMap = new Map<string, { count: number; country: string }>();
+      const languageMap = new Map<string, number>();
+      const hourlyMap = new Map<number, { visitors: Set<string>; pageViews: number }>();
       let totalDuration = 0;
       let durationCount = 0;
 
       // Time series data aggregation
-      const timeSeriesMap: Map<string, { visitors: Set<string>; pageViews: number }> = new Map();
+      const timeSeriesMap = new Map<string, { visitors: Set<string>; pageViews: number }>();
 
       visits?.forEach((visit: any) => {
         const visitDateTime = new Date(visit.visited_at);
