@@ -128,28 +128,20 @@ export default function SEOAnalytics() {
 
       // Process analytics data
       const uniqueVisitors = new Set(visits?.map((v: any) => v.visitor_id || v.ip_address) || []);
-      // @ts-ignore - Map constructor type issue
-      const pageViewsMap: Map<string, { views: number; durations: number[] }> = new Map();
-      // @ts-ignore
-      const referrerMap: Map<string, number> = new Map();
-      // @ts-ignore
-      const deviceMap: Map<string, number> = new Map();
-      // @ts-ignore
-      const browserMap: Map<string, number> = new Map();
-      // @ts-ignore
-      const countryMap: Map<string, { count: number; code: string }> = new Map();
-      // @ts-ignore
-      const cityMap: Map<string, { count: number; country: string }> = new Map();
-      // @ts-ignore
-      const languageMap: Map<string, number> = new Map();
-      // @ts-ignore
-      const hourlyMap: Map<number, { visitors: Set<string>; pageViews: number }> = new Map();
+      
+      // Initialize Maps using Object.create to avoid constructor issues
+      const pageViewsMap = Object.create(null) as Record<string, { views: number; durations: number[] }>;
+      const referrerMap = Object.create(null) as Record<string, number>;
+      const deviceMap = Object.create(null) as Record<string, number>;
+      const browserMap = Object.create(null) as Record<string, number>;
+      const countryMap = Object.create(null) as Record<string, { count: number; code: string }>;
+      const cityMap = Object.create(null) as Record<string, { count: number; country: string }>;
+      const languageMap = Object.create(null) as Record<string, number>;
+      const hourlyMap = Object.create(null) as Record<number, { visitors: Set<string>; pageViews: number }>;
+      const timeSeriesMap = Object.create(null) as Record<string, { visitors: Set<string>; pageViews: number }>;
+      
       let totalDuration = 0;
       let durationCount = 0;
-
-      // Time series data aggregation
-      // @ts-ignore
-      const timeSeriesMap: Map<string, { visitors: Set<string>; pageViews: number }> = new Map();
 
       visits?.forEach((visit: any) => {
         const visitDateTime = new Date(visit.visited_at);
@@ -174,31 +166,33 @@ export default function SEOAnalytics() {
         }
 
         // Aggregate time series data
-        const existing = timeSeriesMap.get(timeKey) || { visitors: new Set<string>(), pageViews: 0 };
-        existing.visitors.add(visit.visitor_id || visit.ip_address || 'unknown');
-        existing.pageViews++;
-        timeSeriesMap.set(timeKey, existing);
+        if (!timeSeriesMap[timeKey]) {
+          timeSeriesMap[timeKey] = { visitors: new Set<string>(), pageViews: 0 };
+        }
+        timeSeriesMap[timeKey].visitors.add(visit.visitor_id || visit.ip_address || 'unknown');
+        timeSeriesMap[timeKey].pageViews++;
 
         // Page views
         const path = visit.page_path || '/';
-        const existingPage = pageViewsMap.get(path) || { views: 0, durations: [] };
-        existingPage.views++;
-        if (visit.session_duration) {
-          existingPage.durations.push(visit.session_duration);
+        if (!pageViewsMap[path]) {
+          pageViewsMap[path] = { views: 0, durations: [] };
         }
-        pageViewsMap.set(path, existingPage);
+        pageViewsMap[path].views++;
+        if (visit.session_duration) {
+          pageViewsMap[path].durations.push(visit.session_duration);
+        }
 
         // Referrers
         const referrer = visit.referrer || 'Direct';
-        referrerMap.set(referrer, (referrerMap.get(referrer) || 0) + 1);
+        referrerMap[referrer] = (referrerMap[referrer] || 0) + 1;
 
         // Devices
         const device = visit.device_type || 'Unknown';
-        deviceMap.set(device, (deviceMap.get(device) || 0) + 1);
+        deviceMap[device] = (deviceMap[device] || 0) + 1;
 
         // Browsers
         const browser = visit.browser || 'Unknown';
-        browserMap.set(browser, (browserMap.get(browser) || 0) + 1);
+        browserMap[browser] = (browserMap[browser] || 0) + 1;
 
         // Session duration
         if (visit.session_duration) {
@@ -208,36 +202,39 @@ export default function SEOAnalytics() {
 
         // Countries
         if (visit.country) {
-          const existing = countryMap.get(visit.country) || { count: 0, code: visit.country_code || '' };
-          existing.count++;
-          countryMap.set(visit.country, existing);
+          if (!countryMap[visit.country]) {
+            countryMap[visit.country] = { count: 0, code: visit.country_code || '' };
+          }
+          countryMap[visit.country].count++;
         }
 
         // Cities
         if (visit.city) {
           const key = `${visit.city}, ${visit.country || 'Unknown'}`;
-          const existing = cityMap.get(key) || { count: 0, country: visit.country || 'Unknown' };
-          existing.count++;
-          cityMap.set(key, existing);
+          if (!cityMap[key]) {
+            cityMap[key] = { count: 0, country: visit.country || 'Unknown' };
+          }
+          cityMap[key].count++;
         }
 
         // Languages
         if (visit.language) {
           const lang = visit.language.split('-')[0]; // Get base language (e.g., 'nl' from 'nl-NL')
-          languageMap.set(lang, (languageMap.get(lang) || 0) + 1);
+          languageMap[lang] = (languageMap[lang] || 0) + 1;
         }
 
         // Hourly data
         const visitHourDate = new Date(visit.visited_at);
         const hour = visitHourDate.getHours();
-        const existingHour = hourlyMap.get(hour) || { visitors: new Set<string>(), pageViews: 0 };
-        existingHour.visitors.add(visit.visitor_id || visit.ip_address || 'unknown');
-        existingHour.pageViews++;
-        hourlyMap.set(hour, existingHour);
+        if (!hourlyMap[hour]) {
+          hourlyMap[hour] = { visitors: new Set<string>(), pageViews: 0 };
+        }
+        hourlyMap[hour].visitors.add(visit.visitor_id || visit.ip_address || 'unknown');
+        hourlyMap[hour].pageViews++;
       });
 
       // Convert time series map to array and sort
-      const timeSeriesData = (Array.from(timeSeriesMap.entries()) as Array<[string, { visitors: Set<string>; pageViews: number }]>)
+      const timeSeriesData = Object.entries(timeSeriesMap)
         .map(([date, data]) => ({
           date,
           visitors: data.visitors.size,
@@ -245,7 +242,7 @@ export default function SEOAnalytics() {
         }))
         .sort((a, b) => a.date.localeCompare(b.date));
 
-      const topPages = (Array.from(pageViewsMap.entries()) as Array<[string, { views: number; durations: number[] }]>)
+      const topPages = Object.entries(pageViewsMap)
         .map(([path, data]) => ({
           path,
           views: data.views,
@@ -276,32 +273,32 @@ export default function SEOAnalytics() {
         pageViews: visits?.length || 0,
         avgSessionDuration: durationCount > 0 ? Math.round(totalDuration / durationCount) : 0,
         topPages,
-        referrers: (Array.from(referrerMap.entries()) as Array<[string, number]>)
+        referrers: Object.entries(referrerMap)
           .map(([source, count]) => ({ source, count }))
           .sort((a, b) => b.count - a.count)
           .slice(0, 10),
-        devices: (Array.from(deviceMap.entries()) as Array<[string, number]>)
+        devices: Object.entries(deviceMap)
           .map(([type, count]) => ({ type, count }))
           .sort((a, b) => b.count - a.count),
-        browsers: (Array.from(browserMap.entries()) as Array<[string, number]>)
+        browsers: Object.entries(browserMap)
           .map(([name, count]) => ({ name, count }))
           .sort((a, b) => b.count - a.count)
           .slice(0, 5),
         timeSeriesData,
-        countries: (Array.from(countryMap.entries()) as Array<[string, { count: number; code: string }]>)
+        countries: Object.entries(countryMap)
           .map(([country, data]) => ({ country, country_code: data.code, count: data.count }))
           .sort((a, b) => b.count - a.count)
           .slice(0, 20),
-        cities: (Array.from(cityMap.entries()) as Array<[string, { count: number; country: string }]>)
+        cities: Object.entries(cityMap)
           .map(([city, data]) => ({ city, country: data.country, count: data.count }))
           .sort((a, b) => b.count - a.count)
           .slice(0, 15),
-        languages: (Array.from(languageMap.entries()) as Array<[string, number]>)
+        languages: Object.entries(languageMap)
           .map(([language, count]) => ({ language, count }))
           .sort((a, b) => b.count - a.count)
           .slice(0, 10),
-        hourlyData: (Array.from(hourlyMap.entries()) as Array<[number, { visitors: Set<string>; pageViews: number }]>)
-          .map(([hour, data]) => ({ hour, visitors: data.visitors.size, pageViews: data.pageViews }))
+        hourlyData: Object.entries(hourlyMap)
+          .map(([hour, data]) => ({ hour: parseInt(hour), visitors: data.visitors.size, pageViews: data.pageViews }))
           .sort((a, b) => a.hour - b.hour),
         recentVisitors
       });
