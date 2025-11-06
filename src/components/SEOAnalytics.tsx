@@ -20,7 +20,12 @@ import {
   Monitor,
   Calendar,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  MapPin,
+  Globe2,
+  Languages,
+  Activity,
+  Map
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -42,6 +47,20 @@ interface AnalyticsData {
   devices: Array<{ type: string; count: number }>;
   browsers: Array<{ name: string; count: number }>;
   timeSeriesData: Array<{ date: string; visitors: number; pageViews: number }>;
+  countries: Array<{ country: string; country_code: string; count: number }>;
+  cities: Array<{ city: string; country: string; count: number }>;
+  languages: Array<{ language: string; count: number }>;
+  hourlyData: Array<{ hour: number; visitors: number; pageViews: number }>;
+  recentVisitors: Array<{
+    id: string;
+    ip_address?: string;
+    country?: string;
+    city?: string;
+    page_path: string;
+    visited_at: string;
+    browser: string;
+    device_type: string;
+  }>;
 }
 
 type TimePeriod = 'day' | 'week' | 'month' | 'year';
@@ -103,6 +122,10 @@ export default function SEOAnalytics() {
       const referrerMap = new Map<string, number>();
       const deviceMap = new Map<string, number>();
       const browserMap = new Map<string, number>();
+      const countryMap = new Map<string, { count: number; code: string }>();
+      const cityMap = new Map<string, { count: number; country: string }>();
+      const languageMap = new Map<string, number>();
+      const hourlyMap = new Map<number, { visitors: Set<string>; pageViews: number }>();
       let totalDuration = 0;
       let durationCount = 0;
 
@@ -163,6 +186,35 @@ export default function SEOAnalytics() {
           totalDuration += visit.session_duration;
           durationCount++;
         }
+
+        // Countries
+        if (visit.country) {
+          const existing = countryMap.get(visit.country) || { count: 0, code: visit.country_code || '' };
+          existing.count++;
+          countryMap.set(visit.country, existing);
+        }
+
+        // Cities
+        if (visit.city) {
+          const key = `${visit.city}, ${visit.country || 'Unknown'}`;
+          const existing = cityMap.get(key) || { count: 0, country: visit.country || 'Unknown' };
+          existing.count++;
+          cityMap.set(key, existing);
+        }
+
+        // Languages
+        if (visit.language) {
+          const lang = visit.language.split('-')[0]; // Get base language (e.g., 'nl' from 'nl-NL')
+          languageMap.set(lang, (languageMap.get(lang) || 0) + 1);
+        }
+
+        // Hourly data
+        const visitDate = new Date(visit.visited_at);
+        const hour = visitDate.getHours();
+        const existingHour = hourlyMap.get(hour) || { visitors: new Set<string>(), pageViews: 0 };
+        existingHour.visitors.add(visit.visitor_id || visit.ip_address || 'unknown');
+        existingHour.pageViews++;
+        hourlyMap.set(hour, existingHour);
       });
 
       // Convert time series map to array and sort
@@ -185,6 +237,20 @@ export default function SEOAnalytics() {
         .sort((a, b) => b.views - a.views)
         .slice(0, 10);
 
+      // Get recent visitors (last 50)
+      const recentVisitors = visits
+        ?.slice(0, 50)
+        .map((visit: any) => ({
+          id: visit.id,
+          ip_address: visit.ip_address,
+          country: visit.country,
+          city: visit.city,
+          page_path: visit.page_path,
+          visited_at: visit.visited_at,
+          browser: visit.browser || 'Unknown',
+          device_type: visit.device_type || 'Unknown'
+        })) || [];
+
       setAnalyticsData({
         totalVisitors: visits?.length || 0,
         uniqueVisitors: uniqueVisitors.size,
@@ -202,7 +268,23 @@ export default function SEOAnalytics() {
           .map(([name, count]) => ({ name, count }))
           .sort((a, b) => b.count - a.count)
           .slice(0, 5),
-        timeSeriesData
+        timeSeriesData,
+        countries: Array.from(countryMap.entries())
+          .map(([country, data]) => ({ country, country_code: data.code, count: data.count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 20),
+        cities: Array.from(cityMap.entries())
+          .map(([city, data]) => ({ city, country: data.country, count: data.count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 15),
+        languages: Array.from(languageMap.entries())
+          .map(([language, count]) => ({ language, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 10),
+        hourlyData: Array.from(hourlyMap.entries())
+          .map(([hour, data]) => ({ hour, visitors: data.visitors.size, pageViews: data.pageViews }))
+          .sort((a, b) => a.hour - b.hour),
+        recentVisitors
       });
     } catch (error) {
       console.error('Error processing analytics:', error);
@@ -871,7 +953,7 @@ export default function SEOAnalytics() {
                     <div className="space-y-3">
                       {analyticsData.referrers.map((ref, index) => (
                         <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <p className="text-gray-900">{ref.source}</p>
+                          <p className="text-gray-900 truncate">{ref.source}</p>
                           <span className="text-orange-600 font-bold">{ref.count}</span>
                         </div>
                       ))}
@@ -905,6 +987,163 @@ export default function SEOAnalytics() {
                     <p className="text-gray-500 text-center py-4">Geen device data</p>
                   )}
                 </div>
+              </div>
+
+              {/* Countries & Cities */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="bg-white rounded-xl p-6 shadow-lg">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Globe2 className="w-6 h-6 text-orange-600" />
+                    <h3 className="text-xl font-bold text-gray-900">Landen</h3>
+                  </div>
+                  {analyticsData.countries.length > 0 ? (
+                    <div className="space-y-3">
+                      {analyticsData.countries.map((country, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-gray-600" />
+                            <div>
+                              <p className="text-gray-900 font-medium">{country.country}</p>
+                              {country.country_code && (
+                                <p className="text-xs text-gray-500">{country.country_code}</p>
+                              )}
+                            </div>
+                          </div>
+                          <span className="text-orange-600 font-bold">{country.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-center py-4">Geen land data beschikbaar</p>
+                  )}
+                </div>
+
+                <div className="bg-white rounded-xl p-6 shadow-lg">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Map className="w-6 h-6 text-orange-600" />
+                    <h3 className="text-xl font-bold text-gray-900">Steden</h3>
+                  </div>
+                  {analyticsData.cities.length > 0 ? (
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {analyticsData.cities.map((city, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <p className="text-gray-900 font-medium">{city.city}</p>
+                            <p className="text-xs text-gray-500">{city.country}</p>
+                          </div>
+                          <span className="text-orange-600 font-bold">{city.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-center py-4">Geen stad data beschikbaar</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Languages & Hourly Activity */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="bg-white rounded-xl p-6 shadow-lg">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Languages className="w-6 h-6 text-orange-600" />
+                    <h3 className="text-xl font-bold text-gray-900">Talen</h3>
+                  </div>
+                  {analyticsData.languages.length > 0 ? (
+                    <div className="space-y-3">
+                      {analyticsData.languages.map((lang, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <p className="text-gray-900 font-medium">{lang.language.toUpperCase()}</p>
+                          <span className="text-orange-600 font-bold">{lang.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-center py-4">Geen taal data</p>
+                  )}
+                </div>
+
+                <div className="bg-white rounded-xl p-6 shadow-lg">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Activity className="w-6 h-6 text-orange-600" />
+                    <h3 className="text-xl font-bold text-gray-900">Activiteit per Uur</h3>
+                  </div>
+                  {analyticsData.hourlyData.length > 0 ? (
+                    <div className="space-y-2">
+                      {analyticsData.hourlyData.map((hour, index) => (
+                        <div key={index} className="flex items-center gap-3">
+                          <div className="w-16 text-sm text-gray-600 font-medium">
+                            {String(hour.hour).padStart(2, '0')}:00
+                          </div>
+                          <div className="flex-1 bg-gray-100 rounded-full h-6 relative overflow-hidden">
+                            <div
+                              className="bg-orange-500 h-full rounded-full flex items-center justify-end pr-2"
+                              style={{ width: `${(hour.visitors / Math.max(...analyticsData.hourlyData.map(h => h.visitors))) * 100}%` }}
+                            >
+                              {hour.visitors > 0 && (
+                                <span className="text-xs text-white font-medium">{hour.visitors}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-center py-4">Geen uur data</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Recent Visitors with IP */}
+              <div className="bg-white rounded-xl p-6 shadow-lg">
+                <div className="flex items-center gap-3 mb-4">
+                  <Users className="w-6 h-6 text-orange-600" />
+                  <h3 className="text-xl font-bold text-gray-900">Recente Bezoekers</h3>
+                </div>
+                {analyticsData.recentVisitors.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Tijd</th>
+                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">IP Adres</th>
+                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Locatie</th>
+                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Pagina</th>
+                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Browser</th>
+                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Apparaat</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {analyticsData.recentVisitors.map((visitor, index) => (
+                          <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="py-3 px-4 text-sm text-gray-900">
+                              {new Date(visitor.visited_at).toLocaleString('nl-NL', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-700 font-mono">
+                              {visitor.ip_address || 'N/A'}
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-700">
+                              {visitor.city && visitor.country 
+                                ? `${visitor.city}, ${visitor.country}`
+                                : visitor.country || 'Onbekend'}
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-700 truncate max-w-xs">
+                              {visitor.page_path}
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-700">{visitor.browser}</td>
+                            <td className="py-3 px-4 text-sm text-gray-700">{visitor.device_type}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-8">Geen recente bezoekers</p>
+                )}
               </div>
             </>
           ) : (
