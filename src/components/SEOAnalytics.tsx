@@ -70,7 +70,9 @@ export default function SEOAnalytics() {
   const [seoScore, setSeoScore] = useState<number | null>(null);
   const [aiRecommendations, setAiRecommendations] = useState<string[]>([]);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('week');
+  const [recentVisitorsLimit, setRecentVisitorsLimit] = useState<number>(50);
   const chartCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [hoveredBar, setHoveredBar] = useState<{ x: number; y: number; data: { date: string; visitors: number; pageViews: number } } | null>(null);
 
   useEffect(() => {
     if (activeSubTab === 'analytics') {
@@ -84,6 +86,38 @@ export default function SEOAnalytics() {
       drawChart();
     }
   }, [analyticsData?.timeSeriesData, timePeriod]);
+
+  // Handle mouse move for tooltips
+  const handleChartMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = chartCanvasRef.current;
+    if (!canvas || !analyticsData?.timeSeriesData) {
+      setHoveredBar(null);
+      return;
+    }
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const barPositions = (canvas as any).barPositions || [];
+    const hovered = barPositions.find((bar: any) => {
+      return x >= bar.x && x <= bar.x + bar.width && y >= bar.y && y <= bar.y + bar.height;
+    });
+
+    if (hovered) {
+      setHoveredBar({
+        x: e.clientX,
+        y: e.clientY,
+        data: hovered.data
+      });
+    } else {
+      setHoveredBar(null);
+    }
+  };
+
+  const handleChartMouseLeave = () => {
+    setHoveredBar(null);
+  };
 
   const loadAnalytics = async () => {
     setIsLoadingAnalytics(true);
@@ -150,18 +184,31 @@ export default function SEOAnalytics() {
         // Create time key based on period
         switch (timePeriod) {
           case 'day':
-            timeKey = visitDateTime.toISOString().split('T')[0]; // YYYY-MM-DD
+            // Per dag: groepeer per uur (0-23)
+            const hour = visitDateTime.getHours();
+            const dayStr = visitDateTime.toISOString().split('T')[0];
+            timeKey = `${dayStr}-${String(hour).padStart(2, '0')}`; // YYYY-MM-DD-HH
             break;
           case 'week':
+            // Per week: groepeer per dag (maandag = 1, zondag = 0)
+            // JavaScript: 0 = zondag, 1 = maandag, etc.
+            // We willen maandag = 0, dus: (day + 6) % 7
+            const dayOfWeek = (visitDateTime.getDay() + 6) % 7; // 0 = maandag, 6 = zondag
             const weekStart = new Date(visitDateTime);
-            weekStart.setDate(visitDateTime.getDate() - visitDateTime.getDay()); // Start of week (Sunday)
-            timeKey = weekStart.toISOString().split('T')[0];
+            weekStart.setDate(visitDateTime.getDate() - dayOfWeek); // Start of week (Monday)
+            const weekStartStr = weekStart.toISOString().split('T')[0];
+            timeKey = `${weekStartStr}-${dayOfWeek}`; // YYYY-MM-DD-0 (0=maandag, 6=zondag)
             break;
           case 'month':
-            timeKey = `${visitDateTime.getFullYear()}-${String(visitDateTime.getMonth() + 1).padStart(2, '0')}`; // YYYY-MM
+            // Per maand: groepeer per week
+            const monthStart = new Date(visitDateTime.getFullYear(), visitDateTime.getMonth(), 1);
+            const daysSinceMonthStart = Math.floor((visitDateTime.getTime() - monthStart.getTime()) / (1000 * 60 * 60 * 24));
+            const weekInMonth = Math.floor(daysSinceMonthStart / 7);
+            timeKey = `${visitDateTime.getFullYear()}-${String(visitDateTime.getMonth() + 1).padStart(2, '0')}-W${weekInMonth}`;
             break;
           case 'year':
-            timeKey = String(visitDateTime.getFullYear()); // YYYY
+            // Per jaar: groepeer per maand
+            timeKey = `${visitDateTime.getFullYear()}-${String(visitDateTime.getMonth() + 1).padStart(2, '0')}`; // YYYY-MM
             break;
         }
 
@@ -233,14 +280,50 @@ export default function SEOAnalytics() {
         hourlyMap[hour].pageViews++;
       });
 
-      // Convert time series map to array and sort
+      // Convert time series map to array and sort, with proper labels
       const timeSeriesData = Object.entries(timeSeriesMap)
-        .map(([date, data]) => ({
-          date,
-          visitors: data.visitors.size,
-          pageViews: data.pageViews
-        }))
-        .sort((a, b) => a.date.localeCompare(b.date));
+        .map(([dateKey, data]) => {
+          let displayDate = dateKey;
+          let sortKey = dateKey;
+          
+          // Format display date based on period
+          switch (timePeriod) {
+            case 'day':
+              // Format: "14:00" (uur)
+              const [dayStr, hour] = dateKey.split('-');
+              displayDate = `${hour}:00`;
+              sortKey = `${dayStr}-${hour}`;
+              break;
+            case 'week':
+              // Format: "Maandag", "Dinsdag", etc.
+              const [weekStart, dayIndex] = dateKey.split('-');
+              const dayNames = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'];
+              displayDate = dayNames[parseInt(dayIndex)] || `Dag ${dayIndex}`;
+              sortKey = `${weekStart}-${dayIndex}`;
+              break;
+            case 'month':
+              // Format: "Week 1", "Week 2", etc.
+              const [year, month, week] = dateKey.split('-');
+              displayDate = `Week ${parseInt(week) + 1}`;
+              sortKey = `${year}-${month}-${week}`;
+              break;
+            case 'year':
+              // Format: "Januari", "Februari", etc.
+              const [yearStr, monthStr] = dateKey.split('-');
+              const monthNames = ['Januari', 'Februari', 'Maart', 'April', 'Mei', 'Juni', 'Juli', 'Augustus', 'September', 'Oktober', 'November', 'December'];
+              displayDate = monthNames[parseInt(monthStr) - 1] || `Maand ${monthStr}`;
+              sortKey = dateKey;
+              break;
+          }
+          
+          return {
+            date: displayDate,
+            dateKey: sortKey,
+            visitors: data.visitors.size,
+            pageViews: data.pageViews
+          };
+        })
+        .sort((a, b) => a.dateKey.localeCompare(b.dateKey));
 
       const topPages = Object.entries(pageViewsMap)
         .map(([path, data]) => ({
@@ -253,9 +336,9 @@ export default function SEOAnalytics() {
         .sort((a, b) => b.views - a.views)
         .slice(0, 10);
 
-      // Get recent visitors (last 50)
+      // Get recent visitors (based on limit)
       const recentVisitors = visits
-        ?.slice(0, 50)
+        ?.slice(0, recentVisitorsLimit)
         .map((visit: any) => ({
           id: visit.id,
           ip_address: visit.ip_address,
@@ -504,28 +587,19 @@ export default function SEOAnalytics() {
     ctx.font = '11px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    const step = Math.max(1, Math.floor(data.length / 10));
+    const step = Math.max(1, Math.floor(data.length / 12)); // Show max 12 labels
     data.forEach((point, index) => {
       if (index % step === 0 || index === data.length - 1) {
-        const x = padding.left + (width - padding.left - padding.right) * (index / (data.length - 1 || 1));
-        let label = point.date;
-        
-        // Format label based on period
-        if (timePeriod === 'day') {
-          const date = new Date(point.date);
-          label = `${date.getDate()}/${date.getMonth() + 1}`;
-        } else if (timePeriod === 'week') {
-          const date = new Date(point.date);
-          label = `Week ${date.getDate()}/${date.getMonth() + 1}`;
-        } else if (timePeriod === 'month') {
-          label = point.date;
-        } else {
-          label = point.date;
-        }
+        const barSpacing = (width - padding.left - padding.right) / data.length;
+        const x = padding.left + (barSpacing * index) + barSpacing / 2;
+        const label = point.date;
         
         ctx.save();
         ctx.translate(x, height - padding.bottom + 10);
-        ctx.rotate(-Math.PI / 4);
+        // Only rotate if label is long
+        if (label.length > 6) {
+          ctx.rotate(-Math.PI / 4);
+        }
         ctx.fillText(label, 0, 0);
         ctx.restore();
       }
@@ -538,12 +612,24 @@ export default function SEOAnalytics() {
       const chartBottom = height - padding.bottom;
       const chartHeight = height - padding.top - padding.bottom;
 
+      // Store bar positions for hover detection
+      const barPositions: Array<{ x: number; y: number; width: number; height: number; data: typeof data[0] }> = [];
+
       data.forEach((point, index) => {
         const x = padding.left + (barSpacing * index) + (barSpacing - barWidth) / 2;
         
         // Calculate bar heights
         const visitorsBarHeight = (point.visitors / maxValue) * chartHeight;
         const pageViewsBarHeight = (point.pageViews / maxValue) * chartHeight;
+        
+        // Store position for hover (use the combined bar area)
+        barPositions.push({
+          x: x,
+          y: padding.top,
+          width: barWidth,
+          height: chartHeight,
+          data: point
+        });
 
         // Draw visitors bar (blue) - left side
         if (point.visitors > 0) {
@@ -607,6 +693,9 @@ export default function SEOAnalytics() {
           }
         }
       });
+      
+      // Store bar positions in canvas data attribute for hover detection
+      (canvas as any).barPositions = barPositions;
     }
 
     // Draw legend
@@ -892,9 +981,40 @@ export default function SEOAnalytics() {
                   <div className="relative">
                     <canvas
                       ref={chartCanvasRef}
-                      className="w-full"
+                      className="w-full cursor-pointer"
                       style={{ maxHeight: '400px' }}
+                      onMouseMove={handleChartMouseMove}
+                      onMouseLeave={handleChartMouseLeave}
                     />
+                    {/* Tooltip */}
+                    {hoveredBar && (
+                      <div
+                        className="absolute bg-gray-900 text-white text-sm rounded-lg shadow-xl p-3 z-50 pointer-events-none"
+                        style={{
+                          left: `${hoveredBar.x + 10}px`,
+                          top: `${hoveredBar.y - 10}px`,
+                          transform: 'translateY(-100%)'
+                        }}
+                      >
+                        <div className="font-semibold mb-2 border-b border-gray-700 pb-1">
+                          {timePeriod === 'day' && `Uur: ${hoveredBar.data.date}`}
+                          {timePeriod === 'week' && `Dag: ${hoveredBar.data.date}`}
+                          {timePeriod === 'month' && `Week: ${hoveredBar.data.date}`}
+                          {timePeriod === 'year' && `Maand: ${hoveredBar.data.date}`}
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                            <span>Bezoekers: <strong>{hoveredBar.data.visitors}</strong></span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 bg-orange-500 rounded"></div>
+                            <span>Pagina Weergaven: <strong>{hoveredBar.data.pageViews}</strong></span>
+                          </div>
+                        </div>
+                        <div className="absolute bottom-0 left-4 transform translate-y-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1135,12 +1255,27 @@ export default function SEOAnalytics() {
 
               {/* Recent Visitors with IP */}
               <div className="bg-white rounded-xl p-6 shadow-lg">
-                <div className="flex items-center gap-3 mb-4">
-                  <Users className="w-6 h-6 text-orange-600" />
-                  <h3 className="text-xl font-bold text-gray-900">Recente Bezoekers</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <Users className="w-6 h-6 text-orange-600" />
+                    <h3 className="text-xl font-bold text-gray-900">Recente Bezoekers</h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Toon:</span>
+                    <select
+                      value={recentVisitorsLimit}
+                      onChange={(e) => setRecentVisitorsLimit(Number(e.target.value))}
+                      className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    >
+                      <option value={10}>10</option>
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
+                  </div>
                 </div>
                 {analyticsData.recentVisitors.length > 0 ? (
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto max-h-96 overflow-y-auto">
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-gray-200">
