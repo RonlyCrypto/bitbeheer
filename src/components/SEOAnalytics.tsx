@@ -1174,12 +1174,49 @@ export default function SEOAnalytics() {
               </p>
               <div className="mt-6 p-4 bg-gray-50 rounded-lg text-left max-w-2xl mx-auto">
                 <p className="text-sm font-semibold text-gray-900 mb-2">Debug informatie:</p>
-                <ul className="text-xs text-gray-600 space-y-1">
+                <ul className="text-xs text-gray-600 space-y-1 mb-4">
                   <li>• Open de browser console (F12) om tracking errors te zien</li>
                   <li>• Controleer of de visitor_analytics tabel bestaat in Supabase</li>
                   <li>• Controleer RLS policies voor de visitor_analytics tabel</li>
                   <li>• Bezoek een pagina om tracking te testen</li>
                 </ul>
+                <button
+                  onClick={async () => {
+                    try {
+                      // Test insert directly
+                      const { data, error } = await supabase.from('visitor_analytics').insert({
+                        visitor_id: 'test-' + Date.now(),
+                        session_id: 'test-session',
+                        page_path: '/test',
+                        referrer: 'Direct',
+                        user_agent: navigator.userAgent,
+                        browser: 'Test',
+                        device_type: 'Desktop',
+                        os: 'Test OS',
+                        ip_address: '127.0.0.1',
+                        country: 'Netherlands',
+                        country_code: 'NL',
+                        city: 'Amsterdam',
+                        language: 'nl',
+                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                      });
+                      
+                      if (error) {
+                        alert('Test insert failed: ' + error.message + '\n\nCheck console for details.');
+                        console.error('Test insert error:', error);
+                      } else {
+                        alert('Test insert successful! Refresh the page to see the data.');
+                        loadAnalytics();
+                      }
+                    } catch (err) {
+                      alert('Test failed: ' + (err instanceof Error ? err.message : 'Unknown error'));
+                      console.error('Test error:', err);
+                    }
+                  }}
+                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium"
+                >
+                  Test Tracking (Voeg test data toe)
+                </button>
               </div>
             </div>
           )}
