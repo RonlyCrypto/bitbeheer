@@ -1062,6 +1062,7 @@ export default function BitcoinHistory() {
                 max: { price: maxPrice, date: maxDate }
               }}
               halvingEvents={showHalvingEvents ? halvingEvents : []}
+              majorEvents={showMajorEvents ? majorEvents : []}
               cyclePhases={showCyclePhases ? 
                 selectedCycle ? 
                   bitcoinCycles.find(cycle => cycle.id === selectedCycle)?.phases ? 
@@ -1166,58 +1167,36 @@ export default function BitcoinHistory() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-xl p-6">
-              <div className="flex items-center gap-3 mb-4">
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-xl p-4">
+              <div className="flex items-center gap-3 mb-3">
                 <div className="bg-orange-100 p-2 rounded-lg">
                   <Calendar className="w-5 h-5 text-orange-600" />
                 </div>
                 <h3 className="text-lg font-bold text-orange-900">Belangrijke Momenten</h3>
               </div>
-              <p className="text-sm text-gray-700 mb-4">
+              <p className="text-sm text-gray-700 mb-3">
                 Bitcoin kent cyclische bewegingen met extreme hoogte- en dieptepunten.
               </p>
               
-              {/* Show only the last event when collapsed */}
-              {!showAllEvents && (
-              <div className="space-y-3">
-                  <div 
-                    className="bg-white bg-opacity-50 rounded-lg p-3 relative cursor-pointer hover:bg-opacity-70 transition-all"
-                    onMouseEnter={() => setHoveredEvent(majorEvents.length - 1)}
-                    onMouseLeave={() => setHoveredEvent(null)}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-semibold text-orange-900">{majorEvents[majorEvents.length - 1].label}</span>
-                      <span className="text-xs text-gray-600">
-                        {majorEvents[majorEvents.length - 1].date}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-700">{majorEvents[majorEvents.length - 1].description}</p>
-                    
-                    {/* Hover popup */}
-                    {hoveredEvent === majorEvents.length - 1 && (
-                      <div className="absolute bottom-full left-0 right-0 mb-2 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-10">
-                        <p className="leading-relaxed">{majorEvents[majorEvents.length - 1].details}</p>
-                        <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* More button */}
-                  <button
-                    onClick={() => setShowAllEvents(true)}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-orange-200 hover:bg-orange-300 text-orange-800 text-xs font-medium rounded-lg transition-colors"
-                  >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                    Meer gebeurtenissen ({majorEvents.length - 1} verborgen)
-                  </button>
-                </div>
-              )}
-              
-              {/* Show all events when expanded */}
-              {showAllEvents && (
-              <div className="space-y-3">
+              {/* Scrollable container with 4 visible blocks */}
+              <div className="max-h-[320px] overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin', scrollbarColor: '#f97316 #f3f4f6' }}>
+                <style>{`
+                  div::-webkit-scrollbar {
+                    width: 6px;
+                  }
+                  div::-webkit-scrollbar-track {
+                    background: #f3f4f6;
+                    border-radius: 3px;
+                  }
+                  div::-webkit-scrollbar-thumb {
+                    background: #f97316;
+                    border-radius: 3px;
+                  }
+                  div::-webkit-scrollbar-thumb:hover {
+                    background: #ea580c;
+                  }
+                `}</style>
+                <div className="space-y-2">
                 {majorEvents.map((event, index) => (
                     <div 
                       key={index} 
@@ -1242,19 +1221,8 @@ export default function BitcoinHistory() {
                       )}
                   </div>
                 ))}
-                  
-                  {/* Less button */}
-                  <button
-                    onClick={() => setShowAllEvents(false)}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-orange-200 hover:bg-orange-300 text-orange-800 text-xs font-medium rounded-lg transition-colors"
-                  >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                    </svg>
-                    Minder
-                  </button>
+                </div>
               </div>
-              )}
             </div>
           </div>
 

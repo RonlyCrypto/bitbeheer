@@ -11,6 +11,13 @@ interface CyclePhase {
   isSelected?: boolean;
 }
 
+interface MajorEvent {
+  date: string;
+  label: string;
+  description: string;
+  details?: string;
+}
+
 interface PriceChartProps {
   data: PriceData[];
   title?: string;
@@ -24,6 +31,7 @@ interface PriceChartProps {
     max: { price: number; date: string };
   };
   halvingEvents?: HalvingEvent[];
+  majorEvents?: MajorEvent[];
   purchaseDetails?: {
     date: string;
     amount: number;
@@ -59,6 +67,7 @@ export default function PriceChart({
   averageBuyPrice,
   minMaxLines,
   halvingEvents = [],
+  majorEvents = [],
   purchaseDetails = [],
   cyclePhases = [],
   selectedPhases,
@@ -669,7 +678,52 @@ export default function PriceChart({
       });
     }
 
-  }, [data, height, showGrid, color, purchasePoints, averageBuyPrice, minMaxLines, halvingEvents, purchaseDetails, cyclePhases]);
+    // Draw major events as vertical lines with labels
+    if (majorEvents.length > 0) {
+      majorEvents.forEach((event) => {
+        const eventDate = new Date(event.date);
+        const dataStartDate = new Date(visibleData[0].date);
+        const dataEndDate = new Date(visibleData[visibleData.length - 1].date);
+        
+        // Only draw if event is within visible data range
+        if (eventDate >= dataStartDate && eventDate <= dataEndDate) {
+          const timeDiff = eventDate.getTime() - dataStartDate.getTime();
+          const totalTime = dataEndDate.getTime() - dataStartDate.getTime();
+          const x = padding.left + (timeDiff / totalTime) * chartWidth;
+          
+          // Draw vertical line (green for major events)
+          ctx.strokeStyle = '#10b981';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.moveTo(x, padding.top);
+          ctx.lineTo(x, padding.top + chartHeight);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          
+          // Draw event marker (circle)
+          ctx.beginPath();
+          ctx.arc(x, padding.top + chartHeight / 2, 6, 0, 2 * Math.PI);
+          ctx.fillStyle = '#10b981';
+          ctx.fill();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          
+          // Draw event label (rotated for better visibility)
+          ctx.save();
+          ctx.translate(x, padding.top - 10);
+          ctx.rotate(-Math.PI / 4);
+          ctx.fillStyle = '#10b981';
+          ctx.font = 'bold 10px sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(event.label, 0, 0);
+          ctx.restore();
+        }
+      });
+    }
+
+  }, [data, height, showGrid, color, purchasePoints, averageBuyPrice, minMaxLines, halvingEvents, majorEvents, purchaseDetails, cyclePhases]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -892,7 +946,7 @@ export default function PriceChart({
   return (
     <div className="relative w-full" style={{ minWidth: '100%' }}>
       <div className="flex items-center justify-between mb-4">
-        {title && (
+      {title && (
           <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
         )}
         {isLiveMode && (
