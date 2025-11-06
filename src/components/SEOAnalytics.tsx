@@ -531,57 +531,81 @@ export default function SEOAnalytics() {
       }
     });
 
-    // Draw visitors line
+    // Draw vertical bars (from bottom to top)
     if (data.length > 0) {
-      ctx.strokeStyle = '#3b82f6';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
+      const barWidth = (width - padding.left - padding.right) / data.length * 0.6; // 60% of available space per bar
+      const barSpacing = (width - padding.left - padding.right) / data.length;
+      const chartBottom = height - padding.bottom;
+      const chartHeight = height - padding.top - padding.bottom;
+
       data.forEach((point, index) => {
-        const x = padding.left + (width - padding.left - padding.right) * (index / (data.length - 1 || 1));
-        const y = height - padding.bottom - ((point.visitors / maxValue) * (height - padding.top - padding.bottom));
+        const x = padding.left + (barSpacing * index) + (barSpacing - barWidth) / 2;
         
-        if (index === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
+        // Calculate bar heights
+        const visitorsBarHeight = (point.visitors / maxValue) * chartHeight;
+        const pageViewsBarHeight = (point.pageViews / maxValue) * chartHeight;
+
+        // Draw visitors bar (blue) - left side
+        if (point.visitors > 0) {
+          const visitorsX = x;
+          const visitorsY = chartBottom - visitorsBarHeight;
+          
+          // Gradient for visitors bar
+          const visitorsGradient = ctx.createLinearGradient(visitorsX, visitorsY, visitorsX, chartBottom);
+          visitorsGradient.addColorStop(0, '#60a5fa'); // Lighter blue at top
+          visitorsGradient.addColorStop(1, '#3b82f6'); // Darker blue at bottom
+          
+          ctx.fillStyle = visitorsGradient;
+          ctx.fillRect(visitorsX, visitorsY, barWidth * 0.45, visitorsBarHeight);
+          
+          // Add subtle border
+          ctx.strokeStyle = '#2563eb';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(visitorsX, visitorsY, barWidth * 0.45, visitorsBarHeight);
+          
+          // Add value label on top of bar
+          if (visitorsBarHeight > 15) {
+            ctx.fillStyle = '#1e40af';
+            ctx.font = 'bold 11px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(
+              point.visitors.toString(),
+              visitorsX + (barWidth * 0.45) / 2,
+              visitorsY - 3
+            );
+          }
         }
-      });
-      ctx.stroke();
 
-      // Draw visitors points
-      ctx.fillStyle = '#3b82f6';
-      data.forEach((point, index) => {
-        const x = padding.left + (width - padding.left - padding.right) * (index / (data.length - 1 || 1));
-        const y = height - padding.bottom - ((point.visitors / maxValue) * (height - padding.top - padding.bottom));
-        ctx.beginPath();
-        ctx.arc(x, y, 4, 0, 2 * Math.PI);
-        ctx.fill();
-      });
-
-      // Draw page views line
-      ctx.strokeStyle = '#f97316';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      data.forEach((point, index) => {
-        const x = padding.left + (width - padding.left - padding.right) * (index / (data.length - 1 || 1));
-        const y = height - padding.bottom - ((point.pageViews / maxValue) * (height - padding.top - padding.bottom));
-        
-        if (index === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
+        // Draw page views bar (orange) - right side
+        if (point.pageViews > 0) {
+          const pageViewsX = x + barWidth * 0.55;
+          const pageViewsY = chartBottom - pageViewsBarHeight;
+          
+          // Gradient for page views bar
+          const pageViewsGradient = ctx.createLinearGradient(pageViewsX, pageViewsY, pageViewsX, chartBottom);
+          pageViewsGradient.addColorStop(0, '#fb923c'); // Lighter orange at top
+          pageViewsGradient.addColorStop(1, '#f97316'); // Darker orange at bottom
+          
+          ctx.fillStyle = pageViewsGradient;
+          ctx.fillRect(pageViewsX, pageViewsY, barWidth * 0.45, pageViewsBarHeight);
+          
+          // Add subtle border
+          ctx.strokeStyle = '#ea580c';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(pageViewsX, pageViewsY, barWidth * 0.45, pageViewsBarHeight);
+          
+          // Add value label on top of bar
+          if (pageViewsBarHeight > 15) {
+            ctx.fillStyle = '#c2410c';
+            ctx.font = 'bold 11px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(
+              point.pageViews.toString(),
+              pageViewsX + (barWidth * 0.45) / 2,
+              pageViewsY - 3
+            );
+          }
         }
-      });
-      ctx.stroke();
-
-      // Draw page views points
-      ctx.fillStyle = '#f97316';
-      data.forEach((point, index) => {
-        const x = padding.left + (width - padding.left - padding.right) * (index / (data.length - 1 || 1));
-        const y = height - padding.bottom - ((point.pageViews / maxValue) * (height - padding.top - padding.bottom));
-        ctx.beginPath();
-        ctx.arc(x, y, 4, 0, 2 * Math.PI);
-        ctx.fill();
       });
     }
 
