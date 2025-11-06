@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { 
   Search, 
-  TrendingUp, 
   Users, 
   Clock, 
   Eye, 
@@ -18,9 +17,6 @@ import {
   Zap,
   Smartphone,
   Monitor,
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
   MapPin,
   Globe2,
   Languages,
