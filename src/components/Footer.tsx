@@ -1,5 +1,6 @@
 import { Shield, Heart } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import AdminLogin from './AdminLogin';
 
@@ -69,13 +70,34 @@ export default function Footer() {
   return (
     <footer className="bg-gray-900 text-gray-300 mt-16">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           <div>
             <h3 className="text-white font-bold text-lg mb-4">Over Dit Platform</h3>
             <p className="text-sm leading-relaxed">
               Een educatief platform dat beginners helpt begrijpen hoe cryptocurrency en DCA investeren werkt,
               zonder hype en met focus op lange termijn denken.
             </p>
+          </div>
+
+          <div>
+            <h3 className="text-white font-bold text-lg mb-4">Ontdek Meer</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link to="/bitcoin-history" className="text-orange-400 hover:text-orange-300 transition-colors underline">
+                  Bitcoin Prijsgeschiedenis
+                </Link>
+              </li>
+              <li>
+                <Link to="/portfolio" className="text-orange-400 hover:text-orange-300 transition-colors underline">
+                  Portfolio Beheer
+                </Link>
+              </li>
+              <li>
+                <Link to="/aanmelden" className="text-orange-400 hover:text-orange-300 transition-colors underline">
+                  Aanmelden voor Begeleiding
+                </Link>
+              </li>
+            </ul>
           </div>
 
           <div>
