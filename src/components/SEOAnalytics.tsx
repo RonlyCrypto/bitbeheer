@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   Search, 
   TrendingUp, 
@@ -17,7 +17,10 @@ import {
   Link as LinkIcon,
   Zap,
   Smartphone,
-  Monitor
+  Monitor,
+  Calendar,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -38,7 +41,10 @@ interface AnalyticsData {
   referrers: Array<{ source: string; count: number }>;
   devices: Array<{ type: string; count: number }>;
   browsers: Array<{ name: string; count: number }>;
+  timeSeriesData: Array<{ date: string; visitors: number; pageViews: number }>;
 }
+
+type TimePeriod = 'day' | 'week' | 'month' | 'year';
 
 export default function SEOAnalytics() {
   const [activeSubTab, setActiveSubTab] = useState<'seo' | 'analytics'>('seo');
@@ -48,12 +54,21 @@ export default function SEOAnalytics() {
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(true);
   const [seoScore, setSeoScore] = useState<number | null>(null);
   const [aiRecommendations, setAiRecommendations] = useState<string[]>([]);
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('week');
+  const chartCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     if (activeSubTab === 'analytics') {
       loadAnalytics();
     }
-  }, [activeSubTab]);
+  }, [activeSubTab, timePeriod]);
+
+  // Draw chart when data changes
+  useEffect(() => {
+    if (analyticsData?.timeSeriesData && chartCanvasRef.current) {
+      drawChart();
+    }
+  }, [analyticsData?.timeSeriesData, timePeriod]);
 
   const loadAnalytics = async () => {
     setIsLoadingAnalytics(true);
@@ -91,15 +106,45 @@ export default function SEOAnalytics() {
       let totalDuration = 0;
       let durationCount = 0;
 
+      // Time series data aggregation
+      const timeSeriesMap = new Map<string, { visitors: Set<string>; pageViews: number }>();
+
       visits?.forEach((visit: any) => {
+        const visitDate = new Date(visit.visited_at);
+        let timeKey = '';
+        
+        // Create time key based on period
+        switch (timePeriod) {
+          case 'day':
+            timeKey = visitDate.toISOString().split('T')[0]; // YYYY-MM-DD
+            break;
+          case 'week':
+            const weekStart = new Date(visitDate);
+            weekStart.setDate(visitDate.getDate() - visitDate.getDay()); // Start of week (Sunday)
+            timeKey = weekStart.toISOString().split('T')[0];
+            break;
+          case 'month':
+            timeKey = `${visitDate.getFullYear()}-${String(visitDate.getMonth() + 1).padStart(2, '0')}`; // YYYY-MM
+            break;
+          case 'year':
+            timeKey = String(visitDate.getFullYear()); // YYYY
+            break;
+        }
+
+        // Aggregate time series data
+        const existing = timeSeriesMap.get(timeKey) || { visitors: new Set<string>(), pageViews: 0 };
+        existing.visitors.add(visit.visitor_id || visit.ip_address || 'unknown');
+        existing.pageViews++;
+        timeSeriesMap.set(timeKey, existing);
+
         // Page views
         const path = visit.page_path || '/';
-        const existing = pageViewsMap.get(path) || { views: 0, durations: [] };
-        existing.views++;
+        const existingPage = pageViewsMap.get(path) || { views: 0, durations: [] };
+        existingPage.views++;
         if (visit.session_duration) {
-          existing.durations.push(visit.session_duration);
+          existingPage.durations.push(visit.session_duration);
         }
-        pageViewsMap.set(path, existing);
+        pageViewsMap.set(path, existingPage);
 
         // Referrers
         const referrer = visit.referrer || 'Direct';
@@ -119,6 +164,15 @@ export default function SEOAnalytics() {
           durationCount++;
         }
       });
+
+      // Convert time series map to array and sort
+      const timeSeriesData = Array.from(timeSeriesMap.entries())
+        .map(([date, data]) => ({
+          date,
+          visitors: data.visitors.size,
+          pageViews: data.pageViews
+        }))
+        .sort((a, b) => a.date.localeCompare(b.date));
 
       const topPages = Array.from(pageViewsMap.entries())
         .map(([path, data]) => ({
@@ -147,7 +201,8 @@ export default function SEOAnalytics() {
         browsers: Array.from(browserMap.entries())
           .map(([name, count]) => ({ name, count }))
           .sort((a, b) => b.count - a.count)
-          .slice(0, 5)
+          .slice(0, 5),
+        timeSeriesData
       });
     } catch (error) {
       console.error('Error processing analytics:', error);
@@ -294,6 +349,157 @@ export default function SEOAnalytics() {
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const drawChart = () => {
+    const canvas = chartCanvasRef.current;
+    if (!canvas || !analyticsData?.timeSeriesData || analyticsData.timeSeriesData.length === 0) {
+      return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Set canvas size
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = 400 * dpr;
+    ctx.scale(dpr, dpr);
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = '400px';
+
+    const width = rect.width;
+    const height = 400;
+    const padding = { top: 40, right: 40, bottom: 60, left: 60 };
+
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+
+    const data = analyticsData.timeSeriesData;
+    const maxVisitors = Math.max(...data.map(d => d.visitors), 1);
+    const maxPageViews = Math.max(...data.map(d => d.pageViews), 1);
+    const maxValue = Math.max(maxVisitors, maxPageViews);
+
+    // Draw grid lines
+    ctx.strokeStyle = '#e5e7eb';
+    ctx.lineWidth = 1;
+    const gridLines = 5;
+    for (let i = 0; i <= gridLines; i++) {
+      const y = padding.top + (height - padding.top - padding.bottom) * (i / gridLines);
+      ctx.beginPath();
+      ctx.moveTo(padding.left, y);
+      ctx.lineTo(width - padding.right, y);
+      ctx.stroke();
+
+      // Y-axis labels
+      ctx.fillStyle = '#6b7280';
+      ctx.font = '12px Arial';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      const value = Math.round(maxValue * (1 - i / gridLines));
+      ctx.fillText(value.toString(), padding.left - 10, y);
+    }
+
+    // Draw X-axis labels
+    ctx.fillStyle = '#6b7280';
+    ctx.font = '11px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    const step = Math.max(1, Math.floor(data.length / 10));
+    data.forEach((point, index) => {
+      if (index % step === 0 || index === data.length - 1) {
+        const x = padding.left + (width - padding.left - padding.right) * (index / (data.length - 1 || 1));
+        let label = point.date;
+        
+        // Format label based on period
+        if (timePeriod === 'day') {
+          const date = new Date(point.date);
+          label = `${date.getDate()}/${date.getMonth() + 1}`;
+        } else if (timePeriod === 'week') {
+          const date = new Date(point.date);
+          label = `Week ${date.getDate()}/${date.getMonth() + 1}`;
+        } else if (timePeriod === 'month') {
+          label = point.date;
+        } else {
+          label = point.date;
+        }
+        
+        ctx.save();
+        ctx.translate(x, height - padding.bottom + 10);
+        ctx.rotate(-Math.PI / 4);
+        ctx.fillText(label, 0, 0);
+        ctx.restore();
+      }
+    });
+
+    // Draw visitors line
+    if (data.length > 0) {
+      ctx.strokeStyle = '#3b82f6';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      data.forEach((point, index) => {
+        const x = padding.left + (width - padding.left - padding.right) * (index / (data.length - 1 || 1));
+        const y = height - padding.bottom - ((point.visitors / maxValue) * (height - padding.top - padding.bottom));
+        
+        if (index === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      });
+      ctx.stroke();
+
+      // Draw visitors points
+      ctx.fillStyle = '#3b82f6';
+      data.forEach((point, index) => {
+        const x = padding.left + (width - padding.left - padding.right) * (index / (data.length - 1 || 1));
+        const y = height - padding.bottom - ((point.visitors / maxValue) * (height - padding.top - padding.bottom));
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, 2 * Math.PI);
+        ctx.fill();
+      });
+
+      // Draw page views line
+      ctx.strokeStyle = '#f97316';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      data.forEach((point, index) => {
+        const x = padding.left + (width - padding.left - padding.right) * (index / (data.length - 1 || 1));
+        const y = height - padding.bottom - ((point.pageViews / maxValue) * (height - padding.top - padding.bottom));
+        
+        if (index === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      });
+      ctx.stroke();
+
+      // Draw page views points
+      ctx.fillStyle = '#f97316';
+      data.forEach((point, index) => {
+        const x = padding.left + (width - padding.left - padding.right) * (index / (data.length - 1 || 1));
+        const y = height - padding.bottom - ((point.pageViews / maxValue) * (height - padding.top - padding.bottom));
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, 2 * Math.PI);
+        ctx.fill();
+      });
+    }
+
+    // Draw legend
+    const legendY = 20;
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillRect(padding.left, legendY, 20, 3);
+    ctx.fillStyle = '#374151';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('Bezoekers', padding.left + 25, legendY + 2);
+
+    ctx.fillStyle = '#f97316';
+    ctx.fillRect(padding.left + 100, legendY, 20, 3);
+    ctx.fillStyle = '#374151';
+    ctx.fillText('Pagina Weergaven', padding.left + 125, legendY + 2);
   };
 
   return (
@@ -520,6 +726,57 @@ export default function SEOAnalytics() {
             </div>
           ) : analyticsData ? (
             <>
+              {/* Time Period Selector */}
+              <div className="bg-white rounded-xl p-6 shadow-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-gray-900">Tijdsperiode</h3>
+                  <div className="flex gap-2">
+                    {(['day', 'week', 'month', 'year'] as TimePeriod[]).map((period) => (
+                      <button
+                        key={period}
+                        onClick={() => setTimePeriod(period)}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                          timePeriod === period
+                            ? 'bg-orange-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {period === 'day' && 'Per Dag'}
+                        {period === 'week' && 'Per Week'}
+                        {period === 'month' && 'Per Maand'}
+                        {period === 'year' && 'Per Jaar'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Visitor Chart */}
+              {analyticsData.timeSeriesData && analyticsData.timeSeriesData.length > 0 && (
+                <div className="bg-white rounded-xl p-6 shadow-lg">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-gray-900">Bezoekers Overzicht</h3>
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-0.5 bg-blue-500"></div>
+                        <span>Bezoekers</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-0.5 bg-orange-500"></div>
+                        <span>Pagina Weergaven</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <canvas
+                      ref={chartCanvasRef}
+                      className="w-full"
+                      style={{ maxHeight: '400px' }}
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Overview Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="bg-white rounded-xl p-6 shadow-lg">
