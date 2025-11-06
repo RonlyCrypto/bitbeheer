@@ -147,19 +147,36 @@ export default function AdminDashboard() {
         .order('date', { ascending: true })
         .order('start_time', { ascending: true });
 
-      // Find upcoming appointment (next confirmed appointment within 48 hours)
+      // Find upcoming appointment (next confirmed appointment in the future)
       const { data: allAppointments } = await supabase
         .from('appointments')
         .select('*')
-        .eq('status', 'confirmed')
+        .in('status', ['confirmed', 'pending'])
         .order('date', { ascending: true })
         .order('start_time', { ascending: true });
 
       const now = new Date();
+      // Find the next appointment in the future (any confirmed or pending appointment)
       const upcomingAppt = allAppointments?.find(apt => {
-        const aptDateTime = new Date(`${apt.date}T${apt.start_time}`);
-        const hoursUntil = (aptDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
-        return hoursUntil > 0 && hoursUntil <= 48;
+        try {
+          // Combine date and time to create full datetime
+          const aptDateStr = apt.date;
+          const aptTimeStr = apt.start_time || '00:00:00';
+          
+          // Create date object from date and time strings
+          const aptDateTime = new Date(`${aptDateStr}T${aptTimeStr}`);
+          
+          // Check if date is valid
+          if (isNaN(aptDateTime.getTime())) {
+            return false;
+          }
+          
+          // Check if appointment is in the future
+          return aptDateTime > now;
+        } catch (error) {
+          console.error('Error parsing appointment date:', error, apt);
+          return false;
+        }
       }) || null;
 
       // Load all accounts (to count accounts in specific sections)
@@ -590,11 +607,35 @@ export default function AdminDashboard() {
                                 </div>
                                 <div className="flex-1">
                                   <h3 className="text-lg font-bold text-gray-900">
-                                    {metrics.upcomingAppointment ? 'Binnenkort' : 'Geen'}
+                                    {metrics.upcomingAppointment ? (
+                                      (() => {
+                                        try {
+                                          const aptDate = new Date(`${metrics.upcomingAppointment.date}T${metrics.upcomingAppointment.start_time || '00:00:00'}`);
+                                          const hoursUntil = (aptDate.getTime() - new Date().getTime()) / (1000 * 60 * 60);
+                                          if (hoursUntil <= 48) {
+                                            return 'Binnenkort';
+                                          } else {
+                                            return 'Volgende afspraak';
+                                          }
+                                        } catch (e) {
+                                          return 'Volgende afspraak';
+                                        }
+                                      })()
+                                    ) : 'Geen'}
                                   </h3>
                                   <p className="text-gray-600">
                                     {metrics.upcomingAppointment 
-                                      ? `${new Date(metrics.upcomingAppointment.date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })} ${metrics.upcomingAppointment.start_time}`
+                                      ? (() => {
+                                          try {
+                                            const aptDate = new Date(metrics.upcomingAppointment.date);
+                                            if (isNaN(aptDate.getTime())) {
+                                              return 'Volgende afspraak';
+                                            }
+                                            return `${aptDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })} ${metrics.upcomingAppointment.start_time || ''}`;
+                                          } catch (e) {
+                                            return 'Volgende afspraak';
+                                          }
+                                        })()
                                       : 'Volgende afspraak'
                                     }
                                   </p>
