@@ -202,7 +202,7 @@ export default function SoonOnlinePage() {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                Wat Komt Er Aan?
+                Wat komt er aan?
               </h2>
                           <p className="text-xl text-gray-600 leading-relaxed">
                             Persoonlijke 1-op-1 begeleiding bij het investeren in Bitcoin.

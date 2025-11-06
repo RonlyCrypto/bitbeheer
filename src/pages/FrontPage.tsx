@@ -82,29 +82,29 @@ export default function FrontPage() {
                     <div className="bg-orange-500 p-3 rounded-xl">
                       <Shield className="w-8 h-8 text-white" />
                     </div>
-                    <h4 className="text-2xl font-bold text-gray-900">Waar We Je Mee Helpen</h4>
+                    <h4 className="text-2xl font-bold text-gray-900">Wat We Willen Bereiken</h4>
                   </div>
                   <div className="space-y-4">
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      <span className="text-gray-700">Veilig Bitcoin aankopen en bewaren in eigen beheer</span>
+                      <span className="text-gray-700">Nederlanders helpen veilig Bitcoin te kopen en bewaren</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      <span className="text-gray-700">Altijd toegang tot je portfolio en waarde</span>
+                      <span className="text-gray-700">Persoonlijke begeleiding voor Bitcoin beginners in Nederland</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      <span className="text-gray-700">100% eigen beheer - not your keys, not your crypto</span>
+                      <span className="text-gray-700">Eigen beheer promoten - not your keys, not your crypto</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      <span className="text-gray-700">Wanneer het slim is om te kopen en waarom</span>
+                      <span className="text-gray-700">Bitcoin educatie en kennis delen met Nederlandse investeerders</span>
                     </div>
                   </div>
                   <div className="mt-6 p-4 bg-white rounded-lg">
                     <p className="text-sm text-gray-600 italic">
-                      "Met de juiste kennis kun je jezelf beschermen, slimme keuzes maken en met vertrouwen de cryptowereld instappen."
+                      "Bitcoin investeren in Nederland hoeft niet moeilijk te zijn. Met de juiste begeleiding en kennis kun je veilig en verstandig beginnen met Bitcoin."
                     </p>
                   </div>
                 </div>
@@ -466,6 +466,20 @@ export default function FrontPage() {
                 Aanmelden voor Begeleiding
                 <ArrowRight className="w-5 h-5" />
               </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Internal Links Section for SEO */}
+      <section className="py-12 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Ontdek Meer</h2>
+            <div className="flex flex-wrap justify-center gap-6">
+              <Link to="/bitcoin-history" className="text-orange-600 hover:text-orange-700 underline font-medium">Bitcoin Prijsgeschiedenis</Link>
+              <Link to="/portfolio" className="text-orange-600 hover:text-orange-700 underline font-medium">Portfolio Beheer</Link>
+              <Link to="/aanmelden" className="text-orange-600 hover:text-orange-700 underline font-medium">Aanmelden voor Begeleiding</Link>
             </div>
           </div>
         </div>
