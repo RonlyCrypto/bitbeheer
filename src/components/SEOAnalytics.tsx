@@ -110,14 +110,20 @@ export default function SEOAnalytics() {
           topPages: [],
           referrers: [],
           devices: [],
-          browsers: []
+          browsers: [],
+          timeSeriesData: [],
+          countries: [],
+          cities: [],
+          languages: [],
+          hourlyData: [],
+          recentVisitors: []
         });
         setIsLoadingAnalytics(false);
         return;
       }
 
       // Process analytics data
-      const uniqueVisitors = new Set(visits?.map(v => v.visitor_id || v.ip_address) || []);
+      const uniqueVisitors = new Set(visits?.map((v: any) => v.visitor_id || v.ip_address) || []);
       const pageViewsMap = new Map<string, { views: number; durations: number[] }>();
       const referrerMap = new Map<string, number>();
       const deviceMap = new Map<string, number>();
@@ -133,24 +139,24 @@ export default function SEOAnalytics() {
       const timeSeriesMap = new Map<string, { visitors: Set<string>; pageViews: number }>();
 
       visits?.forEach((visit: any) => {
-        const visitDate = new Date(visit.visited_at);
+        const visitDateTime = new Date(visit.visited_at);
         let timeKey = '';
         
         // Create time key based on period
         switch (timePeriod) {
           case 'day':
-            timeKey = visitDate.toISOString().split('T')[0]; // YYYY-MM-DD
+            timeKey = visitDateTime.toISOString().split('T')[0]; // YYYY-MM-DD
             break;
           case 'week':
-            const weekStart = new Date(visitDate);
-            weekStart.setDate(visitDate.getDate() - visitDate.getDay()); // Start of week (Sunday)
+            const weekStart = new Date(visitDateTime);
+            weekStart.setDate(visitDateTime.getDate() - visitDateTime.getDay()); // Start of week (Sunday)
             timeKey = weekStart.toISOString().split('T')[0];
             break;
           case 'month':
-            timeKey = `${visitDate.getFullYear()}-${String(visitDate.getMonth() + 1).padStart(2, '0')}`; // YYYY-MM
+            timeKey = `${visitDateTime.getFullYear()}-${String(visitDateTime.getMonth() + 1).padStart(2, '0')}`; // YYYY-MM
             break;
           case 'year':
-            timeKey = String(visitDate.getFullYear()); // YYYY
+            timeKey = String(visitDateTime.getFullYear()); // YYYY
             break;
         }
 
@@ -209,8 +215,8 @@ export default function SEOAnalytics() {
         }
 
         // Hourly data
-        const visitDate = new Date(visit.visited_at);
-        const hour = visitDate.getHours();
+        const visitHourDate = new Date(visit.visited_at);
+        const hour = visitHourDate.getHours();
         const existingHour = hourlyMap.get(hour) || { visitors: new Set<string>(), pageViews: 0 };
         existingHour.visitors.add(visit.visitor_id || visit.ip_address || 'unknown');
         existingHour.pageViews++;
@@ -219,22 +225,22 @@ export default function SEOAnalytics() {
 
       // Convert time series map to array and sort
       const timeSeriesData = Array.from(timeSeriesMap.entries())
-        .map(([date, data]) => ({
+        .map(([date, data]: [string, { visitors: Set<string>; pageViews: number }]) => ({
           date,
           visitors: data.visitors.size,
           pageViews: data.pageViews
         }))
-        .sort((a, b) => a.date.localeCompare(b.date));
+        .sort((a: { date: string }, b: { date: string }) => a.date.localeCompare(b.date));
 
       const topPages = Array.from(pageViewsMap.entries())
-        .map(([path, data]) => ({
+        .map(([path, data]: [string, { views: number; durations: number[] }]) => ({
           path,
           views: data.views,
           avgDuration: data.durations.length > 0
-            ? Math.round(data.durations.reduce((a, b) => a + b, 0) / data.durations.length)
+            ? Math.round(data.durations.reduce((acc: number, val: number) => acc + val, 0) / data.durations.length)
             : 0
         }))
-        .sort((a, b) => b.views - a.views)
+        .sort((a: { views: number }, b: { views: number }) => b.views - a.views)
         .slice(0, 10);
 
       // Get recent visitors (last 50)
@@ -258,32 +264,32 @@ export default function SEOAnalytics() {
         avgSessionDuration: durationCount > 0 ? Math.round(totalDuration / durationCount) : 0,
         topPages,
         referrers: Array.from(referrerMap.entries())
-          .map(([source, count]) => ({ source, count }))
-          .sort((a, b) => b.count - a.count)
+          .map(([source, count]: [string, number]) => ({ source, count }))
+          .sort((a: { count: number }, b: { count: number }) => b.count - a.count)
           .slice(0, 10),
         devices: Array.from(deviceMap.entries())
-          .map(([type, count]) => ({ type, count }))
-          .sort((a, b) => b.count - a.count),
+          .map(([type, count]: [string, number]) => ({ type, count }))
+          .sort((a: { count: number }, b: { count: number }) => b.count - a.count),
         browsers: Array.from(browserMap.entries())
-          .map(([name, count]) => ({ name, count }))
-          .sort((a, b) => b.count - a.count)
+          .map(([name, count]: [string, number]) => ({ name, count }))
+          .sort((a: { count: number }, b: { count: number }) => b.count - a.count)
           .slice(0, 5),
         timeSeriesData,
         countries: Array.from(countryMap.entries())
-          .map(([country, data]) => ({ country, country_code: data.code, count: data.count }))
-          .sort((a, b) => b.count - a.count)
+          .map(([country, data]: [string, { count: number; code: string }]) => ({ country, country_code: data.code, count: data.count }))
+          .sort((a: { count: number }, b: { count: number }) => b.count - a.count)
           .slice(0, 20),
         cities: Array.from(cityMap.entries())
-          .map(([city, data]) => ({ city, country: data.country, count: data.count }))
-          .sort((a, b) => b.count - a.count)
+          .map(([city, data]: [string, { count: number; country: string }]) => ({ city, country: data.country, count: data.count }))
+          .sort((a: { count: number }, b: { count: number }) => b.count - a.count)
           .slice(0, 15),
         languages: Array.from(languageMap.entries())
-          .map(([language, count]) => ({ language, count }))
-          .sort((a, b) => b.count - a.count)
+          .map(([language, count]: [string, number]) => ({ language, count }))
+          .sort((a: { count: number }, b: { count: number }) => b.count - a.count)
           .slice(0, 10),
         hourlyData: Array.from(hourlyMap.entries())
-          .map(([hour, data]) => ({ hour, visitors: data.visitors.size, pageViews: data.pageViews }))
-          .sort((a, b) => a.hour - b.hour),
+          .map(([hour, data]: [number, { visitors: Set<string>; pageViews: number }]) => ({ hour, visitors: data.visitors.size, pageViews: data.pageViews }))
+          .sort((a: { hour: number }, b: { hour: number }) => a.hour - b.hour),
         recentVisitors
       });
     } catch (error) {
