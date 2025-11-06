@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import FrontPage from './pages/FrontPage';
@@ -24,9 +25,15 @@ import { SettingsProvider } from './contexts/SettingsContext';
 import { ProfilePopupProvider } from './contexts/ProfilePopupContext';
 import ImpersonationBanner from './components/ImpersonationBanner';
 import SystemStatusDebug from './components/SystemStatusDebug';
+import { initVisitorTracking } from './utils/visitorTracking';
 
 function AppContent() {
   const { showWelcomePopup, setShowWelcomePopup, user } = useSupabaseAuth();
+
+  // Initialize visitor tracking
+  useEffect(() => {
+    initVisitorTracking();
+  }, []);
 
   return (
     <>

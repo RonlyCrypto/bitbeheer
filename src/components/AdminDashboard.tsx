@@ -36,6 +36,7 @@ import AdminSettings from './AdminSettings';
 import AdminAppointmentManagement from './AdminAppointmentManagement';
 import EmailTemplates from './EmailTemplates';
 import ReferralLinksBeheer from './ReferralLinksBeheer';
+import SEOAnalytics from './SEOAnalytics';
 // import PageManagement from './PageManagement';
 
 export default function AdminDashboard() {
@@ -471,6 +472,16 @@ export default function AdminDashboard() {
                   Referral Links
                 </button>
                 <button
+                  onClick={() => setActiveTab('seo-analytics')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'seo-analytics'
+                      ? 'border-orange-500 text-orange-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  SEO & Analytics
+                </button>
+                <button
                   onClick={() => setActiveTab('settings')}
                   className={`py-2 px-1 border-b-2 font-medium text-sm ${
                     activeTab === 'settings'
@@ -891,6 +902,13 @@ export default function AdminDashboard() {
           {activeTab === 'referral-links' && (
             <div className="space-y-6">
               <ReferralLinksBeheer />
+            </div>
+          )}
+
+          {/* SEO & Analytics Tab */}
+          {activeTab === 'seo-analytics' && (
+            <div className="space-y-6">
+              <SEOAnalytics />
             </div>
           )}
 
