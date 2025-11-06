@@ -11,7 +11,11 @@ ADD COLUMN IF NOT EXISTS language TEXT;
 
 -- Create index for country queries
 CREATE INDEX IF NOT EXISTS idx_visitor_analytics_country ON public.visitor_analytics(country);
-CREATE INDEX IF NOT EXISTS idx_visitor_analytics_visited_at_date ON public.visitor_analytics(DATE(visited_at));
+
+-- Note: Cannot create index on DATE(visited_at) directly as DATE() is not IMMUTABLE
+-- Instead, we can create a functional index with date_trunc or use visited_at directly
+-- For date-based queries, use: WHERE visited_at >= '2024-01-01' AND visited_at < '2024-01-02'
+-- The existing idx_visitor_analytics_visited_at index from create-visitor-analytics-table.sql is sufficient
 
 -- Add comment
 COMMENT ON COLUMN public.visitor_analytics.country IS 'Country name from visitor IP geolocation';
