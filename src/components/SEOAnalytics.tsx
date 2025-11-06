@@ -124,19 +124,19 @@ export default function SEOAnalytics() {
 
       // Process analytics data
       const uniqueVisitors = new Set(visits?.map((v: any) => v.visitor_id || v.ip_address) || []);
-      const pageViewsMap = new Map<string, { views: number; durations: number[] }>();
-      const referrerMap = new Map<string, number>();
-      const deviceMap = new Map<string, number>();
-      const browserMap = new Map<string, number>();
-      const countryMap = new Map<string, { count: number; code: string }>();
-      const cityMap = new Map<string, { count: number; country: string }>();
-      const languageMap = new Map<string, number>();
-      const hourlyMap = new Map<number, { visitors: Set<string>; pageViews: number }>();
+      const pageViewsMap: Map<string, { views: number; durations: number[] }> = new Map();
+      const referrerMap: Map<string, number> = new Map();
+      const deviceMap: Map<string, number> = new Map();
+      const browserMap: Map<string, number> = new Map();
+      const countryMap: Map<string, { count: number; code: string }> = new Map();
+      const cityMap: Map<string, { count: number; country: string }> = new Map();
+      const languageMap: Map<string, number> = new Map();
+      const hourlyMap: Map<number, { visitors: Set<string>; pageViews: number }> = new Map();
       let totalDuration = 0;
       let durationCount = 0;
 
       // Time series data aggregation
-      const timeSeriesMap = new Map<string, { visitors: Set<string>; pageViews: number }>();
+      const timeSeriesMap: Map<string, { visitors: Set<string>; pageViews: number }> = new Map();
 
       visits?.forEach((visit: any) => {
         const visitDateTime = new Date(visit.visited_at);
@@ -224,23 +224,23 @@ export default function SEOAnalytics() {
       });
 
       // Convert time series map to array and sort
-      const timeSeriesData = Array.from(timeSeriesMap.entries())
-        .map(([date, data]: [string, { visitors: Set<string>; pageViews: number }]) => ({
+      const timeSeriesData = (Array.from(timeSeriesMap.entries()) as Array<[string, { visitors: Set<string>; pageViews: number }]>)
+        .map(([date, data]) => ({
           date,
           visitors: data.visitors.size,
           pageViews: data.pageViews
         }))
-        .sort((a: { date: string }, b: { date: string }) => a.date.localeCompare(b.date));
+        .sort((a, b) => a.date.localeCompare(b.date));
 
-      const topPages = Array.from(pageViewsMap.entries())
-        .map(([path, data]: [string, { views: number; durations: number[] }]) => ({
+      const topPages = (Array.from(pageViewsMap.entries()) as Array<[string, { views: number; durations: number[] }]>)
+        .map(([path, data]) => ({
           path,
           views: data.views,
           avgDuration: data.durations.length > 0
             ? Math.round(data.durations.reduce((acc: number, val: number) => acc + val, 0) / data.durations.length)
             : 0
         }))
-        .sort((a: { views: number }, b: { views: number }) => b.views - a.views)
+        .sort((a, b) => b.views - a.views)
         .slice(0, 10);
 
       // Get recent visitors (last 50)
@@ -263,33 +263,33 @@ export default function SEOAnalytics() {
         pageViews: visits?.length || 0,
         avgSessionDuration: durationCount > 0 ? Math.round(totalDuration / durationCount) : 0,
         topPages,
-        referrers: Array.from(referrerMap.entries())
-          .map(([source, count]: [string, number]) => ({ source, count }))
-          .sort((a: { count: number }, b: { count: number }) => b.count - a.count)
+        referrers: (Array.from(referrerMap.entries()) as Array<[string, number]>)
+          .map(([source, count]) => ({ source, count }))
+          .sort((a, b) => b.count - a.count)
           .slice(0, 10),
-        devices: Array.from(deviceMap.entries())
-          .map(([type, count]: [string, number]) => ({ type, count }))
-          .sort((a: { count: number }, b: { count: number }) => b.count - a.count),
-        browsers: Array.from(browserMap.entries())
-          .map(([name, count]: [string, number]) => ({ name, count }))
-          .sort((a: { count: number }, b: { count: number }) => b.count - a.count)
+        devices: (Array.from(deviceMap.entries()) as Array<[string, number]>)
+          .map(([type, count]) => ({ type, count }))
+          .sort((a, b) => b.count - a.count),
+        browsers: (Array.from(browserMap.entries()) as Array<[string, number]>)
+          .map(([name, count]) => ({ name, count }))
+          .sort((a, b) => b.count - a.count)
           .slice(0, 5),
         timeSeriesData,
-        countries: Array.from(countryMap.entries())
-          .map(([country, data]: [string, { count: number; code: string }]) => ({ country, country_code: data.code, count: data.count }))
-          .sort((a: { count: number }, b: { count: number }) => b.count - a.count)
+        countries: (Array.from(countryMap.entries()) as Array<[string, { count: number; code: string }]>)
+          .map(([country, data]) => ({ country, country_code: data.code, count: data.count }))
+          .sort((a, b) => b.count - a.count)
           .slice(0, 20),
-        cities: Array.from(cityMap.entries())
-          .map(([city, data]: [string, { count: number; country: string }]) => ({ city, country: data.country, count: data.count }))
-          .sort((a: { count: number }, b: { count: number }) => b.count - a.count)
+        cities: (Array.from(cityMap.entries()) as Array<[string, { count: number; country: string }]>)
+          .map(([city, data]) => ({ city, country: data.country, count: data.count }))
+          .sort((a, b) => b.count - a.count)
           .slice(0, 15),
-        languages: Array.from(languageMap.entries())
-          .map(([language, count]: [string, number]) => ({ language, count }))
-          .sort((a: { count: number }, b: { count: number }) => b.count - a.count)
+        languages: (Array.from(languageMap.entries()) as Array<[string, number]>)
+          .map(([language, count]) => ({ language, count }))
+          .sort((a, b) => b.count - a.count)
           .slice(0, 10),
-        hourlyData: Array.from(hourlyMap.entries())
-          .map(([hour, data]: [number, { visitors: Set<string>; pageViews: number }]) => ({ hour, visitors: data.visitors.size, pageViews: data.pageViews }))
-          .sort((a: { hour: number }, b: { hour: number }) => a.hour - b.hour),
+        hourlyData: (Array.from(hourlyMap.entries()) as Array<[number, { visitors: Set<string>; pageViews: number }]>)
+          .map(([hour, data]) => ({ hour, visitors: data.visitors.size, pageViews: data.pageViews }))
+          .sort((a, b) => a.hour - b.hour),
         recentVisitors
       });
     } catch (error) {
