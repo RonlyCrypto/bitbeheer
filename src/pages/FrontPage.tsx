@@ -43,37 +43,37 @@ export default function FrontPage() {
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-16">
                 <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                  Mijn Verhaal
+                  Het Verhaal van BitBeheer
                 </h2>
                 <p className="text-xl text-gray-600 leading-relaxed">
-                  Waarom ik dit platform heb gemaakt en hoe ik jou kan helpen
+                  Waarom we BitBeheer hebben opgericht en wat we willen bereiken
                 </p>
               </div>
 
               <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
                 <div>
                   <h3 className="text-3xl font-bold text-gray-900 mb-6">
-                    Hey! Mijn naam is Giovanni
+                    Waarom BitBeheer bestaat
                   </h3>
                   <div className="space-y-6 text-lg text-gray-600 leading-relaxed">
                     <p>
-                      Ik ben sinds 2017 actief in de wereld van cryptocurrency. In de afgelopen jaren heb ik van alles voorbij zien komen: 
-                      Bitcoin, altcoins, NFT's, memecoins, noem het maar op. Ik heb meegemaakt hoe de markt piekte, 
-                      instortte en weer opkrabbelde. En ja… ook de scams, hypes en fabels zijn me niet bespaard gebleven.
+                      BitBeheer is ontstaan uit de behoefte om mensen in Nederland te helpen veilig en verstandig te investeren in Bitcoin. 
+                      Sinds 2017 hebben we gezien hoe de cryptomarkt groeide, maar ook hoe veel beginners verloren door gebrek aan kennis, 
+                      verkeerde keuzes en oplichting. Bitcoin investeren in Nederland kan overweldigend zijn zonder de juiste begeleiding.
                     </p>
                     <p>
-                      Wat me al een hele tijd opvalt, is dat steeds meer mensen bij het horen van "Bitcoin" of "crypto" meteen aan oplichting denken. 
-                      Dat vind ik jammer, want cryptocurrency heeft daar vaak helemaal niets mee te maken. In veel gevallen gaat het om 
-                      gewone oplichting met fiatgeld, waarbij crypto alleen als excuus wordt gebruikt.
+                      Steeds meer Nederlanders willen investeren in Bitcoin, maar weten niet waar ze moeten beginnen. Er is veel informatie beschikbaar, 
+                      maar veel ervan is verwarrend, misleidend of gericht op hype. Veel beginners verliezen geld door niet te weten welke exchanges 
+                      betrouwbaar zijn, Bitcoin op exchanges te bewaren in plaats van eigen beheer, of te vallen voor scams en oplichting.
                     </p>
                     <p>
-                      <strong>Daarom ben ik deze website gestart.</strong> Ik wil mensen helpen die interesse hebben in het investeren in Bitcoin, 
-                      maar niet goed weten waar ze moeten beginnen of waar ze op moeten letten. Met de juiste kennis kun je jezelf 
-                      beschermen, slimme keuzes maken en met vertrouwen de cryptowereld instappen.
+                      <strong>Daarom hebben we BitBeheer opgericht.</strong> We willen Nederlanders helpen die interesse hebben in Bitcoin investeren, 
+                      maar niet goed weten waar ze moeten beginnen. Met persoonlijke 1-op-1 begeleiding, praktische kennis en echte voorbeelden 
+                      helpen we je stap voor stap om veilig Bitcoin te kopen, te bewaren en in eigen beheer te houden.
                     </p>
                     <p className="text-orange-600 font-semibold">
-                      Mijn doel is simpel: anderen helpen begrijpen hoe je veilig Bitcoin aankoopt en in eigen beheer bewaart, 
-                      zonder poespas, zonder hype, gewoon eerlijk en duidelijk.
+                      Ons doel is duidelijk: Nederlanders helpen begrijpen hoe je veilig Bitcoin aankoopt en in eigen beheer bewaart, 
+                      zonder poespas, zonder hype, gewoon eerlijk en duidelijk. Bitcoin voor beginners in Nederland, met Nederlandse begeleiding.
                     </p>
                   </div>
                 </div>
