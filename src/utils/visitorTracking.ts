@@ -193,7 +193,7 @@ class VisitorTracker {
 
       // Send to Supabase
       const { supabase } = await import('../lib/supabase');
-      await supabase.from('visitor_analytics').insert({
+      const { data, error } = await supabase.from('visitor_analytics').insert({
         visitor_id: visitorData.visitor_id,
         session_id: visitorData.session_id,
         page_path: visitorData.page_path,
@@ -211,9 +211,25 @@ class VisitorTracker {
         language: visitorData.language,
         session_duration: timeSpent > 0 ? timeSpent : null
       });
+
+      if (error) {
+        console.error('Error inserting visitor analytics:', error);
+        // Log more details for debugging
+        console.error('Visitor data that failed:', {
+          visitor_id: visitorData.visitor_id,
+          page_path: visitorData.page_path,
+          error_message: error.message,
+          error_code: error.code
+        });
+      } else {
+        console.log('Visitor analytics tracked successfully:', visitorData.page_path);
+      }
     } catch (error) {
-      // Silently fail - analytics should not break the site
+      // Log error but don't break the site
       console.error('Error tracking page view:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', error.message, error.stack);
+      }
     }
   }
 

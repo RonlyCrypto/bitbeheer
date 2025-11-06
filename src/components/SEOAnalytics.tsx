@@ -97,6 +97,12 @@ export default function SEOAnalytics() {
 
       if (error) {
         console.error('Error loading analytics:', error);
+        console.error('Error details:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        });
         // If table doesn't exist, create sample data structure
         setAnalyticsData({
           totalVisitors: 0,
@@ -117,6 +123,8 @@ export default function SEOAnalytics() {
         setIsLoadingAnalytics(false);
         return;
       }
+
+      console.log('Loaded visits from database:', visits?.length || 0, 'visits');
 
       // Process analytics data
       const uniqueVisitors = new Set(visits?.map((v: any) => v.visitor_id || v.ip_address) || []);
@@ -1161,9 +1169,18 @@ export default function SEOAnalytics() {
             <div className="bg-white rounded-xl p-12 text-center shadow-lg">
               <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Geen Analytics Data</h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 mb-4">
                 Analytics data wordt verzameld zodra bezoekers je website bezoeken
               </p>
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg text-left max-w-2xl mx-auto">
+                <p className="text-sm font-semibold text-gray-900 mb-2">Debug informatie:</p>
+                <ul className="text-xs text-gray-600 space-y-1">
+                  <li>• Open de browser console (F12) om tracking errors te zien</li>
+                  <li>• Controleer of de visitor_analytics tabel bestaat in Supabase</li>
+                  <li>• Controleer RLS policies voor de visitor_analytics tabel</li>
+                  <li>• Bezoek een pagina om tracking te testen</li>
+                </ul>
+              </div>
             </div>
           )}
         </div>
