@@ -956,16 +956,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Internal Links Section for SEO */}
-      <div className="mt-8 pt-8 border-t border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Gerelateerde Pagina's</h3>
-        <div className="flex flex-wrap gap-4">
-          <Link to="/" className="text-orange-600 hover:text-orange-700 underline">Home</Link>
-          <Link to="/bitcoin-history" className="text-orange-600 hover:text-orange-700 underline">Bitcoin Geschiedenis</Link>
-          <Link to="/portfolio" className="text-orange-600 hover:text-orange-700 underline">Portfolio</Link>
-          <Link to="/user-dashboard" className="text-orange-600 hover:text-orange-700 underline">Dashboard</Link>
-        </div>
-      </div>
     </div>
   );
 }
