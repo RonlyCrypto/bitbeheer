@@ -381,7 +381,6 @@ export default function SEOAnalytics() {
         for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
           const dayDate = new Date(weekStartDate);
           dayDate.setDate(weekStartDate.getDate() + dayIndex);
-          const dayStr = dayDate.toISOString().split('T')[0];
           const dateKey = `${targetWeekStart}-${dayIndex}`;
           const dayData = timeSeriesMap[dateKey] || { visitors: new Set<string>(), pageViews: 0 };
           
@@ -396,7 +395,7 @@ export default function SEOAnalytics() {
           });
         }
       } else {
-        // For other periods: use existing logic
+        // For other periods (month, year): use existing logic
         timeSeriesData = Object.entries(timeSeriesMap)
           .map(([dateKey, data]) => {
             let displayDate = dateKey;
@@ -404,16 +403,6 @@ export default function SEOAnalytics() {
             
             // Format display date based on period
             switch (timePeriod) {
-              case 'week':
-                // This case is now handled above, but keep for backwards compatibility
-                const [weekStart, dayIndex] = dateKey.split('-');
-                const dayNames = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'];
-                const dayDate = new Date(weekStart);
-                dayDate.setDate(dayDate.getDate() + parseInt(dayIndex));
-                const dateFormatted = dayDate.toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit' });
-                displayDate = `${dayNames[parseInt(dayIndex)]} ${dateFormatted}`;
-                sortKey = `${weekStart}-${dayIndex}`;
-                break;
               case 'month':
                 // Format: "Week 1", "Week 2", etc.
                 const [year, month, week] = dateKey.split('-');
@@ -1535,7 +1524,7 @@ export default function SEOAnalytics() {
                   onClick={async () => {
                     try {
                       // Test insert directly
-                      const { data, error } = await supabase.from('visitor_analytics').insert({
+                      const { error } = await supabase.from('visitor_analytics').insert({
                         visitor_id: 'test-' + Date.now(),
                         session_id: 'test-session',
                         page_path: '/test',
