@@ -107,6 +107,7 @@ export default function SEOAnalytics() {
     });
 
     if (hovered) {
+      // Use mouse position directly (clientX/Y are relative to viewport)
       setHoveredBar({
         x: e.clientX,
         y: e.clientY,
@@ -1179,14 +1180,15 @@ export default function SEOAnalytics() {
                       onMouseMove={handleChartMouseMove}
                       onMouseLeave={handleChartMouseLeave}
                     />
-                    {/* Tooltip */}
+                    {/* Tooltip - positioned at mouse location */}
                     {hoveredBar && (
                       <div
-                        className="absolute bg-gray-900 text-white text-sm rounded-lg shadow-xl p-3 z-50 pointer-events-none"
+                        className="fixed bg-gray-900 text-white text-sm rounded-lg shadow-xl p-3 z-50 pointer-events-none"
                         style={{
-                          left: `${hoveredBar.x + 10}px`,
+                          left: `${hoveredBar.x + 15}px`,
                           top: `${hoveredBar.y - 10}px`,
-                          transform: 'translateY(-100%)'
+                          transform: 'translateY(-100%)',
+                          maxWidth: '250px'
                         }}
                       >
                         <div className="font-semibold mb-2 border-b border-gray-700 pb-1">
