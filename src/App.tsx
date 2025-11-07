@@ -25,6 +25,7 @@ import { SettingsProvider } from './contexts/SettingsContext';
 import { ProfilePopupProvider } from './contexts/ProfilePopupContext';
 import ImpersonationBanner from './components/ImpersonationBanner';
 import SystemStatusDebug from './components/SystemStatusDebug';
+import MobileBottomNav from './components/MobileBottomNav';
 import { initVisitorTracking } from './utils/visitorTracking';
 
 function AppContent() {
@@ -38,9 +39,9 @@ function AppContent() {
   return (
     <>
       <SiteAccessControl>
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-          <Header />
-          
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <Header />
+
           {/* Global Impersonation Banner - Show on all routes when impersonating */}
           <ImpersonationBanner />
           
@@ -116,15 +117,15 @@ function AppContent() {
                                   className="inline-block bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors"
                                 >
                                   Terug naar Home
-                                </a>
-                              </div>
-                            </div>
+              </a>
+            </div>
+        </div>
                           }
                         />
           </Routes>
 
-          <Footer />
-        </div>
+      <Footer />
+    </div>
       </SiteAccessControl>
       
       {/* Welcome Popup */}

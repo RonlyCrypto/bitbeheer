@@ -43,19 +43,22 @@ export default function Header() {
   return (
     <>
     <header className="bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg">
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-4 md:py-6">
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-4">
-            <div className="bg-white bg-opacity-20 p-3 rounded-xl backdrop-blur-sm">
-              <Bitcoin className="w-8 h-8" />
+          <Link to="/" className="flex items-center gap-2 md:gap-4">
+            <div className="bg-white bg-opacity-20 p-2 md:p-3 rounded-xl backdrop-blur-sm">
+              <Bitcoin className="w-6 h-6 md:w-8 md:h-8" />
             </div>
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">BitBeheer</h1>
-              <p className="text-orange-100 text-sm">Persoonlijke begeleiding bij het investeren in Bitcoin.</p>
+            <div className="hidden sm:block">
+              <h1 className="text-xl md:text-3xl font-bold tracking-tight">BitBeheer</h1>
+              <p className="text-orange-100 text-xs md:text-sm">Persoonlijke begeleiding bij het investeren in Bitcoin.</p>
+            </div>
+            <div className="sm:hidden">
+              <h1 className="text-lg font-bold tracking-tight">BitBeheer</h1>
             </div>
           </Link>
           
-          {/* Navigation Menu */}
+          {/* Navigation Menu - Desktop Only */}
           <nav className="hidden md:flex items-center gap-4">
             {/* Admin Dashboard - Only visible for admins when not impersonating */}
             {!isImpersonating && canAccessAdmin && (
@@ -94,7 +97,7 @@ export default function Header() {
                     : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'
                 }`}>
                   <BarChart3 className="w-5 h-5" />
-                </div>
+          </div>
                 <span className="text-sm font-medium">Dashboard</span>
               </Link>
             )}
@@ -166,7 +169,7 @@ export default function Header() {
             )}
           </nav>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             {/* Settings Menu or Login/Register */}
             {isAuthenticated || isImpersonating ? (
               <div className="flex items-center gap-3">
@@ -174,12 +177,12 @@ export default function Header() {
                 <div className="relative settings-dropdown">
                   <button 
                     onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
-                    className="flex items-center gap-3 bg-white bg-opacity-20 px-4 py-3 rounded-xl backdrop-blur-sm hover:bg-opacity-30 transition-all duration-300"
+                    className="flex items-center gap-2 md:gap-3 bg-white bg-opacity-20 px-2 md:px-4 py-2 md:py-3 rounded-xl backdrop-blur-sm hover:bg-opacity-30 transition-all duration-300"
                   >
-                    <div className="w-8 h-8 bg-white bg-opacity-30 rounded-full flex items-center justify-center">
-                      <Settings className="w-5 h-5" />
+                    <div className="w-7 h-7 md:w-8 md:h-8 bg-white bg-opacity-30 rounded-full flex items-center justify-center">
+                      <Settings className="w-4 h-4 md:w-5 md:h-5" />
                     </div>
-                    <span className="font-medium">
+                    <span className="font-medium text-sm md:text-base hidden sm:inline">
                       {getDisplayName(user, isImpersonating, impersonatedUser, null)}
                     </span>
                   </button>
