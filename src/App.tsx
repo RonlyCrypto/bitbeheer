@@ -123,9 +123,11 @@ function AppContent() {
                           }
                         />
           </Routes>
-
-      <Footer />
-    </div>
+          
+          {/* Mobile Bottom Navigation - Only for logged in users */}
+          <MobileBottomNav />
+        </div>
+        <Footer />
       </SiteAccessControl>
       
       {/* Welcome Popup */}
