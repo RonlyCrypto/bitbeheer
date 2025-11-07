@@ -1,5 +1,4 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { TrendingUp, Calendar, Zap, Minus, Maximize, Calculator, Eye, EyeOff, Layers } from 'lucide-react';
 import { initializeEarlyBitcoinData, fetchAllBitcoinData } from '../services/priceService';
 import { bitcoinDataManager } from '../services/bitcoinDataManager';
