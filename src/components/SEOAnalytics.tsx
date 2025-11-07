@@ -71,6 +71,8 @@ export default function SEOAnalytics() {
   const [aiRecommendations, setAiRecommendations] = useState<string[]>([]);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('week');
   const [recentVisitorsLimit, setRecentVisitorsLimit] = useState<number>(50);
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [selectedIp, setSelectedIp] = useState<string | null>(null);
   const chartCanvasRef = useRef<HTMLCanvasElement>(null);
   const [hoveredBar, setHoveredBar] = useState<{ x: number; y: number; data: { date: string; visitors: number; pageViews: number } } | null>(null);
 
@@ -78,7 +80,7 @@ export default function SEOAnalytics() {
     if (activeSubTab === 'analytics') {
       loadAnalytics();
     }
-  }, [activeSubTab, timePeriod]);
+  }, [activeSubTab, timePeriod, selectedCity, selectedIp]);
 
   // Draw chart when data changes
   useEffect(() => {
@@ -135,6 +137,16 @@ export default function SEOAnalytics() {
         today.setHours(0, 0, 0, 0);
         const todayStr = today.toISOString();
         query = query.gte('visited_at', todayStr);
+      }
+      
+      // Apply city filter
+      if (selectedCity) {
+        query = query.eq('city', selectedCity.split(',')[0].trim());
+      }
+      
+      // Apply IP filter
+      if (selectedIp) {
+        query = query.eq('ip_address', selectedIp);
       }
       
       const { data: visits, error } = await query.limit(1000);
@@ -965,27 +977,79 @@ export default function SEOAnalytics() {
             </div>
           ) : analyticsData ? (
             <>
-              {/* Time Period Selector */}
+              {/* Time Period Selector and Filters */}
               <div className="bg-white rounded-xl p-6 shadow-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-gray-900">Tijdsperiode</h3>
-                  <div className="flex gap-2">
-                    {(['day', 'week', 'month', 'year'] as TimePeriod[]).map((period) => (
-                      <button
-                        key={period}
-                        onClick={() => setTimePeriod(period)}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                          timePeriod === period
-                            ? 'bg-orange-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between flex-wrap gap-4">
+                    <h3 className="text-lg font-bold text-gray-900">Tijdsperiode</h3>
+                    <div className="flex gap-2 flex-wrap">
+                      {(['day', 'week', 'month', 'year'] as TimePeriod[]).map((period) => (
+                        <button
+                          key={period}
+                          onClick={() => setTimePeriod(period)}
+                          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                            timePeriod === period
+                              ? 'bg-orange-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {period === 'day' && 'Per Dag'}
+                          {period === 'week' && 'Per Week'}
+                          {period === 'month' && 'Per Maand'}
+                          {period === 'year' && 'Per Jaar'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* City and IP Filters */}
+                  <div className="flex flex-wrap gap-4 items-center">
+                    <div className="flex-1 min-w-[200px]">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Filter op Stad</label>
+                      <select
+                        value={selectedCity || ''}
+                        onChange={(e) => setSelectedCity(e.target.value || null)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                       >
-                        {period === 'day' && 'Per Dag'}
-                        {period === 'week' && 'Per Week'}
-                        {period === 'month' && 'Per Maand'}
-                        {period === 'year' && 'Per Jaar'}
+                        <option value="">Alle steden</option>
+                        {analyticsData?.cities.map((city, index) => (
+                          <option key={index} value={`${city.city}, ${city.country}`}>
+                            {city.city}, {city.country} ({city.count})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex-1 min-w-[200px]">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Filter op IP Adres</label>
+                      <select
+                        value={selectedIp || ''}
+                        onChange={(e) => setSelectedIp(e.target.value || null)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      >
+                        <option value="">Alle IP adressen</option>
+                        {analyticsData?.recentVisitors
+                          .filter((v, index, self) => 
+                            v.ip_address && 
+                            index === self.findIndex(t => t.ip_address === v.ip_address)
+                          )
+                          .map((visitor, index) => (
+                            <option key={index} value={visitor.ip_address}>
+                              {visitor.ip_address}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                    {(selectedCity || selectedIp) && (
+                      <button
+                        onClick={() => {
+                          setSelectedCity(null);
+                          setSelectedIp(null);
+                        }}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
+                      >
+                        Filters wissen
                       </button>
-                    ))}
+                    )}
                   </div>
                 </div>
               </div>
@@ -1214,7 +1278,21 @@ export default function SEOAnalytics() {
                   {analyticsData.cities.length > 0 ? (
                     <div className="space-y-3 max-h-96 overflow-y-auto">
                       {analyticsData.cities.map((city, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div 
+                          key={index} 
+                          className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
+                            selectedCity === `${city.city}, ${city.country}`
+                              ? 'bg-orange-100 border-2 border-orange-500'
+                              : 'bg-gray-50 hover:bg-gray-100'
+                          }`}
+                          onClick={() => {
+                            if (selectedCity === `${city.city}, ${city.country}`) {
+                              setSelectedCity(null);
+                            } else {
+                              setSelectedCity(`${city.city}, ${city.country}`);
+                            }
+                          }}
+                        >
                           <div>
                             <p className="text-gray-900 font-medium">{city.city}</p>
                             <p className="text-xs text-gray-500">{city.country}</p>

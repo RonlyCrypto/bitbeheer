@@ -1,11 +1,14 @@
 import { Bitcoin, Shield, BookOpen, TrendingUp, Users, Target, ArrowRight, CheckCircle, BarChart3, Wallet, Lock, Smartphone, Monitor, Database } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
+import AnimatedBitcoinBackground from '../components/AnimatedBitcoinBackground';
 
 export default function FrontPage() {
   const { isAuthenticated } = useSupabaseAuth();
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 relative">
+      <AnimatedBitcoinBackground />
+      <div className="relative z-10">
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
         <div className="container mx-auto px-4 py-20">
@@ -85,20 +88,28 @@ export default function FrontPage() {
                   </div>
                   <div className="space-y-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      <span className="text-gray-700">Nederlanders helpen veilig Bitcoin te kopen en bewaren</span>
+                      <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                      <span className="text-gray-700">Bitcoin veilig kopen</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      <span className="text-gray-700">Persoonlijke begeleiding voor Bitcoin beginners in Nederland</span>
+                      <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                      <span className="text-gray-700">Weten wanneer je het beste kan instappen</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      <span className="text-gray-700">Eigen beheer promoten - not your keys, not your crypto</span>
+                      <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                      <span className="text-gray-700">Versturen en ontvangen</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      <span className="text-gray-700">Bitcoin educatie en kennis delen met Nederlandse investeerders</span>
+                      <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                      <span className="text-gray-700">Bewaren in eigen beheer</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                      <span className="text-gray-700">24/7 elke seconde je balans kunnen inzien</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                      <span className="text-gray-700">Altijd bij je geld kunnen</span>
                     </div>
                   </div>
                   <div className="mt-6 p-4 bg-white rounded-lg">
@@ -446,7 +457,7 @@ export default function FrontPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+      <section className="py-20 bg-gradient-to-r from-orange-500 to-orange-600 text-white mb-0">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
@@ -469,7 +480,7 @@ export default function FrontPage() {
           </div>
         </div>
       </section>
-
+      </div>
     </div>
   );
 }
