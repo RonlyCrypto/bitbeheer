@@ -350,10 +350,10 @@ export default function AdminDashboard() {
           {/* Tabs */}
           <div className="mb-8">
             <div className="border-b border-gray-200">
-              <nav className="-mb-px flex space-x-8">
+              <nav className="-mb-px flex space-x-8 overflow-x-auto md:overflow-visible scrollbar-hide md:scrollbar-default">
                 <button
                   onClick={() => setActiveTab('overview')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
                     activeTab === 'overview'
                       ? 'border-orange-500 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -363,7 +363,7 @@ export default function AdminDashboard() {
                 </button>
                 <button
                   onClick={() => setActiveTab('chat')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm relative ${
+                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm relative whitespace-nowrap flex-shrink-0 ${
                     activeTab === 'chat'
                       ? 'border-orange-500 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -371,14 +371,14 @@ export default function AdminDashboard() {
                 >
                   Chat
                   {metrics.newChats > 0 ? (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 md:h-5 md:w-5 flex items-center justify-center animate-pulse text-[10px] md:text-xs">
                       {metrics.newChats > 9 ? '9+' : metrics.newChats}
                     </span>
                   ) : null}
                 </button>
                 <button
                   onClick={() => setActiveTab('appointments')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm relative ${
+                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm relative whitespace-nowrap flex-shrink-0 ${
                     activeTab === 'appointments'
                       ? 'border-orange-500 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -386,14 +386,14 @@ export default function AdminDashboard() {
                 >
                   Afspraken
                   {metrics.pendingAppointments > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs font-bold rounded-full h-4 w-4 md:h-5 md:w-5 flex items-center justify-center text-[10px] md:text-xs">
                       {metrics.pendingAppointments > 9 ? '9+' : metrics.pendingAppointments}
                     </span>
                   )}
                 </button>
                 <button
                   onClick={() => setActiveTab('notifications')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm relative ${
+                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm relative whitespace-nowrap flex-shrink-0 ${
                     activeTab === 'notifications'
                       ? 'border-orange-500 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -401,14 +401,14 @@ export default function AdminDashboard() {
                 >
                   Notificaties
                   {metrics.newNotifications > 0 ? (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 md:h-5 md:w-5 flex items-center justify-center animate-pulse text-[10px] md:text-xs">
                       {metrics.newNotifications > 9 ? '9+' : metrics.newNotifications}
                     </span>
                   ) : null}
                 </button>
                 <button
                   onClick={() => setActiveTab('accounts')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm relative ${
+                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm relative whitespace-nowrap flex-shrink-0 ${
                     activeTab === 'accounts'
                       ? 'border-orange-500 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -416,14 +416,14 @@ export default function AdminDashboard() {
                 >
                   Accounts
                   {metrics.newAccounts > 0 ? (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 md:h-5 md:w-5 flex items-center justify-center animate-pulse text-[10px] md:text-xs">
                       {metrics.newAccounts > 9 ? '9+' : metrics.newAccounts}
                     </span>
                   ) : null}
                 </button>
                 <button
                   onClick={() => setActiveTab('pages')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
                     activeTab === 'pages'
                       ? 'border-orange-500 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -433,7 +433,7 @@ export default function AdminDashboard() {
                 </button>
         <button
           onClick={() => setActiveTab('categories')}
-          className={`py-2 px-1 border-b-2 font-medium text-sm ${
+          className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
             activeTab === 'categories'
               ? 'border-orange-500 text-orange-600'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -443,7 +443,7 @@ export default function AdminDashboard() {
         </button>
                 <button
                   onClick={() => setActiveTab('profile')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
                     activeTab === 'profile'
                       ? 'border-orange-500 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -453,7 +453,7 @@ export default function AdminDashboard() {
                 </button>
                 <button
                   onClick={() => setActiveTab('email-templates')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
                     activeTab === 'email-templates'
                       ? 'border-orange-500 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -463,7 +463,7 @@ export default function AdminDashboard() {
                 </button>
                 <button
                   onClick={() => setActiveTab('referral-links')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
                     activeTab === 'referral-links'
                       ? 'border-orange-500 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -473,7 +473,7 @@ export default function AdminDashboard() {
                 </button>
                 <button
                   onClick={() => setActiveTab('seo-analytics')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
                     activeTab === 'seo-analytics'
                       ? 'border-orange-500 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -483,7 +483,7 @@ export default function AdminDashboard() {
                 </button>
                 <button
                   onClick={() => setActiveTab('settings')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
                     activeTab === 'settings'
                       ? 'border-orange-500 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'

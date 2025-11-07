@@ -1,3 +1,25 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Hide scrollbar for mobile horizontal scroll */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Show scrollbar on desktop */
+@media (min-width: 768px) {
+  .scrollbar-default {
+    -ms-overflow-style: auto;
+    scrollbar-width: auto;
+  }
+  
+  .scrollbar-default::-webkit-scrollbar {
+    display: block;
+  }
+}

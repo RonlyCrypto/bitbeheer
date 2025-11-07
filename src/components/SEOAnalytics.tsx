@@ -248,29 +248,22 @@ export default function SEOAnalytics() {
         // Create time key based on period
         switch (timePeriod) {
           case 'day':
-            // Per dag: groepeer per uur (0-23) - gebruik vandaag als referentie
+            // Per dag: groepeer per uur (0-23)
             const hour = visitDateTime.getHours();
-            // Gebruik de datum van de visit, maar normaliseer naar vandaag voor consistentie
-            // Of gebruik de meest recente dag met data
             const dayStr = visitDateTime.toISOString().split('T')[0];
             timeKey = `${dayStr}-${String(hour).padStart(2, '0')}`; // YYYY-MM-DD-HH
             break;
           case 'week':
-            // Per week: groepeer per dag (maandag = 1, zondag = 0)
-            // JavaScript: 0 = zondag, 1 = maandag, etc.
-            // We willen maandag = 0, dus: (day + 6) % 7
+            // Per week: groepeer per dag (maandag = 0, zondag = 6)
             const dayOfWeek = (visitDateTime.getDay() + 6) % 7; // 0 = maandag, 6 = zondag
             const weekStart = new Date(visitDateTime);
-            weekStart.setDate(visitDateTime.getDate() - dayOfWeek); // Start of week (Monday)
+            weekStart.setDate(visitDateTime.getDate() - dayOfWeek);
             const weekStartStr = weekStart.toISOString().split('T')[0];
             timeKey = `${weekStartStr}-${dayOfWeek}`; // YYYY-MM-DD-0 (0=maandag, 6=zondag)
             break;
           case 'month':
-            // Per maand: groepeer per week
-            const monthStart = new Date(visitDateTime.getFullYear(), visitDateTime.getMonth(), 1);
-            const daysSinceMonthStart = Math.floor((visitDateTime.getTime() - monthStart.getTime()) / (1000 * 60 * 60 * 24));
-            const weekInMonth = Math.floor(daysSinceMonthStart / 7);
-            timeKey = `${visitDateTime.getFullYear()}-${String(visitDateTime.getMonth() + 1).padStart(2, '0')}-W${weekInMonth}`;
+            // Per maand: groepeer per dag
+            timeKey = visitDateTime.toISOString().split('T')[0]; // YYYY-MM-DD
             break;
           case 'year':
             // Per jaar: groepeer per maand
@@ -418,37 +411,79 @@ export default function SEOAnalytics() {
             pageViews: dayData.pageViews
           });
         }
+      } else if (timePeriod === 'month') {
+        // For month view: show all days of the month
+        // Get the most recent month from filtered visits
+        const months = new Set<string>();
+        filteredVisits?.forEach((visit: any) => {
+          const visitDateTime = new Date(visit.visited_at);
+          const monthStr = `${visitDateTime.getFullYear()}-${String(visitDateTime.getMonth() + 1).padStart(2, '0')}`;
+          months.add(monthStr);
+        });
+        
+        const targetMonth = months.size > 0
+          ? Array.from(months).sort().reverse()[0]
+          : (() => {
+              const now = new Date();
+              return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            })();
+        
+        const [year, month] = targetMonth.split('-');
+        const monthDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+        const daysInMonth = new Date(parseInt(year), parseInt(month), 0).getDate();
+        
+        // Initialize all days of the month
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dayDate = new Date(parseInt(year), parseInt(month) - 1, day);
+          const dayStr = dayDate.toISOString().split('T')[0];
+          const dateKey = `${dayStr}`;
+          const dayData = timeSeriesMap[dateKey] || { visitors: new Set<string>(), pageViews: 0 };
+          
+          const dateFormatted = dayDate.toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit' });
+          
+          timeSeriesData.push({
+            date: dateFormatted,
+            dateKey: dateKey,
+            visitors: dayData.visitors.size,
+            pageViews: dayData.pageViews
+          });
+        }
+      } else if (timePeriod === 'year') {
+        // For year view: show all 12 months
+        // Get the most recent year from filtered visits
+        const years = new Set<number>();
+        filteredVisits?.forEach((visit: any) => {
+          const visitDateTime = new Date(visit.visited_at);
+          years.add(visitDateTime.getFullYear());
+        });
+        
+        const targetYear = years.size > 0
+          ? Math.max(...Array.from(years))
+          : new Date().getFullYear();
+        
+        const monthNames = ['Januari', 'Februari', 'Maart', 'April', 'Mei', 'Juni', 'Juli', 'Augustus', 'September', 'Oktober', 'November', 'December'];
+        
+        // Initialize all 12 months
+        for (let month = 1; month <= 12; month++) {
+          const monthKey = `${targetYear}-${String(month).padStart(2, '0')}`;
+          const monthData = timeSeriesMap[monthKey] || { visitors: new Set<string>(), pageViews: 0 };
+          
+          timeSeriesData.push({
+            date: monthNames[month - 1],
+            dateKey: monthKey,
+            visitors: monthData.visitors.size,
+            pageViews: monthData.pageViews
+          });
+        }
       } else {
-        // For other periods (month, year): use existing logic
+        // Fallback for other periods
         timeSeriesData = Object.entries(timeSeriesMap)
-          .map(([dateKey, data]) => {
-            let displayDate = dateKey;
-            let sortKey = dateKey;
-            
-            // Format display date based on period
-            switch (timePeriod) {
-              case 'month':
-                // Format: "Week 1", "Week 2", etc.
-                const [year, month, week] = dateKey.split('-');
-                displayDate = `Week ${parseInt(week) + 1}`;
-                sortKey = `${year}-${month}-${week}`;
-                break;
-              case 'year':
-                // Format: "Januari", "Februari", etc.
-                const [, monthStr] = dateKey.split('-');
-                const monthNames = ['Januari', 'Februari', 'Maart', 'April', 'Mei', 'Juni', 'Juli', 'Augustus', 'September', 'Oktober', 'November', 'December'];
-                displayDate = monthNames[parseInt(monthStr) - 1] || `Maand ${monthStr}`;
-                sortKey = dateKey;
-                break;
-            }
-            
-            return {
-              date: displayDate,
-              dateKey: sortKey,
-              visitors: data.visitors.size,
-              pageViews: data.pageViews
-            };
-          })
+          .map(([dateKey, data]) => ({
+            date: dateKey,
+            dateKey: dateKey,
+            visitors: data.visitors.size,
+            pageViews: data.pageViews
+          }))
           .sort((a, b) => a.dateKey.localeCompare(b.dateKey));
       }
 
@@ -902,7 +937,7 @@ export default function SEOAnalytics() {
       {activeSubTab === 'seo' && (
         <div className="space-y-6">
           {/* SEO Score Card */}
-          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 border-2 border-orange-200">
+          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 md:p-6 border-2 border-orange-200">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">SEO Score</h3>
@@ -940,7 +975,7 @@ export default function SEOAnalytics() {
 
           {/* AI Recommendations for Crypto Beginners */}
           {aiRecommendations.length > 0 && (
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-200">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 md:p-6 border-2 border-blue-200">
               <div className="flex items-center gap-3 mb-4">
                 <Sparkles className="w-6 h-6 text-blue-600" />
                 <h3 className="text-xl font-bold text-gray-900">
@@ -963,7 +998,7 @@ export default function SEOAnalytics() {
 
           {/* SEO Issues */}
           {seoIssues.length > 0 && (
-            <div className="bg-white rounded-xl p-6 shadow-lg">
+            <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
               <h3 className="text-xl font-bold text-gray-900 mb-4">
                 Gevonden SEO Issues ({seoIssues.length})
               </h3>
@@ -1007,7 +1042,7 @@ export default function SEOAnalytics() {
           )}
 
           {/* Quick SEO Tips */}
-          <div className="bg-white rounded-xl p-6 shadow-lg">
+          <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
             <h3 className="text-xl font-bold text-gray-900 mb-4">Snelle SEO Tips</h3>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
@@ -1080,16 +1115,16 @@ export default function SEOAnalytics() {
           ) : analyticsData ? (
             <>
               {/* Time Period Selector and Filters */}
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center justify-between flex-wrap gap-4">
-                    <h3 className="text-lg font-bold text-gray-900">Tijdsperiode</h3>
-                    <div className="flex gap-2 flex-wrap">
+              <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
+                <div className="flex flex-col gap-3 md:gap-4">
+                  <div className="flex items-center justify-between flex-wrap gap-2 md:gap-4">
+                    <h3 className="text-base md:text-lg font-bold text-gray-900">Tijdsperiode</h3>
+                    <div className="flex gap-1 md:gap-2 flex-wrap">
                       {(['day', 'week', 'month', 'year'] as TimePeriod[]).map((period) => (
                         <button
                           key={period}
                           onClick={() => setTimePeriod(period)}
-                          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                          className={`px-2 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-xs md:text-sm transition-colors ${
                             timePeriod === period
                               ? 'bg-orange-600 text-white'
                               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -1105,13 +1140,13 @@ export default function SEOAnalytics() {
                   </div>
                   
                   {/* City and IP Filters */}
-                  <div className="flex flex-wrap gap-4 items-center">
-                    <div className="flex-1 min-w-[200px]">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Filter op Stad</label>
+                  <div className="flex flex-col md:flex-row flex-wrap gap-3 md:gap-4 items-stretch md:items-center">
+                    <div className="flex-1 min-w-0 md:min-w-[200px]">
+                      <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Filter op Stad</label>
                       <select
                         value={selectedCity || ''}
                         onChange={(e) => setSelectedCity(e.target.value || null)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full px-2 md:px-3 py-1.5 md:py-2 border border-gray-300 rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                       >
                         <option value="">Alle steden</option>
                         {analyticsData?.cities.map((city, index) => (
@@ -1121,12 +1156,12 @@ export default function SEOAnalytics() {
                         ))}
                       </select>
                     </div>
-                    <div className="flex-1 min-w-[200px]">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Filter op IP Adres</label>
+                    <div className="flex-1 min-w-0 md:min-w-[200px]">
+                      <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Filter op IP Adres</label>
                       <select
                         value={selectedIp || ''}
                         onChange={(e) => setSelectedIp(e.target.value || null)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full px-2 md:px-3 py-1.5 md:py-2 border border-gray-300 rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                       >
                         <option value="">Alle IP adressen</option>
                         {analyticsData?.recentVisitors
@@ -1147,7 +1182,7 @@ export default function SEOAnalytics() {
                           setSelectedCity(null);
                           setSelectedIp(null);
                         }}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
+                        className="px-3 md:px-4 py-1.5 md:py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-xs md:text-sm font-medium self-end md:self-center"
                       >
                         Filters wissen
                       </button>
@@ -1158,7 +1193,7 @@ export default function SEOAnalytics() {
 
               {/* Visitor Chart */}
               {analyticsData.timeSeriesData && analyticsData.timeSeriesData.length > 0 && (
-                <div className="bg-white rounded-xl p-6 shadow-lg">
+                <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xl font-bold text-gray-900">Bezoekers Overzicht</h3>
                     <div className="flex items-center gap-4 text-sm text-gray-600">
@@ -1194,7 +1229,7 @@ export default function SEOAnalytics() {
                         <div className="font-semibold mb-2 border-b border-gray-700 pb-1">
                           {timePeriod === 'day' && `Uur: ${hoveredBar.data.date}`}
                           {timePeriod === 'week' && `Dag: ${hoveredBar.data.date}`}
-                          {timePeriod === 'month' && `Week: ${hoveredBar.data.date}`}
+                          {timePeriod === 'month' && `Dag: ${hoveredBar.data.date}`}
                           {timePeriod === 'year' && `Maand: ${hoveredBar.data.date}`}
                         </div>
                         <div className="space-y-1">
@@ -1216,7 +1251,7 @@ export default function SEOAnalytics() {
 
               {/* Overview Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="bg-white rounded-xl p-6 shadow-lg">
+                <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
                   <div className="flex items-center gap-4">
                     <div className="bg-blue-100 p-3 rounded-lg">
                       <Users className="w-6 h-6 text-blue-600" />
@@ -1228,7 +1263,7 @@ export default function SEOAnalytics() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-xl p-6 shadow-lg">
+                <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
                   <div className="flex items-center gap-4">
                     <div className="bg-green-100 p-3 rounded-lg">
                       <Eye className="w-6 h-6 text-green-600" />
@@ -1240,7 +1275,7 @@ export default function SEOAnalytics() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-xl p-6 shadow-lg">
+                <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
                   <div className="flex items-center gap-4">
                     <div className="bg-orange-100 p-3 rounded-lg">
                       <BarChart3 className="w-6 h-6 text-orange-600" />
@@ -1252,7 +1287,7 @@ export default function SEOAnalytics() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-xl p-6 shadow-lg">
+                <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
                   <div className="flex items-center gap-4">
                     <div className="bg-purple-100 p-3 rounded-lg">
                       <Clock className="w-6 h-6 text-purple-600" />
@@ -1268,7 +1303,7 @@ export default function SEOAnalytics() {
               </div>
 
               {/* Top Pages */}
-              <div className="bg-white rounded-xl p-6 shadow-lg">
+              <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
                 <h3 className="text-xl font-bold text-gray-900 mb-4">Meest Bezochte Pagina's</h3>
                 {analyticsData.topPages.length > 0 ? (
                   <div className="space-y-3">
@@ -1302,7 +1337,7 @@ export default function SEOAnalytics() {
 
               {/* Referrers & Devices */}
               <div className="grid md:grid-cols-2 gap-6">
-                <div className="bg-white rounded-xl p-6 shadow-lg">
+                <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
                   <h3 className="text-xl font-bold text-gray-900 mb-4">Verkeersbronnen</h3>
                   {analyticsData.referrers.length > 0 ? (
                     <div className="space-y-3">
@@ -1318,7 +1353,7 @@ export default function SEOAnalytics() {
                   )}
                 </div>
 
-                <div className="bg-white rounded-xl p-6 shadow-lg">
+                <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
                   <h3 className="text-xl font-bold text-gray-900 mb-4">Apparaten</h3>
                   {analyticsData.devices.length > 0 ? (
                     <div className="space-y-3">
@@ -1346,7 +1381,7 @@ export default function SEOAnalytics() {
 
               {/* Countries & Cities */}
               <div className="grid md:grid-cols-2 gap-6">
-                <div className="bg-white rounded-xl p-6 shadow-lg">
+                <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
                   <div className="flex items-center gap-3 mb-4">
                     <Globe2 className="w-6 h-6 text-orange-600" />
                     <h3 className="text-xl font-bold text-gray-900">Landen</h3>
@@ -1373,7 +1408,7 @@ export default function SEOAnalytics() {
                   )}
                 </div>
 
-                <div className="bg-white rounded-xl p-6 shadow-lg">
+                <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
                   <div className="flex items-center gap-3 mb-4">
                     <Map className="w-6 h-6 text-orange-600" />
                     <h3 className="text-xl font-bold text-gray-900">Steden</h3>
@@ -1412,7 +1447,7 @@ export default function SEOAnalytics() {
 
               {/* Languages & Hourly Activity */}
               <div className="grid md:grid-cols-2 gap-6">
-                <div className="bg-white rounded-xl p-6 shadow-lg">
+                <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
                   <div className="flex items-center gap-3 mb-4">
                     <Languages className="w-6 h-6 text-orange-600" />
                     <h3 className="text-xl font-bold text-gray-900">Talen</h3>
@@ -1431,7 +1466,7 @@ export default function SEOAnalytics() {
                   )}
                 </div>
 
-                <div className="bg-white rounded-xl p-6 shadow-lg">
+                <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
                   <div className="flex items-center gap-3 mb-4">
                     <Activity className="w-6 h-6 text-orange-600" />
                     <h3 className="text-xl font-bold text-gray-900">Activiteit per Uur</h3>
@@ -1463,7 +1498,7 @@ export default function SEOAnalytics() {
               </div>
 
               {/* Recent Visitors with IP */}
-              <div className="bg-white rounded-xl p-6 shadow-lg">
+              <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <Users className="w-6 h-6 text-orange-600" />
