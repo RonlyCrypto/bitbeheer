@@ -6,6 +6,7 @@ import { PriceData, SimulationResult } from '../types';
 import PriceChart from './PriceChart';
 import DCASimulator from './DCASimulator';
 import LiveBitcoinPrice from './LiveBitcoinPrice';
+import CurrencyToggle from './CurrencyToggle';
 import { useCurrency } from '../contexts/CurrencyContext';
 
 const halvingEvents = [
@@ -641,9 +642,12 @@ export default function BitcoinHistory() {
           </div>
         </div>
 
-        {/* Live Bitcoin Price - Compact Version */}
-        <div className="lg:max-w-xs">
-          <LiveBitcoinPrice />
+        {/* Live Bitcoin Price and Currency Toggle */}
+        <div className="flex items-center gap-4">
+          <div className="lg:max-w-xs">
+            <LiveBitcoinPrice />
+          </div>
+          <CurrencyToggle />
         </div>
       </div>
 

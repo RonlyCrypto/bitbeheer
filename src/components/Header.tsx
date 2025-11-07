@@ -9,8 +9,6 @@ import { useSettings } from '../contexts/SettingsContext';
 import { useProfilePopup } from '../contexts/ProfilePopupContext';
 import { impersonationUtils } from '../utils/impersonation';
 import { getDisplayName, getDisplayEmail } from '../utils/emailUtils';
-import BitcoinLivePrice from './BitcoinLivePrice';
-import CurrencyToggle from './CurrencyToggle';
 import LoginRegister from './LoginRegister';
 
 export default function Header() {
@@ -176,12 +174,6 @@ export default function Header() {
           </nav>
           
           <div className="flex items-center gap-4">
-            {/* Bitcoin Live Price and Currency Toggle */}
-            <div className="hidden md:flex items-center gap-3">
-              <BitcoinLivePrice />
-              <CurrencyToggle />
-            </div>
-            
             {/* Settings Menu or Login/Register */}
             {isAuthenticated || isImpersonating ? (
               <div className="flex items-center gap-3">

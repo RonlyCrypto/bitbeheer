@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import PortfolioChart from '../components/PortfolioChart';
 import TransactionBlock from '../components/TransactionBlock';
+import CurrencyToggle from '../components/CurrencyToggle';
 import { bitcoinApiService, BitcoinWallet, BitcoinTransaction } from '../services/bitcoinApiService';
 import { supabase } from '../lib/supabase';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
@@ -343,6 +344,12 @@ export default function PortfolioPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Currency Toggle - Only on Portfolio page */}
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex justify-end">
+          <CurrencyToggle />
+        </div>
+      </div>
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
