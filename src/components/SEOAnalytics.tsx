@@ -179,7 +179,7 @@ export default function SEOAnalytics() {
 
       console.log('Loaded visits from database:', visits?.length || 0, 'visits');
 
-      // Filter by day if needed (after loading to get most recent day)
+      // Filter by day or week if needed (after loading to get most recent period)
       let filteredVisits = visits;
       if (timePeriod === 'day' && visits && visits.length > 0) {
         // Get the most recent day
@@ -197,6 +197,29 @@ export default function SEOAnalytics() {
         filteredVisits = visits.filter((visit: any) => {
           const visitDate = new Date(visit.visited_at);
           return visitDate >= dayStart && visitDate <= dayEnd;
+        });
+      } else if (timePeriod === 'week' && visits && visits.length > 0) {
+        // Get the most recent week
+        const weekStarts = new Set<string>();
+        visits.forEach((visit: any) => {
+          const visitDateTime = new Date(visit.visited_at);
+          const dayOfWeek = (visitDateTime.getDay() + 6) % 7; // 0 = maandag, 6 = zondag
+          const weekStart = new Date(visitDateTime);
+          weekStart.setDate(visitDateTime.getDate() - dayOfWeek);
+          weekStart.setHours(0, 0, 0, 0);
+          const weekStartStr = weekStart.toISOString().split('T')[0];
+          weekStarts.add(weekStartStr);
+        });
+        
+        const targetWeekStart = Array.from(weekStarts).sort().reverse()[0];
+        const weekStartDate = new Date(targetWeekStart);
+        const weekEndDate = new Date(weekStartDate);
+        weekEndDate.setDate(weekStartDate.getDate() + 6);
+        weekEndDate.setHours(23, 59, 59, 999);
+        
+        filteredVisits = visits.filter((visit: any) => {
+          const visitDate = new Date(visit.visited_at);
+          return visitDate >= weekStartDate && visitDate <= weekEndDate;
         });
       }
 
@@ -327,9 +350,9 @@ export default function SEOAnalytics() {
       
       if (timePeriod === 'day') {
         // For day view: show all 24 hours (00:00 to 23:59)
-        // Get the most recent day with data, or use today
+        // Get the most recent day from filtered visits
         const allDays = new Set<string>();
-        visits?.forEach((visit: any) => {
+        filteredVisits?.forEach((visit: any) => {
           const dayStr = new Date(visit.visited_at).toISOString().split('T')[0];
           allDays.add(dayStr);
         });
@@ -352,9 +375,9 @@ export default function SEOAnalytics() {
         }
       } else if (timePeriod === 'week') {
         // For week view: show Monday to Sunday with dates
-        // Get all unique week starts from the data
+        // Get the most recent week from filtered visits
         const weekStarts = new Set<string>();
-        visits?.forEach((visit: any) => {
+        filteredVisits?.forEach((visit: any) => {
           const visitDateTime = new Date(visit.visited_at);
           const dayOfWeek = (visitDateTime.getDay() + 6) % 7; // 0 = maandag, 6 = zondag
           const weekStart = new Date(visitDateTime);
