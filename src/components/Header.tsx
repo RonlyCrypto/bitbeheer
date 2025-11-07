@@ -39,13 +39,6 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showSettingsDropdown]);
 
-  const handleStopImpersonation = () => {
-    localStorage.removeItem('impersonation');
-    setIsImpersonating(false);
-    setImpersonatedUser(null);
-    // Redirect to admin dashboard
-    window.location.href = '/admin';
-  };
   
   return (
     <>
