@@ -132,11 +132,8 @@ export default function SEOAnalytics() {
         .order('visited_at', { ascending: false });
       
       if (timePeriod === 'day') {
-        // Get only today's data
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const todayStr = today.toISOString();
-        query = query.gte('visited_at', todayStr);
+        // Get data from the most recent day with data, or today
+        // We'll filter after loading to get the most recent day
       }
       
       // Apply city filter
@@ -182,8 +179,29 @@ export default function SEOAnalytics() {
 
       console.log('Loaded visits from database:', visits?.length || 0, 'visits');
 
+      // Filter by day if needed (after loading to get most recent day)
+      let filteredVisits = visits;
+      if (timePeriod === 'day' && visits && visits.length > 0) {
+        // Get the most recent day
+        const allDays = new Set<string>();
+        visits.forEach((visit: any) => {
+          const dayStr = new Date(visit.visited_at).toISOString().split('T')[0];
+          allDays.add(dayStr);
+        });
+        const targetDay = Array.from(allDays).sort().reverse()[0];
+        const dayStart = new Date(targetDay);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(targetDay);
+        dayEnd.setHours(23, 59, 59, 999);
+        
+        filteredVisits = visits.filter((visit: any) => {
+          const visitDate = new Date(visit.visited_at);
+          return visitDate >= dayStart && visitDate <= dayEnd;
+        });
+      }
+
       // Process analytics data
-      const uniqueVisitors = new Set(visits?.map((v: any) => v.visitor_id || v.ip_address) || []);
+      const uniqueVisitors = new Set(filteredVisits?.map((v: any) => v.visitor_id || v.ip_address) || []);
       
       // Initialize Maps using Object.create to avoid constructor issues
       const pageViewsMap = Object.create(null) as Record<string, { views: number; durations: number[] }>;
@@ -199,7 +217,7 @@ export default function SEOAnalytics() {
       let totalDuration = 0;
       let durationCount = 0;
 
-      visits?.forEach((visit: any) => {
+      filteredVisits?.forEach((visit: any) => {
         const visitDateTime = new Date(visit.visited_at);
         let timeKey = '';
         
@@ -308,13 +326,21 @@ export default function SEOAnalytics() {
       let timeSeriesData: Array<{ date: string; dateKey: string; visitors: number; pageViews: number }> = [];
       
       if (timePeriod === 'day') {
-        // For day view: show all 24 hours (00:00 to 23:00)
-        const today = new Date();
-        const todayStr = today.toISOString().split('T')[0];
+        // For day view: show all 24 hours (00:00 to 23:59)
+        // Get the most recent day with data, or use today
+        const allDays = new Set<string>();
+        visits?.forEach((visit: any) => {
+          const dayStr = new Date(visit.visited_at).toISOString().split('T')[0];
+          allDays.add(dayStr);
+        });
+        
+        const targetDay = allDays.size > 0 
+          ? Array.from(allDays).sort().reverse()[0] // Most recent day
+          : new Date().toISOString().split('T')[0];
         
         // Initialize all 24 hours
         for (let hour = 0; hour < 24; hour++) {
-          const hourKey = `${todayStr}-${String(hour).padStart(2, '0')}`;
+          const hourKey = `${targetDay}-${String(hour).padStart(2, '0')}`;
           const hourData = timeSeriesMap[hourKey] || { visitors: new Set<string>(), pageViews: 0 };
           
           timeSeriesData.push({
@@ -322,6 +348,51 @@ export default function SEOAnalytics() {
             dateKey: hourKey,
             visitors: hourData.visitors.size,
             pageViews: hourData.pageViews
+          });
+        }
+      } else if (timePeriod === 'week') {
+        // For week view: show Monday to Sunday with dates
+        // Get all unique week starts from the data
+        const weekStarts = new Set<string>();
+        visits?.forEach((visit: any) => {
+          const visitDateTime = new Date(visit.visited_at);
+          const dayOfWeek = (visitDateTime.getDay() + 6) % 7; // 0 = maandag, 6 = zondag
+          const weekStart = new Date(visitDateTime);
+          weekStart.setDate(visitDateTime.getDate() - dayOfWeek);
+          const weekStartStr = weekStart.toISOString().split('T')[0];
+          weekStarts.add(weekStartStr);
+        });
+        
+        // Use the most recent week, or current week
+        const targetWeekStart = weekStarts.size > 0
+          ? Array.from(weekStarts).sort().reverse()[0]
+          : (() => {
+              const now = new Date();
+              const dayOfWeek = (now.getDay() + 6) % 7;
+              const weekStart = new Date(now);
+              weekStart.setDate(now.getDate() - dayOfWeek);
+              return weekStart.toISOString().split('T')[0];
+            })();
+        
+        const weekStartDate = new Date(targetWeekStart);
+        const dayNames = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'];
+        
+        // Initialize all 7 days of the week
+        for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+          const dayDate = new Date(weekStartDate);
+          dayDate.setDate(weekStartDate.getDate() + dayIndex);
+          const dayStr = dayDate.toISOString().split('T')[0];
+          const dateKey = `${targetWeekStart}-${dayIndex}`;
+          const dayData = timeSeriesMap[dateKey] || { visitors: new Set<string>(), pageViews: 0 };
+          
+          const dayName = dayNames[dayIndex];
+          const dateFormatted = dayDate.toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit' });
+          
+          timeSeriesData.push({
+            date: `${dayName} ${dateFormatted}`,
+            dateKey: dateKey,
+            visitors: dayData.visitors.size,
+            pageViews: dayData.pageViews
           });
         }
       } else {
@@ -334,10 +405,13 @@ export default function SEOAnalytics() {
             // Format display date based on period
             switch (timePeriod) {
               case 'week':
-                // Format: "Maandag", "Dinsdag", etc.
+                // This case is now handled above, but keep for backwards compatibility
                 const [weekStart, dayIndex] = dateKey.split('-');
                 const dayNames = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'];
-                displayDate = dayNames[parseInt(dayIndex)] || `Dag ${dayIndex}`;
+                const dayDate = new Date(weekStart);
+                dayDate.setDate(dayDate.getDate() + parseInt(dayIndex));
+                const dateFormatted = dayDate.toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit' });
+                displayDate = `${dayNames[parseInt(dayIndex)]} ${dateFormatted}`;
                 sortKey = `${weekStart}-${dayIndex}`;
                 break;
               case 'month':
@@ -377,7 +451,7 @@ export default function SEOAnalytics() {
         .slice(0, 10);
 
       // Get recent visitors (based on limit)
-      const recentVisitors = visits
+      const recentVisitors = filteredVisits
         ?.slice(0, recentVisitorsLimit)
         .map((visit: any) => ({
           id: visit.id,
@@ -391,9 +465,9 @@ export default function SEOAnalytics() {
         })) || [];
 
       setAnalyticsData({
-        totalVisitors: visits?.length || 0,
+        totalVisitors: filteredVisits?.length || 0,
         uniqueVisitors: uniqueVisitors.size,
-        pageViews: visits?.length || 0,
+        pageViews: filteredVisits?.length || 0,
         avgSessionDuration: durationCount > 0 ? Math.round(totalDuration / durationCount) : 0,
         topPages,
         referrers: Object.entries(referrerMap)
@@ -627,17 +701,32 @@ export default function SEOAnalytics() {
     ctx.font = '11px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    const step = Math.max(1, Math.floor(data.length / 12)); // Show max 12 labels
+    
+    // For day view, show all 24 hours (but skip some if too many)
+    // For week view, show all 7 days
+    // For other views, show max 12 labels
+    let step = 1;
+    if (timePeriod === 'day') {
+      step = data.length <= 24 ? 1 : Math.max(1, Math.floor(data.length / 12));
+    } else if (timePeriod === 'week') {
+      step = 1; // Always show all 7 days
+    } else {
+      step = Math.max(1, Math.floor(data.length / 12));
+    }
+    
     data.forEach((point, index) => {
       if (index % step === 0 || index === data.length - 1) {
         const barSpacing = (width - padding.left - padding.right) / data.length;
         const x = padding.left + (barSpacing * index) + barSpacing / 2;
-        const label = point.date;
+        let label = point.date;
+        
+        // For day view, show hour format (already formatted as "00:00")
+        // For week view, labels already include day name and date
         
         ctx.save();
         ctx.translate(x, height - padding.bottom + 10);
-        // Only rotate if label is long
-        if (label.length > 6) {
+        // Rotate if label is long (but not for hours which are short)
+        if (label.length > 8 && timePeriod !== 'day') {
           ctx.rotate(-Math.PI / 4);
         }
         ctx.fillText(label, 0, 0);

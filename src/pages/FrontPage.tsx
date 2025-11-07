@@ -10,7 +10,7 @@ export default function FrontPage() {
       <AnimatedBitcoinBackground />
       <div className="relative z-10">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+      <section className="bg-gradient-to-r from-orange-500 to-orange-600 text-white relative z-10">
         <div className="container mx-auto px-4 py-20">
           <div className="max-w-4xl mx-auto text-center">
             <div className="flex justify-center mb-8">
@@ -204,7 +204,7 @@ export default function FrontPage() {
                   </p>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-8 mb-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12">
                   <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all">
                     <div className="bg-orange-100 p-4 rounded-xl w-fit mb-6">
                       <BarChart3 className="w-8 h-8 text-orange-600" />
@@ -289,7 +289,7 @@ export default function FrontPage() {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
               <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all">
                 <div className="bg-orange-100 p-4 rounded-xl w-fit mb-6">
                   <BookOpen className="w-8 h-8 text-orange-600" />
@@ -382,7 +382,7 @@ export default function FrontPage() {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
               <div className="space-y-8">
                 <div className="flex items-start gap-4">
                   <div className="bg-green-100 p-3 rounded-xl">

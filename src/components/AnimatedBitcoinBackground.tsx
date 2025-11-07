@@ -14,6 +14,7 @@ interface BitcoinLogo {
 
 export default function AnimatedBitcoinBackground() {
   const [logos, setLogos] = useState<BitcoinLogo[]>([]);
+  const [opacities, setOpacities] = useState<Record<number, number>>({});
   const scrollYRef = useRef(0);
   const animationFrameRef = useRef<number>();
   const startTimeRef = useRef(Date.now());
@@ -49,11 +50,13 @@ export default function AnimatedBitcoinBackground() {
       const now = Date.now();
       const elapsed = now - startTimeRef.current;
       
+      const newOpacities: Record<number, number> = {};
       setLogos(prevLogos => prevLogos.map(logo => {
         const cycle = (elapsed % logo.blinkSpeed) / logo.blinkSpeed;
         // Smooth fade in/out using sine wave
         const opacityMultiplier = (Math.sin(cycle * Math.PI * 2) + 1) / 2;
         const currentOpacity = logo.baseOpacity * (0.4 + opacityMultiplier * 0.6);
+        newOpacities[logo.id] = currentOpacity;
         
         // Calculate scroll offset
         const scrollOffset = scrollYRef.current * logo.speed;
@@ -64,6 +67,7 @@ export default function AnimatedBitcoinBackground() {
         };
       }));
       
+      setOpacities(newOpacities);
       animationFrameRef.current = requestAnimationFrame(animate);
     };
 
@@ -86,31 +90,24 @@ export default function AnimatedBitcoinBackground() {
         backfaceVisibility: 'hidden'
       }}
     >
-      {logos.map((logo) => {
-        const now = Date.now();
-        const elapsed = now - startTimeRef.current;
-        const cycle = (elapsed % logo.blinkSpeed) / logo.blinkSpeed;
-        const opacityMultiplier = (Math.sin(cycle * Math.PI * 2) + 1) / 2;
-        const currentOpacity = logo.baseOpacity * (0.4 + opacityMultiplier * 0.6);
-        
-        return (
-          <div
-            key={logo.id}
-            className="absolute"
-            style={{
-              left: `${logo.x}%`,
-              top: `${logo.y}%`,
-              width: `${logo.size}px`,
-              height: `${logo.size}px`,
-              opacity: currentOpacity,
-              transform: 'translate(-50%, -50%)',
-              willChange: 'transform, opacity'
-            }}
-          >
-            <Bitcoin className="w-full h-full text-orange-400" />
-          </div>
-        );
-      })}
+      {logos.map((logo) => (
+        <div
+          key={logo.id}
+          className="absolute"
+          style={{
+            left: `${logo.x}%`,
+            top: `${logo.y}%`,
+            width: `${logo.size}px`,
+            height: `${logo.size}px`,
+            opacity: opacities[logo.id] || logo.baseOpacity,
+            transform: 'translate(-50%, -50%)',
+            willChange: 'transform, opacity',
+            transition: 'opacity 0.3s ease-in-out'
+          }}
+        >
+          <Bitcoin className="w-full h-full text-orange-400" />
+        </div>
+      ))}
     </div>
   );
 }
