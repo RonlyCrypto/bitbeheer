@@ -429,7 +429,6 @@ export default function SEOAnalytics() {
             })();
         
         const [year, month] = targetMonth.split('-');
-        const monthDate = new Date(parseInt(year), parseInt(month) - 1, 1);
         const daysInMonth = new Date(parseInt(year), parseInt(month), 0).getDate();
         
         // Initialize all days of the month
