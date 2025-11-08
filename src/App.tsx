@@ -39,7 +39,7 @@ function AppContent() {
   return (
     <>
       <SiteAccessControl>
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100" style={{ backgroundColor: '#f9fafb' }}>
       <Header />
 
           {/* Global Impersonation Banner - Show on all routes when impersonating */}
@@ -123,11 +123,11 @@ function AppContent() {
                           }
                         />
           </Routes>
-          
+
           {/* Mobile Bottom Navigation - Only for logged in users */}
           <MobileBottomNav />
         </div>
-        <Footer />
+      <Footer />
       </SiteAccessControl>
       
       {/* Welcome Popup */}

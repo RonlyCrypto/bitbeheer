@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force light background on mobile - prevent dark mode override */
+html, body {
+  background-color: #f9fafb !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  html, body {
+    background-color: #f9fafb !important;
+  }
+}
+
 /* Hide scrollbar for mobile horizontal scroll */
 .scrollbar-hide {
   -ms-overflow-style: none;

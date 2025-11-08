@@ -670,102 +670,109 @@ export default function AccountBeheer() {
                 filteredUsers
                   .filter(user => (user.account_approved === true) || user.isAdmin || user.isTest)
                   .map((user) => (
-                    <div key={user.id} className="p-6 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <span className="font-medium text-gray-900">{user.email}</span>
-                              <span className="text-sm text-gray-500">•</span>
-                              <span className="text-sm text-gray-600">{user.name}</span>
-                              {user.isAdmin && (
-                                <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full font-semibold">
-                                  ADMIN
-                                </span>
-                              )}
-                              {user.isTest && (
-                                <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-semibold">
-                                  TEST
-                                </span>
-                              )}
-                              {user.category && !user.isAdmin && !user.isTest && (
-                                <>
-                                  <span className="text-sm text-gray-500">•</span>
-                                  <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
-                                    {user.category}
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                            {user.message && user.message !== 'Geen bericht' && (
-                              <p className="text-sm text-gray-600 mb-2">{user.message}</p>
+                    <div key={user.id} className="p-3 md:p-6 hover:bg-gray-50 transition-colors">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className="font-medium text-sm md:text-base text-gray-900 break-words">{user.email}</span>
+                            {user.name && (
+                              <>
+                                <span className="text-xs text-gray-500 hidden sm:inline">•</span>
+                                <span className="text-xs md:text-sm text-gray-600 break-words">{user.name}</span>
+                              </>
                             )}
-                            <div className="flex items-center gap-4 text-xs text-gray-400">
-                              <span>Aangemeld: {user.registrationDate || user.date}</span>
-                              {user.lastLogin && (
-                                <span>Laatste login: {user.lastLogin}</span>
-                              )}
-                              {user.loginCount && (
-                                <span>Logins: {user.loginCount}</span>
-                              )}
-                            </div>
-                            <div className="mt-2 flex items-center gap-2 flex-wrap">
-                              {user.isAdmin || user.isTest ? (
-                                <span className="inline-flex items-center gap-1 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                  <CheckCircle className="w-3 h-3" />
-                                  Altijd Actief
+                            {user.isAdmin && (
+                              <span className="text-[10px] md:text-xs bg-red-100 text-red-800 px-1.5 md:px-2 py-0.5 md:py-1 rounded-full font-semibold flex-shrink-0">
+                                ADMIN
+                              </span>
+                            )}
+                            {user.isTest && (
+                              <span className="text-[10px] md:text-xs bg-yellow-100 text-yellow-800 px-1.5 md:px-2 py-0.5 md:py-1 rounded-full font-semibold flex-shrink-0">
+                                TEST
+                              </span>
+                            )}
+                            {user.category && !user.isAdmin && !user.isTest && (
+                              <>
+                                <span className="text-xs text-gray-500 hidden sm:inline">•</span>
+                                <span className="text-[10px] md:text-xs bg-orange-100 text-orange-800 px-1.5 md:px-2 py-0.5 md:py-1 rounded-full flex-shrink-0 break-words">
+                                  {user.category}
                                 </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                                  <CheckCircle className="w-3 h-3" />
-                                  Geverifieerd
-                                </span>
-                              )}
-                              {/* First appointment status */}
-                              {user.first_appointment_completed && (
-                                <span className="inline-flex items-center gap-1 text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
-                                  <Calendar className="w-3 h-3" />
-                                  20min Gesprek Voltooid
-                                </span>
-                              )}
-                              {/* Account approval status */}
-                              {user.account_approved && (
-                                <span className="inline-flex items-center gap-1 text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full font-semibold">
-                                  <UserCheck className="w-3 h-3" />
-                                  Dashboard Actief
-                                </span>
-                              )}
-                              {!user.isAdmin && !user.isTest && (
-                                <select
-                                  value={user.actief !== false ? 'actief' : 'inactief'}
-                                  onChange={(e) => handleUpdateAccountStatus(user.id, e.target.value === 'actief')}
-                                  disabled={isUpdatingStatus === user.id}
-                                  className="text-xs px-2 py-1 rounded-full border border-gray-300 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 disabled:opacity-50 bg-green-50"
-                                >
-                                  <option value="actief">🟢 Actief</option>
-                                  <option value="inactief">🔴 Inactief</option>
-                                </select>
-                              )}
-                            </div>
+                              </>
+                            )}
+                          </div>
+                          {user.message && user.message !== 'Geen bericht' && (
+                            <p className="text-xs md:text-sm text-gray-600 mb-1 break-words">{user.message}</p>
+                          )}
+                          <div className="flex items-center gap-2 md:gap-4 text-[10px] md:text-xs text-gray-400 flex-wrap">
+                            <span>Aangemeld: {user.registrationDate || user.date}</span>
+                            {user.lastLogin && (
+                              <span>Laatste login: {user.lastLogin}</span>
+                            )}
+                            {user.loginCount !== undefined && (
+                              <span>Logins: {user.loginCount}</span>
+                            )}
+                          </div>
+                          <div className="mt-2 flex items-center gap-1.5 md:gap-2 flex-wrap">
+                            {user.isAdmin || user.isTest ? (
+                              <span className="inline-flex items-center gap-0.5 md:gap-1 text-[10px] md:text-xs bg-blue-100 text-blue-800 px-1.5 md:px-2 py-0.5 md:py-1 rounded-full flex-shrink-0">
+                                <CheckCircle className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                                <span className="hidden sm:inline">Altijd Actief</span>
+                                <span className="sm:hidden">Actief</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-0.5 md:gap-1 text-[10px] md:text-xs bg-green-100 text-green-800 px-1.5 md:px-2 py-0.5 md:py-1 rounded-full flex-shrink-0">
+                                <CheckCircle className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                                Geverifieerd
+                              </span>
+                            )}
+                            {/* First appointment status */}
+                            {user.first_appointment_completed && (
+                              <span className="inline-flex items-center gap-0.5 md:gap-1 text-[10px] md:text-xs bg-orange-100 text-orange-800 px-1.5 md:px-2 py-0.5 md:py-1 rounded-full flex-shrink-0">
+                                <Calendar className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                                <span className="hidden sm:inline">20min Gesprek Voltooid</span>
+                                <span className="sm:hidden">20min</span>
+                              </span>
+                            )}
+                            {/* Account approval status */}
+                            {user.account_approved && (
+                              <span className="inline-flex items-center gap-0.5 md:gap-1 text-[10px] md:text-xs bg-purple-100 text-purple-800 px-1.5 md:px-2 py-0.5 md:py-1 rounded-full font-semibold flex-shrink-0">
+                                <UserCheck className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                                <span className="hidden sm:inline">Dashboard Actief</span>
+                                <span className="sm:hidden">Dashboard</span>
+                              </span>
+                            )}
+                            {!user.isAdmin && !user.isTest && (
+                              <select
+                                value={user.actief !== false ? 'actief' : 'inactief'}
+                                onChange={(e) => handleUpdateAccountStatus(user.id, e.target.value === 'actief')}
+                                disabled={isUpdatingStatus === user.id}
+                                className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full border border-gray-300 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 disabled:opacity-50 bg-green-50 flex-shrink-0"
+                              >
+                                <option value="actief">🟢 Actief</option>
+                                <option value="inactief">🔴 Inactief</option>
+                              </select>
+                            )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
                           <button
                             onClick={() => handleViewUser(user)}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs md:text-sm"
                           >
-                            <Eye className="w-4 h-4" />
-                            Bekijken
+                            <Eye className="w-3 h-3 md:w-4 md:h-4" />
+                            <span className="hidden sm:inline">Bekijken</span>
+                            <span className="sm:hidden">Bekijk</span>
                           </button>
                           <button
                             onClick={() => {
                               handleLoginAsUser(user);
                               handleUpdateUserLogin(user.id);
                             }}
-                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                            className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs md:text-sm"
                           >
-                            <LogIn className="w-4 h-4" />
-                            Inloggen als
+                            <LogIn className="w-3 h-3 md:w-4 md:h-4" />
+                            <span className="hidden sm:inline">Inloggen als</span>
+                            <span className="sm:hidden">Login</span>
                           </button>
                         </div>
                       </div>
