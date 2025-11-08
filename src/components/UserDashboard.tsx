@@ -570,10 +570,30 @@ export default function UserDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <button className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
+              <button 
+                onClick={() => {
+                  // Navigate to appointments tab to show notifications
+                  setActiveTab('appointments');
+                  // Scroll to top of appointments section
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors relative"
+                title="Bekijk afspraken en notificaties"
+              >
                 <Bell className="w-6 h-6" />
+                {unreadChatCount > 0 && (
+                  <span className="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    {unreadChatCount > 9 ? '9+' : unreadChatCount}
+                  </span>
+                )}
               </button>
-              <button className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
+              <button 
+                onClick={() => {
+                  openProfilePopup();
+                }}
+                className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Open profiel instellingen"
+              >
                 <Settings className="w-6 h-6" />
               </button>
             </div>
