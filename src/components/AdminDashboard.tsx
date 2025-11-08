@@ -29,9 +29,7 @@ import { supabase } from '../lib/supabase';
 import NotificatieBeheer from './NotificatieBeheer';
 import AccountBeheer from './AccountBeheer';
 import AdminChat from './AdminChat';
-import CategorieBeheer from './CategorieBeheer';
 import EmailVerificationStatus from './EmailVerificationStatus';
-import AdminProfile from './AdminProfile';
 import AdminSettings from './AdminSettings';
 import AdminAppointmentManagement from './AdminAppointmentManagement';
 import EmailTemplates from './EmailTemplates';
@@ -422,36 +420,6 @@ export default function AdminDashboard() {
                   ) : null}
                 </button>
                 <button
-                  onClick={() => setActiveTab('pages')}
-                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
-                    activeTab === 'pages'
-                      ? 'border-orange-500 text-orange-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  Pagina's
-                </button>
-        <button
-          onClick={() => setActiveTab('categories')}
-          className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
-            activeTab === 'categories'
-              ? 'border-orange-500 text-orange-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-          }`}
-        >
-          Categorieën
-        </button>
-                <button
-                  onClick={() => setActiveTab('profile')}
-                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
-                    activeTab === 'profile'
-                      ? 'border-orange-500 text-orange-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  Profiel
-                </button>
-                <button
                   onClick={() => setActiveTab('email-templates')}
                   className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
                     activeTab === 'email-templates'
@@ -811,44 +779,6 @@ export default function AdminDashboard() {
           )}
 
           {/* Pages Tab */}
-          {activeTab === 'pages' && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-bold text-gray-900">Beschikbare Pagina's</h3>
-                <button className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
-                  <Plus className="w-4 h-4" />
-                  Nieuwe Pagina
-                </button>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                {adminPages.map((page) => (
-                  <Link
-                    key={page.id}
-                    to={page.path}
-                    className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all group"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className={`${page.color} p-3 rounded-xl`}>
-                        <page.icon className="w-8 h-8 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">
-                          {page.title}
-                        </h4>
-                        <p className="text-gray-600 mb-4">{page.description}</p>
-                        <div className="flex items-center gap-2 text-orange-600 font-medium">
-                          <span>Openen</span>
-                          <ChevronRight className="w-4 h-4" />
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Notifications Tab */}
           {activeTab === 'notifications' && (
             <div className="space-y-6">
@@ -874,20 +804,6 @@ export default function AdminDashboard() {
           {activeTab === 'appointments' && (
             <div className="space-y-6">
               <AdminAppointmentManagement />
-            </div>
-          )}
-
-          {/* Categories Tab */}
-          {activeTab === 'categories' && (
-            <div className="space-y-6">
-              <CategorieBeheer />
-            </div>
-          )}
-
-          {/* Profile Tab */}
-          {activeTab === 'profile' && (
-            <div className="space-y-6">
-              <AdminProfile />
             </div>
           )}
 
@@ -922,34 +838,81 @@ export default function AdminDashboard() {
           {/* Controls Tab */}
           {activeTab === 'controls' && (
             <div className="space-y-6">
-              <h3 className="text-2xl font-bold text-gray-900">Beheer Opties</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-bold text-gray-900">Beheer Opties & Pagina's</h3>
+                <button className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
+                  <Plus className="w-4 h-4" />
+                  Nieuwe Pagina
+                </button>
+              </div>
 
-              {/* Page Visibility Management - Temporarily disabled */}
-              {/* <PageManagement /> */}
-
-              <div className="grid md:grid-cols-2 gap-6">
-                {adminControls.filter(control => control.id !== 'page-visibility').map((control) => (
-                  <div
-                    key={control.id}
-                    className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer group"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className={`${control.color} p-3 rounded-xl`}>
-                        <control.icon className="w-8 h-8 text-white" />
+              {/* Beschikbare Pagina's */}
+              <div>
+                <h4 className="text-xl font-bold text-gray-900 mb-4">Beschikbare Pagina's</h4>
+                <div className="grid md:grid-cols-2 gap-6 mb-8">
+                  {adminPages.map((page) => (
+                    <Link
+                      key={page.id}
+                      to={page.path}
+                      className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all group"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className={`${page.color} p-3 rounded-xl`}>
+                          <page.icon className="w-8 h-8 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">
+                            {page.title}
+                          </h4>
+                          <p className="text-gray-600 mb-4">{page.description}</p>
+                          <div className="flex items-center gap-2 text-orange-600 font-medium">
+                            <span>Openen</span>
+                            <ChevronRight className="w-4 h-4" />
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <h4 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">
-                          {control.title}
-                        </h4>
-                        <p className="text-gray-600 mb-4">{control.description}</p>
-                        <div className="flex items-center gap-2 text-orange-600 font-medium">
-                          <Edit3 className="w-4 h-4" />
-                          <span>Beheren</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {/* Beheer Opties */}
+              <div>
+                <h4 className="text-xl font-bold text-gray-900 mb-4">Beheer Opties</h4>
+                <div className="grid md:grid-cols-2 gap-6">
+                  {adminControls.filter(control => control.id !== 'page-visibility').map((control) => (
+                    <div
+                      key={control.id}
+                      className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer group"
+                      onClick={() => {
+                        if (control.id === 'aanmeldingen') {
+                          setActiveTab('accounts');
+                        } else if (control.id === 'settings') {
+                          setActiveTab('settings');
+                        } else if (control.id === 'content') {
+                          // Could link to content management if exists
+                          console.log('Content beheer - nog te implementeren');
+                        }
+                      }}
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className={`${control.color} p-3 rounded-xl`}>
+                          <control.icon className="w-8 h-8 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">
+                            {control.title}
+                          </h4>
+                          <p className="text-gray-600 mb-4">{control.description}</p>
+                          <div className="flex items-center gap-2 text-orange-600 font-medium">
+                            <Edit3 className="w-4 h-4" />
+                            <span>Beheren</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           )}

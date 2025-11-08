@@ -222,14 +222,17 @@ export default function Header() {
                               Gebruiker Profiel
                             </button>
                           ) : (
-                            <Link 
-                              to="/admin" 
-                              className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                              onClick={() => setShowSettingsDropdown(false)}
+                            <button
+                              className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                              onClick={() => {
+                                console.log('🔗 Mijn Profiel clicked, opening popup');
+                                openProfilePopup();
+                                setShowSettingsDropdown(false);
+                              }}
                             >
                               <User className="w-4 h-4" />
                               Mijn Profiel
-                            </Link>
+                            </button>
                           )}
                           
                           {!isImpersonating && (
