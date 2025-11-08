@@ -17,7 +17,6 @@ import {
   Lock,
   ToggleLeft,
   ToggleRight,
-  Bell, // Added for notifications
   MessageSquare,
   Calendar,
   Clock,
@@ -29,7 +28,6 @@ import { supabase } from '../lib/supabase';
 import NotificatieBeheer from './NotificatieBeheer';
 import AccountBeheer from './AccountBeheer';
 import AdminChat from './AdminChat';
-import EmailVerificationStatus from './EmailVerificationStatus';
 import AdminSettings from './AdminSettings';
 import AdminAppointmentManagement from './AdminAppointmentManagement';
 import EmailTemplates from './EmailTemplates';
