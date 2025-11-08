@@ -108,7 +108,7 @@ export default function UserDashboard() {
   const { user } = useSupabaseAuth();
   const { theme } = useTheme();
   const { isImpersonating, impersonatedUser } = usePermissions();
-  const { isOpen: isProfilePopupOpen, closeProfilePopup } = useProfilePopup();
+  const { isOpen: isProfilePopupOpen, openProfilePopup, closeProfilePopup } = useProfilePopup();
   const [activeTab, setActiveTab] = useState('overview');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [goals, setGoals] = useState<Goal[]>([]);
