@@ -891,7 +891,7 @@ export default function SEOAnalytics() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between" flex-wrap>
         <div>
           <h2 className="text-3xl font-bold text-gray-900">SEO & Analytics</h2>
           <p className="text-gray-600 mt-2">
@@ -911,7 +911,7 @@ export default function SEOAnalytics() {
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2" flex-wrap>
               <Search className="w-5 h-5" />
               SEO Analyse
             </div>
@@ -924,7 +924,7 @@ export default function SEOAnalytics() {
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2" flex-wrap>
               <BarChart3 className="w-5 h-5" />
               Bezoekers Analytics
             </div>
@@ -937,7 +937,7 @@ export default function SEOAnalytics() {
         <div className="space-y-6">
           {/* SEO Score Card */}
           <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 md:p-6 border-2 border-orange-200">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4" flex-wrap>
               <div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">SEO Score</h3>
                 <p className="text-gray-600">
@@ -956,7 +956,7 @@ export default function SEOAnalytics() {
             <button
               onClick={analyzeSEO}
               disabled={isAnalyzing}
-              className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed" flex-wrap
             >
               {isAnalyzing ? (
                 <>
@@ -975,7 +975,7 @@ export default function SEOAnalytics() {
           {/* AI Recommendations for Crypto Beginners */}
           {aiRecommendations.length > 0 && (
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 md:p-6 border-2 border-blue-200">
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-3 mb-4" flex-wrap>
                 <Sparkles className="w-6 h-6 text-blue-600" />
                 <h3 className="text-xl font-bold text-gray-900">
                   AI Aanbevelingen: Website aanraden voor Crypto Beginners
@@ -1116,7 +1116,7 @@ export default function SEOAnalytics() {
               {/* Time Period Selector and Filters */}
               <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
                 <div className="flex flex-col gap-3 md:gap-4">
-                  <div className="flex items-center justify-between flex-wrap gap-2 md:gap-4">
+                  <div className="flex items-center justify-between flex-wrap gap-2 md:gap-4" flex-wrap>
                     <h3 className="text-base md:text-lg font-bold text-gray-900">Tijdsperiode</h3>
                     <div className="flex gap-1 md:gap-2 flex-wrap">
                       {(['day', 'week', 'month', 'year'] as TimePeriod[]).map((period) => (
@@ -1193,14 +1193,14 @@ export default function SEOAnalytics() {
               {/* Visitor Chart */}
               {analyticsData.timeSeriesData && analyticsData.timeSeriesData.length > 0 && (
                 <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-4" flex-wrap>
                     <h3 className="text-xl font-bold text-gray-900">Bezoekers Overzicht</h3>
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-4 text-sm text-gray-600" flex-wrap>
+                      <div className="flex items-center gap-2" flex-wrap>
                         <div className="w-4 h-0.5 bg-blue-500"></div>
                         <span>Bezoekers</span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2" flex-wrap>
                         <div className="w-4 h-0.5 bg-orange-500"></div>
                         <span>Pagina Weergaven</span>
                       </div>
@@ -1232,11 +1232,11 @@ export default function SEOAnalytics() {
                           {timePeriod === 'year' && `Maand: ${hoveredBar.data.date}`}
                         </div>
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2" flex-wrap>
                             <div className="w-3 h-3 bg-blue-500 rounded"></div>
                             <span>Bezoekers: <strong>{hoveredBar.data.visitors}</strong></span>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2" flex-wrap>
                             <div className="w-3 h-3 bg-orange-500 rounded"></div>
                             <span>Pagina Weergaven: <strong>{hoveredBar.data.pageViews}</strong></span>
                           </div>
@@ -1251,7 +1251,7 @@ export default function SEOAnalytics() {
               {/* Overview Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4" flex-wrap>
                     <div className="bg-blue-100 p-3 rounded-lg">
                       <Users className="w-6 h-6 text-blue-600" />
                     </div>
@@ -1263,7 +1263,7 @@ export default function SEOAnalytics() {
                 </div>
 
                 <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4" flex-wrap>
                     <div className="bg-green-100 p-3 rounded-lg">
                       <Eye className="w-6 h-6 text-green-600" />
                     </div>
@@ -1275,7 +1275,7 @@ export default function SEOAnalytics() {
                 </div>
 
                 <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4" flex-wrap>
                     <div className="bg-orange-100 p-3 rounded-lg">
                       <BarChart3 className="w-6 h-6 text-orange-600" />
                     </div>
@@ -1287,7 +1287,7 @@ export default function SEOAnalytics() {
                 </div>
 
                 <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4" flex-wrap>
                     <div className="bg-purple-100 p-3 rounded-lg">
                       <Clock className="w-6 h-6 text-purple-600" />
                     </div>
@@ -1307,8 +1307,8 @@ export default function SEOAnalytics() {
                 {analyticsData.topPages.length > 0 ? (
                   <div className="space-y-3">
                     {analyticsData.topPages.map((page, index) => (
-                      <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                        <div className="flex items-center gap-3">
+                      <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg" flex-wrap>
+                        <div className="flex items-center gap-3" flex-wrap>
                           <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
                             <span className="text-orange-600 font-bold">{index + 1}</span>
                           </div>
@@ -1341,8 +1341,8 @@ export default function SEOAnalytics() {
                   {analyticsData.referrers.length > 0 ? (
                     <div className="space-y-3">
                       {analyticsData.referrers.map((ref, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <p className="text-gray-900 truncate">{ref.source}</p>
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg" flex-wrap>
+                          <p className="text-gray-900 truncate" break-words>{ref.source}</p>
                           <span className="text-orange-600 font-bold">{ref.count}</span>
                         </div>
                       ))}
@@ -1357,8 +1357,8 @@ export default function SEOAnalytics() {
                   {analyticsData.devices.length > 0 ? (
                     <div className="space-y-3">
                       {analyticsData.devices.map((device, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center gap-2">
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg" flex-wrap>
+                          <div className="flex items-center gap-2" flex-wrap>
                             {device.type === 'Mobile' ? (
                               <Smartphone className="w-4 h-4 text-gray-600" />
                             ) : device.type === 'Tablet' ? (
@@ -1366,7 +1366,7 @@ export default function SEOAnalytics() {
                             ) : (
                               <Monitor className="w-4 h-4 text-gray-600" />
                             )}
-                            <p className="text-gray-900">{device.type}</p>
+                            <p className="text-gray-900" break-words>{device.type}</p>
                           </div>
                           <span className="text-orange-600 font-bold">{device.count}</span>
                         </div>
@@ -1381,18 +1381,18 @@ export default function SEOAnalytics() {
               {/* Countries & Cities */}
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
-                  <div className="flex items-center gap-3 mb-4">
+                  <div className="flex items-center gap-3 mb-4" flex-wrap>
                     <Globe2 className="w-6 h-6 text-orange-600" />
                     <h3 className="text-xl font-bold text-gray-900">Landen</h3>
                   </div>
                   {analyticsData.countries.length > 0 ? (
                     <div className="space-y-3">
                       {analyticsData.countries.map((country, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center gap-2">
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg" flex-wrap>
+                          <div className="flex items-center gap-2" flex-wrap>
                             <MapPin className="w-4 h-4 text-gray-600" />
                             <div>
-                              <p className="text-gray-900 font-medium">{country.country}</p>
+                              <p className="text-gray-900 font-medium" break-words>{country.country}</p>
                               {country.country_code && (
                                 <p className="text-xs text-gray-500">{country.country_code}</p>
                               )}
@@ -1408,7 +1408,7 @@ export default function SEOAnalytics() {
                 </div>
 
                 <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
-                  <div className="flex items-center gap-3 mb-4">
+                  <div className="flex items-center gap-3 mb-4" flex-wrap>
                     <Map className="w-6 h-6 text-orange-600" />
                     <h3 className="text-xl font-bold text-gray-900">Steden</h3>
                   </div>
@@ -1431,7 +1431,7 @@ export default function SEOAnalytics() {
                           }}
                         >
                           <div>
-                            <p className="text-gray-900 font-medium">{city.city}</p>
+                            <p className="text-gray-900 font-medium" break-words>{city.city}</p>
                             <p className="text-xs text-gray-500">{city.country}</p>
                           </div>
                           <span className="text-orange-600 font-bold">{city.count}</span>
@@ -1447,15 +1447,15 @@ export default function SEOAnalytics() {
               {/* Languages & Hourly Activity */}
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
-                  <div className="flex items-center gap-3 mb-4">
+                  <div className="flex items-center gap-3 mb-4" flex-wrap>
                     <Languages className="w-6 h-6 text-orange-600" />
                     <h3 className="text-xl font-bold text-gray-900">Talen</h3>
                   </div>
                   {analyticsData.languages.length > 0 ? (
                     <div className="space-y-3">
                       {analyticsData.languages.map((lang, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <p className="text-gray-900 font-medium">{lang.language.toUpperCase()}</p>
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg" flex-wrap>
+                          <p className="text-gray-900 font-medium" break-words>{lang.language.toUpperCase()}</p>
                           <span className="text-orange-600 font-bold">{lang.count}</span>
                         </div>
                       ))}
@@ -1466,14 +1466,14 @@ export default function SEOAnalytics() {
                 </div>
 
                 <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
-                  <div className="flex items-center gap-3 mb-4">
+                  <div className="flex items-center gap-3 mb-4" flex-wrap>
                     <Activity className="w-6 h-6 text-orange-600" />
                     <h3 className="text-xl font-bold text-gray-900">Activiteit per Uur</h3>
                   </div>
                   {analyticsData.hourlyData.length > 0 ? (
                     <div className="space-y-2">
                       {analyticsData.hourlyData.map((hour, index) => (
-                        <div key={index} className="flex items-center gap-3">
+                        <div key={index} className="flex items-center gap-3" flex-wrap>
                           <div className="w-16 text-sm text-gray-600 font-medium">
                             {String(hour.hour).padStart(2, '0')}:00
                           </div>
@@ -1498,12 +1498,12 @@ export default function SEOAnalytics() {
 
               {/* Recent Visitors with IP */}
               <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between mb-4" flex-wrap>
+                  <div className="flex items-center gap-3" flex-wrap>
                     <Users className="w-6 h-6 text-orange-600" />
                     <h3 className="text-xl font-bold text-gray-900">Recente Bezoekers</h3>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2" flex-wrap>
                     <span className="text-sm text-gray-600">Toon:</span>
                     <select
                       value={recentVisitorsLimit}
@@ -1522,18 +1522,18 @@ export default function SEOAnalytics() {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-gray-200">
-                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Tijd</th>
-                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">IP Adres</th>
-                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Locatie</th>
-                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Pagina</th>
-                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Browser</th>
-                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Apparaat</th>
+                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700" break-words>Tijd</th>
+                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700" break-words>IP Adres</th>
+                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700" break-words>Locatie</th>
+                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700" break-words>Pagina</th>
+                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700" break-words>Browser</th>
+                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700" break-words>Apparaat</th>
                         </tr>
                       </thead>
                       <tbody>
                         {analyticsData.recentVisitors.map((visitor, index) => (
                           <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-3 px-4 text-sm text-gray-900">
+                            <td className="py-3 px-4 text-sm text-gray-900" break-words>
                               {new Date(visitor.visited_at).toLocaleString('nl-NL', {
                                 day: '2-digit',
                                 month: '2-digit',
@@ -1541,19 +1541,19 @@ export default function SEOAnalytics() {
                                 minute: '2-digit'
                               })}
                             </td>
-                            <td className="py-3 px-4 text-sm text-gray-700 font-mono">
+                            <td className="py-3 px-4 text-sm text-gray-700 font-mono" break-words>
                               {visitor.ip_address || 'N/A'}
                             </td>
-                            <td className="py-3 px-4 text-sm text-gray-700">
+                            <td className="py-3 px-4 text-sm text-gray-700" break-words>
                               {visitor.city && visitor.country 
                                 ? `${visitor.city}, ${visitor.country}`
                                 : visitor.country || 'Onbekend'}
                             </td>
-                            <td className="py-3 px-4 text-sm text-gray-700 truncate max-w-xs">
+                            <td className="py-3 px-4 text-sm text-gray-700 truncate max-w-xs" break-words>
                               {visitor.page_path}
                             </td>
-                            <td className="py-3 px-4 text-sm text-gray-700">{visitor.browser}</td>
-                            <td className="py-3 px-4 text-sm text-gray-700">{visitor.device_type}</td>
+                            <td className="py-3 px-4 text-sm text-gray-700" break-words>{visitor.browser}</td>
+                            <td className="py-3 px-4 text-sm text-gray-700" break-words>{visitor.device_type}</td>
                           </tr>
                         ))}
                       </tbody>
