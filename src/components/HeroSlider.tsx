@@ -112,15 +112,15 @@ export default function HeroSlider() {
                 }`}>
                   Bit
                 </span>
-                <span className={`inline-block text-orange-200 transition-all duration-700 ${
-                  slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 w-0 mx-0' :
-                  'opacity-100 mx-1 md:mx-1.5'
+                <span className={`inline-block text-orange-200 transition-all duration-700 mx-1 md:mx-1.5 ${
+                  slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 invisible' :
+                  'opacity-100 visible'
                 }`}>
                   coin
                 </span>
-                <span className={`inline-block text-orange-200 transition-all duration-700 ${
-                  slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 w-0 ml-0' :
-                  'opacity-100 ml-1 md:ml-1.5'
+                <span className={`inline-block text-orange-200 transition-all duration-700 ml-1 md:ml-1.5 ${
+                  slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 invisible' :
+                  'opacity-100 visible'
                 }`}>
                   in eigen
                 </span>
@@ -135,7 +135,7 @@ export default function HeroSlider() {
             </div>
           </div>
 
-          {/* Slider Container */}
+          {/* Slider Container - Always present but hidden until ready */}
           <div className="relative">
             {/* Slides */}
             <div className="relative h-[200px] md:h-[180px]">
@@ -144,8 +144,8 @@ export default function HeroSlider() {
                   key={slide.id}
                   className={`absolute inset-0 transition-all duration-700 ease-in-out ${
                     index === currentSlide && showBitcoinText
-                      ? 'opacity-100 translate-y-0'
-                      : 'opacity-0 translate-y-4'
+                      ? 'opacity-100 translate-y-0 visible'
+                      : 'opacity-0 translate-y-4 invisible'
                   }`}
                 >
                   <div className="text-center">
