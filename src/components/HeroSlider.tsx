@@ -185,19 +185,7 @@ export default function HeroSlider() {
           overflow: hidden;
         }
 
-        /* Animatie wanneer banner geladen wordt - Bit en beheer schuiven uit elkaar */
-        .banner-animation.animate .left-text {
-          transform: translateX(-100px);
-          opacity: 1;
-        }
-
-        .banner-animation.animate .right-text {
-          transform: translateX(100px);
-          opacity: 1;
-          margin-left: 0;
-        }
-
-        /* Na sliding: Bit en beheer keren terug naar eindpositie, coin in eigen verschijnt */
+        /* Animatie wanneer banner geladen wordt - Bit en beheer schuiven uit elkaar, dan terug */
         .banner-animation.animate .left-text {
           animation: slide-left-then-back 1s ease forwards;
         }
