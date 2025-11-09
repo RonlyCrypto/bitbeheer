@@ -9,8 +9,6 @@ export default function FrontPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 relative">
       <AnimatedBitcoinBackground />
       <div className="relative z-10">
-      {/* SEO H1 Tag - Always visible for SEO */}
-      <h1 className="sr-only">Bitcoin Investeren in Nederland - Persoonlijke Begeleiding voor Beginners</h1>
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-orange-500 to-orange-600 text-white relative z-10">
         <div className="container mx-auto px-4 py-20">
@@ -20,9 +18,9 @@ export default function FrontPage() {
                 <Bitcoin className="w-16 h-16" />
               </div>
             </div>
-            <h2 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
-              Persoonlijke Bitcoin Begeleiding
-            </h2>
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
+              Bitcoin Investeren in Nederland - Persoonlijke Begeleiding voor Beginners
+            </h1>
             <p className="text-xl md:text-2xl text-orange-100 mb-8 max-w-3xl mx-auto leading-relaxed">
               Persoonlijke 1-op-1 begeleiding voor mensen die willen investeren in Bitcoin. 
               Leer veilig Bitcoin kopen, bewaren en in eigen beheer houden.
@@ -478,6 +476,22 @@ export default function FrontPage() {
                 Aanmelden voor Begeleiding
                 <ArrowRight className="w-5 h-5" />
               </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Internal Links Section for SEO */}
+      <section className="py-12 bg-white border-t border-gray-200">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Gerelateerde Pagina's</h2>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link to="/" className="text-orange-600 hover:text-orange-700 underline font-medium">Home</Link>
+              <Link to="/bitcoin-history" className="text-orange-600 hover:text-orange-700 underline font-medium">Bitcoin Geschiedenis</Link>
+              <Link to="/portfolio" className="text-orange-600 hover:text-orange-700 underline font-medium">Portfolio</Link>
+              <Link to="/user-dashboard" className="text-orange-600 hover:text-orange-700 underline font-medium">Dashboard</Link>
+              <Link to="/aanmelden" className="text-orange-600 hover:text-orange-700 underline font-medium">Aanmelden</Link>
             </div>
           </div>
         </div>

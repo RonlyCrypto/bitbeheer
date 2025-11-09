@@ -349,13 +349,15 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pb-20 md:pb-0">
+      {/* SEO H1 Tag */}
+      <h1 className="sr-only">BitBeheer Admin Dashboard - Beheer Bitcoin Begeleiding Platform</h1>
       <div className="container mx-auto px-4 py-6 md:py-12 pb-20 md:pb-12">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
               Admin Dashboard
-            </h1>
+            </h2>
             <p className="text-xl text-gray-600">
               Beheer je Bitcoin begeleiding platform
             </p>
@@ -946,6 +948,20 @@ export default function AdminDashboard() {
         isImpersonating={isImpersonating}
         impersonatedUser={impersonatedUser}
       />
+
+      {/* Internal Links Section for SEO */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-white rounded-lg p-6 border border-gray-200">
+          <h2 className="text-xl font-bold text-gray-900 mb-4 text-center">Gerelateerde Pagina's</h2>
+          <div className="flex flex-wrap justify-center gap-4">
+            <Link to="/" className="text-orange-600 hover:text-orange-700 underline font-medium">Home</Link>
+            <Link to="/bitcoin-history" className="text-orange-600 hover:text-orange-700 underline font-medium">Bitcoin Geschiedenis</Link>
+            <Link to="/portfolio" className="text-orange-600 hover:text-orange-700 underline font-medium">Portfolio</Link>
+            <Link to="/user-dashboard" className="text-orange-600 hover:text-orange-700 underline font-medium">Dashboard</Link>
+            <Link to="/aanmelden" className="text-orange-600 hover:text-orange-700 underline font-medium">Aanmelden</Link>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

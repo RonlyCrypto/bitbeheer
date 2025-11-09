@@ -14,6 +14,7 @@ import {
   Loader2,
   X
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import PortfolioChart from '../components/PortfolioChart';
 import TransactionBlock from '../components/TransactionBlock';
 import CurrencyToggle from '../components/CurrencyToggle';
@@ -350,6 +351,8 @@ export default function PortfolioPage() {
           <CurrencyToggle />
         </div>
       </div>
+      {/* H1 Tag for SEO */}
+      <h1 className="sr-only">Bitcoin Portfolio Beheer - Bewaar en Monitor Je Bitcoin Wallets</h1>
       <div className="container mx-auto px-4 py-6 md:py-12 pb-20 md:pb-12">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
@@ -808,6 +811,20 @@ export default function PortfolioPage() {
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Internal Links Section for SEO */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-white rounded-lg p-6 border border-gray-200">
+          <h2 className="text-xl font-bold text-gray-900 mb-4 text-center">Gerelateerde Pagina's</h2>
+          <div className="flex flex-wrap justify-center gap-4">
+            <Link to="/" className="text-orange-600 hover:text-orange-700 underline font-medium">Home</Link>
+            <Link to="/bitcoin-history" className="text-orange-600 hover:text-orange-700 underline font-medium">Bitcoin Geschiedenis</Link>
+            <Link to="/portfolio" className="text-orange-600 hover:text-orange-700 underline font-medium">Portfolio</Link>
+            <Link to="/user-dashboard" className="text-orange-600 hover:text-orange-700 underline font-medium">Dashboard</Link>
+            <Link to="/aanmelden" className="text-orange-600 hover:text-orange-700 underline font-medium">Aanmelden</Link>
+          </div>
         </div>
       </div>
 

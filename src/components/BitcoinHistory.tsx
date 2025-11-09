@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { TrendingUp, Calendar, Zap, Minus, Maximize, Calculator, Eye, EyeOff, Layers } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { initializeEarlyBitcoinData, fetchAllBitcoinData } from '../services/priceService';
 import { bitcoinDataManager } from '../services/bitcoinDataManager';
 import { PriceData, SimulationResult } from '../types';
@@ -1246,6 +1247,18 @@ export default function BitcoinHistory() {
           </div>
         </>
       )}
+
+      {/* Internal Links Section for SEO */}
+      <div className="mt-8 pt-6 border-t border-gray-200">
+        <h2 className="text-xl font-bold text-gray-900 mb-4 text-center">Gerelateerde Pagina's</h2>
+        <div className="flex flex-wrap justify-center gap-4">
+          <Link to="/" className="text-orange-600 hover:text-orange-700 underline font-medium">Home</Link>
+          <Link to="/bitcoin-history" className="text-orange-600 hover:text-orange-700 underline font-medium">Bitcoin Geschiedenis</Link>
+          <Link to="/portfolio" className="text-orange-600 hover:text-orange-700 underline font-medium">Portfolio</Link>
+          <Link to="/user-dashboard" className="text-orange-600 hover:text-orange-700 underline font-medium">Dashboard</Link>
+          <Link to="/aanmelden" className="text-orange-600 hover:text-orange-700 underline font-medium">Aanmelden</Link>
+        </div>
+      </div>
 
     </div>
   );
