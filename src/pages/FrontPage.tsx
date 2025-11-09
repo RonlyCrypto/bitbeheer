@@ -9,6 +9,8 @@ export default function FrontPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 relative">
       <AnimatedBitcoinBackground />
       <div className="relative z-10">
+      {/* SEO H1 Tag - Always visible for SEO */}
+      <h1 className="sr-only">Bitcoin Investeren in Nederland - Persoonlijke Begeleiding voor Beginners</h1>
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-orange-500 to-orange-600 text-white relative z-10">
         <div className="container mx-auto px-4 py-20">
@@ -18,9 +20,9 @@ export default function FrontPage() {
                 <Bitcoin className="w-16 h-16" />
               </div>
             </div>
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
+            <h2 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
               Persoonlijke Bitcoin Begeleiding
-            </h1>
+            </h2>
             <p className="text-xl md:text-2xl text-orange-100 mb-8 max-w-3xl mx-auto leading-relaxed">
               Persoonlijke 1-op-1 begeleiding voor mensen die willen investeren in Bitcoin. 
               Leer veilig Bitcoin kopen, bewaren en in eigen beheer houden.
