@@ -101,10 +101,10 @@ export default function HeroSlider() {
 
       <div className="container mx-auto px-4 py-12 md:py-16 relative z-10">
         <div className="max-w-5xl mx-auto">
-          {/* Animated Brand Name */}
-          <div className="text-center mb-4 min-h-[100px] flex flex-col items-center justify-center">
-            <div className="relative w-full mb-3">
-              <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center">
+          {/* Animated Brand Name - Fixed height container */}
+          <div className="text-center mb-4 h-[100px] md:h-[120px] flex flex-col items-center justify-center">
+            <div className="relative w-full mb-3 h-full flex items-center justify-center">
+              <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center h-full">
                 <span className={`inline-block transition-all duration-700 ${
                   slidePhase === 'together' ? 'mr-0' :
                   slidePhase === 'sliding' ? 'mr-0 animate-slide-left' :
@@ -136,13 +136,9 @@ export default function HeroSlider() {
           </div>
 
           {/* Slider Container - Always present but hidden until ready */}
-          <div className={`relative transition-all duration-700 ${
-            showBitcoinText ? 'opacity-100 h-auto' : 'opacity-0 h-0 overflow-hidden'
-          }`}>
+          <div className="relative">
             {/* Slides */}
-            <div className={`relative transition-all duration-700 ${
-              showBitcoinText ? 'h-[200px] md:h-[180px]' : 'h-0'
-            }`}>
+            <div className="relative h-[200px] md:h-[180px]">
               {slides.map((slide, index) => (
                 <div
                   key={slide.id}
