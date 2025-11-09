@@ -52,10 +52,13 @@ export default function HeroSlider() {
       // After 2 seconds, start sliding apart - beheer slides right
       setSlidePhase('sliding');
       setTimeout(() => {
-        // After sliding animation completes, fade in coin in eigen
-        setShowBitcoinText(true);
-        setSlidePhase('fading');
-      }, 1000); // Wait for slide animation to complete (700ms transition + buffer)
+        // After sliding animation completes, smoothly transition to fading
+        // First return Bit and beheer to their final positions
+        setTimeout(() => {
+          setShowBitcoinText(true);
+          setSlidePhase('fading');
+        }, 200); // Small delay to ensure smooth transition
+      }, 800); // Wait for slide animation to complete (700ms transition + small buffer)
     }, 2000); // Wait 2 seconds before sliding
   }, []);
 
@@ -110,7 +113,10 @@ export default function HeroSlider() {
                   slidePhase === 'sliding' ? '' :
                   ''
                 }`} style={{
-                  transform: slidePhase === 'sliding' ? 'translateX(calc(-100% - 0.5rem))' : 'translateX(0)'
+                  transform: slidePhase === 'together' ? 'translateX(0)' :
+                             slidePhase === 'sliding' ? 'translateX(calc(-100% - 0.5rem))' :
+                             'translateX(0)',
+                  transition: 'transform 0.7s cubic-bezier(0.4, 0, 0.2, 1)'
                 }}>
                   Bit
                 </span>
@@ -119,7 +125,8 @@ export default function HeroSlider() {
                   slidePhase === 'fading' ? 'animate-coin-in-eigen mx-0' : 'opacity-100 scale-x-100 mx-0'
                 }`} style={{
                   transformOrigin: 'center',
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  transition: slidePhase === 'fading' ? 'none' : 'opacity 0.3s ease-in-out, width 0.3s ease-in-out'
                 }}>
                   coin in eigen
                 </span>
@@ -128,7 +135,10 @@ export default function HeroSlider() {
                   slidePhase === 'sliding' ? 'ml-0' :
                   'ml-1 md:ml-1.5'
                 }`} style={{
-                  transform: slidePhase === 'sliding' ? 'translateX(calc(100% + 0.5rem + 0.5rem))' : 'translateX(0)'
+                  transform: slidePhase === 'together' ? 'translateX(0)' :
+                             slidePhase === 'sliding' ? 'translateX(calc(100% + 0.5rem + 0.5rem))' :
+                             'translateX(0)',
+                  transition: 'transform 0.7s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.7s cubic-bezier(0.4, 0, 0.2, 1)'
                 }}>
                   beheer
                 </span>
