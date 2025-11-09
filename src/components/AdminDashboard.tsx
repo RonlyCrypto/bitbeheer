@@ -33,6 +33,7 @@ import AdminAppointmentManagement from './AdminAppointmentManagement';
 import ReferralLinksBeheer from './ReferralLinksBeheer';
 import SEOAnalytics from './SEOAnalytics';
 import EmailManagementTab from './EmailManagementTab';
+import NotificationManagement from './NotificationManagement';
 import ProfilePopup from './ProfilePopup';
 import { useProfilePopup } from '../contexts/ProfilePopupContext';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
@@ -456,6 +457,16 @@ export default function AdminDashboard() {
                   Referral Links
                 </button>
                 <button
+                  onClick={() => setActiveTab('notification-management')}
+                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
+                    activeTab === 'notification-management'
+                      ? 'border-orange-500 text-orange-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Notificaties
+                </button>
+                <button
                   onClick={() => setActiveTab('seo-analytics')}
                   className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
                     activeTab === 'seo-analytics'
@@ -834,6 +845,13 @@ export default function AdminDashboard() {
           {activeTab === 'referral-links' && (
             <div className="space-y-6">
               <ReferralLinksBeheer />
+            </div>
+          )}
+
+          {/* Notification Management Tab */}
+          {activeTab === 'notification-management' && (
+            <div className="space-y-6">
+              <NotificationManagement />
             </div>
           )}
 

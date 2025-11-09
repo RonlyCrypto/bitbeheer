@@ -41,6 +41,7 @@ import { bitcoinApiService, BitcoinTransaction } from '../services/bitcoinApiSer
 import PortfolioChart from './PortfolioChart';
 import SignupProcessFlow from './SignupProcessFlow';
 import ReferralBlocks from './ReferralBlocks';
+import NotificationDropdown from './NotificationDropdown';
 
 interface UserProfile {
   id: string;
@@ -642,23 +643,7 @@ export default function UserDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <button 
-                onClick={() => {
-                  // Navigate to appointments tab to show notifications
-                  setActiveTab('appointments');
-                  // Scroll to top of appointments section
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors relative"
-                title="Bekijk afspraken en notificaties"
-              >
-                <Bell className="w-6 h-6" />
-                {unreadChatCount > 0 && (
-                  <span className="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                    {unreadChatCount > 9 ? '9+' : unreadChatCount}
-                  </span>
-                )}
-              </button>
+              <NotificationDropdown unreadCount={unreadChatCount} />
               <button 
                 onClick={() => {
                   openProfilePopup();
@@ -1793,7 +1778,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
       )}
       
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
           <div className="flex items-center gap-4">
             <div className="bg-blue-100 p-3 rounded-lg">
@@ -1814,32 +1799,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             <div>
               <p className="text-sm text-gray-600">Aankomende Afspraken</p>
               <p className="text-2xl font-bold text-gray-900">{upcomingAppointments}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          <div className="flex items-center gap-4">
-            <div className="bg-orange-100 p-3 rounded-lg">
-              <TrendingUp className="w-6 h-6 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Portfolio Waarde</p>
-              <p className="text-2xl font-bold text-gray-900">
-                €{portfolio?.value?.toLocaleString() || '0'}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          <div className="flex items-center gap-4">
-            <div className="bg-purple-100 p-3 rounded-lg">
-              <Activity className="w-6 h-6 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Totaal Sessies</p>
-              <p className="text-2xl font-bold text-gray-900">{userProfile?.totalSessions || 0}</p>
             </div>
           </div>
         </div>
