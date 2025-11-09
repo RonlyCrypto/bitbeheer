@@ -164,13 +164,15 @@ export default function HeroSlider() {
         }
 
         .banner-animation .left-text {
-          transform: translateX(50px);
+          transform: translateX(0);
           margin-right: 0;
+          opacity: 1;
         }
 
         .banner-animation .right-text {
-          transform: translateX(-50px);
+          transform: translateX(0);
           margin-left: 0;
+          opacity: 1;
         }
 
         .banner-animation .middle-text {
@@ -179,26 +181,76 @@ export default function HeroSlider() {
           color: rgb(254 243 199);
           white-space: nowrap;
           margin: 0;
+          width: 0;
+          overflow: hidden;
         }
 
-        /* Animatie wanneer banner geladen wordt */
+        /* Animatie wanneer banner geladen wordt - Bit en beheer schuiven uit elkaar */
         .banner-animation.animate .left-text {
-          transform: translateX(0);
+          transform: translateX(-100px);
           opacity: 1;
         }
 
         .banner-animation.animate .right-text {
-          transform: translateX(0);
+          transform: translateX(100px);
           opacity: 1;
-          margin-left: 0.375rem;
+          margin-left: 0;
+        }
+
+        /* Na sliding: Bit en beheer keren terug naar eindpositie, coin in eigen verschijnt */
+        .banner-animation.animate .left-text {
+          animation: slide-left-then-back 1s ease forwards;
+        }
+
+        .banner-animation.animate .right-text {
+          animation: slide-right-then-back 1s ease forwards;
         }
 
         .banner-animation.animate .middle-text.visible {
           opacity: 1;
-          transition-delay: 0.8s;
+          animation: coin-appear 0.6s ease 0.8s forwards;
           position: relative;
           margin-left: 0;
           margin-right: 0;
+          width: auto;
+        }
+
+        @keyframes slide-left-then-back {
+          0% {
+            transform: translateX(0);
+          }
+          50% {
+            transform: translateX(-100px);
+          }
+          100% {
+            transform: translateX(0);
+          }
+        }
+
+        @keyframes slide-right-then-back {
+          0% {
+            transform: translateX(0);
+            margin-left: 0;
+          }
+          50% {
+            transform: translateX(100px);
+            margin-left: 0;
+          }
+          100% {
+            transform: translateX(0);
+            margin-left: 0.375rem;
+          }
+        }
+
+        @keyframes coin-appear {
+          0% {
+            opacity: 0;
+            transform: scaleX(0);
+          }
+          100% {
+            opacity: 1;
+            transform: scaleX(1);
+          }
         }
 
         @keyframes blink {
