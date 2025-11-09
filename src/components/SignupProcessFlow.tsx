@@ -212,10 +212,10 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
       }
       if (stepNumber === 2) {
         // Step 2: 20min gesprek
-        // Current if email verified but appointment not completed
-        if (user?.email_verified && !user?.first_appointment_completed) return 'current';
-        // Completed if appointment is completed (moved to step 3)
-        if (user?.first_appointment_completed) return 'completed';
+        // Current if email verified but appointment not completed or approved
+        if (user?.email_verified && !user?.first_appointment_completed && !hasApprovedOneOnOne) return 'current';
+        // Completed if appointment is completed or approved (moved to step 3)
+        if (user?.first_appointment_completed || hasApprovedOneOnOne) return 'completed';
         // Pending if email not verified yet
         return 'pending';
       }
