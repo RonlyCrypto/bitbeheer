@@ -656,20 +656,20 @@ export default function AdminDashboard() {
 
                           {/* Upcoming Appointment Detail Card */}
                           {metrics.upcomingAppointment && (
-                            <div className="bg-gradient-to-r from-orange-50 to-orange-100 border-2 border-orange-300 rounded-xl p-6 shadow-lg">
-                              <div className="flex items-start justify-between">
-                                <div className="flex items-start gap-4">
-                                  <div className="bg-orange-500 p-3 rounded-xl">
-                                    <AlertCircle className="w-8 h-8 text-white" />
+                            <div className="bg-gradient-to-r from-orange-50 to-orange-100 border-2 border-orange-300 rounded-xl p-4 md:p-6 shadow-lg">
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex items-start gap-3 md:gap-4 min-w-0 flex-1">
+                                  <div className="bg-orange-500 p-2 md:p-3 rounded-xl flex-shrink-0">
+                                    <AlertCircle className="w-6 h-6 md:w-8 md:h-8 text-white" />
                                   </div>
-                                  <div>
-                                    <h3 className="text-xl font-bold text-orange-900 mb-2">
+                                  <div className="min-w-0 flex-1">
+                                    <h3 className="text-base md:text-xl font-bold text-orange-900 mb-2 break-words">
                                       Binnenkort: Afspraak met {metrics.upcomingAppointment.user_name || metrics.upcomingAppointment.user_email}
                                     </h3>
-                                    <div className="space-y-1 text-orange-800">
+                                    <div className="space-y-1 text-orange-800 text-sm md:text-base">
                                       <div className="flex items-center gap-2">
-                                        <Calendar className="w-4 h-4" />
-                                        <span>
+                                        <Calendar className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
+                                        <span className="break-words">
                                           {new Date(metrics.upcomingAppointment.date).toLocaleDateString('nl-NL', { 
                                             weekday: 'long', 
                                             day: 'numeric', 
@@ -679,8 +679,8 @@ export default function AdminDashboard() {
                                         </span>
                                       </div>
                                       <div className="flex items-center gap-2">
-                                        <Clock className="w-4 h-4" />
-                                        <span>
+                                        <Clock className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
+                                        <span className="break-words">
                                           {metrics.upcomingAppointment.start_time} - {metrics.upcomingAppointment.end_time}
                                         </span>
                                       </div>
@@ -698,20 +698,22 @@ export default function AdminDashboard() {
                                     </div>
                                   </div>
                                 </div>
-                                <div className="flex flex-col gap-2">
+                                <div className="flex flex-col gap-2 flex-shrink-0">
                                   <Link
                                     to={`/admin?tab=accounts&email=${encodeURIComponent(metrics.upcomingAppointment.user_email)}`}
-                                    className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium"
+                                    className="flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-xs md:text-sm font-medium whitespace-nowrap"
                                   >
-                                    <User className="w-4 h-4" />
-                                    Bekijk Account
+                                    <User className="w-3 h-3 md:w-4 md:h-4" />
+                                    <span className="hidden sm:inline">Bekijk Account</span>
+                                    <span className="sm:hidden">Account</span>
                                   </Link>
                                   <button
                                     onClick={() => setActiveTab('appointments')}
-                                    className="flex items-center gap-2 px-4 py-2 bg-white text-orange-600 border-2 border-orange-600 rounded-lg hover:bg-orange-50 transition-colors text-sm font-medium"
+                                    className="flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-white text-orange-600 border-2 border-orange-600 rounded-lg hover:bg-orange-50 transition-colors text-xs md:text-sm font-medium whitespace-nowrap"
                                   >
-                                    <Calendar className="w-4 h-4" />
-                                    Alle Afspraken
+                                    <Calendar className="w-3 h-3 md:w-4 md:h-4" />
+                                    <span className="hidden sm:inline">Alle Afspraken</span>
+                                    <span className="sm:hidden">Afspraken</span>
                                   </button>
                                 </div>
                               </div>
