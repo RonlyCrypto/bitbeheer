@@ -2319,8 +2319,8 @@ function GoalsTab({ goals, setGoals }: any) {
                   <div className="bg-white rounded-lg p-3 mb-3">
                     <p className="text-sm text-green-800 font-medium">🎉 Doel behaald!</p>
                     <p className="text-xs text-green-600 mt-1">
-                      {goal.isBitcoinGoal 
-                        ? `${goal.currentBitcoinAmount?.toFixed(8) || 0} BTC bereikt`
+                      {(goal as any).isBitcoinGoal 
+                        ? `${((goal as any).currentBitcoinAmount || 0).toFixed(8)} BTC bereikt`
                         : `€${goal.currentAmount.toLocaleString()} bereikt`
                       }
                     </p>
@@ -2373,9 +2373,9 @@ function GoalsTab({ goals, setGoals }: any) {
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Voortgang</span>
                     <span className="font-medium">
-                      {isBitcoinGoal && goal.currentBitcoinAmount !== undefined ? (
+                      {isBitcoinGoal && (goal as any).currentBitcoinAmount !== undefined ? (
                         <>
-                          {goal.currentBitcoinAmount.toFixed(8)} / {goal.targetBitcoinAmount?.toFixed(8) || 0} BTC
+                          {((goal as any).currentBitcoinAmount || 0).toFixed(8)} / {((goal as any).targetBitcoinAmount || 0).toFixed(8)} BTC
                           <span className="text-xs text-gray-500 ml-2">
                             (€{goal.currentAmount.toLocaleString()} / €{goal.targetAmount.toLocaleString()})
                           </span>
@@ -2399,10 +2399,10 @@ function GoalsTab({ goals, setGoals }: any) {
                       <span>{new Date(goal.targetDate).toLocaleDateString('nl-NL')}</span>
                     )}
                   </div>
-                  {isBitcoinGoal && goal.monthlyInvestment && (
+                  {isBitcoinGoal && (goal as any).monthlyInvestment && (
                     <div className="mt-2 pt-2 border-t border-gray-200">
                       <p className="text-xs text-gray-600">
-                        Maandelijks: €{goal.monthlyInvestment.toLocaleString()}
+                        Maandelijks: €{((goal as any).monthlyInvestment || 0).toLocaleString()}
                       </p>
                     </div>
                   )}
