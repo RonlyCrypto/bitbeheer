@@ -14,42 +14,28 @@ interface Slide {
 const slides: Slide[] = [
   {
     id: 1,
-    title: 'Bitcoin Investeren in Nederland',
-    subtitle: 'Persoonlijke Begeleiding voor Beginners',
-    description: 'Leer veilig Bitcoin kopen, bewaren en in eigen beheer houden met persoonlijke 1-op-1 begeleiding. Geen hype, alleen praktische kennis.',
+    title: '',
+    subtitle: '',
+    description: 'Laat ons de kennis en skills geven om je eigen Bitcoin in eigen beheer te houden.',
     icon: <Bitcoin className="w-16 h-16" />,
-    keywords: ['Bitcoin investeren Nederland', 'Bitcoin beginners', 'Bitcoin begeleiding', 'Bitcoin kopen Nederland']
+    keywords: ['Bitcoin eigen beheer', 'Bitcoin kennis', 'Bitcoin skills', 'Bitcoin begeleiding']
   },
   {
     id: 2,
-    title: 'Veilig Bitcoin Bewaren',
-    subtitle: 'Eigen Beheer met Hardware Wallet',
-    description: 'Leer hoe je Bitcoin veilig bewaart in eigen beheer met een hardware wallet. Volledige controle over je eigen geld, altijd en overal.',
+    title: '',
+    subtitle: '',
+    description: '24/7 toegang tot je funds waar niemand bij kan, alleen jij.',
     icon: <Shield className="w-16 h-16" />,
-    keywords: ['Bitcoin bewaren', 'Hardware wallet', 'Bitcoin eigen beheer', 'Bitcoin veiligheid']
+    keywords: ['Bitcoin toegang', 'Bitcoin privacy', 'Bitcoin veiligheid', 'Bitcoin controle']
   },
   {
     id: 3,
-    title: 'Bitcoin Portfolio Beheer',
-    subtitle: 'Monitor Je Investeringen 24/7',
-    description: 'Volg je Bitcoin portfolio in real-time, bekijk transacties en analyseer je investeringen. Altijd up-to-date met je Bitcoin balans.',
-    icon: <TrendingUp className="w-16 h-16" />,
-    keywords: ['Bitcoin portfolio', 'Bitcoin monitoring', 'Bitcoin tracking', 'Bitcoin balans']
-  },
-  {
-    id: 4,
-    title: 'Bitcoin Prijs Analyse',
-    subtitle: 'Begrijp Markt Trends en Cycles',
-    description: 'Analyseer Bitcoin prijsgeschiedenis, markt trends en 4-jarige cycles. Maak geïnformeerde beslissingen met historische data.',
+    title: '',
+    subtitle: '',
+    description: 'Volledige controle over je eigen geld, zonder tussenpersonen. Veilig, privé en altijd beschikbaar.',
     icon: <Lock className="w-16 h-16" />,
-    keywords: ['Bitcoin prijs', 'Bitcoin analyse', 'Bitcoin trends', 'Bitcoin cycles']
+    keywords: ['Bitcoin controle', 'Bitcoin veiligheid', 'Bitcoin privé', 'Bitcoin beschikbaar']
   }
-];
-
-const textSlides = [
-  "Laat ons de kennis en skills geven om je eigen Bitcoin in eigen beheer te houden.",
-  "24/7 toegang tot je funds waar niemand bij kan, alleen jij.",
-  "Volledige controle over je eigen geld, zonder tussenpersonen. Veilig, privé en altijd beschikbaar."
 ];
 
 export default function HeroSlider() {
@@ -57,8 +43,6 @@ export default function HeroSlider() {
   const [isAnimating, setIsAnimating] = useState(false);
   const [showBitcoinText, setShowBitcoinText] = useState(false);
   const [isBlinking, setIsBlinking] = useState(true);
-  const [showTextSlider, setShowTextSlider] = useState(false);
-  const [currentTextSlide, setCurrentTextSlide] = useState(0);
 
   // Blinking phase - BitBeheer knipperen
   useEffect(() => {
@@ -78,35 +62,23 @@ export default function HeroSlider() {
     }
   }, [isBlinking]);
 
-  // Show text slider after animation completes
+  // Auto-advance main slides - start after animation
   useEffect(() => {
-    if (showBitcoinText) {
-      const textSliderTimer = setTimeout(() => {
-        setShowTextSlider(true);
-      }, 2000); // Show text slider 2 seconds after animation starts
-      return () => clearTimeout(textSliderTimer);
-    }
+    if (!showBitcoinText) return;
+
+    const sliderTimer = setTimeout(() => {
+      const interval = setInterval(() => {
+        setCurrentSlide((prev) => (prev + 1) % slides.length);
+      }, 4000); // Change slide every 4 seconds
+
+      // Store interval ID for cleanup
+      return () => clearInterval(interval);
+    }, 2000); // Start slider 2 seconds after animation starts
+
+    return () => {
+      clearTimeout(sliderTimer);
+    };
   }, [showBitcoinText]);
-
-  // Auto-advance main slides
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 6000); // Change slide every 6 seconds
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Auto-advance text slides
-  useEffect(() => {
-    if (showTextSlider) {
-      const textInterval = setInterval(() => {
-        setCurrentTextSlide((prev) => (prev + 1) % textSlides.length);
-      }, 4000); // Change text slide every 4 seconds
-
-      return () => clearInterval(textInterval);
-    }
-  }, [showTextSlider]);
 
   const goToSlide = (index: number) => {
     if (index !== currentSlide && !isAnimating) {
@@ -156,24 +128,6 @@ export default function HeroSlider() {
                 </div>
               )}
             </div>
-            
-            {/* Text Slider */}
-            {showTextSlider && (
-              <div className="relative h-20 md:h-16 mt-4 max-w-3xl mx-auto">
-                {textSlides.map((text, index) => (
-                  <div
-                    key={index}
-                    className={`absolute inset-0 text-base md:text-lg text-orange-100 leading-relaxed transition-all duration-700 ease-in-out ${
-                      index === currentTextSlide
-                        ? 'opacity-100 translate-y-0'
-                        : 'opacity-0 translate-y-4'
-                    }`}
-                  >
-                    <p>{text}</p>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Slider Container */}
@@ -199,18 +153,8 @@ export default function HeroSlider() {
                       </div>
                     </div>
 
-                    {/* Title */}
-                    <h1 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight">
-                      {slide.title}
-                    </h1>
-
-                    {/* Subtitle */}
-                    <h2 className="text-2xl md:text-3xl text-orange-100 mb-6 font-semibold">
-                      {slide.subtitle}
-                    </h2>
-
-                    {/* Description */}
-                    <p className="text-lg md:text-xl text-orange-100 mb-8 max-w-3xl mx-auto leading-relaxed">
+                    {/* Description as main text */}
+                    <p className="text-xl md:text-2xl text-orange-100 mb-8 max-w-3xl mx-auto leading-relaxed font-medium">
                       {slide.description}
                     </p>
 
