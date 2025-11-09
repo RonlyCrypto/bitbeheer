@@ -66,17 +66,19 @@ export default function HeroSlider() {
   useEffect(() => {
     if (!showBitcoinText) return;
 
+    let intervalId: NodeJS.Timeout | null = null;
+
     const sliderTimer = setTimeout(() => {
-      const interval = setInterval(() => {
+      intervalId = setInterval(() => {
         setCurrentSlide((prev) => (prev + 1) % slides.length);
       }, 4000); // Change slide every 4 seconds
-
-      // Store interval ID for cleanup
-      return () => clearInterval(interval);
     }, 2000); // Start slider 2 seconds after animation starts
 
     return () => {
       clearTimeout(sliderTimer);
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
     };
   }, [showBitcoinText]);
 
