@@ -112,15 +112,15 @@ export default function HeroSlider() {
                 }`}>
                   Bit
                 </span>
-                <span className={`inline-block text-orange-200 transition-all duration-700 mx-1 md:mx-1.5 ${
-                  slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 invisible' :
-                  'opacity-100 visible'
+                <span className={`inline-block text-orange-200 transition-all duration-700 ${
+                  slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 w-0 mx-0 overflow-hidden' :
+                  'opacity-100 mx-1 md:mx-1.5'
                 }`}>
                   coin
                 </span>
-                <span className={`inline-block text-orange-200 transition-all duration-700 ml-1 md:ml-1.5 ${
-                  slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 invisible' :
-                  'opacity-100 visible'
+                <span className={`inline-block text-orange-200 transition-all duration-700 ${
+                  slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 w-0 ml-0 overflow-hidden' :
+                  'opacity-100 ml-1 md:ml-1.5'
                 }`}>
                   in eigen
                 </span>
