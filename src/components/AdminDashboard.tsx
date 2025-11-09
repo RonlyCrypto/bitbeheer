@@ -25,7 +25,6 @@ import {
   User
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import NotificatieBeheer from './NotificatieBeheer';
 import AccountBeheer from './AccountBeheer';
 import AdminChat from './AdminChat';
 import AdminSettings from './AdminSettings';
