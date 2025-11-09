@@ -39,6 +39,7 @@ import AgendaView from './AgendaView';
 import PortfolioPage from '../pages/PortfolioPage';
 import { bitcoinApiService, BitcoinTransaction } from '../services/bitcoinApiService';
 import PortfolioChart from './PortfolioChart';
+import SignupProcessFlow from './SignupProcessFlow';
 
 interface UserProfile {
   id: string;
@@ -130,6 +131,7 @@ export default function UserDashboard() {
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [accountApproved, setAccountApproved] = useState(false);
   const [firstAppointmentCompleted, setFirstAppointmentCompleted] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
   const [hasApprovedOneOnOne, setHasApprovedOneOnOne] = useState(false);
   const [allUserAppointments, setAllUserAppointments] = useState<any[]>([]);
   const [bitcoinGoal, setBitcoinGoal] = useState({
@@ -254,13 +256,14 @@ export default function UserDashboard() {
           try {
             const { data: userData, error: userError } = await supabase
               .from('users')
-              .select('account_approved, first_appointment_completed')
+              .select('account_approved, first_appointment_completed, email_verified, verified_at')
               .eq('email', user.email)
               .single();
             
             if (userData && !userError) {
               setAccountApproved(userData.account_approved || false);
               setFirstAppointmentCompleted(userData.first_appointment_completed || false);
+              setEmailVerified(userData.email_verified || false);
             } else if (userError?.code === 'PGRST204' || userError?.code === 'PGRST116') {
               // Column doesn't exist or no row found, try accounts table
               const { data: accountData } = await supabase
@@ -671,6 +674,9 @@ export default function UserDashboard() {
               impersonatedUser={impersonatedUser}
               hasApprovedOneOnOne={hasApprovedOneOnOne}
               onNavigateToPortfolio={() => setActiveTab('portfolio')}
+              user={user}
+              emailVerified={emailVerified}
+              firstAppointmentCompleted={firstAppointmentCompleted}
             />}
             {activeTab === 'goals' && (accountApproved || hasApprovedOneOnOne) && <GoalsTab goals={goals} setGoals={setGoals} />}
             {activeTab === 'portfolio' && (accountApproved || hasApprovedOneOnOne) && <PortfolioPage />}
@@ -784,7 +790,7 @@ export default function UserDashboard() {
 }
 
 // Overview Tab Component
-function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppointment, accountApproved, isImpersonating, impersonatedUser, hasApprovedOneOnOne, onNavigateToPortfolio }: any) {
+function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppointment, accountApproved, isImpersonating, impersonatedUser, hasApprovedOneOnOne, onNavigateToPortfolio, user, emailVerified, firstAppointmentCompleted }: any) {
   // Determine goals to display based on account status
   const displayGoals = accountApproved 
     ? [
@@ -1773,6 +1779,25 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+          {/* Aanmeldproces Stappen */}
+          {!accountApproved && (
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Jouw Aanmeldproces</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Volg deze stappen om je account volledig te activeren en toegang te krijgen tot alle functies.
+              </p>
+              <SignupProcessFlow 
+                user={{
+                  email_verified: emailVerified,
+                  first_appointment_completed: firstAppointmentCompleted,
+                  account_approved: accountApproved,
+                  created_at: user?.created_at
+                }}
+                showLegend={true}
+              />
+            </div>
+          )}
+
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Recente Doelen</h3>
           <div className="space-y-3">
             {goals.slice(0, 3).map((goal: Goal) => (

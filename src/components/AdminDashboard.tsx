@@ -32,6 +32,7 @@ import AdminSettings from './AdminSettings';
 import AdminAppointmentManagement from './AdminAppointmentManagement';
 import ReferralLinksBeheer from './ReferralLinksBeheer';
 import SEOAnalytics from './SEOAnalytics';
+import EmailManagementTab from './EmailManagementTab';
 import ProfilePopup from './ProfilePopup';
 import { useProfilePopup } from '../contexts/ProfilePopupContext';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
@@ -435,6 +436,16 @@ export default function AdminDashboard() {
                   ) : null}
                 </button>
                 <button
+                  onClick={() => setActiveTab('email-management')}
+                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
+                    activeTab === 'email-management'
+                      ? 'border-orange-500 text-orange-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  E-mail Beheer
+                </button>
+                <button
                   onClick={() => setActiveTab('referral-links')}
                   className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
                     activeTab === 'referral-links'
@@ -795,6 +806,13 @@ export default function AdminDashboard() {
           {activeTab === 'accounts' && (
             <div className="space-y-6">
               <AccountBeheer />
+            </div>
+          )}
+
+          {/* Email Management Tab */}
+          {activeTab === 'email-management' && (
+            <div className="space-y-6">
+              <EmailManagementTab />
             </div>
           )}
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Users, Eye, LogIn, Mail, Calendar, MessageSquare, Tag, Search, Filter, RefreshCw, Clock, CheckCircle, XCircle, Send, UserCheck, AlertTriangle, UserCog } from 'lucide-react';
 import { impersonationUtils } from '../utils/impersonation';
 import { supabase } from '../lib/supabase';
+import SignupProcessFlow from './SignupProcessFlow';
 
 interface UserAccount {
   id: string;
@@ -1207,8 +1208,8 @@ export default function AccountBeheer() {
 
       {/* User Modal */}
       {showUserModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 shadow-2xl">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-xl p-8 max-w-4xl w-full mx-4 shadow-2xl my-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-gray-900">Account Details</h3>
               <button
@@ -1219,54 +1220,69 @@ export default function AccountBeheer() {
               </button>
             </div>
             
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
-                  <p className="text-gray-900">{selectedUser.email}</p>
+            <div className="space-y-6">
+              {/* Account Info */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+                    <p className="text-gray-900">{selectedUser.email}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Naam</label>
+                    <p className="text-gray-900">{selectedUser.name}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Categorie</label>
+                    <span className="inline-block bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-sm">
+                      {selectedUser.category}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Aangemeld</label>
+                    <p className="text-gray-900">{selectedUser.date}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">E-mail Status</label>
+                    <p className={`text-sm ${selectedUser.emailSent ? 'text-green-600' : 'text-orange-600'}`}>
+                      {selectedUser.emailSent ? 'Verzonden' : 'Nog niet verzonden'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Login Count</label>
+                    <p className="text-gray-900">{selectedUser.loginCount || 0}</p>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Naam</label>
-                  <p className="text-gray-900">{selectedUser.name}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Categorie</label>
-                  <span className="inline-block bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-sm">
-                    {selectedUser.category}
-                  </span>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Aangemeld</label>
-                  <p className="text-gray-900">{selectedUser.date}</p>
-                </div>
+                
+                {selectedUser.message && selectedUser.message !== 'Geen bericht' && (
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Bericht</label>
+                    <p className="text-gray-900 bg-white p-3 rounded-lg">{selectedUser.message}</p>
+                  </div>
+                )}
+                
+                {selectedUser.lastLogin && (
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Laatste Login</label>
+                    <p className="text-gray-900">{selectedUser.lastLogin}</p>
+                  </div>
+                )}
               </div>
-              
-              {selectedUser.message && selectedUser.message !== 'Geen bericht' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Bericht</label>
-                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{selectedUser.message}</p>
-                </div>
-              )}
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">E-mail Status</label>
-                  <p className={`text-sm ${selectedUser.emailSent ? 'text-green-600' : 'text-orange-600'}`}>
-                    {selectedUser.emailSent ? 'Verzonden' : 'Nog niet verzonden'}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Login Count</label>
-                  <p className="text-gray-900">{selectedUser.loginCount || 0}</p>
-                </div>
+
+              {/* Aanmeldproces Schema */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <h4 className="text-xl font-bold text-gray-900 mb-4">Aanmeldproces Status</h4>
+                <SignupProcessFlow 
+                  user={{
+                    email_verified: selectedUser.email_verified,
+                    first_appointment_completed: selectedUser.first_appointment_completed,
+                    account_approved: selectedUser.account_approved,
+                    created_at: selectedUser.created_at,
+                    verified_at: selectedUser.verified_at
+                  }}
+                  showLegend={false}
+                />
               </div>
-              
-              {selectedUser.lastLogin && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Laatste Login</label>
-                  <p className="text-gray-900">{selectedUser.lastLogin}</p>
-                </div>
-              )}
             </div>
             
             <div className="flex gap-3 mt-6">
