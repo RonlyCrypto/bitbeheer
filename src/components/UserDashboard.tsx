@@ -455,18 +455,14 @@ export default function UserDashboard() {
               if (accountError) {
                 console.error('🔍 Periodic refresh error:', accountError);
               } else if (accountData) {
-                    if (accountData && !accountError) {
-                      console.log('🔍 Periodic refresh - Loaded from accounts table:', accountData);
-                      setAccountApproved(accountData.account_approved || false);
-                      setFirstAppointmentCompleted(accountData.first_appointment_completed || false);
-                      setEmailVerified(accountData.email_verified || false);
-                    }
-                  });
-              } else if (userData) {
-                console.log('🔍 Periodic refresh - Loaded from users table:', userData);
-                setAccountApproved(userData.account_approved || false);
-                setFirstAppointmentCompleted(userData.first_appointment_completed || false);
-                setEmailVerified(userData.email_verified || false);
+                console.log('🔍 Periodic refresh - Loaded from accounts table:', {
+                  account_approved: accountData.account_approved,
+                  first_appointment_completed: accountData.first_appointment_completed,
+                  email_verified: accountData.email_verified
+                });
+                setAccountApproved(accountData.account_approved || false);
+                setFirstAppointmentCompleted(accountData.first_appointment_completed || false);
+                setEmailVerified(accountData.email_verified || false);
               }
             });
         }
