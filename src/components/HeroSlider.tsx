@@ -148,29 +148,10 @@ export default function HeroSlider() {
                   }`}
                 >
                   <div className="text-center">
-                    {/* Icon */}
-                    <div className="flex justify-center mb-6">
-                      <div className="bg-white bg-opacity-20 p-4 rounded-2xl backdrop-blur-sm animate-pulse-slow">
-                        {slide.icon}
-                      </div>
-                    </div>
-
                     {/* Description as main text */}
-                    <p className="text-xl md:text-2xl text-orange-100 mb-8 max-w-3xl mx-auto leading-relaxed font-medium">
+                    <p className="text-xl md:text-2xl text-orange-100 max-w-3xl mx-auto leading-relaxed font-medium">
                       {slide.description}
                     </p>
-
-                    {/* CTA Button */}
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                      <Link
-                        to="/aanmelden"
-                        className="bg-white text-orange-600 px-8 py-4 rounded-xl font-semibold hover:bg-orange-50 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
-                      >
-                        <BookOpen className="w-5 h-5" />
-                        Aanmelden voor Begeleiding
-                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                      </Link>
-                    </div>
                   </div>
                 </div>
               ))}
