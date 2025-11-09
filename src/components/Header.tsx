@@ -58,8 +58,8 @@ export default function Header() {
             </div>
           </Link>
           
-          {/* Navigation Menu - Desktop Only */}
-          <nav className="hidden md:flex items-center gap-4">
+          {/* Navigation Menu - Desktop Only - Centered */}
+          <nav className="hidden md:flex items-center gap-4 flex-1 justify-center">
             {/* Admin Dashboard - Only visible for admins when not impersonating */}
             {!isImpersonating && canAccessAdmin && (
               <Link 
@@ -219,7 +219,7 @@ export default function Header() {
                               }}
                             >
                               <User className="w-4 h-4" />
-                              Gebruiker Profiel
+                              Gebruiker profiel
                             </button>
                           ) : (
                             <button
@@ -231,7 +231,7 @@ export default function Header() {
                               }}
                             >
                               <User className="w-4 h-4" />
-                              Mijn Profiel
+                              Mijn profiel
                             </button>
                           )}
                           
@@ -345,7 +345,7 @@ export default function Header() {
                   >
                     <BarChart3 className="w-5 h-5" />
                     <div>
-                      <div className="text-xs text-orange-100">Beschikbare Pagina's</div>
+                      <div className="text-xs text-orange-100">Beschikbare pagina's</div>
                       <div className="font-semibold">Beheer</div>
                     </div>
                   </Link>
