@@ -43,6 +43,7 @@ export default function HeroSlider() {
   const [isAnimating, setIsAnimating] = useState(false);
   const [showBitcoinText, setShowBitcoinText] = useState(false);
   const [showFullText, setShowFullText] = useState(true);
+  const [expandPhase, setExpandPhase] = useState<'collapsed' | 'expanding' | 'fading'>('collapsed');
 
   // Show full text first for a few seconds, then animate
   useEffect(() => {
@@ -51,10 +52,31 @@ export default function HeroSlider() {
       // Start animation after full text is hidden
       setTimeout(() => {
         setShowBitcoinText(true);
+        setExpandPhase('collapsed');
       }, 300); // Smooth transition
     }, 3000); // Show full text for 3 seconds
     return () => clearTimeout(fullTextTimer);
   }, []);
+
+  // Expand and fade animation for coin in eigen
+  useEffect(() => {
+    if (showBitcoinText && expandPhase === 'collapsed') {
+      // After 2 seconds: start expanding
+      const expandTimer = setTimeout(() => {
+        setExpandPhase('expanding');
+      }, 2000);
+      
+      // After expansion: fade in
+      const fadeTimer = setTimeout(() => {
+        setExpandPhase('fading');
+      }, 3500);
+      
+      return () => {
+        clearTimeout(expandTimer);
+        clearTimeout(fadeTimer);
+      };
+    }
+  }, [showBitcoinText, expandPhase]);
 
   // Auto-advance main slides - start after animation completes
   useEffect(() => {
@@ -104,20 +126,24 @@ export default function HeroSlider() {
               {showFullText ? (
                 <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center transition-opacity duration-500">
                   <span className="inline-block">Bit</span>
-                  <span className="inline-block text-orange-200">Coin</span>
+                  <span className="inline-block text-orange-200">coin</span>
                   <span className="inline-block text-orange-200 ml-1 md:ml-1.5">in eigen</span>
                   <span className="inline-block ml-1 md:ml-1.5">beheer</span>
                 </div>
               ) : (
                 <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center">
                   <span className="inline-block animate-fade-in">Bit</span>
-                  <span className={`inline-block text-orange-200 transition-all duration-700 delay-300 ${
-                    showBitcoinText ? 'opacity-100 scale-100' : 'opacity-0 scale-95 w-0'
+                  <span className={`inline-block text-orange-200 transition-all duration-700 ${
+                    expandPhase === 'collapsed' ? 'opacity-0 scale-x-0' :
+                    expandPhase === 'expanding' ? 'opacity-0 scale-x-100' :
+                    'opacity-100 scale-x-100'
                   }`}>
-                    Coin
+                    coin
                   </span>
-                  <span className={`inline-block text-orange-200 transition-all duration-700 delay-500 ${
-                    showBitcoinText ? 'opacity-100 ml-1 md:ml-1.5' : 'opacity-0 w-0 ml-0'
+                  <span className={`inline-block text-orange-200 transition-all duration-700 ${
+                    expandPhase === 'collapsed' ? 'opacity-0 scale-x-0 ml-0' :
+                    expandPhase === 'expanding' ? 'opacity-0 scale-x-100 ml-1 md:ml-1.5' :
+                    'opacity-100 scale-x-100 ml-1 md:ml-1.5'
                   }`}>
                     in eigen
                   </span>
