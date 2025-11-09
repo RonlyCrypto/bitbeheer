@@ -536,7 +536,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-                          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
                             <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg border-2 border-orange-200">
                               <div className="flex items-center gap-3 md:gap-4">
                                 <div className="bg-orange-100 p-2 md:p-3 rounded-xl flex-shrink-0">
@@ -872,7 +872,7 @@ export default function AdminDashboard() {
               {/* Beschikbare Pagina's */}
               <div>
                 <h4 className="text-lg md:text-xl font-bold text-gray-900 mb-4">Beschikbare Pagina's</h4>
-                <div className="grid md:grid-cols-2 gap-6 mb-8">
+                <div className="grid md:grid-cols-2 gap-3 md:gap-6 mb-8">
                   {adminPages.map((page) => (
                     <Link
                       key={page.id}
@@ -902,7 +902,7 @@ export default function AdminDashboard() {
               {/* Beheer Opties */}
               <div>
                 <h4 className="text-lg md:text-xl font-bold text-gray-900 mb-4">Beheer Opties</h4>
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid md:grid-cols-2 gap-3 md:gap-6">
                   {adminControls.filter(control => control.id !== 'page-visibility').map((control) => (
                     <div
                       key={control.id}
