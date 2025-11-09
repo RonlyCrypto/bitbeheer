@@ -861,7 +861,7 @@ export default function AdminDashboard() {
           {activeTab === 'controls' && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-bold text-gray-900">Beheer Opties & Pagina's</h3>
+                <h3 className="text-xl md:text-2xl font-bold text-gray-900">Beheer Opties & Pagina's</h3>
                 <button className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
                   <Plus className="w-4 h-4" />
                   Nieuwe Pagina
@@ -870,7 +870,7 @@ export default function AdminDashboard() {
 
               {/* Beschikbare Pagina's */}
               <div>
-                <h4 className="text-xl font-bold text-gray-900 mb-4">Beschikbare Pagina's</h4>
+                <h4 className="text-lg md:text-xl font-bold text-gray-900 mb-4">Beschikbare Pagina's</h4>
                 <div className="grid md:grid-cols-2 gap-6 mb-8">
                   {adminPages.map((page) => (
                     <Link
@@ -900,7 +900,7 @@ export default function AdminDashboard() {
 
               {/* Beheer Opties */}
               <div>
-                <h4 className="text-xl font-bold text-gray-900 mb-4">Beheer Opties</h4>
+                <h4 className="text-lg md:text-xl font-bold text-gray-900 mb-4">Beheer Opties</h4>
                 <div className="grid md:grid-cols-2 gap-6">
                   {adminControls.filter(control => control.id !== 'page-visibility').map((control) => (
                     <div
