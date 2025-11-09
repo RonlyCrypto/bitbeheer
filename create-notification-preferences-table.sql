@@ -53,9 +53,9 @@ CREATE POLICY "Admins can view all notification preferences"
   ON notification_preferences FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM users 
-      WHERE users.id = auth.uid() 
-      AND users.is_admin = true
+      SELECT 1 FROM accounts 
+      WHERE accounts.id = auth.uid() 
+      AND accounts.is_admin = true
     )
   );
 
@@ -64,9 +64,9 @@ CREATE POLICY "Admins can update global notification settings"
   ON notification_preferences FOR UPDATE
   USING (
     EXISTS (
-      SELECT 1 FROM users 
-      WHERE users.id = auth.uid() 
-      AND users.is_admin = true
+      SELECT 1 FROM accounts 
+      WHERE accounts.id = auth.uid() 
+      AND accounts.is_admin = true
     )
   );
 

@@ -260,6 +260,7 @@ export default function UserDashboard() {
             const { data: userData, error: userError } = await supabase
               .from('users')
               .select('account_approved, first_appointment_completed, email_verified, verified_at')
+              .maybeSingle()
               .eq('email', user.email)
               .maybeSingle();
             
