@@ -1783,9 +1783,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           {!accountApproved && (
             <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Jouw Aanmeldproces</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Volg deze stappen om je account volledig te activeren en toegang te krijgen tot alle functies.
-              </p>
               <SignupProcessFlow 
                 user={{
                   email_verified: emailVerified,
@@ -1793,8 +1790,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   account_approved: accountApproved,
                   created_at: user?.created_at
                 }}
-                showLegend={true}
+                showLegend={false}
                 accordionMode={true}
+                simpleMode={true}
               />
             </div>
           )}

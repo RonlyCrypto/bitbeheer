@@ -16,16 +16,29 @@ interface SignupProcessFlowProps {
   onResendVerificationEmail?: () => void;
   isResendingEmail?: boolean;
   accordionMode?: boolean; // If true, only current step is expanded
+  simpleMode?: boolean; // If true, show simplified version for users
 }
 
-export default function SignupProcessFlow({ user, showLegend = true, onResendVerificationEmail, isResendingEmail = false, accordionMode = false }: SignupProcessFlowProps) {
+export default function SignupProcessFlow({ user, showLegend = true, onResendVerificationEmail, isResendingEmail = false, accordionMode = false, simpleMode = false }: SignupProcessFlowProps) {
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
   const getCurrentStep = () => {
     if (!user) return 0;
-    if (user.account_approved && user.first_appointment_completed) return 4;
-    if (user.first_appointment_completed) return 3;
-    if (user.email_verified) return 2;
-    return 1;
+    if (simpleMode) {
+      // Simple mode: 3 steps instead of 4
+      // Step 1: Aanmelden gelukt (always visible)
+      // Step 2: 20min gesprek (visible when email verified)
+      // Step 3: Gesprek goedgekeurd (visible when appointment completed)
+      if (user.account_approved && user.first_appointment_completed) return 3;
+      if (user.first_appointment_completed) return 3; // Show step 3 when appointment is completed
+      if (user.email_verified) return 2; // Show step 2 when email is verified
+      return 1; // Show step 1 when just registered
+    } else {
+      // Full mode: 4 steps
+      if (user.account_approved && user.first_appointment_completed) return 4;
+      if (user.first_appointment_completed) return 3;
+      if (user.email_verified) return 2;
+      return 1;
+    }
   };
 
   const currentStep = getCurrentStep();
@@ -58,7 +71,26 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
     return expandedSteps.has(stepNumber);
   };
 
-  const steps = [
+  const steps = simpleMode ? [
+    {
+      number: 1,
+      title: 'Aanmelden gelukt',
+      simpleText: 'Nu wachten op email bevestiging',
+      color: 'blue'
+    },
+    {
+      number: 2,
+      title: '20min gesprek',
+      simpleText: 'Plan je 20min gesprek',
+      color: 'green'
+    },
+    {
+      number: 3,
+      title: 'Gesprek goedgekeurd',
+      simpleText: 'Na het gesprek keurt de admin het account goed en wordt de gebruiker volledig geactiveerd.',
+      color: 'orange'
+    }
+  ] : [
     {
       number: 1,
       title: 'Gebruiker vult aanmeldformulier in',
@@ -128,6 +160,33 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
   ];
 
   const getStepStatus = (stepNumber: number) => {
+    if (simpleMode) {
+      // In simple mode, determine status based on user progress
+      if (stepNumber === 1) {
+        // Step 1 is current if user registered but email not verified
+        if (user && !user.email_verified) return 'current';
+        // Step 1 is completed if email is verified
+        if (user?.email_verified) return 'completed';
+        return 'pending';
+      }
+      if (stepNumber === 2) {
+        // Step 2 is current if email verified but appointment not completed
+        if (user?.email_verified && !user?.first_appointment_completed) return 'current';
+        // Step 2 is completed if appointment is completed
+        if (user?.first_appointment_completed) return 'completed';
+        // Step 2 is pending if email not verified
+        return 'pending';
+      }
+      if (stepNumber === 3) {
+        // Step 3 is current if appointment completed but not approved
+        if (user?.first_appointment_completed && !user?.account_approved) return 'current';
+        // Step 3 is completed if account approved
+        if (user?.account_approved) return 'completed';
+        // Step 3 is pending otherwise
+        return 'pending';
+      }
+    }
+    // Full mode logic
     if (stepNumber < currentStep) return 'completed';
     if (stepNumber === currentStep) return 'current';
     return 'pending';
@@ -238,11 +297,14 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
                 }`}>
                   {step.title}
                 </h3>
-                {isCompleted && accordionMode && (
+                {isCompleted && accordionMode && !simpleMode && (
                   <p className="text-sm text-gray-500">Voltooid</p>
                 )}
-                {isCurrent && accordionMode && (
+                {isCurrent && accordionMode && !simpleMode && (
                   <p className="text-sm text-orange-600 font-medium">Huidige stap - Open voor details</p>
+                )}
+                {simpleMode && isCurrent && (
+                  <p className="text-sm text-gray-600 mt-1">{step.simpleText}</p>
                 )}
               </div>
               {accordionMode && !isCurrent && (
@@ -259,84 +321,98 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
             {/* Step Content - Only visible when expanded or current */}
             {(isExpanded || isCurrent) && (
               <div className="px-4 pb-4 pl-14">
-                <p className={`mb-4 ${
-                  status === 'completed' ? 'text-gray-600' : 
-                  status === 'current' ? 'text-gray-700' : 
-                  'text-gray-400'
-                }`}>
-                  {step.description}
-                </p>
-
-                {/* Action Text for current step */}
-                {isCurrent && step.actionText && (
-                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
-                    <p className="text-sm font-medium text-orange-900 mb-1">📋 Wat moet je doen:</p>
-                    <p className="text-sm text-orange-800">{step.actionText}</p>
-                  </div>
-                )}
-                
-                {step.email && (
-                  <div className={`${colors.lightBg} border ${colors.borderLight} rounded-lg p-4 mb-3`}>
-                    <p className={`text-sm font-medium ${colors.text} mb-2`}>📧 Email: {step.email.type}</p>
-                    <p className={`text-sm ${colors.textLight}`}>
-                      <strong>Wanneer:</strong> {step.email.when}<br />
-                      <strong>Type:</strong> {step.email.emailType}<br />
-                      <strong>Inhoud:</strong> {step.email.content}<br />
-                      <strong>Status tracking:</strong> {step.email.tracking}
+                {simpleMode ? (
+                  // Simple mode: only show simpleText
+                  <p className={`${
+                    status === 'completed' ? 'text-gray-600' : 
+                    status === 'current' ? 'text-gray-700' : 
+                    'text-gray-400'
+                  }`}>
+                    {step.simpleText}
+                  </p>
+                ) : (
+                  // Full mode: show all details
+                  <>
+                    <p className={`mb-4 ${
+                      status === 'completed' ? 'text-gray-600' : 
+                      status === 'current' ? 'text-gray-700' : 
+                      'text-gray-400'
+                    }`}>
+                      {step.description}
                     </p>
-                    {step.email.emailType === 'verification' && user?.email && (
-                      <div className="mt-3 pt-3 border-t border-gray-200">
-                        <p className={`text-sm ${colors.textLight} mb-2`}>
-                          <strong>Verzonden naar:</strong> {user.email}<br />
-                          {user.email_sent_date && (
-                            <>
-                              <strong>Verzonden op:</strong> {formatDate(user.email_sent_date) || 'Onbekend'}<br />
-                            </>
-                          )}
-                          {user.verification_token_created && !user.email_sent_date && (
-                            <>
-                              <strong>Aangemaakt op:</strong> {formatDate(user.verification_token_created) || 'Onbekend'}<br />
-                            </>
-                          )}
+
+                    {/* Action Text for current step */}
+                    {isCurrent && step.actionText && (
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                        <p className="text-sm font-medium text-orange-900 mb-1">📋 Wat moet je doen:</p>
+                        <p className="text-sm text-orange-800">{step.actionText}</p>
+                      </div>
+                    )}
+                    
+                    {step.email && (
+                      <div className={`${colors.lightBg} border ${colors.borderLight} rounded-lg p-4 mb-3`}>
+                        <p className={`text-sm font-medium ${colors.text} mb-2`}>📧 Email: {step.email.type}</p>
+                        <p className={`text-sm ${colors.textLight}`}>
+                          <strong>Wanneer:</strong> {step.email.when}<br />
+                          <strong>Type:</strong> {step.email.emailType}<br />
+                          <strong>Inhoud:</strong> {step.email.content}<br />
+                          <strong>Status tracking:</strong> {step.email.tracking}
                         </p>
-                        {!user.email_verified && onResendVerificationEmail && (
-                          <button
-                            onClick={onResendVerificationEmail}
-                            disabled={isResendingEmail}
-                            className="mt-2 flex items-center gap-2 px-3 py-1.5 bg-orange-600 text-white text-xs rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {isResendingEmail ? (
-                              <>
-                                <RefreshCw className="w-3 h-3 animate-spin" />
-                                Verzenden...
-                              </>
-                            ) : (
-                              <>
-                                <Send className="w-3 h-3" />
-                                Opnieuw versturen
-                              </>
+                        {step.email.emailType === 'verification' && user?.email && (
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <p className={`text-sm ${colors.textLight} mb-2`}>
+                              <strong>Verzonden naar:</strong> {user.email}<br />
+                              {user.email_sent_date && (
+                                <>
+                                  <strong>Verzonden op:</strong> {formatDate(user.email_sent_date) || 'Onbekend'}<br />
+                                </>
+                              )}
+                              {user.verification_token_created && !user.email_sent_date && (
+                                <>
+                                  <strong>Aangemaakt op:</strong> {formatDate(user.verification_token_created) || 'Onbekend'}<br />
+                                </>
+                              )}
+                            </p>
+                            {!user.email_verified && onResendVerificationEmail && (
+                              <button
+                                onClick={onResendVerificationEmail}
+                                disabled={isResendingEmail}
+                                className="mt-2 flex items-center gap-2 px-3 py-1.5 bg-orange-600 text-white text-xs rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {isResendingEmail ? (
+                                  <>
+                                    <RefreshCw className="w-3 h-3 animate-spin" />
+                                    Verzenden...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Send className="w-3 h-3" />
+                                    Opnieuw versturen
+                                  </>
+                                )}
+                              </button>
                             )}
-                          </button>
+                          </div>
                         )}
                       </div>
                     )}
-                  </div>
-                )}
 
-                {step.status && (
-                  <div className={`${colors.lightBg} border ${colors.borderLight} rounded-lg p-4`}>
-                    <p className={`text-sm font-medium ${colors.text} mb-2`}>
-                      ✅ Account Status
-                    </p>
-                    <p className={`text-sm ${colors.textLight}`}>
-                      <strong>{step.status.field}:</strong> {step.status.value || 'Nog niet bereikt'}<br />
-                      {step.status.verifiedAt && (
-                        <>
-                          <strong>Geverifieerd op:</strong> {new Date(step.status.verifiedAt).toLocaleString('nl-NL')}
-                        </>
-                      )}
-                    </p>
-                  </div>
+                    {step.status && (
+                      <div className={`${colors.lightBg} border ${colors.borderLight} rounded-lg p-4`}>
+                        <p className={`text-sm font-medium ${colors.text} mb-2`}>
+                          ✅ Account Status
+                        </p>
+                        <p className={`text-sm ${colors.textLight}`}>
+                          <strong>{step.status.field}:</strong> {step.status.value || 'Nog niet bereikt'}<br />
+                          {step.status.verifiedAt && (
+                            <>
+                              <strong>Geverifieerd op:</strong> {new Date(step.status.verifiedAt).toLocaleString('nl-NL')}
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -344,7 +420,7 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
         );
       })}
 
-      {showLegend && (
+      {showLegend && !simpleMode && (
         <div className="mt-8 bg-gray-50 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Legenda</h3>
           <div className="grid md:grid-cols-2 gap-4">
