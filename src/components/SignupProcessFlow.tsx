@@ -21,6 +21,19 @@ interface SignupProcessFlowProps {
 
 export default function SignupProcessFlow({ user, showLegend = true, onResendVerificationEmail, isResendingEmail = false, accordionMode = false, simpleMode = false }: SignupProcessFlowProps) {
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
+  
+  // Debug logging
+  useEffect(() => {
+    if (simpleMode && user) {
+      console.log('🔍 SignupProcessFlow Debug:', {
+        email_verified: user.email_verified,
+        first_appointment_completed: user.first_appointment_completed,
+        account_approved: user.account_approved,
+        user: user
+      });
+    }
+  }, [user, simpleMode]);
+  
   const getCurrentStep = () => {
     if (!user) return 0;
     if (simpleMode) {
@@ -42,6 +55,17 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
   };
 
   const currentStep = getCurrentStep();
+
+  // Debug logging for current step
+  useEffect(() => {
+    if (simpleMode) {
+      console.log('🔍 Current Step:', currentStep, {
+        email_verified: user?.email_verified,
+        first_appointment_completed: user?.first_appointment_completed,
+        account_approved: user?.account_approved
+      });
+    }
+  }, [currentStep, simpleMode, user]);
 
   // Initialize expanded steps: in accordion mode, only current step is expanded
   useEffect(() => {
@@ -271,6 +295,19 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
         const isExpanded = isStepExpanded(step.number);
         const isCompleted = status === 'completed';
         const isCurrent = status === 'current';
+        
+        // Debug logging for each step
+        if (simpleMode && step.number === 1) {
+          console.log('🔍 Step 1 Status:', {
+            stepNumber: step.number,
+            status,
+            isCurrent,
+            isExpanded,
+            email_verified: user?.email_verified,
+            first_appointment_completed: user?.first_appointment_completed,
+            account_approved: user?.account_approved
+          });
+        }
 
         return (
           <div key={step.number} className={`border-l-4 ${colors.border} rounded-lg ${isExpanded ? 'bg-gray-50' : ''} transition-colors`}>
