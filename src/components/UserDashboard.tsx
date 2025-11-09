@@ -1872,6 +1872,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 showLegend={false}
                 accordionMode={true}
                 simpleMode={true}
+                hasApprovedOneOnOne={hasApprovedOneOnOne}
               />
             </div>
           )}

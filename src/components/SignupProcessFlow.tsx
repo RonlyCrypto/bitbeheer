@@ -17,9 +17,10 @@ interface SignupProcessFlowProps {
   isResendingEmail?: boolean;
   accordionMode?: boolean; // If true, only current step is expanded
   simpleMode?: boolean; // If true, show simplified version for users
+  hasApprovedOneOnOne?: boolean; // If true, 1-on-1 appointment is approved
 }
 
-export default function SignupProcessFlow({ user, showLegend = true, onResendVerificationEmail, isResendingEmail = false, accordionMode = false, simpleMode = false }: SignupProcessFlowProps) {
+export default function SignupProcessFlow({ user, showLegend = true, onResendVerificationEmail, isResendingEmail = false, accordionMode = false, simpleMode = false, hasApprovedOneOnOne = false }: SignupProcessFlowProps) {
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
   
   // Debug logging
@@ -40,9 +41,9 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
       // Simple mode: 3 steps instead of 4
       // Step 1: Aanmelden gelukt (always visible)
       // Step 2: 20min gesprek (visible when email verified)
-      // Step 3: Gesprek goedgekeurd (visible when appointment completed)
-      if (user.account_approved && user.first_appointment_completed) return 3;
-      if (user.first_appointment_completed) return 3; // Show step 3 when appointment is completed (waiting for approval)
+      // Step 3: Gesprek goedgekeurd (visible when appointment completed or approved)
+      if (user.account_approved || hasApprovedOneOnOne) return 3; // Account approved or 1-on-1 approved
+      if (user.first_appointment_completed || hasApprovedOneOnOne) return 3; // Show step 3 when appointment is completed or approved
       if (user.email_verified) return 2; // Show step 2 when email is verified (waiting for appointment)
       return 1; // Show step 1 when just registered (waiting for email verification)
     } else {
@@ -68,11 +69,22 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
   }, [currentStep, simpleMode, user]);
 
   // Initialize expanded steps: in accordion mode, only current step is expanded
+  // If all steps are completed, keep everything collapsed
   useEffect(() => {
-    if (accordionMode && currentStep > 0) {
-      setExpandedSteps(new Set([currentStep]));
+    if (accordionMode) {
+      if (currentStep > 0) {
+        // Check if all steps are completed
+        const allCompleted = user?.account_approved || hasApprovedOneOnOne;
+        if (allCompleted) {
+          // All completed: keep everything collapsed
+          setExpandedSteps(new Set());
+        } else {
+          // Not all completed: expand current step
+          setExpandedSteps(new Set([currentStep]));
+        }
+      }
     }
-  }, [accordionMode, currentStep]);
+  }, [accordionMode, currentStep, user?.account_approved, hasApprovedOneOnOne]);
 
   const toggleStep = (stepNumber: number) => {
     if (!accordionMode) return; // Don't allow toggling if not in accordion mode
@@ -90,6 +102,9 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
 
   const isStepExpanded = (stepNumber: number) => {
     if (!accordionMode) return true; // Always expanded if not in accordion mode
+    // If all steps are completed, nothing is expanded
+    const allCompleted = user?.account_approved || hasApprovedOneOnOne;
+    if (allCompleted) return false;
     // Current step is always expanded
     if (stepNumber === currentStep) return true;
     return expandedSteps.has(stepNumber);
@@ -111,7 +126,7 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
     {
       number: 3,
       title: 'Gesprek goedgekeurd',
-      simpleText: 'Na het gesprek keurt de admin het account goed en wordt de gebruiker volledig geactiveerd.',
+      simpleText: 'Account volledig geopend. Je hebt nu toegang tot alle functies.',
       color: 'orange'
     }
   ] : [
@@ -206,10 +221,10 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
       }
       if (stepNumber === 3) {
         // Step 3: Gesprek goedgekeurd
-        // Current if appointment completed but account not approved
-        if (user?.first_appointment_completed && !user?.account_approved) return 'current';
-        // Completed if account approved
-        if (user?.account_approved) return 'completed';
+        // Current if appointment completed or approved but account not fully approved
+        if ((user?.first_appointment_completed || hasApprovedOneOnOne) && !user?.account_approved && !hasApprovedOneOnOne) return 'current';
+        // Completed if account approved or 1-on-1 approved
+        if (user?.account_approved || hasApprovedOneOnOne) return 'completed';
         // Pending if appointment not completed yet
         return 'pending';
       }
@@ -342,9 +357,6 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
                 )}
                 {isCurrent && accordionMode && !simpleMode && (
                   <p className="text-sm text-orange-600 font-medium">Huidige stap - Open voor details</p>
-                )}
-                {simpleMode && isCurrent && 'simpleText' in step && (
-                  <p className="text-sm text-gray-600 mt-1">{step.simpleText}</p>
                 )}
               </div>
               {accordionMode && !isCurrent && (
