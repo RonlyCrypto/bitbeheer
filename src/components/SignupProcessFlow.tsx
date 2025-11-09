@@ -21,6 +21,17 @@ interface SignupProcessFlowProps {
 
 export default function SignupProcessFlow({ user, showLegend = true, onResendVerificationEmail, isResendingEmail = false, accordionMode = false, simpleMode = false }: SignupProcessFlowProps) {
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
+  
+  // Debug: log user data to see what's being passed
+  useEffect(() => {
+    if (simpleMode && user) {
+      console.log('SignupProcessFlow - User data:', {
+        email_verified: user.email_verified,
+        first_appointment_completed: user.first_appointment_completed,
+        account_approved: user.account_approved
+      });
+    }
+  }, [user, simpleMode]);
   const getCurrentStep = () => {
     if (!user) return 0;
     if (simpleMode) {

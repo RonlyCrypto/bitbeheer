@@ -381,13 +381,14 @@ export default function UserDashboard() {
           
           const { data: userData, error: userError } = await supabase
             .from('users')
-            .select('account_approved, first_appointment_completed')
+            .select('account_approved, first_appointment_completed, email_verified')
             .eq('email', effectiveEmail)
             .single();
           
           if (userData && !userError) {
             setAccountApproved(userData.account_approved || false);
             setFirstAppointmentCompleted(userData.first_appointment_completed || false);
+            setEmailVerified(userData.email_verified || false);
           } else if (userError?.code === 'PGRST204' || userError?.code === 'PGRST116') {
             // Try accounts table as fallback
             const { data: accountData } = await supabase
@@ -427,6 +428,30 @@ export default function UserDashboard() {
     };
     
     window.addEventListener('refreshAccounts', handleAccountRefresh);
+    
+    // Periodic refresh of account status (every 30 seconds)
+    const accountStatusInterval = setInterval(() => {
+      if (user?.email) {
+        const effectiveEmail = (isImpersonating && impersonatedUser) 
+          ? impersonatedUser 
+          : (user.email || null);
+        
+        if (effectiveEmail) {
+          supabase
+            .from('users')
+            .select('account_approved, first_appointment_completed, email_verified')
+            .eq('email', effectiveEmail)
+            .single()
+            .then(({ data: userData, error: userError }) => {
+              if (userData && !userError) {
+                setAccountApproved(userData.account_approved || false);
+                setFirstAppointmentCompleted(userData.first_appointment_completed || false);
+                setEmailVerified(userData.email_verified || false);
+              }
+            });
+        }
+      }
+    }, 30000); // Refresh every 30 seconds
     
     // Function to check and update unread chat count
     const checkUnreadMessages = async () => {
@@ -481,6 +506,7 @@ export default function UserDashboard() {
 
     return () => {
       clearInterval(interval);
+      clearInterval(accountStatusInterval);
       window.removeEventListener('refreshAccounts', handleAccountRefresh);
       window.removeEventListener('newAdminMessage', handleNewMessage);
     };
