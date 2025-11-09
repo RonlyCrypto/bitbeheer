@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Mail, FileText, History, ArrowRight, CheckCircle, XCircle, Clock, Send, RefreshCw, Search, Filter } from 'lucide-react';
+import { Mail, FileText, History, ArrowRight, CheckCircle, XCircle, Clock, Send, RefreshCw, Search, Filter, Calendar } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import EmailTemplates from './EmailTemplates';
 
@@ -503,8 +503,172 @@ export default function EmailManagementTab() {
 
       {activeTab === 'flow' && (
         <div className="bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Aanmeldproces Schema</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Email Flow Schema</h2>
           
+          {/* Visual Flow Diagram */}
+          <div className="mb-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-8 overflow-x-auto">
+            <div className="min-w-[800px]">
+              {/* Start: Aanmelden */}
+              <div className="flex justify-center mb-8">
+                <div className="bg-blue-500 text-white rounded-xl px-8 py-4 shadow-lg">
+                  <div className="flex items-center gap-3">
+                    <Mail className="w-6 h-6" />
+                    <div>
+                      <h3 className="text-lg font-bold">Gebruiker vult aanmeldformulier in</h3>
+                      <p className="text-sm opacity-90">Naam, email, bericht</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Arrow Down */}
+              <div className="flex justify-center mb-4">
+                <ArrowRight className="w-6 h-6 text-gray-400 rotate-90" />
+              </div>
+
+              {/* Email 1: Verificatie Email */}
+              <div className="flex justify-center mb-8">
+                <div className="bg-blue-100 border-2 border-blue-500 rounded-xl px-6 py-4 shadow-md max-w-md">
+                  <div className="flex items-start gap-3">
+                    <Mail className="w-5 h-5 text-blue-600 mt-1" />
+                    <div>
+                      <h4 className="font-bold text-blue-900 mb-1">📧 Verificatie Email</h4>
+                      <p className="text-sm text-blue-800 mb-2">
+                        <strong>Type:</strong> verification<br />
+                        <strong>Onderwerp:</strong> Bevestig je email adres<br />
+                        <strong>Inhoud:</strong> Welkomstbericht + verificatielink<br />
+                        <strong>Geldig:</strong> 5 dagen
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Split: 2 paths */}
+              <div className="grid grid-cols-2 gap-8 mb-8">
+                {/* Path 1: Gebruiker klikt op link */}
+                <div>
+                  <div className="flex justify-center mb-4">
+                    <ArrowRight className="w-6 h-6 text-green-500" />
+                  </div>
+                  <div className="bg-green-50 border-2 border-green-500 rounded-xl px-6 py-4 shadow-md">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle className="w-5 h-5 text-green-600 mt-1" />
+                      <div>
+                        <h4 className="font-bold text-green-900 mb-1">✅ Gebruiker klikt op link</h4>
+                        <p className="text-sm text-green-800 mb-2">
+                          <strong>email_verified:</strong> true<br />
+                          <strong>Status:</strong> Geverifieerd
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Arrow Down */}
+                  <div className="flex justify-center my-4">
+                    <ArrowRight className="w-6 h-6 text-gray-400 rotate-90" />
+                  </div>
+
+                  {/* Path 1a: Gebruiker reageert binnen 5 dagen */}
+                  <div className="bg-purple-50 border-2 border-purple-500 rounded-xl px-6 py-4 shadow-md mb-4">
+                    <div className="flex items-start gap-3">
+                      <Calendar className="w-5 h-5 text-purple-600 mt-1" />
+                      <div>
+                        <h4 className="font-bold text-purple-900 mb-1">📅 20min Gesprek Gepland</h4>
+                        <p className="text-sm text-purple-800 mb-2">
+                          <strong>Email:</strong> Afspraak Bevestiging<br />
+                          <strong>Type:</strong> appointment<br />
+                          <strong>Inhoud:</strong> Teams link, datum/tijd
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Arrow Down */}
+                  <div className="flex justify-center my-4">
+                    <ArrowRight className="w-6 h-6 text-gray-400 rotate-90" />
+                  </div>
+
+                  {/* Gesprek voltooid */}
+                  <div className="bg-orange-50 border-2 border-orange-500 rounded-xl px-6 py-4 shadow-md">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle className="w-5 h-5 text-orange-600 mt-1" />
+                      <div>
+                        <h4 className="font-bold text-orange-900 mb-1">✅ Gesprek Voltooid</h4>
+                        <p className="text-sm text-orange-800 mb-2">
+                          <strong>Email:</strong> Welkom Email<br />
+                          <strong>Type:</strong> welcome<br />
+                          <strong>Inhoud:</strong> Inloggegevens, volgende stappen<br />
+                          <strong>Status:</strong> Account volledig geactiveerd
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Path 2: Gebruiker reageert NIET binnen 5 dagen */}
+                <div>
+                  <div className="flex justify-center mb-4">
+                    <ArrowRight className="w-6 h-6 text-red-500" />
+                  </div>
+                  <div className="bg-red-50 border-2 border-red-500 rounded-xl px-6 py-4 shadow-md">
+                    <div className="flex items-start gap-3">
+                      <Clock className="w-5 h-5 text-red-600 mt-1" />
+                      <div>
+                        <h4 className="font-bold text-red-900 mb-1">⏰ Geen reactie binnen 5 dagen</h4>
+                        <p className="text-sm text-red-800 mb-2">
+                          <strong>Status:</strong> Verificatielink verlopen<br />
+                          <strong>Account:</strong> Niet geverifieerd
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Arrow Down */}
+                  <div className="flex justify-center my-4">
+                    <ArrowRight className="w-6 h-6 text-gray-400 rotate-90" />
+                  </div>
+
+                  {/* Herinnering Email */}
+                  <div className="bg-yellow-50 border-2 border-yellow-500 rounded-xl px-6 py-4 shadow-md mb-4">
+                    <div className="flex items-start gap-3">
+                      <Send className="w-5 h-5 text-yellow-600 mt-1" />
+                      <div>
+                        <h4 className="font-bold text-yellow-900 mb-1">📧 Herinnering Email</h4>
+                        <p className="text-sm text-yellow-800 mb-2">
+                          <strong>Type:</strong> notification<br />
+                          <strong>Onderwerp:</strong> Vergeet niet je account te activeren<br />
+                          <strong>Inhoud:</strong> Nieuwe verificatielink<br />
+                          <strong>Optie:</strong> Admin kan opnieuw versturen
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Arrow Down */}
+                  <div className="flex justify-center my-4">
+                    <ArrowRight className="w-6 h-6 text-gray-400 rotate-90" />
+                  </div>
+
+                  {/* Terug naar verificatie */}
+                  <div className="bg-blue-50 border-2 border-blue-500 border-dashed rounded-xl px-6 py-4 shadow-md">
+                    <div className="flex items-start gap-3">
+                      <RefreshCw className="w-5 h-5 text-blue-600 mt-1" />
+                      <div>
+                        <h4 className="font-bold text-blue-900 mb-1">🔄 Terug naar Verificatie</h4>
+                        <p className="text-sm text-blue-800">
+                          Nieuwe verificatielink verstuurd<br />
+                          Gebruiker kan opnieuw proberen
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Detailed Steps */}
           <div className="space-y-6">
             {/* Step 1 */}
             <div className="border-l-4 border-blue-500 pl-6 pb-6">
@@ -520,6 +684,7 @@ export default function EmailManagementTab() {
                     <p className="text-sm text-blue-800">
                       <strong>Wanneer:</strong> Direct na aanmelding<br />
                       <strong>Type:</strong> verification<br />
+                      <strong>Onderwerp:</strong> Bevestig je email adres - BitBeheer<br />
                       <strong>Inhoud:</strong> Welkomstbericht met verificatielink (geldig 5 dagen)<br />
                       <strong>Status tracking:</strong> Verstuurd, Geopend, Geklikt, Antwoord ontvangen
                     </p>
@@ -562,6 +727,7 @@ export default function EmailManagementTab() {
                     <p className="text-sm text-purple-800">
                       <strong>Wanneer:</strong> Na het plannen van de afspraak<br />
                       <strong>Type:</strong> appointment<br />
+                      <strong>Onderwerp:</strong> Je afspraak is bevestigd - BitBeheer<br />
                       <strong>Inhoud:</strong> Teams link, datum/tijd, instructies<br />
                       <strong>Status tracking:</strong> Verstuurd, Geopend, Geklikt, Antwoord ontvangen
                     </p>
@@ -584,6 +750,7 @@ export default function EmailManagementTab() {
                     <p className="text-sm text-orange-800">
                       <strong>Wanneer:</strong> Na account goedkeuring<br />
                       <strong>Type:</strong> welcome<br />
+                      <strong>Onderwerp:</strong> Welkom bij BitBeheer - Je Account is Aangemaakt<br />
                       <strong>Inhoud:</strong> Welkomstbericht, inloggegevens, volgende stappen<br />
                       <strong>Status tracking:</strong> Verstuurd, Geopend, Geklikt, Antwoord ontvangen
                     </p>
@@ -600,21 +767,53 @@ export default function EmailManagementTab() {
               </div>
             </div>
 
-            {/* Step 5 */}
-            <div className="border-l-4 border-gray-400 pl-6">
+            {/* Step 5: Geen reactie */}
+            <div className="border-l-4 border-red-500 pl-6 pb-6">
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-10 h-10 bg-gray-400 text-white rounded-full flex items-center justify-center font-bold">
+                <div className="flex-shrink-0 w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center font-bold">
                   5
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Ongedaan maken / Opnieuw versturen</h3>
-                  <p className="text-gray-600 mb-3">Als een email niet aankomt of de gebruiker reageert niet, kan de admin emails opnieuw versturen.</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Geen reactie binnen 5 dagen</h3>
+                  <p className="text-gray-600 mb-3">Als de gebruiker niet binnen 5 dagen op de verificatielink klikt, verloopt de link en wordt een herinnering verstuurd.</p>
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <p className="text-sm font-medium text-red-900 mb-2">⏰ Verificatielink Verlopen</p>
+                    <p className="text-sm text-red-800 mb-3">
+                      <strong>Status:</strong> email_verified = false<br />
+                      <strong>Account status:</strong> Niet geverifieerd<br />
+                      <strong>Actie:</strong> Herinnering email versturen
+                    </p>
+                  </div>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-3">
+                    <p className="text-sm font-medium text-yellow-900 mb-2">📧 Email: Herinnering Email</p>
+                    <p className="text-sm text-yellow-800">
+                      <strong>Wanneer:</strong> Na 5 dagen zonder reactie<br />
+                      <strong>Type:</strong> notification<br />
+                      <strong>Onderwerp:</strong> Vergeet niet je account te activeren - BitBeheer<br />
+                      <strong>Inhoud:</strong> Nieuwe verificatielink, uitleg waarom belangrijk<br />
+                      <strong>Optie:</strong> Admin kan handmatig opnieuw versturen
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 6: Opnieuw versturen */}
+            <div className="border-l-4 border-gray-400 pl-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-10 h-10 bg-gray-400 text-white rounded-full flex items-center justify-center font-bold">
+                  6
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Opnieuw Versturen</h3>
+                  <p className="text-gray-600 mb-3">Als een email niet aankomt of de gebruiker reageert niet, kan de admin emails opnieuw versturen vanuit het Email Beheer.</p>
                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                    <p className="text-sm font-medium text-gray-900 mb-2">🔄 Opnieuw Versturen</p>
+                    <p className="text-sm font-medium text-gray-900 mb-2">🔄 Opnieuw Versturen Functionaliteit</p>
                     <p className="text-sm text-gray-800">
                       <strong>Resend count:</strong> Wordt bijgewerkt bij elke nieuwe verzending<br />
                       <strong>Last resent at:</strong> Datum/tijd van laatste verzending<br />
-                      <strong>Status:</strong> Wordt gereset naar 'pending' of 'sent'
+                      <strong>Status:</strong> Wordt gereset naar 'pending' of 'sent'<br />
+                      <strong>Locatie:</strong> Email Beheer → Email Geschiedenis → Actie knoppen
                     </p>
                   </div>
                 </div>
