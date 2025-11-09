@@ -1,4 +1,5 @@
-import { CheckCircle, Clock, XCircle, Send, RefreshCw } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { CheckCircle, Clock, XCircle, Send, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface SignupProcessFlowProps {
   user?: {
@@ -14,9 +15,11 @@ interface SignupProcessFlowProps {
   showLegend?: boolean;
   onResendVerificationEmail?: () => void;
   isResendingEmail?: boolean;
+  accordionMode?: boolean; // If true, only current step is expanded
 }
 
-export default function SignupProcessFlow({ user, showLegend = true, onResendVerificationEmail, isResendingEmail = false }: SignupProcessFlowProps) {
+export default function SignupProcessFlow({ user, showLegend = true, onResendVerificationEmail, isResendingEmail = false, accordionMode = false }: SignupProcessFlowProps) {
+  const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
   const getCurrentStep = () => {
     if (!user) return 0;
     if (user.account_approved && user.first_appointment_completed) return 4;
@@ -27,11 +30,40 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
 
   const currentStep = getCurrentStep();
 
+  // Initialize expanded steps: in accordion mode, only current step is expanded
+  useEffect(() => {
+    if (accordionMode && currentStep > 0) {
+      setExpandedSteps(new Set([currentStep]));
+    }
+  }, [accordionMode, currentStep]);
+
+  const toggleStep = (stepNumber: number) => {
+    if (!accordionMode) return; // Don't allow toggling if not in accordion mode
+    
+    setExpandedSteps(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(stepNumber)) {
+        newSet.delete(stepNumber);
+      } else {
+        newSet.add(stepNumber);
+      }
+      return newSet;
+    });
+  };
+
+  const isStepExpanded = (stepNumber: number) => {
+    if (!accordionMode) return true; // Always expanded if not in accordion mode
+    // Current step is always expanded
+    if (stepNumber === currentStep) return true;
+    return expandedSteps.has(stepNumber);
+  };
+
   const steps = [
     {
       number: 1,
       title: 'Gebruiker vult aanmeldformulier in',
       description: 'Gebruiker geeft naam, email en eventueel bericht op via het aanmeldformulier op de website.',
+      actionText: 'Je hebt je al aangemeld! Controleer je email inbox voor de verificatielink.',
       email: {
         type: 'Verificatie Email',
         when: 'Direct na aanmelding',
@@ -49,6 +81,7 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
       number: 2,
       title: 'Gebruiker klikt op verificatielink',
       description: 'Gebruiker opent de email en klikt op de verificatielink om het account te activeren.',
+      actionText: 'Controleer je email inbox en klik op de verificatielink om je account te activeren. De link is 5 dagen geldig.',
       status: {
         field: 'email_verified',
         value: user?.email_verified ? 'Geverifieerd' : null,
@@ -60,6 +93,7 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
       number: 3,
       title: '20 minuten kennismakingsgesprek',
       description: 'Admin plant een 20 minuten kennismakingsgesprek via Microsoft Teams met de gebruiker.',
+      actionText: 'Plan je eerste kennismakingsgesprek van 20 minuten. Klik op de knop hieronder om een afspraak in te plannen.',
       email: {
         type: 'Afspraak Bevestiging',
         when: 'Na het plannen van de afspraak',
@@ -77,6 +111,7 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
       number: 4,
       title: 'Gesprek voltooid - Account goedgekeurd',
       description: 'Na het gesprek keurt de admin het account goed en wordt de gebruiker volledig geactiveerd.',
+      actionText: 'Wacht op goedkeuring van de admin. Na het gesprek wordt je account volledig geactiveerd.',
       email: {
         type: 'Welkom Email',
         when: 'Na account goedkeuring',
@@ -166,15 +201,23 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {steps.map((step, index) => {
         const status = getStepStatus(step.number);
         const colors = getColorClasses(step.color, status);
         const isLast = index === steps.length - 1;
+        const isExpanded = isStepExpanded(step.number);
+        const isCompleted = status === 'completed';
+        const isCurrent = status === 'current';
 
         return (
-          <div key={step.number} className={`border-l-4 ${colors.border} pl-6 ${!isLast ? 'pb-6' : ''}`}>
-            <div className="flex items-start gap-4">
+          <div key={step.number} className={`border-l-4 ${colors.border} rounded-lg ${isExpanded ? 'bg-gray-50' : ''} transition-colors`}>
+            {/* Step Header - Always visible */}
+            <button
+              onClick={() => accordionMode && !isCurrent && toggleStep(step.number)}
+              disabled={accordionMode && isCurrent}
+              className={`w-full flex items-start gap-4 p-4 ${accordionMode && !isCurrent ? 'cursor-pointer hover:bg-gray-100' : 'cursor-default'} transition-colors`}
+            >
               <div className={`flex-shrink-0 w-10 h-10 ${colors.bg} text-white rounded-full flex items-center justify-center font-bold relative`}>
                 {status === 'completed' ? (
                   <CheckCircle className="w-6 h-6" />
@@ -187,21 +230,50 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
                   <span className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full animate-pulse"></span>
                 )}
               </div>
-              <div className="flex-1">
-                <h3 className={`text-lg font-semibold mb-2 ${
-                  status === 'completed' ? 'text-gray-900' : 
+              <div className="flex-1 text-left">
+                <h3 className={`text-lg font-semibold mb-1 ${
+                  status === 'completed' ? 'text-gray-700' : 
                   status === 'current' ? 'text-orange-600' : 
                   'text-gray-500'
                 }`}>
                   {step.title}
                 </h3>
-                <p className={`mb-3 ${
+                {isCompleted && accordionMode && (
+                  <p className="text-sm text-gray-500">Voltooid</p>
+                )}
+                {isCurrent && accordionMode && (
+                  <p className="text-sm text-orange-600 font-medium">Huidige stap - Open voor details</p>
+                )}
+              </div>
+              {accordionMode && !isCurrent && (
+                <div className="flex-shrink-0">
+                  {isExpanded ? (
+                    <ChevronUp className="w-5 h-5 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                  )}
+                </div>
+              )}
+            </button>
+
+            {/* Step Content - Only visible when expanded or current */}
+            {(isExpanded || isCurrent) && (
+              <div className="px-4 pb-4 pl-14">
+                <p className={`mb-4 ${
                   status === 'completed' ? 'text-gray-600' : 
-                  status === 'current' ? 'text-gray-600' : 
+                  status === 'current' ? 'text-gray-700' : 
                   'text-gray-400'
                 }`}>
                   {step.description}
                 </p>
+
+                {/* Action Text for current step */}
+                {isCurrent && step.actionText && (
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                    <p className="text-sm font-medium text-orange-900 mb-1">📋 Wat moet je doen:</p>
+                    <p className="text-sm text-orange-800">{step.actionText}</p>
+                  </div>
+                )}
                 
                 {step.email && (
                   <div className={`${colors.lightBg} border ${colors.borderLight} rounded-lg p-4 mb-3`}>
@@ -267,7 +339,7 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
                   </div>
                 )}
               </div>
-            </div>
+            )}
           </div>
         );
       })}

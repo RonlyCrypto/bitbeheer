@@ -1794,6 +1794,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   created_at: user?.created_at
                 }}
                 showLegend={true}
+                accordionMode={true}
               />
             </div>
           )}
