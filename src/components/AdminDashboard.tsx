@@ -30,14 +30,31 @@ import AccountBeheer from './AccountBeheer';
 import AdminChat from './AdminChat';
 import AdminSettings from './AdminSettings';
 import AdminAppointmentManagement from './AdminAppointmentManagement';
-import EmailTemplates from './EmailTemplates';
 import ReferralLinksBeheer from './ReferralLinksBeheer';
 import SEOAnalytics from './SEOAnalytics';
+import ProfilePopup from './ProfilePopup';
+import { useProfilePopup } from '../contexts/ProfilePopupContext';
+import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 // import PageManagement from './PageManagement';
 
 export default function AdminDashboard() {
+  const { user } = useSupabaseAuth();
+  const { isImpersonating, impersonatedUser } = usePermissions();
+  const { isOpen: isProfilePopupOpen, closeProfilePopup } = useProfilePopup();
   const [activeTab, setActiveTab] = useState('overview');
   const [isSoonOnlineMode, setIsSoonOnlineMode] = useState(true);
+  const [userProfile, setUserProfile] = useState<any>({
+    id: user?.id || '',
+    email: user?.email || '',
+    name: user?.user_metadata?.name || user?.email?.split('@')[0] || 'Admin',
+    first_name: user?.user_metadata?.first_name || '',
+    last_name: user?.user_metadata?.last_name || '',
+    phone: user?.user_metadata?.phone || '',
+    location: user?.user_metadata?.location || '',
+    company: user?.user_metadata?.company || '',
+    bio: user?.user_metadata?.bio || 'Administrator van BitBeheer'
+  });
   const [users, setUsers] = useState<any[]>([]);
   const [metrics, setMetrics] = useState({
     newChats: 0,
@@ -418,16 +435,6 @@ export default function AdminDashboard() {
                   ) : null}
                 </button>
                 <button
-                  onClick={() => setActiveTab('email-templates')}
-                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
-                    activeTab === 'email-templates'
-                      ? 'border-orange-500 text-orange-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  Email Templates
-                </button>
-                <button
                   onClick={() => setActiveTab('referral-links')}
                   className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
                     activeTab === 'referral-links'
@@ -805,13 +812,6 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* Email Templates Tab */}
-          {activeTab === 'email-templates' && (
-            <div className="space-y-6">
-              <EmailTemplates />
-            </div>
-          )}
-
           {/* Referral Links Tab */}
           {activeTab === 'referral-links' && (
             <div className="space-y-6">
@@ -917,6 +917,16 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* Profile Popup */}
+      <ProfilePopup
+        isOpen={isProfilePopupOpen}
+        onClose={closeProfilePopup}
+        userProfile={userProfile}
+        setUserProfile={setUserProfile}
+        user={user}
+        isImpersonating={isImpersonating}
+        impersonatedUser={impersonatedUser}
+      />
     </div>
   );
 }
