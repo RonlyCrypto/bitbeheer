@@ -407,21 +407,6 @@ export default function AdminDashboard() {
                   )}
                 </button>
                 <button
-                  onClick={() => setActiveTab('notifications')}
-                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm relative whitespace-nowrap flex-shrink-0 ${
-                    activeTab === 'notifications'
-                      ? 'border-orange-500 text-orange-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  Notificaties
-                  {metrics.newNotifications > 0 ? (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 md:h-5 md:w-5 flex items-center justify-center animate-pulse text-[10px] md:text-xs">
-                      {metrics.newNotifications > 9 ? '9+' : metrics.newNotifications}
-                    </span>
-                  ) : null}
-                </button>
-                <button
                   onClick={() => setActiveTab('accounts')}
                   className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm relative whitespace-nowrap flex-shrink-0 ${
                     activeTab === 'accounts'
@@ -458,13 +443,18 @@ export default function AdminDashboard() {
                 </button>
                 <button
                   onClick={() => setActiveTab('notification-management')}
-                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
+                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 relative ${
                     activeTab === 'notification-management'
                       ? 'border-orange-500 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
                   Notificaties
+                  {metrics.newNotifications > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 md:h-5 md:w-5 flex items-center justify-center animate-pulse text-[10px] md:text-xs">
+                      {metrics.newNotifications > 9 ? '9+' : metrics.newNotifications}
+                    </span>
+                  )}
                 </button>
                 <button
                   onClick={() => setActiveTab('seo-analytics')}
@@ -806,12 +796,6 @@ export default function AdminDashboard() {
           )}
 
           {/* Pages Tab */}
-          {/* Notifications Tab */}
-          {activeTab === 'notifications' && (
-            <div className="space-y-6">
-              <NotificatieBeheer />
-            </div>
-          )}
 
           {/* Accounts Tab */}
           {activeTab === 'accounts' && (

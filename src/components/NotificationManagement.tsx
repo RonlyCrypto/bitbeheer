@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Bell, TrendingDown, TrendingUp, Target, Mail, Phone, ToggleLeft, ToggleRight, Users, Save } from 'lucide-react';
+import { Bell, TrendingDown, TrendingUp, Target, Mail, Phone, ToggleLeft, ToggleRight, Users, Save, MessageSquare } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import NotificatieBeheer from './NotificatieBeheer';
 
 interface NotificationPreferences {
   id?: string;
@@ -18,6 +19,7 @@ interface NotificationPreferences {
 }
 
 export default function NotificationManagement() {
+  const [activeSubTab, setActiveSubTab] = useState<'preferences' | 'users'>('preferences');
   const [globalSettings, setGlobalSettings] = useState({
     bear_market_buys_global_enabled: true,
     bear_market_alerts_global_enabled: true,
@@ -140,6 +142,44 @@ export default function NotificationManagement() {
           Beheer globale notificatie instellingen en bekijk gebruikers met bear market buys ingeschakeld
         </p>
       </div>
+
+      {/* Sub Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveSubTab('preferences')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+              activeSubTab === 'preferences'
+                ? 'border-orange-500 text-orange-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <Bell className="w-4 h-4 inline mr-2" />
+            Voorkeuren & Instellingen
+          </button>
+          <button
+            onClick={() => setActiveSubTab('users')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+              activeSubTab === 'users'
+                ? 'border-orange-500 text-orange-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <MessageSquare className="w-4 h-4 inline mr-2" />
+            Notificatie Aanmeldingen
+          </button>
+        </nav>
+      </div>
+
+      {/* Tab Content */}
+      {activeSubTab === 'users' && (
+        <div>
+          <NotificatieBeheer />
+        </div>
+      )}
+
+      {activeSubTab === 'preferences' && (
+        <div className="space-y-6">
 
       {/* Global Settings */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -322,7 +362,8 @@ export default function NotificationManagement() {
             </table>
           </div>
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

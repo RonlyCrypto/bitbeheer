@@ -35,6 +35,13 @@ CREATE INDEX IF NOT EXISTS idx_notification_preferences_bear_market_buys ON noti
 -- Enable RLS
 ALTER TABLE notification_preferences ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can view own notification preferences" ON notification_preferences;
+DROP POLICY IF EXISTS "Users can update own notification preferences" ON notification_preferences;
+DROP POLICY IF EXISTS "Users can insert own notification preferences" ON notification_preferences;
+DROP POLICY IF EXISTS "Admins can view all notification preferences" ON notification_preferences;
+DROP POLICY IF EXISTS "Admins can update global notification settings" ON notification_preferences;
+
 -- Policy: Users can read and update their own preferences
 CREATE POLICY "Users can view own notification preferences"
   ON notification_preferences FOR SELECT
