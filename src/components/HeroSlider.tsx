@@ -42,25 +42,19 @@ export default function HeroSlider() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [showBitcoinText, setShowBitcoinText] = useState(false);
-  const [isBlinking, setIsBlinking] = useState(true);
+  const [showFullText, setShowFullText] = useState(true);
 
-  // Blinking phase - BitBeheer knipperen
+  // Show full text first for a few seconds, then animate
   useEffect(() => {
-    const blinkTimer = setTimeout(() => {
-      setIsBlinking(false);
-    }, 3000); // Blink for 3 seconds
-    return () => clearTimeout(blinkTimer);
-  }, []);
-
-  // Start animation after blinking
-  useEffect(() => {
-    if (!isBlinking) {
-      const animationTimer = setTimeout(() => {
+    const fullTextTimer = setTimeout(() => {
+      setShowFullText(false);
+      // Start animation after full text is hidden
+      setTimeout(() => {
         setShowBitcoinText(true);
-      }, 500); // Start animation 500ms after blinking stops
-      return () => clearTimeout(animationTimer);
-    }
-  }, [isBlinking]);
+      }, 300); // Smooth transition
+    }, 3000); // Show full text for 3 seconds
+    return () => clearTimeout(fullTextTimer);
+  }, []);
 
   // Auto-advance main slides - start after animation completes
   useEffect(() => {
@@ -107,15 +101,16 @@ export default function HeroSlider() {
           {/* Animated Brand Name */}
           <div className="text-center mb-4 min-h-[100px] flex flex-col items-center justify-center">
             <div className="relative w-full mb-3">
-              {isBlinking ? (
-                <div className="flex items-center justify-center gap-2">
-                  <span className="text-5xl md:text-7xl font-bold tracking-tight inline-block animate-blink">
-                    BitBeheer
-                  </span>
+              {showFullText ? (
+                <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center transition-opacity duration-500">
+                  <span className="inline-block">Bit</span>
+                  <span className="inline-block text-orange-200">Coin</span>
+                  <span className="inline-block text-orange-200 ml-1 md:ml-1.5">in eigen</span>
+                  <span className="inline-block ml-1 md:ml-1.5">beheer</span>
                 </div>
               ) : (
                 <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center">
-                  <span className="inline-block">Bit</span>
+                  <span className="inline-block animate-fade-in">Bit</span>
                   <span className={`inline-block text-orange-200 transition-all duration-700 delay-300 ${
                     showBitcoinText ? 'opacity-100 scale-100' : 'opacity-0 scale-95 w-0'
                   }`}>
@@ -126,7 +121,7 @@ export default function HeroSlider() {
                   }`}>
                     in eigen
                   </span>
-                  <span className="inline-block ml-1 md:ml-1.5">beheer</span>
+                  <span className="inline-block ml-1 md:ml-1.5 animate-fade-in">beheer</span>
                 </div>
               )}
             </div>
