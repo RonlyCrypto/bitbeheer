@@ -136,9 +136,13 @@ export default function HeroSlider() {
           </div>
 
           {/* Slider Container - Always present but hidden until ready */}
-          <div className="relative">
+          <div className={`relative transition-all duration-700 ${
+            showBitcoinText ? 'opacity-100 h-auto' : 'opacity-0 h-0 overflow-hidden'
+          }`}>
             {/* Slides */}
-            <div className="relative h-[200px] md:h-[180px]">
+            <div className={`relative transition-all duration-700 ${
+              showBitcoinText ? 'h-[200px] md:h-[180px]' : 'h-0'
+            }`}>
               {slides.map((slide, index) => (
                 <div
                   key={slide.id}
