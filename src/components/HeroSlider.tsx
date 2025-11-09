@@ -105,10 +105,7 @@ export default function HeroSlider() {
           <div className="text-center mb-4 h-[100px] md:h-[120px] flex flex-col items-center justify-center">
             <div className="relative w-full mb-3 h-full flex items-center justify-center">
               <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center h-full">
-                <span className={`inline-block transition-all duration-700 ${
-                  slidePhase === 'together' ? 'mr-0' :
-                  'mr-0'
-                }`}>
+                <span className="inline-block mr-0">
                   Bit
                 </span>
                 <span className={`inline-block text-orange-200 transition-all duration-700 mx-0 ${
