@@ -797,19 +797,6 @@ export default function UserDashboard() {
                   setAccountApproved(false);
                   setFirstAppointmentCompleted(false);
                   setEmailVerified(false);
-                } else {
-                  // Try accounts table as fallback (shouldn't be needed)
-                  supabase
-                    .from('accounts')
-                    .select('account_approved, first_appointment_completed')
-                    .eq('email', user.email)
-                    .single()
-                    .then(({ data: accountData }) => {
-                      if (accountData) {
-                        setAccountApproved(accountData.account_approved || false);
-                        setFirstAppointmentCompleted(accountData.first_appointment_completed || false);
-                      }
-                    });
                 }
               });
           }
