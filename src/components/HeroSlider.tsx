@@ -49,13 +49,13 @@ export default function HeroSlider() {
     // Start with Bit and beheer together
     setSlidePhase('together');
     setTimeout(() => {
-      // After 2 seconds, start sliding apart - change margin first
+      // After 2 seconds, start sliding apart - beheer slides right
       setSlidePhase('sliding');
       setTimeout(() => {
         // After sliding animation completes, fade in coin in eigen
         setShowBitcoinText(true);
         setSlidePhase('fading');
-      }, 1200); // Wait for slide animation to complete
+      }, 1000); // Wait for slide animation to complete (700ms transition + buffer)
     }, 2000); // Wait 2 seconds before sliding
   }, []);
 
@@ -175,9 +175,9 @@ export default function HeroSlider() {
             transform: scaleX(0);
             opacity: 0;
           }
-          50% {
-            transform: scaleX(1.1);
-            opacity: 0.8;
+          60% {
+            transform: scaleX(1.05);
+            opacity: 0.9;
           }
           100% {
             transform: scaleX(1);
@@ -186,7 +186,7 @@ export default function HeroSlider() {
         }
 
         .animate-coin-in-eigen {
-          animation: coin-in-eigen-expand 0.8s ease-out forwards;
+          animation: coin-in-eigen-expand 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
 
         @keyframes fade-in {
