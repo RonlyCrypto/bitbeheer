@@ -108,16 +108,21 @@ export default function HeroSlider() {
                 <span className="inline-block mr-0">
                   Bit
                 </span>
-                <span className={`inline-block text-orange-200 transition-all duration-700 ${
-                  slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 w-0 mx-0 overflow-hidden' :
-                  'opacity-100 mx-0'
-                }`}>
+                <span className={`inline-block text-orange-200 mx-0 ${
+                  slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 scale-x-0' :
+                  slidePhase === 'fading' ? 'animate-coin-in-eigen' : 'opacity-100 scale-x-100'
+                }`} style={{
+                  transformOrigin: 'center'
+                }}>
                   coin
                 </span>
-                <span className={`inline-block text-orange-200 transition-all duration-700 ${
-                  slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 w-0 ml-0 overflow-hidden' :
-                  'opacity-100 ml-1 md:ml-1.5'
-                }`}>
+                <span className={`inline-block text-orange-200 ml-1 md:ml-1.5 ${
+                  slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 scale-x-0' :
+                  slidePhase === 'fading' ? 'animate-coin-in-eigen' : 'opacity-100 scale-x-100'
+                }`} style={{
+                  transformOrigin: 'center',
+                  animationDelay: slidePhase === 'fading' ? '0.1s' : '0s'
+                }}>
                   in eigen
                 </span>
                 <span className={`inline-block transition-all duration-700 ease-in-out ${
@@ -173,17 +178,23 @@ export default function HeroSlider() {
           }
         }
 
-        @keyframes slide-beheer {
+        @keyframes coin-in-eigen-expand {
           0% {
-            transform: translateX(0);
+            transform: scaleX(0);
+            opacity: 0;
+          }
+          50% {
+            transform: scaleX(1.1);
+            opacity: 0.8;
           }
           100% {
-            transform: translateX(0);
+            transform: scaleX(1);
+            opacity: 1;
           }
         }
 
-        .animate-slide-beheer {
-          animation: slide-beheer 1.2s ease-in-out forwards;
+        .animate-coin-in-eigen {
+          animation: coin-in-eigen-expand 0.8s ease-out forwards;
         }
 
         @keyframes fade-in {
