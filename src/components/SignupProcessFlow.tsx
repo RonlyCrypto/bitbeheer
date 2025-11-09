@@ -265,10 +265,9 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
 
   return (
     <div className="space-y-4">
-      {steps.map((step, index) => {
+      {steps.map((step) => {
         const status = getStepStatus(step.number);
         const colors = getColorClasses(step.color, status);
-        const isLast = index === steps.length - 1;
         const isExpanded = isStepExpanded(step.number);
         const isCompleted = status === 'completed';
         const isCurrent = status === 'current';
