@@ -123,15 +123,11 @@ export default function HeroSlider() {
                 }`}>
                   in eigen
                 </span>
-                <span className={`inline-block transition-all duration-700 ${
+                <span className={`inline-block transition-all duration-700 ease-in-out ${
                   slidePhase === 'together' ? 'ml-0' :
                   slidePhase === 'sliding' ? 'ml-0' :
                   'ml-1 md:ml-1.5'
-                }`} style={{
-                  transform: slidePhase === 'together' ? 'translateX(0)' :
-                             slidePhase === 'sliding' ? 'translateX(calc(100% + 0.375rem + 0.375rem))' :
-                             'translateX(0)'
-                }}>
+                }`}>
                   beheer
                 </span>
               </div>
