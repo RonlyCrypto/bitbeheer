@@ -362,7 +362,7 @@ export default function NotificationManagement() {
             </table>
           </div>
         )}
-        </div>
+      </div>
       )}
     </div>
   );
