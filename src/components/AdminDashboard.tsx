@@ -730,14 +730,14 @@ export default function AdminDashboard() {
                       <p className="text-gray-600">Beheer notificatie e-mails en verstuur bulk berichten</p>
                     </div>
                   </div>
-                  <Link
-                    to="/admin/emails"
+                  <button
+                    onClick={() => setActiveTab('email-management')}
                     className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                   >
                     <Mail className="w-4 h-4" />
                     E-mail Beheer
                     <ChevronRight className="w-4 h-4" />
-                  </Link>
+                  </button>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="bg-gray-50 rounded-lg p-4">
