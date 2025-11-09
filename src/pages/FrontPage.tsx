@@ -256,7 +256,7 @@ export default function FrontPage() {
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                Wat We Je Leren
+                Wat we je leren
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                 Persoonlijke begeleiding in drie essentiële stappen
@@ -349,7 +349,7 @@ export default function FrontPage() {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                Voor Wie is Dit Bedoeld?
+                Voor wie is dit bedoeld?
               </h2>
               <p className="text-xl text-gray-600">
                 We helpen mensen die serieus willen investeren in Bitcoin
