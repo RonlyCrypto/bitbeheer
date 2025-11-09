@@ -182,6 +182,7 @@ export default function BitcoinHistory() {
   const [selectedMetric, setSelectedMetric] = useState<'price' | 'marketCap'>('price');
   const [showAllEvents, setShowAllEvents] = useState(false);
   const [hoveredEvent, setHoveredEvent] = useState<number | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
   const [isLiveMode, setIsLiveMode] = useState(false);
   const [liveData, setLiveData] = useState<PriceData[]>([]);
   const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
@@ -1069,6 +1070,7 @@ export default function BitcoinHistory() {
               }}
               halvingEvents={showHalvingEvents ? halvingEvents : []}
               majorEvents={showMajorEvents ? majorEvents : []}
+              highlightedEvent={selectedEvent}
               cyclePhases={showCyclePhases ? 
                 selectedCycle ? 
                   bitcoinCycles.find(cycle => cycle.id === selectedCycle)?.phases ? 
@@ -1206,9 +1208,15 @@ export default function BitcoinHistory() {
                 {majorEvents.map((event, index) => (
                     <div 
                       key={index} 
-                      className="bg-white bg-opacity-50 rounded-lg p-3 relative cursor-pointer hover:bg-opacity-70 transition-all"
+                      className={`bg-white bg-opacity-50 rounded-lg p-3 relative cursor-pointer hover:bg-opacity-70 transition-all ${
+                        selectedEvent === event.date ? 'ring-2 ring-orange-500 bg-opacity-80' : ''
+                      }`}
                       onMouseEnter={() => setHoveredEvent(index)}
                       onMouseLeave={() => setHoveredEvent(null)}
+                      onClick={() => {
+                        // Toggle selection: if already selected, deselect; otherwise select
+                        setSelectedEvent(selectedEvent === event.date ? null : event.date);
+                      }}
                     >
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm font-semibold text-orange-900">{event.label}</span>

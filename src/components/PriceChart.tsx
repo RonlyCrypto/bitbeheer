@@ -55,6 +55,7 @@ interface PriceChartProps {
   currentTimeRange?: '1y' | '3y' | '5y' | 'all' | 'live';
   isLiveMode?: boolean;
   lastUpdateTime?: Date | null;
+  highlightedEvent?: string | null; // Date of highlighted event
 }
 
 export default function PriceChart({
@@ -79,7 +80,8 @@ export default function PriceChart({
   onTimeRangeChange,
   currentTimeRange = 'all',
   isLiveMode = false,
-  lastUpdateTime = null
+  lastUpdateTime = null,
+  highlightedEvent = null
 }: PriceChartProps) {
   const { getCurrencySymbol, formatPrice } = useCurrency();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -97,6 +99,8 @@ export default function PriceChart({
       monthNumber: number;
       currentValue: number;
     };
+    isMajorEvent?: boolean;
+    majorEvent?: MajorEvent;
   } | null>(null);
   const [zoomRange, setZoomRange] = useState<{ start: number; end: number }>({ start: 0, end: 100 });
   const [isDragging, setIsDragging] = useState<'start' | 'end' | 'range' | null>(null);
@@ -691,9 +695,12 @@ export default function PriceChart({
           const totalTime = dataEndDate.getTime() - dataStartDate.getTime();
           const x = padding.left + (timeDiff / totalTime) * chartWidth;
           
-          // Draw vertical line (green for major events)
-          ctx.strokeStyle = '#10b981';
-          ctx.lineWidth = 2;
+          // Check if this event is highlighted
+          const isHighlighted = highlightedEvent === event.date;
+          
+          // Draw vertical line (green for major events, brighter if highlighted)
+          ctx.strokeStyle = isHighlighted ? '#34d399' : '#10b981';
+          ctx.lineWidth = isHighlighted ? 3 : 2;
           ctx.setLineDash([3, 3]);
           ctx.beginPath();
           ctx.moveTo(x, padding.top);
@@ -701,21 +708,32 @@ export default function PriceChart({
           ctx.stroke();
           ctx.setLineDash([]);
           
-          // Draw event marker (circle)
+          // Draw event marker (circle) - larger if highlighted
+          const circleRadius = isHighlighted ? 10 : 6;
           ctx.beginPath();
-          ctx.arc(x, padding.top + chartHeight / 2, 6, 0, 2 * Math.PI);
-          ctx.fillStyle = '#10b981';
+          ctx.arc(x, padding.top + chartHeight / 2, circleRadius, 0, 2 * Math.PI);
+          ctx.fillStyle = isHighlighted ? '#34d399' : '#10b981';
           ctx.fill();
           ctx.strokeStyle = '#ffffff';
-          ctx.lineWidth = 2;
+          ctx.lineWidth = isHighlighted ? 3 : 2;
           ctx.stroke();
+          
+          // Draw glow effect for highlighted events
+          if (isHighlighted) {
+            ctx.shadowColor = '#34d399';
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.arc(x, padding.top + chartHeight / 2, circleRadius, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          }
           
           // Draw event label (rotated for better visibility)
           ctx.save();
           ctx.translate(x, padding.top - 10);
           ctx.rotate(-Math.PI / 4);
-          ctx.fillStyle = '#10b981';
-          ctx.font = 'bold 10px sans-serif';
+          ctx.fillStyle = isHighlighted ? '#34d399' : '#10b981';
+          ctx.font = isHighlighted ? 'bold 12px sans-serif' : 'bold 10px sans-serif';
           ctx.textAlign = 'left';
           ctx.fillText(event.label, 0, 0);
           ctx.restore();
@@ -723,7 +741,7 @@ export default function PriceChart({
       });
     }
 
-  }, [data, height, showGrid, color, purchasePoints, averageBuyPrice, minMaxLines, halvingEvents, majorEvents, purchaseDetails, cyclePhases]);
+  }, [data, height, showGrid, color, purchasePoints, averageBuyPrice, minMaxLines, halvingEvents, majorEvents, purchaseDetails, cyclePhases, highlightedEvent]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -743,7 +761,65 @@ export default function PriceChart({
       return;
     }
 
-    // First check if we're hovering over a purchase point
+    // First check if we're hovering over a major event
+    if (majorEvents.length > 0) {
+      const prices = data.map(d => d.price);
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+      const priceRange = maxPrice - minPrice;
+      
+      for (let i = 0; i < majorEvents.length; i++) {
+        const event = majorEvents[i];
+        const eventDate = new Date(event.date);
+        const dataStartDate = new Date(data[0].date);
+        const dataEndDate = new Date(data[data.length - 1].date);
+        
+        // Only check if event is within visible data range
+        if (eventDate >= dataStartDate && eventDate <= dataEndDate) {
+          const timeDiff = eventDate.getTime() - dataStartDate.getTime();
+          const totalTime = dataEndDate.getTime() - dataStartDate.getTime();
+          const eventX = padding.left + (timeDiff / totalTime) * chartWidth;
+          
+          // Find the price at this event date
+          let eventPrice = 0;
+          const eventDataPoint = data.find(d => d.date === event.date);
+          if (eventDataPoint) {
+            eventPrice = eventDataPoint.price;
+          } else {
+            // Find closest data point
+            let closestPoint = data[0];
+            let minDiff = Infinity;
+            data.forEach(d => {
+              const diff = Math.abs(new Date(d.date).getTime() - eventDate.getTime());
+              if (diff < minDiff) {
+                minDiff = diff;
+                closestPoint = d;
+              }
+            });
+            eventPrice = closestPoint.price;
+          }
+          
+          const eventY = padding.top + chartHeight - ((eventPrice - minPrice) / priceRange) * chartHeight;
+          
+          // Check if mouse is within 25 pixels of the event marker
+          const distance = Math.sqrt((x - eventX) ** 2 + (y - eventY) ** 2);
+          
+          if (distance <= 25) {
+            setHoveredPoint({
+              x: eventX,
+              y: eventY,
+              date: event.date,
+              price: eventPrice,
+              isMajorEvent: true,
+              majorEvent: event
+            });
+            return;
+          }
+        }
+      }
+    }
+
+    // Then check if we're hovering over a purchase point
     if (purchasePoints.length > 0) {
       const prices = data.map(d => d.price);
       const minPrice = Math.min(...prices);
@@ -997,6 +1073,20 @@ export default function PriceChart({
                 year: 'numeric'
               })}
             </div>
+                
+                {/* Major event details */}
+                {hoveredPoint.isMajorEvent && hoveredPoint.majorEvent && (
+                  <div className="bg-gray-700 rounded-lg p-3 border border-gray-600">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+                      <div className="text-green-400 font-semibold text-xs">{hoveredPoint.majorEvent.label}</div>
+                    </div>
+                    <p className="text-xs text-gray-300 mb-2">{hoveredPoint.majorEvent.description}</p>
+                    {hoveredPoint.majorEvent.details && (
+                      <p className="text-xs text-gray-400 leading-relaxed">{hoveredPoint.majorEvent.details}</p>
+                    )}
+                  </div>
+                )}
                 
                 {/* Purchase details */}
                 {hoveredPoint.isPurchase && hoveredPoint.purchaseDetail && (
