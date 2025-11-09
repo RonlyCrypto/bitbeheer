@@ -1851,22 +1851,13 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           {!accountApproved && (
             <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Jouw Aanmeldproces</h3>
-              {(() => {
-                // Debug logging
-                console.log('🔍 UserDashboard - Passing to SignupProcessFlow:', {
-                  email_verified: emailVerified,
-                  first_appointment_completed: firstAppointmentCompleted,
-                  account_approved: accountApproved,
-                  created_at: user?.created_at
-                });
-                return null;
-              })()}
               <SignupProcessFlow 
                 user={{
                   email_verified: emailVerified,
                   first_appointment_completed: firstAppointmentCompleted,
                   account_approved: accountApproved,
-                  created_at: user?.created_at
+                  created_at: user?.created_at,
+                  email: user?.email
                 }}
                 showLegend={false}
                 accordionMode={true}
