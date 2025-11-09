@@ -196,7 +196,7 @@ export default function HeroSlider() {
             transform: translateX(0);
           }
           100% {
-            transform: translateX(calc(-50% - 140px));
+            transform: translateX(calc(-50% - 80px));
           }
         }
 
@@ -205,7 +205,7 @@ export default function HeroSlider() {
             transform: translateX(0);
           }
           100% {
-            transform: translateX(calc(50% + 140px));
+            transform: translateX(calc(50% + 80px));
           }
         }
 
