@@ -80,21 +80,31 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-white font-bold text-lg mb-4">Ontdek Meer</h3>
+            <h3 className="text-white font-bold text-lg mb-4">Gerelateerde Pagina's</h3>
             <ul className="space-y-2 text-sm">
               <li>
+                <Link to="/" className="text-orange-400 hover:text-orange-300 transition-colors underline">
+                  Home
+                </Link>
+              </li>
+              <li>
                 <Link to="/bitcoin-history" className="text-orange-400 hover:text-orange-300 transition-colors underline">
-                  Bitcoin Prijsgeschiedenis
+                  Bitcoin Geschiedenis
                 </Link>
               </li>
               <li>
                 <Link to="/portfolio" className="text-orange-400 hover:text-orange-300 transition-colors underline">
-                  Portfolio Beheer
+                  Portfolio
+                </Link>
+              </li>
+              <li>
+                <Link to="/user-dashboard" className="text-orange-400 hover:text-orange-300 transition-colors underline">
+                  Dashboard
                 </Link>
               </li>
               <li>
                 <Link to="/aanmelden" className="text-orange-400 hover:text-orange-300 transition-colors underline">
-                  Aanmelden voor Begeleiding
+                  Aanmelden
                 </Link>
               </li>
             </ul>

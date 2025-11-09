@@ -480,22 +480,6 @@ export default function FrontPage() {
           </div>
         </div>
       </section>
-
-      {/* Internal Links Section for SEO */}
-      <section className="py-12 bg-white border-t border-gray-200">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Gerelateerde Pagina's</h2>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Link to="/" className="text-orange-600 hover:text-orange-700 underline font-medium">Home</Link>
-              <Link to="/bitcoin-history" className="text-orange-600 hover:text-orange-700 underline font-medium">Bitcoin Geschiedenis</Link>
-              <Link to="/portfolio" className="text-orange-600 hover:text-orange-700 underline font-medium">Portfolio</Link>
-              <Link to="/user-dashboard" className="text-orange-600 hover:text-orange-700 underline font-medium">Dashboard</Link>
-              <Link to="/aanmelden" className="text-orange-600 hover:text-orange-700 underline font-medium">Aanmelden</Link>
-            </div>
-          </div>
-        </div>
-      </section>
       </div>
     </div>
   );
