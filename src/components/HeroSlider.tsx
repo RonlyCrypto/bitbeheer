@@ -114,10 +114,10 @@ export default function HeroSlider() {
                   </span>
                 </div>
               ) : (
-                <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center flex-wrap">
+                <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center">
                   <span className="inline-block animate-slide-to-position-left">Bit</span>
-                  <span className={`inline-block mx-1 md:mx-2 text-orange-200 transition-all duration-700 delay-300 ${
-                    showBitcoinText ? 'opacity-100 scale-100' : 'opacity-0 scale-95 w-0 mx-0'
+                  <span className={`inline-block text-orange-200 transition-all duration-700 delay-300 ${
+                    showBitcoinText ? 'opacity-100 scale-100 mx-1 md:mx-2' : 'opacity-0 scale-95 w-0 mx-0'
                   }`}>
                     Coin
                   </span>
@@ -196,7 +196,7 @@ export default function HeroSlider() {
             transform: translateX(0);
           }
           100% {
-            transform: translateX(calc(-50% - 80px));
+            transform: translateX(calc(-50% - 60px));
           }
         }
 
@@ -205,7 +205,7 @@ export default function HeroSlider() {
             transform: translateX(0);
           }
           100% {
-            transform: translateX(calc(50% + 80px));
+            transform: translateX(calc(50% + 60px));
           }
         }
 
