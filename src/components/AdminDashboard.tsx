@@ -759,24 +759,24 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-                    <div className="bg-white rounded-xl p-6 shadow-lg">
-                      <h3 className="text-xl font-bold text-gray-900 mb-4">Recente Activiteit</h3>
-                      <div className="space-y-3">
+                    <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
+                      <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-4">Recente Activiteit</h3>
+                      <div className="space-y-2 md:space-y-3">
                         {users.length > 0 ? (
                           users.slice(0, 5).map((user, index) => (
-                            <div key={user.id || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                                  <Users className="w-4 h-4 text-orange-600" />
+                            <div key={user.id || index} className="flex items-center justify-between p-2 md:p-3 bg-gray-50 rounded-lg gap-2 overflow-hidden">
+                              <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+                                <div className="w-6 h-6 md:w-8 md:h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                  <Users className="w-3 h-3 md:w-4 md:h-4 text-orange-600" />
                                 </div>
-                                <div>
-                                  <p className="font-medium text-gray-900">{user.name || 'Niet opgegeven'}</p>
-                                  <p className="text-sm text-gray-600">{user.email}</p>
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-medium text-gray-900 text-xs md:text-sm truncate">{user.name || 'Niet opgegeven'}</p>
+                                  <p className="text-xs md:text-sm text-gray-600 truncate">{user.email}</p>
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <p className="text-sm text-gray-500">{user.date || 'Onbekend'}</p>
-                                <span className="inline-block px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded-full">
+                              <div className="text-right flex-shrink-0 ml-2">
+                                <p className="text-xs md:text-sm text-gray-500 whitespace-nowrap">{user.date || 'Onbekend'}</p>
+                                <span className="inline-block px-1.5 md:px-2 py-0.5 md:py-1 text-xs bg-orange-100 text-orange-800 rounded-full whitespace-nowrap">
                                   {user.category || 'Niet opgegeven'}
                                 </span>
                               </div>
@@ -787,8 +787,8 @@ export default function AdminDashboard() {
                             <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                               <BarChart3 className="w-6 h-6 text-gray-400" />
                             </div>
-                            <p>Nog geen activiteit geregistreerd</p>
-                            <p className="text-sm">Activiteit wordt hier getoond zodra er data is</p>
+                            <p className="text-sm md:text-base">Nog geen activiteit geregistreerd</p>
+                            <p className="text-xs md:text-sm">Activiteit wordt hier getoond zodra er data is</p>
                           </div>
                         )}
                       </div>
