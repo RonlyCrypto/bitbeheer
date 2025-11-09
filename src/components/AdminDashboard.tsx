@@ -537,14 +537,14 @@ export default function AdminDashboard() {
               </div>
 
                           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            <div className="bg-white rounded-xl p-6 shadow-lg border-2 border-orange-200">
-                              <div className="flex items-center gap-4">
-                                <div className="bg-orange-100 p-3 rounded-xl">
-                                  <MessageSquare className="w-8 h-8 text-orange-600" />
+                            <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg border-2 border-orange-200">
+                              <div className="flex items-center gap-3 md:gap-4">
+                                <div className="bg-orange-100 p-2 md:p-3 rounded-xl flex-shrink-0">
+                                  <MessageSquare className="w-6 h-6 md:w-8 md:h-8 text-orange-600" />
                                 </div>
-                                <div className="flex-1">
-                                  <h3 className="text-2xl font-bold text-gray-900">{metrics.newChats}</h3>
-                                  <p className="text-gray-600">Nieuwe Chats</p>
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="text-xl md:text-2xl font-bold text-gray-900">{metrics.newChats}</h3>
+                                  <p className="text-xs md:text-sm text-gray-600 truncate">Nieuwe Chats</p>
                                 </div>
                               </div>
                               {metrics.newChats > 0 && (
@@ -557,14 +557,14 @@ export default function AdminDashboard() {
                               )}
                             </div>
 
-                            <div className="bg-white rounded-xl p-6 shadow-lg border-2 border-orange-200">
-                              <div className="flex items-center gap-4">
-                                <div className="bg-orange-100 p-3 rounded-xl">
-                                  <Calendar className="w-8 h-8 text-orange-600" />
+                            <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg border-2 border-orange-200">
+                              <div className="flex items-center gap-3 md:gap-4">
+                                <div className="bg-orange-100 p-2 md:p-3 rounded-xl flex-shrink-0">
+                                  <Calendar className="w-6 h-6 md:w-8 md:h-8 text-orange-600" />
                                 </div>
-                                <div className="flex-1">
-                                  <h3 className="text-2xl font-bold text-gray-900">{metrics.pendingAppointments}</h3>
-                                  <p className="text-gray-600">Afspraken in Afwachting</p>
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="text-xl md:text-2xl font-bold text-gray-900">{metrics.pendingAppointments}</h3>
+                                  <p className="text-xs md:text-sm text-gray-600 truncate">Afspraken in Afwachting</p>
                                 </div>
                               </div>
                               {metrics.pendingAppointments > 0 && (
@@ -577,14 +577,14 @@ export default function AdminDashboard() {
                               )}
                             </div>
 
-                            <div className="bg-white rounded-xl p-6 shadow-lg border-2 border-green-200">
-                              <div className="flex items-center gap-4">
-                                <div className="bg-green-100 p-3 rounded-xl">
-                                  <Users className="w-8 h-8 text-green-600" />
+                            <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg border-2 border-green-200">
+                              <div className="flex items-center gap-3 md:gap-4">
+                                <div className="bg-green-100 p-2 md:p-3 rounded-xl flex-shrink-0">
+                                  <Users className="w-6 h-6 md:w-8 md:h-8 text-green-600" />
                                 </div>
-                                <div className="flex-1">
-                                  <h3 className="text-2xl font-bold text-gray-900">{metrics.newAccounts}</h3>
-                                  <p className="text-gray-600">Accounts die aandacht nodig hebben</p>
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="text-xl md:text-2xl font-bold text-gray-900">{metrics.newAccounts}</h3>
+                                  <p className="text-xs md:text-sm text-gray-600 truncate">Accounts die aandacht nodig hebben</p>
                                 </div>
                               </div>
                               {metrics.newAccounts > 0 && (
@@ -598,12 +598,12 @@ export default function AdminDashboard() {
                             </div>
 
                             <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg border-2 border-blue-200">
-                              <div className="flex items-center gap-4">
-                                <div className="bg-blue-100 p-3 rounded-xl">
-                                  <Clock className="w-8 h-8 text-blue-600" />
+                              <div className="flex items-center gap-3 md:gap-4">
+                                <div className="bg-blue-100 p-2 md:p-3 rounded-xl flex-shrink-0">
+                                  <Clock className="w-6 h-6 md:w-8 md:h-8 text-blue-600" />
                                 </div>
-                                <div className="flex-1">
-                                  <h3 className="text-lg font-bold text-gray-900">
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="text-base md:text-lg font-bold text-gray-900">
                                     {metrics.upcomingAppointment ? (
                                       (() => {
                                         try {
@@ -620,7 +620,7 @@ export default function AdminDashboard() {
                                       })()
                                     ) : 'Geen'}
                                   </h3>
-                                  <p className="text-gray-600">
+                                  <p className="text-xs md:text-sm text-gray-600 truncate">
                                     {metrics.upcomingAppointment 
                                       ? (() => {
                                           try {
