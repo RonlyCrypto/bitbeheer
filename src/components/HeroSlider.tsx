@@ -62,7 +62,7 @@ export default function HeroSlider() {
     }
   }, [isBlinking]);
 
-  // Auto-advance main slides - start after animation
+  // Auto-advance main slides - start after animation completes
   useEffect(() => {
     if (!showBitcoinText) return;
 
@@ -72,7 +72,7 @@ export default function HeroSlider() {
       intervalId = setInterval(() => {
         setCurrentSlide((prev) => (prev + 1) % slides.length);
       }, 4000); // Change slide every 4 seconds
-    }, 2000); // Start slider 2 seconds after animation starts
+    }, 3500); // Start slider 3.5 seconds after animation starts (after animation completes)
 
     return () => {
       clearTimeout(sliderTimer);
@@ -102,10 +102,10 @@ export default function HeroSlider() {
         }}></div>
       </div>
 
-      <div className="container mx-auto px-4 py-20 relative z-10">
+      <div className="container mx-auto px-4 py-12 md:py-16 relative z-10">
         <div className="max-w-5xl mx-auto">
           {/* Animated Brand Name */}
-          <div className="text-center mb-4 min-h-[120px] flex flex-col items-center justify-center">
+          <div className="text-center mb-4 min-h-[100px] flex flex-col items-center justify-center">
             <div className="relative w-full mb-3">
               {isBlinking ? (
                 <div className="flex items-center justify-center gap-2">
@@ -113,20 +113,20 @@ export default function HeroSlider() {
                     BitBeheer
                   </span>
                 </div>
-              ) : !showBitcoinText ? (
-                <div className="flex items-center justify-center gap-2">
-                  <span className="text-5xl md:text-7xl font-bold tracking-tight inline-block animate-slide-out-left">
-                    Bit
-                  </span>
-                  <span className="text-5xl md:text-7xl font-bold tracking-tight inline-block animate-slide-out-right">
-                    Beheer
-                  </span>
-                </div>
               ) : (
-                <div className="text-4xl md:text-6xl font-bold tracking-tight animate-fade-in text-center">
-                  <span className="inline-block">Bit</span>
-                  <span className="inline-block mx-1 md:mx-2 text-orange-200 animate-coin-appear">Coin</span>
-                  <span className="inline-block ml-1 md:ml-2">in eigen beheer</span>
+                <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center">
+                  <span className="inline-block animate-slide-to-position-left">Bit</span>
+                  <span className={`inline-block mx-1 md:mx-2 text-orange-200 transition-all duration-500 ${
+                    showBitcoinText ? 'opacity-100' : 'opacity-0 w-0 mx-0'
+                  }`}>
+                    Coin
+                  </span>
+                  <span className={`inline-block transition-all duration-500 ${
+                    showBitcoinText ? 'opacity-100 ml-1 md:ml-2' : 'opacity-0 w-0 ml-0'
+                  }`}>
+                    in eigen
+                  </span>
+                  <span className="inline-block animate-slide-to-position-right">beheer</span>
                 </div>
               )}
             </div>
@@ -135,16 +135,14 @@ export default function HeroSlider() {
           {/* Slider Container */}
           <div className="relative">
             {/* Slides */}
-            <div className="relative h-[400px] md:h-[350px]">
+            <div className="relative h-[200px] md:h-[180px]">
               {slides.map((slide, index) => (
                 <div
                   key={slide.id}
-                  className={`absolute inset-0 transition-all duration-500 ease-in-out ${
-                    index === currentSlide
-                      ? 'opacity-100 translate-x-0'
-                      : index < currentSlide
-                      ? 'opacity-0 -translate-x-full'
-                      : 'opacity-0 translate-x-full'
+                  className={`absolute inset-0 transition-all duration-700 ease-in-out ${
+                    index === currentSlide && showBitcoinText
+                      ? 'opacity-100 translate-y-0'
+                      : 'opacity-0 translate-y-4'
                   }`}
                 >
                   <div className="text-center">
@@ -193,33 +191,21 @@ export default function HeroSlider() {
           }
         }
 
-        @keyframes slide-out-left {
+        @keyframes slide-to-position-left {
           0% {
             transform: translateX(0);
-            opacity: 1;
-          }
-          60% {
-            transform: translateX(-100px);
-            opacity: 0.3;
           }
           100% {
-            transform: translateX(-200px);
-            opacity: 0;
+            transform: translateX(-180px);
           }
         }
 
-        @keyframes slide-out-right {
+        @keyframes slide-to-position-right {
           0% {
             transform: translateX(0);
-            opacity: 1;
-          }
-          60% {
-            transform: translateX(100px);
-            opacity: 0.3;
           }
           100% {
-            transform: translateX(200px);
-            opacity: 0;
+            transform: translateX(180px);
           }
         }
 
@@ -261,12 +247,12 @@ export default function HeroSlider() {
           animation: blink 1.2s ease-in-out infinite;
         }
 
-        .animate-slide-out-left {
-          animation: slide-out-left 1.2s ease-in-out forwards;
+        .animate-slide-to-position-left {
+          animation: slide-to-position-left 1.2s ease-in-out forwards;
         }
 
-        .animate-slide-out-right {
-          animation: slide-out-right 1.2s ease-in-out forwards;
+        .animate-slide-to-position-right {
+          animation: slide-to-position-right 1.2s ease-in-out forwards;
         }
 
         .animate-fade-in {
