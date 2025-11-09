@@ -109,7 +109,7 @@ export default function HeroSlider() {
                   Bit
                 </span>
                 <span className={`inline-block text-orange-200 transition-all duration-700 ${
-                  slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 scale-x-0 mx-0' :
+                  slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 w-0 overflow-hidden flex-shrink-0 flex-grow-0 mx-0' :
                   slidePhase === 'fading' ? 'animate-coin-in-eigen mx-0' : 'opacity-100 scale-x-100 mx-0'
                 }`} style={{
                   transformOrigin: 'center',
