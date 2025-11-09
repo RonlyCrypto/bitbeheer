@@ -221,10 +221,10 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
       }
       if (stepNumber === 3) {
         // Step 3: Gesprek goedgekeurd
-        // Current if appointment completed or approved but account not fully approved
-        if ((user?.first_appointment_completed || hasApprovedOneOnOne) && !user?.account_approved && !hasApprovedOneOnOne) return 'current';
         // Completed if account approved or 1-on-1 approved
         if (user?.account_approved || hasApprovedOneOnOne) return 'completed';
+        // Current if appointment completed but not yet approved
+        if (user?.first_appointment_completed && !user?.account_approved && !hasApprovedOneOnOne) return 'current';
         // Pending if appointment not completed yet
         return 'pending';
       }
