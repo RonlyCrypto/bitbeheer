@@ -254,11 +254,16 @@ export default function UserDashboard() {
 
           // Load account approval status - try users table first, then accounts
           try {
+            // Use maybeSingle() instead of single() to handle missing records gracefully
             const { data: userData, error: userError } = await supabase
               .from('users')
               .select('account_approved, first_appointment_completed, email_verified, verified_at')
               .eq('email', user.email)
-              .single();
+              .maybeSingle();
+            
+            if (userError) {
+              console.error('🔍 Error loading from users table:', userError);
+            }
             
             if (userData && !userError) {
               console.log('🔍 UserDashboard - Loaded from users table:', {
@@ -269,28 +274,43 @@ export default function UserDashboard() {
               setAccountApproved(userData.account_approved || false);
               setFirstAppointmentCompleted(userData.first_appointment_completed || false);
               setEmailVerified(userData.email_verified || false);
-            } else if (userError?.code === 'PGRST204' || userError?.code === 'PGRST116') {
-              // Column doesn't exist or no row found, try accounts table
-              const { data: accountData } = await supabase
+            } else {
+              // Try accounts table as fallback
+              console.log('🔍 Trying accounts table as fallback...');
+              const { data: accountData, error: accountError } = await supabase
                 .from('accounts')
-                .select('account_approved, first_appointment_completed')
+                .select('account_approved, first_appointment_completed, email_verified')
                 .eq('email', user.email)
-                .single();
+                .maybeSingle();
+              
+              if (accountError) {
+                console.error('🔍 Error loading from accounts table:', accountError);
+              }
               
               if (accountData) {
+                console.log('🔍 UserDashboard - Loaded from accounts table:', {
+                  account_approved: accountData.account_approved,
+                  first_appointment_completed: accountData.first_appointment_completed,
+                  email_verified: accountData.email_verified
+                });
                 setAccountApproved(accountData.account_approved || false);
                 setFirstAppointmentCompleted(accountData.first_appointment_completed || false);
+                setEmailVerified(accountData.email_verified || false);
               } else {
-                // Default to false if columns don't exist
+                // Default to false if no data found
+                console.warn('🔍 No account data found in users or accounts table');
                 setAccountApproved(false);
                 setFirstAppointmentCompleted(false);
+                setEmailVerified(false);
               }
             }
           } catch (error) {
+            console.error('🔍 Exception loading account approval status:', error);
             // Silently fail - columns might not exist yet
             console.warn('Could not load account approval status. Columns may not exist. Run add-users-account-status-columns.sql');
             setAccountApproved(false);
             setFirstAppointmentCompleted(false);
+            setEmailVerified(false);
           }
 
           // Load appointments to check for one_on_one_approved status
@@ -446,9 +466,26 @@ export default function UserDashboard() {
             .from('users')
             .select('account_approved, first_appointment_completed, email_verified')
             .eq('email', effectiveEmail)
-            .single()
+            .maybeSingle()
             .then(({ data: userData, error: userError }) => {
-              if (userData && !userError) {
+              if (userError) {
+                console.error('🔍 Periodic refresh error:', userError);
+                // Try accounts table as fallback
+                supabase
+                  .from('accounts')
+                  .select('account_approved, first_appointment_completed, email_verified')
+                  .eq('email', effectiveEmail)
+                  .maybeSingle()
+                  .then(({ data: accountData, error: accountError }) => {
+                    if (accountData && !accountError) {
+                      console.log('🔍 Periodic refresh - Loaded from accounts table:', accountData);
+                      setAccountApproved(accountData.account_approved || false);
+                      setFirstAppointmentCompleted(accountData.first_appointment_completed || false);
+                      setEmailVerified(accountData.email_verified || false);
+                    }
+                  });
+              } else if (userData) {
+                console.log('🔍 Periodic refresh - Loaded from users table:', userData);
                 setAccountApproved(userData.account_approved || false);
                 setFirstAppointmentCompleted(userData.first_appointment_completed || false);
                 setEmailVerified(userData.email_verified || false);
