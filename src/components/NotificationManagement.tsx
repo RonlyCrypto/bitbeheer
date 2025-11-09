@@ -56,28 +56,17 @@ export default function NotificationManagement() {
       // Load bear market buys users
       const { data: usersData, error: usersError } = await supabase
         .from('notification_preferences')
-        .select(`
-          id,
-          user_id,
-          email,
-          bear_market_buys_enabled,
-          bear_market_buys_contact_method,
-          users:user_id (
-            id,
-            email,
-            user_metadata
-          )
-        `)
+        .select('id, user_id, email, bear_market_buys_enabled, bear_market_buys_contact_method')
         .eq('bear_market_buys_enabled', true);
 
       if (usersError) throw usersError;
 
-      // Also get user details from users table
+      // Also get user details from accounts table
       const userIds = usersData?.map(u => u.user_id).filter(Boolean) || [];
       if (userIds.length > 0) {
         const { data: userDetails, error: userDetailsError } = await supabase
-          .from('users')
-          .select('id, email, first_name, last_name, phone')
+          .from('accounts')
+          .select('id, email, name, phone')
           .in('id', userIds);
 
         if (!userDetailsError && userDetails) {
@@ -85,7 +74,7 @@ export default function NotificationManagement() {
             const userDetail = userDetails.find(u => u.id === pref.user_id);
             return {
               ...pref,
-              name: userDetail ? `${userDetail.first_name || ''} ${userDetail.last_name || ''}`.trim() : '',
+              name: userDetail?.name || '',
               phone: userDetail?.phone || ''
             };
           }) || [];
@@ -147,17 +136,6 @@ export default function NotificationManagement() {
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
           <button
-            onClick={() => setActiveSubTab('preferences')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
-              activeSubTab === 'preferences'
-                ? 'border-orange-500 text-orange-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            <Bell className="w-4 h-4 inline mr-2" />
-            Voorkeuren & Instellingen
-          </button>
-          <button
             onClick={() => setActiveSubTab('users')}
             className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
               activeSubTab === 'users'
@@ -167,6 +145,17 @@ export default function NotificationManagement() {
           >
             <MessageSquare className="w-4 h-4 inline mr-2" />
             Notificatie Aanmeldingen
+          </button>
+          <button
+            onClick={() => setActiveSubTab('preferences')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+              activeSubTab === 'preferences'
+                ? 'border-orange-500 text-orange-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <Bell className="w-4 h-4 inline mr-2" />
+            Voorkeuren & Instellingen
           </button>
         </nav>
       </div>
