@@ -105,7 +105,10 @@ export default function HeroSlider() {
           <div className="text-center mb-4 h-[100px] md:h-[120px] flex flex-col items-center justify-center">
             <div className="relative w-full mb-3 h-full flex items-center justify-center">
               <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center h-full">
-                <span className="inline-block mr-0">
+                <span className={`inline-block transition-all duration-700 ${
+                  slidePhase === 'together' ? 'mr-0' :
+                  'mr-0'
+                }`}>
                   Bit
                 </span>
                 <span className={`inline-block text-orange-200 transition-all duration-700 mx-0 ${
@@ -120,7 +123,15 @@ export default function HeroSlider() {
                 }`}>
                   in eigen
                 </span>
-                <span className="inline-block ml-1 md:ml-1.5">
+                <span className={`inline-block transition-all duration-700 ${
+                  slidePhase === 'together' ? 'ml-0' :
+                  slidePhase === 'sliding' ? 'ml-0' :
+                  'ml-1 md:ml-1.5'
+                }`} style={{
+                  transform: slidePhase === 'together' ? 'translateX(0)' :
+                             slidePhase === 'sliding' ? 'translateX(calc(100% + 0.375rem + 0.375rem))' :
+                             'translateX(0)'
+                }}>
                   beheer
                 </span>
               </div>
@@ -170,7 +181,7 @@ export default function HeroSlider() {
           }
         }
 
-        @keyframes slide-left {
+        @keyframes slide-beheer {
           0% {
             transform: translateX(0);
           }
@@ -179,13 +190,8 @@ export default function HeroSlider() {
           }
         }
 
-        @keyframes slide-right {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(0);
-          }
+        .animate-slide-beheer {
+          animation: slide-beheer 1.2s ease-in-out forwards;
         }
 
         @keyframes fade-in {
