@@ -29,9 +29,9 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
       // Step 2: 20min gesprek (visible when email verified)
       // Step 3: Gesprek goedgekeurd (visible when appointment completed)
       if (user.account_approved && user.first_appointment_completed) return 3;
-      if (user.first_appointment_completed) return 3; // Show step 3 when appointment is completed
-      if (user.email_verified) return 2; // Show step 2 when email is verified
-      return 1; // Show step 1 when just registered
+      if (user.first_appointment_completed) return 3; // Show step 3 when appointment is completed (waiting for approval)
+      if (user.email_verified) return 2; // Show step 2 when email is verified (waiting for appointment)
+      return 1; // Show step 1 when just registered (waiting for email verification)
     } else {
       // Full mode: 4 steps
       if (user.account_approved && user.first_appointment_completed) return 4;
@@ -162,27 +162,31 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
   const getStepStatus = (stepNumber: number) => {
     if (simpleMode) {
       // In simple mode, determine status based on user progress
+      // Check in reverse order to handle completed states correctly
       if (stepNumber === 1) {
-        // Step 1 is current if user registered but email not verified
+        // Step 1: Aanmelden gelukt
+        // Current if user exists but email not verified
         if (user && !user.email_verified) return 'current';
-        // Step 1 is completed if email is verified
+        // Completed if email is verified (moved to step 2)
         if (user?.email_verified) return 'completed';
         return 'pending';
       }
       if (stepNumber === 2) {
-        // Step 2 is current if email verified but appointment not completed
+        // Step 2: 20min gesprek
+        // Current if email verified but appointment not completed
         if (user?.email_verified && !user?.first_appointment_completed) return 'current';
-        // Step 2 is completed if appointment is completed
+        // Completed if appointment is completed (moved to step 3)
         if (user?.first_appointment_completed) return 'completed';
-        // Step 2 is pending if email not verified
+        // Pending if email not verified yet
         return 'pending';
       }
       if (stepNumber === 3) {
-        // Step 3 is current if appointment completed but not approved
+        // Step 3: Gesprek goedgekeurd
+        // Current if appointment completed but account not approved
         if (user?.first_appointment_completed && !user?.account_approved) return 'current';
-        // Step 3 is completed if account approved
+        // Completed if account approved
         if (user?.account_approved) return 'completed';
-        // Step 3 is pending otherwise
+        // Pending if appointment not completed yet
         return 'pending';
       }
     }
