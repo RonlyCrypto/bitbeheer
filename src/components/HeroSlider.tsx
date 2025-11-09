@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bitcoin, BookOpen, ArrowRight, ChevronLeft, ChevronRight, Shield, TrendingUp, Lock } from 'lucide-react';
+import { Bitcoin, BookOpen, ArrowRight, Shield, TrendingUp, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface Slide {
@@ -60,11 +60,11 @@ export default function HeroSlider() {
     return () => clearInterval(interval);
   }, []);
 
-  // Trigger Bitcoin text animation after component mounts
+  // Trigger Bitcoin text animation after component mounts - faster transition
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowBitcoinText(true);
-    }, 2000);
+    }, 800); // Reduced from 2000ms to 800ms for faster transition
     return () => clearTimeout(timer);
   }, []);
 
@@ -74,14 +74,6 @@ export default function HeroSlider() {
       setCurrentSlide(index);
       setTimeout(() => setIsAnimating(false), 500);
     }
-  };
-
-  const nextSlide = () => {
-    goToSlide((currentSlide + 1) % slides.length);
-  };
-
-  const prevSlide = () => {
-    goToSlide((currentSlide - 1 + slides.length) % slides.length);
   };
 
   const currentSlideData = slides[currentSlide];
@@ -98,16 +90,9 @@ export default function HeroSlider() {
 
       <div className="container mx-auto px-4 py-20 relative z-10">
         <div className="max-w-5xl mx-auto">
-          {/* Logo Animation Section */}
-          <div className="flex justify-center mb-8">
-            <div className="bg-white bg-opacity-20 p-4 rounded-2xl backdrop-blur-sm">
-              <Bitcoin className="w-16 h-16" />
-            </div>
-          </div>
-
           {/* Animated Brand Name */}
-          <div className="text-center mb-8 min-h-[120px] flex items-center justify-center">
-            <div className="relative w-full">
+          <div className="text-center mb-4 min-h-[120px] flex flex-col items-center justify-center">
+            <div className="relative w-full mb-3">
               {!showBitcoinText ? (
                 <div className="flex items-center justify-center gap-2">
                   <span className="text-5xl md:text-7xl font-bold tracking-tight inline-block animate-slide-out-left">
@@ -125,6 +110,21 @@ export default function HeroSlider() {
                 </div>
               )}
             </div>
+            
+            {/* Supporting Text */}
+            {showBitcoinText && (
+              <div className="text-base md:text-lg text-orange-100 max-w-3xl mx-auto leading-relaxed animate-fade-in-delayed">
+                <p className="mb-2">
+                  Laat ons de kennis en skills geven om je eigen Bitcoin in eigen beheer te houden.
+                </p>
+                <p className="mb-2">
+                  24/7 toegang tot je funds waar niemand bij kan, alleen jij.
+                </p>
+                <p className="text-sm md:text-base text-orange-200">
+                  Volledige controle over je eigen geld, zonder tussenpersonen. Veilig, privé en altijd beschikbaar.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Slider Container */}
@@ -181,22 +181,6 @@ export default function HeroSlider() {
               ))}
             </div>
 
-            {/* Navigation Arrows */}
-            <button
-              onClick={prevSlide}
-              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-12 bg-white bg-opacity-20 hover:bg-opacity-30 p-3 rounded-full backdrop-blur-sm transition-all z-20"
-              aria-label="Vorige slide"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-            <button
-              onClick={nextSlide}
-              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-12 bg-white bg-opacity-20 hover:bg-opacity-30 p-3 rounded-full backdrop-blur-sm transition-all z-20"
-              aria-label="Volgende slide"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
-
             {/* Slide Indicators */}
             <div className="flex justify-center gap-2 mt-8">
               {slides.map((_, index) => (
@@ -229,9 +213,9 @@ export default function HeroSlider() {
             transform: translateX(0);
             opacity: 1;
           }
-          50% {
+          60% {
             transform: translateX(-100px);
-            opacity: 0.5;
+            opacity: 0.3;
           }
           100% {
             transform: translateX(-200px);
@@ -244,9 +228,9 @@ export default function HeroSlider() {
             transform: translateX(0);
             opacity: 1;
           }
-          50% {
+          60% {
             transform: translateX(100px);
-            opacity: 0.5;
+            opacity: 0.3;
           }
           100% {
             transform: translateX(200px);
@@ -257,7 +241,18 @@ export default function HeroSlider() {
         @keyframes fade-in {
           0% {
             opacity: 0;
-            transform: translateY(20px);
+            transform: translateY(10px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes fade-in-delayed {
+          0% {
+            opacity: 0;
+            transform: translateY(10px);
           }
           100% {
             opacity: 1;
@@ -268,10 +263,10 @@ export default function HeroSlider() {
         @keyframes coin-appear {
           0% {
             opacity: 0;
-            transform: scale(0.5);
+            transform: scale(0.8);
           }
           50% {
-            transform: scale(1.2);
+            transform: scale(1.1);
           }
           100% {
             opacity: 1;
@@ -289,15 +284,19 @@ export default function HeroSlider() {
         }
 
         .animate-slide-out-left {
-          animation: slide-out-left 1.5s ease-in-out forwards;
+          animation: slide-out-left 0.8s ease-in-out forwards;
         }
 
         .animate-slide-out-right {
-          animation: slide-out-right 1.5s ease-in-out forwards;
+          animation: slide-out-right 0.8s ease-in-out forwards;
         }
 
         .animate-fade-in {
-          animation: fade-in 1s ease-in-out forwards;
+          animation: fade-in 0.6s ease-out 0.4s both;
+        }
+
+        .animate-fade-in-delayed {
+          animation: fade-in-delayed 0.6s ease-out 0.7s both;
         }
 
         .animate-pulse-slow {
@@ -305,7 +304,7 @@ export default function HeroSlider() {
         }
 
         .animate-coin-appear {
-          animation: coin-appear 0.8s ease-out 0.3s both;
+          animation: coin-appear 0.5s ease-out 0.5s both;
         }
       `}</style>
     </section>
