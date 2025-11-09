@@ -49,10 +49,10 @@ export default function HeroSlider() {
     // Start with Bit and beheer together
     setSlidePhase('together');
     setTimeout(() => {
-      // After 2 seconds, start sliding apart
+      // After 2 seconds, start sliding apart - change margin first
       setSlidePhase('sliding');
       setTimeout(() => {
-        // After sliding, fade in coin in eigen
+        // After sliding animation completes, fade in coin in eigen
         setShowBitcoinText(true);
         setSlidePhase('fading');
       }, 1200); // Wait for slide animation to complete
@@ -125,7 +125,6 @@ export default function HeroSlider() {
                 </span>
                 <span className={`inline-block transition-all duration-700 ease-in-out ${
                   slidePhase === 'together' ? 'ml-0' :
-                  slidePhase === 'sliding' ? 'ml-0' :
                   'ml-1 md:ml-1.5'
                 }`}>
                   beheer
