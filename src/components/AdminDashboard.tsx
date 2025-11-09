@@ -597,7 +597,7 @@ export default function AdminDashboard() {
                               )}
                             </div>
 
-                            <div className="bg-white rounded-xl p-6 shadow-lg border-2 border-blue-200">
+                            <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg border-2 border-blue-200">
                               <div className="flex items-center gap-4">
                                 <div className="bg-blue-100 p-3 rounded-xl">
                                   <Clock className="w-8 h-8 text-blue-600" />
