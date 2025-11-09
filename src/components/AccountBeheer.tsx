@@ -297,6 +297,7 @@ export default function AccountBeheer() {
 
   const handleViewUser = (user: UserAccount) => {
     setSelectedUser(user);
+    setShowStatusTab(false); // Always start with Profiel tab
     setShowUserModal(true);
   };
 
