@@ -42,19 +42,21 @@ export default function HeroSlider() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [showBitcoinText, setShowBitcoinText] = useState(false);
-  const [isAnimated, setIsAnimated] = useState(false);
+  const [slidePhase, setSlidePhase] = useState<'together' | 'sliding' | 'fading'>('together');
 
-  // Start animation after component mounts
+  // Start with Bit and beheer together, then slide apart
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsAnimated(true);
-      // Show coin in eigen after sliding animation completes
+    // Start with Bit and beheer together
+    setSlidePhase('together');
+    setTimeout(() => {
+      // After 2 seconds, start sliding apart
+      setSlidePhase('sliding');
       setTimeout(() => {
+        // After sliding animation completes, fade in coin in eigen
         setShowBitcoinText(true);
+        setSlidePhase('fading');
       }, 1000); // Wait for slide animation to complete
-    }, 2000); // Wait 2 seconds before starting animation
-
-    return () => clearTimeout(timer);
+    }, 2000); // Wait 2 seconds before sliding
   }, []);
 
   // Auto-advance main slides - start later after animation completes
@@ -102,14 +104,36 @@ export default function HeroSlider() {
           {/* Animated Brand Name - Fixed height container */}
           <div className="text-center mb-4 h-[100px] md:h-[120px] flex flex-col items-center justify-center">
             <div className="relative w-full mb-3 h-full flex items-center justify-center">
-              <div className={`text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center h-full banner-animation ${isAnimated ? 'animate' : ''}`}>
-                <span className="left-text">
+              <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center h-full">
+                <span className={`inline-block transition-all duration-700 ease-in-out mr-0 ${
+                  slidePhase === 'together' ? '' :
+                  slidePhase === 'sliding' ? '' :
+                  ''
+                }`} style={{
+                  transform: slidePhase === 'together' ? 'translateX(0)' :
+                             slidePhase === 'sliding' ? 'translateX(calc(-100% - 0.5rem))' :
+                             'translateX(0)'
+                }}>
                   Bit
                 </span>
-                <span className={`middle-text ${showBitcoinText ? 'visible' : ''}`}>
+                <span className={`inline-block text-orange-200 transition-all duration-700 ${
+                  slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 w-0 overflow-hidden flex-shrink-0 flex-grow-0 mx-0' :
+                  slidePhase === 'fading' ? 'animate-coin-in-eigen mx-0' : 'opacity-100 scale-x-100 mx-0'
+                }`} style={{
+                  transformOrigin: 'center',
+                  whiteSpace: 'nowrap'
+                }}>
                   coin in eigen
                 </span>
-                <span className="right-text">
+                <span className={`inline-block transition-all duration-700 ease-in-out ${
+                  slidePhase === 'together' ? 'ml-0' :
+                  slidePhase === 'sliding' ? 'ml-0' :
+                  'ml-1 md:ml-1.5'
+                }`} style={{
+                  transform: slidePhase === 'together' ? 'translateX(0)' :
+                             slidePhase === 'sliding' ? 'translateX(calc(100% + 0.5rem + 0.5rem))' :
+                             'translateX(0)'
+                }}>
                   beheer
                 </span>
               </div>
@@ -150,95 +174,23 @@ export default function HeroSlider() {
       </div>
 
       <style>{`
-        .banner-animation {
-          position: relative;
-          overflow: hidden;
-        }
-
-        .banner-animation .left-text,
-        .banner-animation .right-text,
-        .banner-animation .middle-text {
-          opacity: 0;
-          transition: all 1s ease;
-          position: relative;
-        }
-
-        .banner-animation .left-text {
-          transform: translateX(0);
-          margin-right: 0;
-          opacity: 1;
-        }
-
-        .banner-animation .right-text {
-          transform: translateX(0);
-          margin-left: 0;
-          opacity: 1;
-        }
-
-        .banner-animation .middle-text {
-          position: absolute;
-          opacity: 0;
-          color: rgb(254 243 199);
-          white-space: nowrap;
-          margin: 0;
-          width: 0;
-          overflow: hidden;
-        }
-
-        /* Animatie wanneer banner geladen wordt - Bit en beheer schuiven uit elkaar, dan terug */
-        .banner-animation.animate .left-text {
-          animation: slide-left-then-back 1s ease forwards;
-        }
-
-        .banner-animation.animate .right-text {
-          animation: slide-right-then-back 1s ease forwards;
-        }
-
-        .banner-animation.animate .middle-text.visible {
-          opacity: 1;
-          animation: coin-appear 0.6s ease 0.8s forwards;
-          position: relative;
-          margin-left: 0;
-          margin-right: 0;
-          width: auto;
-        }
-
-        @keyframes slide-left-then-back {
+        @keyframes coin-in-eigen-expand {
           0% {
-            transform: translateX(0);
-          }
-          50% {
-            transform: translateX(-100px);
-          }
-          100% {
-            transform: translateX(0);
-          }
-        }
-
-        @keyframes slide-right-then-back {
-          0% {
-            transform: translateX(0);
-            margin-left: 0;
-          }
-          50% {
-            transform: translateX(100px);
-            margin-left: 0;
-          }
-          100% {
-            transform: translateX(0);
-            margin-left: 0.375rem;
-          }
-        }
-
-        @keyframes coin-appear {
-          0% {
-            opacity: 0;
             transform: scaleX(0);
+            opacity: 0;
+          }
+          60% {
+            transform: scaleX(1.05);
+            opacity: 0.9;
           }
           100% {
-            opacity: 1;
             transform: scaleX(1);
+            opacity: 1;
           }
+        }
+
+        .animate-coin-in-eigen {
+          animation: coin-in-eigen-expand 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
 
         @keyframes blink {
