@@ -46,12 +46,49 @@ const slides: Slide[] = [
   }
 ];
 
+const textSlides = [
+  "Laat ons de kennis en skills geven om je eigen Bitcoin in eigen beheer te houden.",
+  "24/7 toegang tot je funds waar niemand bij kan, alleen jij.",
+  "Volledige controle over je eigen geld, zonder tussenpersonen. Veilig, privé en altijd beschikbaar."
+];
+
 export default function HeroSlider() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [showBitcoinText, setShowBitcoinText] = useState(false);
+  const [isBlinking, setIsBlinking] = useState(true);
+  const [showTextSlider, setShowTextSlider] = useState(false);
+  const [currentTextSlide, setCurrentTextSlide] = useState(0);
 
-  // Auto-advance slides
+  // Blinking phase - BitBeheer knipperen
+  useEffect(() => {
+    const blinkTimer = setTimeout(() => {
+      setIsBlinking(false);
+    }, 3000); // Blink for 3 seconds
+    return () => clearTimeout(blinkTimer);
+  }, []);
+
+  // Start animation after blinking
+  useEffect(() => {
+    if (!isBlinking) {
+      const animationTimer = setTimeout(() => {
+        setShowBitcoinText(true);
+      }, 500); // Start animation 500ms after blinking stops
+      return () => clearTimeout(animationTimer);
+    }
+  }, [isBlinking]);
+
+  // Show text slider after animation completes
+  useEffect(() => {
+    if (showBitcoinText) {
+      const textSliderTimer = setTimeout(() => {
+        setShowTextSlider(true);
+      }, 2000); // Show text slider 2 seconds after animation starts
+      return () => clearTimeout(textSliderTimer);
+    }
+  }, [showBitcoinText]);
+
+  // Auto-advance main slides
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -60,13 +97,16 @@ export default function HeroSlider() {
     return () => clearInterval(interval);
   }, []);
 
-  // Trigger Bitcoin text animation after component mounts - faster transition
+  // Auto-advance text slides
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowBitcoinText(true);
-    }, 800); // Reduced from 2000ms to 800ms for faster transition
-    return () => clearTimeout(timer);
-  }, []);
+    if (showTextSlider) {
+      const textInterval = setInterval(() => {
+        setCurrentTextSlide((prev) => (prev + 1) % textSlides.length);
+      }, 4000); // Change text slide every 4 seconds
+
+      return () => clearInterval(textInterval);
+    }
+  }, [showTextSlider]);
 
   const goToSlide = (index: number) => {
     if (index !== currentSlide && !isAnimating) {
@@ -93,7 +133,13 @@ export default function HeroSlider() {
           {/* Animated Brand Name */}
           <div className="text-center mb-4 min-h-[120px] flex flex-col items-center justify-center">
             <div className="relative w-full mb-3">
-              {!showBitcoinText ? (
+              {isBlinking ? (
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-5xl md:text-7xl font-bold tracking-tight inline-block animate-blink">
+                    BitBeheer
+                  </span>
+                </div>
+              ) : !showBitcoinText ? (
                 <div className="flex items-center justify-center gap-2">
                   <span className="text-5xl md:text-7xl font-bold tracking-tight inline-block animate-slide-out-left">
                     Bit
@@ -111,18 +157,21 @@ export default function HeroSlider() {
               )}
             </div>
             
-            {/* Supporting Text */}
-            {showBitcoinText && (
-              <div className="text-base md:text-lg text-orange-100 max-w-3xl mx-auto leading-relaxed animate-fade-in-delayed">
-                <p className="mb-2">
-                  Laat ons de kennis en skills geven om je eigen Bitcoin in eigen beheer te houden.
-                </p>
-                <p className="mb-2">
-                  24/7 toegang tot je funds waar niemand bij kan, alleen jij.
-                </p>
-                <p className="text-sm md:text-base text-orange-200">
-                  Volledige controle over je eigen geld, zonder tussenpersonen. Veilig, privé en altijd beschikbaar.
-                </p>
+            {/* Text Slider */}
+            {showTextSlider && (
+              <div className="relative h-20 md:h-16 mt-4 max-w-3xl mx-auto">
+                {textSlides.map((text, index) => (
+                  <div
+                    key={index}
+                    className={`absolute inset-0 text-base md:text-lg text-orange-100 leading-relaxed transition-all duration-700 ease-in-out ${
+                      index === currentTextSlide
+                        ? 'opacity-100 translate-y-0'
+                        : 'opacity-0 translate-y-4'
+                    }`}
+                  >
+                    <p>{text}</p>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -208,6 +257,15 @@ export default function HeroSlider() {
       </div>
 
       <style>{`
+        @keyframes blink {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.3;
+          }
+        }
+
         @keyframes slide-out-left {
           0% {
             transform: translateX(0);
@@ -249,17 +307,6 @@ export default function HeroSlider() {
           }
         }
 
-        @keyframes fade-in-delayed {
-          0% {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
         @keyframes coin-appear {
           0% {
             opacity: 0;
@@ -283,20 +330,20 @@ export default function HeroSlider() {
           }
         }
 
+        .animate-blink {
+          animation: blink 1.2s ease-in-out infinite;
+        }
+
         .animate-slide-out-left {
-          animation: slide-out-left 0.8s ease-in-out forwards;
+          animation: slide-out-left 1.2s ease-in-out forwards;
         }
 
         .animate-slide-out-right {
-          animation: slide-out-right 0.8s ease-in-out forwards;
+          animation: slide-out-right 1.2s ease-in-out forwards;
         }
 
         .animate-fade-in {
-          animation: fade-in 0.6s ease-out 0.4s both;
-        }
-
-        .animate-fade-in-delayed {
-          animation: fade-in-delayed 0.6s ease-out 0.7s both;
+          animation: fade-in 1s ease-out 0.3s both;
         }
 
         .animate-pulse-slow {
@@ -304,7 +351,7 @@ export default function HeroSlider() {
         }
 
         .animate-coin-appear {
-          animation: coin-appear 0.5s ease-out 0.5s both;
+          animation: coin-appear 0.7s ease-out 0.6s both;
         }
       `}</style>
     </section>
