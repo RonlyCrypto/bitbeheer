@@ -2,6 +2,7 @@ import { Bitcoin, Shield, BookOpen, TrendingUp, Users, Target, ArrowRight, Check
 import { Link } from 'react-router-dom';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import AnimatedBitcoinBackground from '../components/AnimatedBitcoinBackground';
+import HeroSlider from '../components/HeroSlider';
 
 export default function FrontPage() {
   const { isAuthenticated } = useSupabaseAuth();
@@ -9,35 +10,8 @@ export default function FrontPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 relative">
       <AnimatedBitcoinBackground />
       <div className="relative z-10">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-orange-500 to-orange-600 text-white relative z-10">
-        <div className="container mx-auto px-4 py-20">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="flex justify-center mb-8">
-              <div className="bg-white bg-opacity-20 p-4 rounded-2xl backdrop-blur-sm">
-                <Bitcoin className="w-16 h-16" />
-              </div>
-            </div>
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
-              Bitcoin Investeren in Nederland - Persoonlijke Begeleiding voor Beginners
-            </h1>
-            <p className="text-xl md:text-2xl text-orange-100 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Persoonlijke 1-op-1 begeleiding voor mensen die willen investeren in Bitcoin. 
-              Leer veilig Bitcoin kopen, bewaren en in eigen beheer houden.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to="/aanmelden"
-                className="bg-white text-orange-600 px-8 py-4 rounded-xl font-semibold hover:bg-orange-50 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
-              >
-                <BookOpen className="w-5 h-5" />
-                Aanmelden voor Begeleiding
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Hero Slider Section */}
+      <HeroSlider />
 
       {/* My Story Section - Only for logged in users */}
       {isAuthenticated && (
