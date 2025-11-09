@@ -1,4 +1,4 @@
-import { CheckCircle, Clock, XCircle } from 'lucide-react';
+import { CheckCircle, Clock, XCircle, Send, RefreshCw } from 'lucide-react';
 
 interface SignupProcessFlowProps {
   user?: {
@@ -7,11 +7,16 @@ interface SignupProcessFlowProps {
     account_approved?: boolean;
     created_at?: string;
     verified_at?: string;
+    email?: string;
+    verification_token_created?: string;
+    email_sent_date?: string;
   };
   showLegend?: boolean;
+  onResendVerificationEmail?: () => void;
+  isResendingEmail?: boolean;
 }
 
-export default function SignupProcessFlow({ user, showLegend = true }: SignupProcessFlowProps) {
+export default function SignupProcessFlow({ user, showLegend = true, onResendVerificationEmail, isResendingEmail = false }: SignupProcessFlowProps) {
   const getCurrentStep = () => {
     if (!user) return 0;
     if (user.account_approved && user.first_appointment_completed) return 4;
@@ -94,6 +99,18 @@ export default function SignupProcessFlow({ user, showLegend = true }: SignupPro
   };
 
   const getColorClasses = (color: string, status: string) => {
+    // If step is pending (not completed), use gray colors
+    if (status === 'pending') {
+      return {
+        border: 'border-gray-300',
+        bg: 'bg-gray-300',
+        lightBg: 'bg-gray-50',
+        borderLight: 'border-gray-200',
+        text: 'text-gray-600',
+        textLight: 'text-gray-500'
+      };
+    }
+
     const colors: Record<string, Record<string, string>> = {
       blue: {
         border: 'border-blue-500',
@@ -132,6 +149,22 @@ export default function SignupProcessFlow({ user, showLegend = true }: SignupPro
     return colors[color] || colors.blue;
   };
 
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return null;
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString('nl-NL', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return null;
+    }
+  };
+
   return (
     <div className="space-y-6">
       {steps.map((step, index) => {
@@ -155,10 +188,20 @@ export default function SignupProcessFlow({ user, showLegend = true }: SignupPro
                 )}
               </div>
               <div className="flex-1">
-                <h3 className={`text-lg font-semibold text-gray-900 mb-2 ${status === 'current' ? 'text-orange-600' : ''}`}>
+                <h3 className={`text-lg font-semibold mb-2 ${
+                  status === 'completed' ? 'text-gray-900' : 
+                  status === 'current' ? 'text-orange-600' : 
+                  'text-gray-500'
+                }`}>
                   {step.title}
                 </h3>
-                <p className="text-gray-600 mb-3">{step.description}</p>
+                <p className={`mb-3 ${
+                  status === 'completed' ? 'text-gray-600' : 
+                  status === 'current' ? 'text-gray-600' : 
+                  'text-gray-400'
+                }`}>
+                  {step.description}
+                </p>
                 
                 {step.email && (
                   <div className={`${colors.lightBg} border ${colors.borderLight} rounded-lg p-4 mb-3`}>
@@ -169,6 +212,42 @@ export default function SignupProcessFlow({ user, showLegend = true }: SignupPro
                       <strong>Inhoud:</strong> {step.email.content}<br />
                       <strong>Status tracking:</strong> {step.email.tracking}
                     </p>
+                    {step.email.emailType === 'verification' && user?.email && (
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <p className={`text-sm ${colors.textLight} mb-2`}>
+                          <strong>Verzonden naar:</strong> {user.email}<br />
+                          {user.email_sent_date && (
+                            <>
+                              <strong>Verzonden op:</strong> {formatDate(user.email_sent_date) || 'Onbekend'}<br />
+                            </>
+                          )}
+                          {user.verification_token_created && !user.email_sent_date && (
+                            <>
+                              <strong>Aangemaakt op:</strong> {formatDate(user.verification_token_created) || 'Onbekend'}<br />
+                            </>
+                          )}
+                        </p>
+                        {!user.email_verified && onResendVerificationEmail && (
+                          <button
+                            onClick={onResendVerificationEmail}
+                            disabled={isResendingEmail}
+                            className="mt-2 flex items-center gap-2 px-3 py-1.5 bg-orange-600 text-white text-xs rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isResendingEmail ? (
+                              <>
+                                <RefreshCw className="w-3 h-3 animate-spin" />
+                                Verzenden...
+                              </>
+                            ) : (
+                              <>
+                                <Send className="w-3 h-3" />
+                                Opnieuw versturen
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 

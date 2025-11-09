@@ -42,6 +42,7 @@ export default function AccountBeheer() {
   const [isSendingEmail, setIsSendingEmail] = useState<string | null>(null);
   const [isActivating, setIsActivating] = useState<string | null>(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
+  const [showStatusTab, setShowStatusTab] = useState(false);
 
   // Calculate remaining time for verification
   const getRemainingTime = (user: UserAccount): number | null => {
@@ -102,13 +103,13 @@ export default function AccountBeheer() {
               // Get all data from both tables
               const { data: userData } = await supabase
                 .from('users')
-                .select('email_verified, verified_at, actief, account_approved, first_appointment_completed')
+                .select('email_verified, verified_at, actief, account_approved, first_appointment_completed, verification_token_created, email_sent_date, created_at')
                 .eq('email', account.email)
                 .maybeSingle();
               
               const { data: accountData } = await supabase
                 .from('accounts')
-                .select('email_verified, verified_at, actief, account_approved, first_appointment_completed')
+                .select('email_verified, verified_at, actief, account_approved, first_appointment_completed, created_at')
                 .eq('email', account.email)
                 .maybeSingle();
               
@@ -122,7 +123,10 @@ export default function AccountBeheer() {
               verified_at: finalData.verified_at ?? account.verified_at,
               actief: finalData.actief !== undefined ? finalData.actief : (account.actief !== undefined ? account.actief : true),
               account_approved: finalData.account_approved || false,
-              first_appointment_completed: finalData.first_appointment_completed || false
+              first_appointment_completed: finalData.first_appointment_completed || false,
+              verification_token_created: userData?.verification_token_created || account.verification_token_created,
+              email_sent_date: userData?.email_sent_date || account.emailSentDate || account.email_sent_date,
+              created_at: finalData.created_at || account.created_at || account.timestamp || account.registrationDate
             };
             } catch (error) {
               // If columns don't exist, default to false
@@ -1213,76 +1217,119 @@ export default function AccountBeheer() {
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-gray-900">Account Details</h3>
               <button
-                onClick={() => setShowUserModal(false)}
+                onClick={() => {
+                  setShowUserModal(false);
+                  setShowStatusTab(false);
+                }}
                 className="text-gray-400 hover:text-gray-600"
               >
                 ✕
               </button>
             </div>
+
+            {/* Tabs */}
+            <div className="border-b border-gray-200 mb-6">
+              <nav className="flex -mb-px">
+                <button
+                  onClick={() => setShowStatusTab(false)}
+                  className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors ${
+                    !showStatusTab
+                      ? 'border-orange-500 text-orange-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Profiel
+                </button>
+                <button
+                  onClick={() => setShowStatusTab(true)}
+                  className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors relative flex items-center gap-2 ${
+                    selectedUser.account_approved && selectedUser.first_appointment_completed && selectedUser.email_verified
+                      ? showStatusTab
+                        ? 'border-green-500 text-green-600'
+                        : 'border-transparent text-green-600 hover:text-green-700 hover:border-green-300'
+                      : showStatusTab
+                        ? 'border-orange-500 text-orange-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Status
+                  {selectedUser.account_approved && selectedUser.first_appointment_completed && selectedUser.email_verified && (
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                  )}
+                </button>
+              </nav>
+            </div>
             
             <div className="space-y-6">
-              {/* Account Info */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
-                    <p className="text-gray-900">{selectedUser.email}</p>
+              {!showStatusTab ? (
+                /* Profiel Info */
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+                      <p className="text-gray-900">{selectedUser.email}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Naam</label>
+                      <p className="text-gray-900">{selectedUser.name}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Categorie</label>
+                      <span className="inline-block bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-sm">
+                        {selectedUser.category}
+                      </span>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Aangemeld</label>
+                      <p className="text-gray-900">{selectedUser.date}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">E-mail Status</label>
+                      <p className={`text-sm ${selectedUser.emailSent ? 'text-green-600' : 'text-orange-600'}`}>
+                        {selectedUser.emailSent ? 'Verzonden' : 'Nog niet verzonden'}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Login Count</label>
+                      <p className="text-gray-900">{selectedUser.loginCount || 0}</p>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Naam</label>
-                    <p className="text-gray-900">{selectedUser.name}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Categorie</label>
-                    <span className="inline-block bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-sm">
-                      {selectedUser.category}
-                    </span>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Aangemeld</label>
-                    <p className="text-gray-900">{selectedUser.date}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">E-mail Status</label>
-                    <p className={`text-sm ${selectedUser.emailSent ? 'text-green-600' : 'text-orange-600'}`}>
-                      {selectedUser.emailSent ? 'Verzonden' : 'Nog niet verzonden'}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Login Count</label>
-                    <p className="text-gray-900">{selectedUser.loginCount || 0}</p>
-                  </div>
+                  
+                  {selectedUser.message && selectedUser.message !== 'Geen bericht' && (
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Bericht</label>
+                      <p className="text-gray-900 bg-white p-3 rounded-lg">{selectedUser.message}</p>
+                    </div>
+                  )}
+                  
+                  {selectedUser.lastLogin && (
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Laatste Login</label>
+                      <p className="text-gray-900">{selectedUser.lastLogin}</p>
+                    </div>
+                  )}
                 </div>
-                
-                {selectedUser.message && selectedUser.message !== 'Geen bericht' && (
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Bericht</label>
-                    <p className="text-gray-900 bg-white p-3 rounded-lg">{selectedUser.message}</p>
-                  </div>
-                )}
-                
-                {selectedUser.lastLogin && (
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Laatste Login</label>
-                    <p className="text-gray-900">{selectedUser.lastLogin}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Aanmeldproces Schema */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <h4 className="text-xl font-bold text-gray-900 mb-4">Aanmeldproces Status</h4>
-                <SignupProcessFlow 
-                  user={{
-                    email_verified: selectedUser.email_verified,
-                    first_appointment_completed: selectedUser.first_appointment_completed,
-                    account_approved: selectedUser.account_approved,
-                    created_at: selectedUser.created_at,
-                    verified_at: selectedUser.verified_at
-                  }}
-                  showLegend={false}
-                />
-              </div>
+              ) : (
+                /* Aanmeldproces Schema */
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <h4 className="text-xl font-bold text-gray-900 mb-4">Aanmeldproces Status</h4>
+                  <SignupProcessFlow 
+                    user={{
+                      email_verified: selectedUser.email_verified,
+                      first_appointment_completed: selectedUser.first_appointment_completed,
+                      account_approved: selectedUser.account_approved,
+                      created_at: selectedUser.created_at,
+                      verified_at: selectedUser.verified_at,
+                      email: selectedUser.email,
+                      verification_token_created: selectedUser.verification_token_created,
+                      email_sent_date: selectedUser.emailSentDate || selectedUser.email_sent_date
+                    }}
+                    showLegend={false}
+                    onResendVerificationEmail={() => handleResendVerificationEmail(selectedUser)}
+                    isResendingEmail={isSendingEmail === selectedUser.id}
+                  />
+                </div>
+              )}
             </div>
             
             <div className="flex gap-3 mt-6">

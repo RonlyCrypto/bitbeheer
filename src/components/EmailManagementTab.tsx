@@ -376,20 +376,20 @@ export default function EmailManagementTab() {
                   />
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-gray-400" />
-                <select
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                >
-                  <option value="all">Alle types</option>
-                  <option value="verification">Verificatie</option>
-                  <option value="welcome">Welkom</option>
-                  <option value="appointment">Afspraak</option>
-                  <option value="notification">Notificatie</option>
-                </select>
-              </div>
+                  <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4 text-gray-400" />
+                    <select
+                      value={filterType}
+                      onChange={(e) => setFilterType(e.target.value)}
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    >
+                      <option value="all">Alle onderwerpen</option>
+                      <option value="verification">Verificatie</option>
+                      <option value="welcome">Welkom</option>
+                      <option value="appointment">Afspraak</option>
+                      <option value="notification">Notificatie</option>
+                    </select>
+                  </div>
               <div className="flex items-center gap-2">
                 <select
                   value={filterStatus}
