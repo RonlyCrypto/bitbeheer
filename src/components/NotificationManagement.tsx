@@ -180,188 +180,188 @@ export default function NotificationManagement() {
 
       {activeSubTab === 'preferences' && (
         <div className="space-y-6">
-
-      {/* Global Settings */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Globale Instellingen</h3>
-        <p className="text-sm text-gray-600 mb-6">
-          Schakel notificatie functies in of uit voor alle gebruikers
-        </p>
-
-        <div className="space-y-4">
-          {/* Bear Market Buys Global */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <TrendingDown className="w-5 h-5 text-red-600" />
-              <div>
-                <label className="text-sm font-medium text-gray-900">Bear Market Buys</label>
-                <p className="text-xs text-gray-600">Gebruikers kunnen zich aanmelden voor bear market buy begeleiding</p>
-              </div>
-            </div>
-            <button
-              onClick={() => updateGlobalSetting('bear_market_buys_global_enabled', !globalSettings.bear_market_buys_global_enabled)}
-              disabled={saving}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                globalSettings.bear_market_buys_global_enabled ? 'bg-orange-600' : 'bg-gray-300'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  globalSettings.bear_market_buys_global_enabled ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-          </div>
-
-          {/* Bear Market Alerts Global */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <TrendingDown className="w-5 h-5 text-red-600" />
-              <div>
-                <label className="text-sm font-medium text-gray-900">Bear Market Meldingen</label>
-                <p className="text-xs text-gray-600">Email meldingen wanneer we in een bear market zitten</p>
-              </div>
-            </div>
-            <button
-              onClick={() => updateGlobalSetting('bear_market_alerts_global_enabled', !globalSettings.bear_market_alerts_global_enabled)}
-              disabled={saving}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                globalSettings.bear_market_alerts_global_enabled ? 'bg-orange-600' : 'bg-gray-300'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  globalSettings.bear_market_alerts_global_enabled ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-          </div>
-
-          {/* Bull Market Alerts Global */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <TrendingUp className="w-5 h-5 text-green-600" />
-              <div>
-                <label className="text-sm font-medium text-gray-900">Bull Market Meldingen</label>
-                <p className="text-xs text-gray-600">Email meldingen wanneer we in een bull market zitten</p>
-              </div>
-            </div>
-            <button
-              onClick={() => updateGlobalSetting('bull_market_alerts_global_enabled', !globalSettings.bull_market_alerts_global_enabled)}
-              disabled={saving}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                globalSettings.bull_market_alerts_global_enabled ? 'bg-orange-600' : 'bg-gray-300'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  globalSettings.bull_market_alerts_global_enabled ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-          </div>
-
-          {/* Goal Achievements Global */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <Target className="w-5 h-5 text-blue-600" />
-              <div>
-                <label className="text-sm font-medium text-gray-900">Behaalde Doelen Meldingen</label>
-                <p className="text-xs text-gray-600">Email meldingen wanneer gebruikers doelen behalen</p>
-              </div>
-            </div>
-            <button
-              onClick={() => updateGlobalSetting('goal_achievements_global_enabled', !globalSettings.goal_achievements_global_enabled)}
-              disabled={saving}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                globalSettings.goal_achievements_global_enabled ? 'bg-orange-600' : 'bg-gray-300'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  globalSettings.goal_achievements_global_enabled ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Bear Market Buys Users */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              Bear Market Buys Groep
-            </h3>
-            <p className="text-sm text-gray-600 mt-1">
-              Gebruikers die zich hebben aangemeld voor bear market buy begeleiding ({bearMarketBuysUsers.length} gebruikers)
+          {/* Global Settings */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Globale Instellingen</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Schakel notificatie functies in of uit voor alle gebruikers
             </p>
-          </div>
-        </div>
 
-        {bearMarketBuysUsers.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p>Geen gebruikers met bear market buys ingeschakeld</p>
+            <div className="space-y-4">
+              {/* Bear Market Buys Global */}
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <TrendingDown className="w-5 h-5 text-red-600" />
+                  <div>
+                    <label className="text-sm font-medium text-gray-900">Bear Market Buys</label>
+                    <p className="text-xs text-gray-600">Gebruikers kunnen zich aanmelden voor bear market buy begeleiding</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => updateGlobalSetting('bear_market_buys_global_enabled', !globalSettings.bear_market_buys_global_enabled)}
+                  disabled={saving}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    globalSettings.bear_market_buys_global_enabled ? 'bg-orange-600' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      globalSettings.bear_market_buys_global_enabled ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Bear Market Alerts Global */}
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <TrendingDown className="w-5 h-5 text-red-600" />
+                  <div>
+                    <label className="text-sm font-medium text-gray-900">Bear Market Meldingen</label>
+                    <p className="text-xs text-gray-600">Email meldingen wanneer we in een bear market zitten</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => updateGlobalSetting('bear_market_alerts_global_enabled', !globalSettings.bear_market_alerts_global_enabled)}
+                  disabled={saving}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    globalSettings.bear_market_alerts_global_enabled ? 'bg-orange-600' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      globalSettings.bear_market_alerts_global_enabled ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Bull Market Alerts Global */}
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <TrendingUp className="w-5 h-5 text-green-600" />
+                  <div>
+                    <label className="text-sm font-medium text-gray-900">Bull Market Meldingen</label>
+                    <p className="text-xs text-gray-600">Email meldingen wanneer we in een bull market zitten</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => updateGlobalSetting('bull_market_alerts_global_enabled', !globalSettings.bull_market_alerts_global_enabled)}
+                  disabled={saving}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    globalSettings.bull_market_alerts_global_enabled ? 'bg-orange-600' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      globalSettings.bull_market_alerts_global_enabled ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Goal Achievements Global */}
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Target className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <label className="text-sm font-medium text-gray-900">Behaalde Doelen Meldingen</label>
+                    <p className="text-xs text-gray-600">Email meldingen wanneer gebruikers doelen behalen</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => updateGlobalSetting('goal_achievements_global_enabled', !globalSettings.goal_achievements_global_enabled)}
+                  disabled={saving}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    globalSettings.goal_achievements_global_enabled ? 'bg-orange-600' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      globalSettings.goal_achievements_global_enabled ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Naam
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Telefoon
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Contactvoorkeur
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {bearMarketBuysUsers.map((user) => (
-                  <tr key={user.id || user.user_id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                      {user.name || '-'}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                      {user.email}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                      {user.phone || '-'}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                        user.bear_market_buys_contact_method === 'phone'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {user.bear_market_buys_contact_method === 'phone' ? (
-                          <>
-                            <Phone className="w-3 h-3" />
-                            Telefoon
-                          </>
-                        ) : (
-                          <>
-                            <Mail className="w-3 h-3" />
-                            Email
-                          </>
-                        )}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+          {/* Bear Market Buys Users */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Bear Market Buys Groep
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Gebruikers die zich hebben aangemeld voor bear market buy begeleiding ({bearMarketBuysUsers.length} gebruikers)
+                </p>
+              </div>
+            </div>
+
+            {bearMarketBuysUsers.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                <p>Geen gebruikers met bear market buys ingeschakeld</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Naam
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Email
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Telefoon
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Contactvoorkeur
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {bearMarketBuysUsers.map((user) => (
+                      <tr key={user.id || user.user_id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                          {user.name || '-'}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                          {user.email}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                          {user.phone || '-'}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                            user.bear_market_buys_contact_method === 'phone'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {user.bear_market_buys_contact_method === 'phone' ? (
+                              <>
+                                <Phone className="w-3 h-3" />
+                                Telefoon
+                              </>
+                            ) : (
+                              <>
+                                <Mail className="w-3 h-3" />
+                                Email
+                              </>
+                            )}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-        )}
         </div>
       )}
     </div>
