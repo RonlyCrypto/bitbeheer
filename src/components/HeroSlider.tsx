@@ -42,26 +42,21 @@ export default function HeroSlider() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [showBitcoinText, setShowBitcoinText] = useState(false);
-  const [showFullText, setShowFullText] = useState(true);
   const [slidePhase, setSlidePhase] = useState<'together' | 'sliding' | 'fading'>('together');
 
-  // Show Bit and beheer together first, then slide apart
+  // Start with Bit and beheer together, then slide apart
   useEffect(() => {
-    const fullTextTimer = setTimeout(() => {
-      setShowFullText(false);
-      // Start with Bit and beheer together
-      setSlidePhase('together');
+    // Start with Bit and beheer together
+    setSlidePhase('together');
+    setTimeout(() => {
+      // After 2 seconds, start sliding apart
+      setSlidePhase('sliding');
       setTimeout(() => {
-        // After 2 seconds, start sliding apart
-        setSlidePhase('sliding');
-        setTimeout(() => {
-          // After sliding, fade in coin in eigen
-          setShowBitcoinText(true);
-          setSlidePhase('fading');
-        }, 1200); // Wait for slide animation to complete
-      }, 2000); // Wait 2 seconds before sliding
-    }, 3000); // Show full text for 3 seconds
-    return () => clearTimeout(fullTextTimer);
+        // After sliding, fade in coin in eigen
+        setShowBitcoinText(true);
+        setSlidePhase('fading');
+      }, 1200); // Wait for slide animation to complete
+    }, 2000); // Wait 2 seconds before sliding
   }, []);
 
   // Auto-advance main slides - start after animation completes
@@ -109,43 +104,34 @@ export default function HeroSlider() {
           {/* Animated Brand Name */}
           <div className="text-center mb-4 min-h-[100px] flex flex-col items-center justify-center">
             <div className="relative w-full mb-3">
-              {showFullText ? (
-                <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center transition-opacity duration-500">
-                  <span className="inline-block">Bit</span>
-                  <span className="inline-block text-orange-200">coin</span>
-                  <span className="inline-block text-orange-200 ml-1 md:ml-1.5">in eigen</span>
-                  <span className="inline-block ml-1 md:ml-1.5">beheer</span>
-                </div>
-              ) : (
-                <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center">
-                  <span className={`inline-block transition-all duration-700 ${
-                    slidePhase === 'together' ? 'mr-0' :
-                    slidePhase === 'sliding' ? 'mr-0 animate-slide-left' :
-                    'mr-0'
-                  }`}>
-                    Bit
-                  </span>
-                  <span className={`inline-block text-orange-200 transition-all duration-700 ${
-                    slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 w-0 mx-0' :
-                    'opacity-100 mx-1 md:mx-1.5'
-                  }`}>
-                    coin
-                  </span>
-                  <span className={`inline-block text-orange-200 transition-all duration-700 ${
-                    slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 w-0 ml-0' :
-                    'opacity-100 ml-1 md:ml-1.5'
-                  }`}>
-                    in eigen
-                  </span>
-                  <span className={`inline-block transition-all duration-700 ${
-                    slidePhase === 'together' ? 'ml-0' :
-                    slidePhase === 'sliding' ? 'ml-0 animate-slide-right' :
-                    'ml-1 md:ml-1.5'
-                  }`}>
-                    beheer
-                  </span>
-                </div>
-              )}
+              <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center">
+                <span className={`inline-block transition-all duration-700 ${
+                  slidePhase === 'together' ? 'mr-0' :
+                  slidePhase === 'sliding' ? 'mr-0 animate-slide-left' :
+                  'mr-0'
+                }`}>
+                  Bit
+                </span>
+                <span className={`inline-block text-orange-200 transition-all duration-700 ${
+                  slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 w-0 mx-0' :
+                  'opacity-100 mx-1 md:mx-1.5'
+                }`}>
+                  coin
+                </span>
+                <span className={`inline-block text-orange-200 transition-all duration-700 ${
+                  slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 w-0 ml-0' :
+                  'opacity-100 ml-1 md:ml-1.5'
+                }`}>
+                  in eigen
+                </span>
+                <span className={`inline-block transition-all duration-700 ${
+                  slidePhase === 'together' ? 'ml-0' :
+                  slidePhase === 'sliding' ? 'ml-0 animate-slide-right' :
+                  'ml-1 md:ml-1.5'
+                }`}>
+                  beheer
+                </span>
+              </div>
             </div>
           </div>
 
