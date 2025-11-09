@@ -258,9 +258,8 @@ export default function UserDashboard() {
           try {
             // Use maybeSingle() instead of single() to handle missing records gracefully
             const { data: userData, error: userError } = await supabase
-              .from('users')
-              .select('account_approved, first_appointment_completed, email_verified, verified_at')
-              .maybeSingle()
+              .from('accounts')
+              .select('account_approved, first_appointment_completed, email_verified')
               .eq('email', user.email)
               .maybeSingle();
             
@@ -269,7 +268,7 @@ export default function UserDashboard() {
             }
             
             if (userData && !userError) {
-              console.log('🔍 UserDashboard - Loaded from users table:', {
+              console.log('🔍 UserDashboard - Loaded from accounts table:', {
                 account_approved: userData.account_approved,
                 first_appointment_completed: userData.first_appointment_completed,
                 email_verified: userData.email_verified
@@ -278,34 +277,11 @@ export default function UserDashboard() {
               setFirstAppointmentCompleted(userData.first_appointment_completed || false);
               setEmailVerified(userData.email_verified || false);
             } else {
-              // Try accounts table as fallback
-              console.log('🔍 Trying accounts table as fallback...');
-              const { data: accountData, error: accountError } = await supabase
-                .from('accounts')
-                .select('account_approved, first_appointment_completed, email_verified')
-                .eq('email', user.email)
-                .maybeSingle();
-              
-              if (accountError) {
-                console.error('🔍 Error loading from accounts table:', accountError);
-              }
-              
-              if (accountData) {
-                console.log('🔍 UserDashboard - Loaded from accounts table:', {
-                  account_approved: accountData.account_approved,
-                  first_appointment_completed: accountData.first_appointment_completed,
-                  email_verified: accountData.email_verified
-                });
-                setAccountApproved(accountData.account_approved || false);
-                setFirstAppointmentCompleted(accountData.first_appointment_completed || false);
-                setEmailVerified(accountData.email_verified || false);
-              } else {
-                // Default to false if no data found
-                console.warn('🔍 No account data found in users or accounts table');
-                setAccountApproved(false);
-                setFirstAppointmentCompleted(false);
-                setEmailVerified(false);
-              }
+              // Default to false if no data found
+              console.warn('🔍 No account data found in accounts table');
+              setAccountApproved(false);
+              setFirstAppointmentCompleted(false);
+              setEmailVerified(false);
             }
           } catch (error) {
             console.error('🔍 Exception loading account approval status:', error);
@@ -407,19 +383,24 @@ export default function UserDashboard() {
           
           if (!effectiveEmail) return;
           
-          const { data: userData, error: userError } = await supabase
-            .from('users')
+          const { data: accountData, error: accountError } = await supabase
+            .from('accounts')
             .select('account_approved, first_appointment_completed, email_verified')
             .eq('email', effectiveEmail)
-            .single();
+            .maybeSingle();
           
-          if (userData && !userError) {
-            setAccountApproved(userData.account_approved || false);
-            setFirstAppointmentCompleted(userData.first_appointment_completed || false);
-            setEmailVerified(userData.email_verified || false);
-          } else if (userError?.code === 'PGRST204' || userError?.code === 'PGRST116') {
-            // Try accounts table as fallback
-            const { data: accountData } = await supabase
+          if (accountData && !accountError) {
+            setAccountApproved(accountData.account_approved || false);
+            setFirstAppointmentCompleted(accountData.first_appointment_completed || false);
+            setEmailVerified(accountData.email_verified || false);
+          } else if (accountError?.code === 'PGRST204' || accountError?.code === 'PGRST116') {
+            // No data found, use defaults
+            setAccountApproved(false);
+            setFirstAppointmentCompleted(false);
+            setEmailVerified(false);
+          } else {
+            // Try accounts table as fallback (shouldn't be needed but keeping for safety)
+            const { data: fallbackData } = await supabase
               .from('accounts')
               .select('account_approved, first_appointment_completed')
               .eq('email', effectiveEmail)
@@ -466,20 +447,14 @@ export default function UserDashboard() {
         
         if (effectiveEmail) {
           supabase
-            .from('users')
+            .from('accounts')
             .select('account_approved, first_appointment_completed, email_verified')
             .eq('email', effectiveEmail)
             .maybeSingle()
-            .then(({ data: userData, error: userError }) => {
-              if (userError) {
-                console.error('🔍 Periodic refresh error:', userError);
-                // Try accounts table as fallback
-                supabase
-                  .from('accounts')
-                  .select('account_approved, first_appointment_completed, email_verified')
-                  .eq('email', effectiveEmail)
-                  .maybeSingle()
-                  .then(({ data: accountData, error: accountError }) => {
+            .then(({ data: accountData, error: accountError }) => {
+              if (accountError) {
+                console.error('🔍 Periodic refresh error:', accountError);
+              } else if (accountData) {
                     if (accountData && !accountError) {
                       console.log('🔍 Periodic refresh - Loaded from accounts table:', accountData);
                       setAccountApproved(accountData.account_approved || false);
@@ -808,16 +783,22 @@ export default function UserDashboard() {
           // Reload account status to check if approved
           if (user?.email) {
             supabase
-              .from('users')
-              .select('account_approved, first_appointment_completed')
+              .from('accounts')
+              .select('account_approved, first_appointment_completed, email_verified')
               .eq('email', user.email)
-              .single()
-              .then(({ data: userData, error: userError }) => {
-                if (userData && !userError) {
-                  setAccountApproved(userData.account_approved || false);
-                  setFirstAppointmentCompleted(userData.first_appointment_completed || false);
-                } else if (userError?.code === 'PGRST204' || userError?.code === 'PGRST116') {
-                  // Try accounts table as fallback
+              .maybeSingle()
+              .then(({ data: accountData, error: accountError }) => {
+                if (accountData && !accountError) {
+                  setAccountApproved(accountData.account_approved || false);
+                setFirstAppointmentCompleted(accountData.first_appointment_completed || false);
+                  setEmailVerified(accountData.email_verified || false);
+                } else if (accountError?.code === 'PGRST204' || accountError?.code === 'PGRST116') {
+                  // No data found, use defaults
+                  setAccountApproved(false);
+                  setFirstAppointmentCompleted(false);
+                  setEmailVerified(false);
+                } else {
+                  // Try accounts table as fallback (shouldn't be needed)
                   supabase
                     .from('accounts')
                     .select('account_approved, first_appointment_completed')
