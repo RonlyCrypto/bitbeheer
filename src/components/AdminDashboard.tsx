@@ -721,24 +721,25 @@ export default function AdminDashboard() {
                           )}
 
               {/* Email Management Section */}
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-purple-100 p-3 rounded-xl">
-                      <Mail className="w-8 h-8 text-purple-600" />
+              <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
+                  <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+                    <div className="bg-purple-100 p-2 md:p-3 rounded-xl flex-shrink-0">
+                      <Mail className="w-6 h-6 md:w-8 md:h-8 text-purple-600" />
                     </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900">E-mail Beheer</h3>
-                      <p className="text-gray-600">Beheer notificatie e-mails en verstuur bulk berichten</p>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-lg md:text-xl font-bold text-gray-900">E-mail Beheer</h3>
+                      <p className="text-xs md:text-sm text-gray-600 break-words">Beheer notificatie e-mails en verstuur bulk berichten</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setActiveTab('email-management')}
-                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    className="flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-xs md:text-sm font-medium whitespace-nowrap flex-shrink-0"
                   >
-                    <Mail className="w-4 h-4" />
-                    E-mail Beheer
-                    <ChevronRight className="w-4 h-4" />
+                    <Mail className="w-3 h-3 md:w-4 md:h-4" />
+                    <span className="hidden sm:inline">E-mail Beheer</span>
+                    <span className="sm:hidden">Beheer</span>
+                    <ChevronRight className="w-3 h-3 md:w-4 md:h-4" />
                   </button>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
