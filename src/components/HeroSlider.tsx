@@ -59,7 +59,7 @@ export default function HeroSlider() {
     }, 2000); // Wait 2 seconds before sliding
   }, []);
 
-  // Auto-advance main slides - start after animation completes
+  // Auto-advance main slides - start later after animation completes
   useEffect(() => {
     if (!showBitcoinText) return;
 
@@ -69,7 +69,7 @@ export default function HeroSlider() {
       intervalId = setInterval(() => {
         setCurrentSlide((prev) => (prev + 1) % slides.length);
       }, 4000); // Change slide every 4 seconds
-    }, 3500); // Start slider 3.5 seconds after animation starts (after animation completes)
+    }, 5000); // Start slider 5 seconds after animation completes (later)
 
     return () => {
       clearTimeout(sliderTimer);
@@ -155,22 +155,6 @@ export default function HeroSlider() {
                     </p>
                   </div>
                 </div>
-              ))}
-            </div>
-
-            {/* Slide Indicators */}
-            <div className="flex justify-center gap-2 mt-8">
-              {slides.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => goToSlide(index)}
-                  className={`h-2 rounded-full transition-all ${
-                    index === currentSlide
-                      ? 'bg-white w-8'
-                      : 'bg-white bg-opacity-50 w-2 hover:bg-opacity-75'
-                  }`}
-                  aria-label={`Ga naar slide ${index + 1}`}
-                />
               ))}
             </div>
           </div>
