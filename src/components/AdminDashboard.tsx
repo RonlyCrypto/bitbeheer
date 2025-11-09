@@ -876,20 +876,20 @@ export default function AdminDashboard() {
                     <Link
                       key={page.id}
                       to={page.path}
-                      className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all group"
+                      className="bg-white rounded-xl p-4 md:p-6 shadow-lg hover:shadow-xl transition-all group"
                     >
-                      <div className="flex items-start gap-4">
-                        <div className={`${page.color} p-3 rounded-xl`}>
-                          <page.icon className="w-8 h-8 text-white" />
+                      <div className="flex items-start gap-3 md:gap-4">
+                        <div className={`${page.color} p-2 md:p-3 rounded-xl flex-shrink-0`}>
+                          <page.icon className="w-6 h-6 md:w-8 md:h-8 text-white" />
                         </div>
-                        <div className="flex-1">
-                          <h4 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-lg md:text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors break-words">
                             {page.title}
                           </h4>
-                          <p className="text-gray-600 mb-4">{page.description}</p>
-                          <div className="flex items-center gap-2 text-orange-600 font-medium">
+                          <p className="text-sm md:text-base text-gray-600 mb-4 break-words">{page.description}</p>
+                          <div className="flex items-center gap-2 text-orange-600 font-medium text-sm md:text-base">
                             <span>Openen</span>
-                            <ChevronRight className="w-4 h-4" />
+                            <ChevronRight className="w-3 h-3 md:w-4 md:h-4" />
                           </div>
                         </div>
                       </div>
@@ -905,7 +905,7 @@ export default function AdminDashboard() {
                   {adminControls.filter(control => control.id !== 'page-visibility').map((control) => (
                     <div
                       key={control.id}
-                      className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer group"
+                      className="bg-white rounded-xl p-4 md:p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer group"
                       onClick={() => {
                         if (control.id === 'aanmeldingen') {
                           setActiveTab('accounts');
@@ -917,17 +917,17 @@ export default function AdminDashboard() {
                         }
                       }}
                     >
-                      <div className="flex items-start gap-4">
-                        <div className={`${control.color} p-3 rounded-xl`}>
-                          <control.icon className="w-8 h-8 text-white" />
+                      <div className="flex items-start gap-3 md:gap-4">
+                        <div className={`${control.color} p-2 md:p-3 rounded-xl flex-shrink-0`}>
+                          <control.icon className="w-6 h-6 md:w-8 md:h-8 text-white" />
                         </div>
-                        <div className="flex-1">
-                          <h4 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-lg md:text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors break-words">
                             {control.title}
                           </h4>
-                          <p className="text-gray-600 mb-4">{control.description}</p>
-                          <div className="flex items-center gap-2 text-orange-600 font-medium">
-                            <Edit3 className="w-4 h-4" />
+                          <p className="text-sm md:text-base text-gray-600 mb-4 break-words">{control.description}</p>
+                          <div className="flex items-center gap-2 text-orange-600 font-medium text-sm md:text-base">
+                            <Edit3 className="w-3 h-3 md:w-4 md:h-4" />
                             <span>Beheren</span>
                           </div>
                         </div>
