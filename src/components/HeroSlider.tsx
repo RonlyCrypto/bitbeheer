@@ -43,40 +43,26 @@ export default function HeroSlider() {
   const [isAnimating, setIsAnimating] = useState(false);
   const [showBitcoinText, setShowBitcoinText] = useState(false);
   const [showFullText, setShowFullText] = useState(true);
-  const [expandPhase, setExpandPhase] = useState<'collapsed' | 'expanding' | 'fading'>('collapsed');
+  const [slidePhase, setSlidePhase] = useState<'together' | 'sliding' | 'fading'>('together');
 
-  // Show full text first for a few seconds, then animate
+  // Show Bit and beheer together first, then slide apart
   useEffect(() => {
     const fullTextTimer = setTimeout(() => {
       setShowFullText(false);
-      // Start animation after full text is hidden
+      // Start with Bit and beheer together
+      setSlidePhase('together');
       setTimeout(() => {
-        setShowBitcoinText(true);
-        setExpandPhase('collapsed');
-      }, 300); // Smooth transition
+        // After 2 seconds, start sliding apart
+        setSlidePhase('sliding');
+        setTimeout(() => {
+          // After sliding, fade in coin in eigen
+          setShowBitcoinText(true);
+          setSlidePhase('fading');
+        }, 1200); // Wait for slide animation to complete
+      }, 2000); // Wait 2 seconds before sliding
     }, 3000); // Show full text for 3 seconds
     return () => clearTimeout(fullTextTimer);
   }, []);
-
-  // Expand and fade animation for coin in eigen
-  useEffect(() => {
-    if (showBitcoinText && expandPhase === 'collapsed') {
-      // After 2 seconds: start expanding
-      const expandTimer = setTimeout(() => {
-        setExpandPhase('expanding');
-      }, 2000);
-      
-      // After expansion: fade in
-      const fadeTimer = setTimeout(() => {
-        setExpandPhase('fading');
-      }, 3500);
-      
-      return () => {
-        clearTimeout(expandTimer);
-        clearTimeout(fadeTimer);
-      };
-    }
-  }, [showBitcoinText, expandPhase]);
 
   // Auto-advance main slides - start after animation completes
   useEffect(() => {
@@ -132,22 +118,32 @@ export default function HeroSlider() {
                 </div>
               ) : (
                 <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center">
-                  <span className="inline-block animate-fade-in">Bit</span>
+                  <span className={`inline-block transition-all duration-700 ${
+                    slidePhase === 'together' ? 'mr-0' :
+                    slidePhase === 'sliding' ? 'mr-0 animate-slide-left' :
+                    'mr-0'
+                  }`}>
+                    Bit
+                  </span>
                   <span className={`inline-block text-orange-200 transition-all duration-700 ${
-                    expandPhase === 'collapsed' ? 'opacity-0 scale-x-0' :
-                    expandPhase === 'expanding' ? 'opacity-0 scale-x-100' :
-                    'opacity-100 scale-x-100'
+                    slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 w-0 mx-0' :
+                    'opacity-100 mx-1 md:mx-1.5'
                   }`}>
                     coin
                   </span>
                   <span className={`inline-block text-orange-200 transition-all duration-700 ${
-                    expandPhase === 'collapsed' ? 'opacity-0 scale-x-0 ml-0' :
-                    expandPhase === 'expanding' ? 'opacity-0 scale-x-100 ml-1 md:ml-1.5' :
-                    'opacity-100 scale-x-100 ml-1 md:ml-1.5'
+                    slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 w-0 ml-0' :
+                    'opacity-100 ml-1 md:ml-1.5'
                   }`}>
                     in eigen
                   </span>
-                  <span className="inline-block ml-1 md:ml-1.5 animate-fade-in">beheer</span>
+                  <span className={`inline-block transition-all duration-700 ${
+                    slidePhase === 'together' ? 'ml-0' :
+                    slidePhase === 'sliding' ? 'ml-0 animate-slide-right' :
+                    'ml-1 md:ml-1.5'
+                  }`}>
+                    beheer
+                  </span>
                 </div>
               )}
             </div>
@@ -212,21 +208,21 @@ export default function HeroSlider() {
           }
         }
 
-        @keyframes slide-to-position-left {
+        @keyframes slide-left {
           0% {
             transform: translateX(0);
           }
           100% {
-            transform: translateX(calc(-50% - 50px));
+            transform: translateX(calc(-50% - 40px));
           }
         }
 
-        @keyframes slide-to-position-right {
+        @keyframes slide-right {
           0% {
             transform: translateX(0);
           }
           100% {
-            transform: translateX(calc(50% + 50px));
+            transform: translateX(calc(50% + 40px));
           }
         }
 
@@ -268,12 +264,12 @@ export default function HeroSlider() {
           animation: blink 1.2s ease-in-out infinite;
         }
 
-        .animate-slide-to-position-left {
-          animation: slide-to-position-left 1.2s ease-in-out forwards;
+        .animate-slide-left {
+          animation: slide-left 1.2s ease-in-out forwards;
         }
 
-        .animate-slide-to-position-right {
-          animation: slide-to-position-right 1.2s ease-in-out forwards;
+        .animate-slide-right {
+          animation: slide-right 1.2s ease-in-out forwards;
         }
 
         .animate-fade-in {
