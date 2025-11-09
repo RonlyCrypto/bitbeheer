@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle, Clock, XCircle, Send, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle, Clock, Send, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface SignupProcessFlowProps {
   user?: {
@@ -21,17 +21,6 @@ interface SignupProcessFlowProps {
 
 export default function SignupProcessFlow({ user, showLegend = true, onResendVerificationEmail, isResendingEmail = false, accordionMode = false, simpleMode = false }: SignupProcessFlowProps) {
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
-  
-  // Debug: log user data to see what's being passed
-  useEffect(() => {
-    if (simpleMode && user) {
-      console.log('SignupProcessFlow - User data:', {
-        email_verified: user.email_verified,
-        first_appointment_completed: user.first_appointment_completed,
-        account_approved: user.account_approved
-      });
-    }
-  }, [user, simpleMode]);
   const getCurrentStep = () => {
     if (!user) return 0;
     if (simpleMode) {
@@ -318,7 +307,7 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
                 {isCurrent && accordionMode && !simpleMode && (
                   <p className="text-sm text-orange-600 font-medium">Huidige stap - Open voor details</p>
                 )}
-                {simpleMode && isCurrent && (
+                {simpleMode && isCurrent && 'simpleText' in step && (
                   <p className="text-sm text-gray-600 mt-1">{step.simpleText}</p>
                 )}
               </div>
@@ -338,33 +327,37 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
               <div className="px-4 pb-4 pl-14">
                 {simpleMode ? (
                   // Simple mode: only show simpleText
-                  <p className={`${
-                    status === 'completed' ? 'text-gray-600' : 
-                    status === 'current' ? 'text-gray-700' : 
-                    'text-gray-400'
-                  }`}>
-                    {step.simpleText}
-                  </p>
-                ) : (
-                  // Full mode: show all details
-                  <>
-                    <p className={`mb-4 ${
+                  'simpleText' in step ? (
+                    <p className={`${
                       status === 'completed' ? 'text-gray-600' : 
                       status === 'current' ? 'text-gray-700' : 
                       'text-gray-400'
                     }`}>
-                      {step.description}
+                      {step.simpleText}
                     </p>
+                  ) : null
+                ) : (
+                  // Full mode: show all details
+                  <>
+                    {'description' in step && (
+                      <p className={`mb-4 ${
+                        status === 'completed' ? 'text-gray-600' : 
+                        status === 'current' ? 'text-gray-700' : 
+                        'text-gray-400'
+                      }`}>
+                        {step.description}
+                      </p>
+                    )}
 
                     {/* Action Text for current step */}
-                    {isCurrent && step.actionText && (
+                    {isCurrent && 'actionText' in step && step.actionText && (
                       <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
                         <p className="text-sm font-medium text-orange-900 mb-1">📋 Wat moet je doen:</p>
                         <p className="text-sm text-orange-800">{step.actionText}</p>
                       </div>
                     )}
                     
-                    {step.email && (
+                    {'email' in step && step.email && (
                       <div className={`${colors.lightBg} border ${colors.borderLight} rounded-lg p-4 mb-3`}>
                         <p className={`text-sm font-medium ${colors.text} mb-2`}>📧 Email: {step.email.type}</p>
                         <p className={`text-sm ${colors.textLight}`}>
@@ -412,7 +405,7 @@ export default function SignupProcessFlow({ user, showLegend = true, onResendVer
                       </div>
                     )}
 
-                    {step.status && (
+                    {'status' in step && step.status && (
                       <div className={`${colors.lightBg} border ${colors.borderLight} rounded-lg p-4`}>
                         <p className={`text-sm font-medium ${colors.text} mb-2`}>
                           ✅ Account Status
