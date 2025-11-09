@@ -105,30 +105,22 @@ export default function HeroSlider() {
           <div className="text-center mb-4 h-[100px] md:h-[120px] flex flex-col items-center justify-center">
             <div className="relative w-full mb-3 h-full flex items-center justify-center">
               <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center h-full">
-                <span className={`inline-block transition-all duration-700 ${
-                  slidePhase === 'together' ? 'mr-0' :
-                  slidePhase === 'sliding' ? 'mr-0 animate-slide-left' :
-                  'mr-0'
-                }`}>
+                <span className="inline-block mr-0">
                   Bit
                 </span>
-                <span className={`inline-block text-orange-200 transition-all duration-700 ${
-                  slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 w-0 mx-0 overflow-hidden' :
-                  'opacity-100 mx-0'
+                <span className={`inline-block text-orange-200 transition-all duration-700 mx-0 ${
+                  slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 invisible' :
+                  'opacity-100 visible'
                 }`}>
                   coin
                 </span>
-                <span className={`inline-block text-orange-200 transition-all duration-700 ${
-                  slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 w-0 ml-0 overflow-hidden' :
-                  'opacity-100 ml-1 md:ml-1.5'
+                <span className={`inline-block text-orange-200 transition-all duration-700 ml-1 md:ml-1.5 ${
+                  slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 invisible' :
+                  'opacity-100 visible'
                 }`}>
                   in eigen
                 </span>
-                <span className={`inline-block transition-all duration-700 ${
-                  slidePhase === 'together' ? 'ml-0' :
-                  slidePhase === 'sliding' ? 'ml-0 animate-slide-right' :
-                  'ml-1 md:ml-1.5'
-                }`}>
+                <span className="inline-block ml-1 md:ml-1.5">
                   beheer
                 </span>
               </div>
@@ -183,7 +175,7 @@ export default function HeroSlider() {
             transform: translateX(0);
           }
           100% {
-            transform: translateX(calc(-50% - 40px));
+            transform: translateX(0);
           }
         }
 
@@ -192,7 +184,7 @@ export default function HeroSlider() {
             transform: translateX(0);
           }
           100% {
-            transform: translateX(calc(50% + 40px));
+            transform: translateX(0);
           }
         }
 
