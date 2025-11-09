@@ -261,6 +261,11 @@ export default function UserDashboard() {
               .single();
             
             if (userData && !userError) {
+              console.log('🔍 UserDashboard - Loaded from users table:', {
+                account_approved: userData.account_approved,
+                first_appointment_completed: userData.first_appointment_completed,
+                email_verified: userData.email_verified
+              });
               setAccountApproved(userData.account_approved || false);
               setFirstAppointmentCompleted(userData.first_appointment_completed || false);
               setEmailVerified(userData.email_verified || false);
@@ -1809,6 +1814,16 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           {!accountApproved && (
             <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Jouw Aanmeldproces</h3>
+              {(() => {
+                // Debug logging
+                console.log('🔍 UserDashboard - Passing to SignupProcessFlow:', {
+                  email_verified: emailVerified,
+                  first_appointment_completed: firstAppointmentCompleted,
+                  account_approved: accountApproved,
+                  created_at: user?.created_at
+                });
+                return null;
+              })()}
               <SignupProcessFlow 
                 user={{
                   email_verified: emailVerified,
