@@ -117,7 +117,7 @@ export default function HeroSlider() {
                 <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center">
                   <span className="inline-block">Bit</span>
                   <span className={`inline-block text-orange-200 transition-all duration-700 delay-300 ${
-                    showBitcoinText ? 'opacity-100 scale-100 mx-1 md:mx-1.5' : 'opacity-0 scale-95 w-0 mx-0'
+                    showBitcoinText ? 'opacity-100 scale-100' : 'opacity-0 scale-95 w-0'
                   }`}>
                     Coin
                   </span>
@@ -126,7 +126,7 @@ export default function HeroSlider() {
                   }`}>
                     in eigen
                   </span>
-                  <span className="inline-block">beheer</span>
+                  <span className="inline-block ml-1 md:ml-1.5">beheer</span>
                 </div>
               )}
             </div>
