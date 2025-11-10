@@ -52,9 +52,12 @@ export default function HeroSlider() {
       // After 2 seconds, start sliding apart
       setSlidePhase('sliding');
       setTimeout(() => {
-        // After sliding animation completes, fade in coin in eigen
-        setShowBitcoinText(true);
+        // After sliding animation completes, show coin in eigen
         setSlidePhase('fading');
+        setTimeout(() => {
+          // Start slider after coin in eigen is visible
+          setShowBitcoinText(true);
+        }, 300); // Small delay to ensure coin in eigen is visible
       }, 1000); // Wait for slide animation to complete
     }, 2000); // Wait 2 seconds before sliding
   }, []);
@@ -108,11 +111,12 @@ export default function HeroSlider() {
                 {/* Background layer: coin in eigen - always present but behind Bit and beheer */}
                 <span className={`absolute text-orange-200 transition-all duration-700 mx-0 ml-1 md:ml-1.5 ${
                   slidePhase === 'together' ? 'opacity-0' :
-                  slidePhase === 'sliding' ? 'opacity-100' :
+                  slidePhase === 'sliding' ? 'opacity-0' :
                   'opacity-100'
                 }`} style={{
                   whiteSpace: 'nowrap',
-                  zIndex: 0
+                  zIndex: 0,
+                  transitionDelay: slidePhase === 'fading' ? '0.3s' : '0s'
                 }}>
                   coin in eigen
                 </span>
@@ -125,7 +129,7 @@ export default function HeroSlider() {
                     ''
                   }`} style={{
                     transform: slidePhase === 'together' ? 'translateX(0)' :
-                               slidePhase === 'sliding' ? 'translateX(calc(-100% - 0.5rem))' :
+                               slidePhase === 'sliding' ? 'translateX(calc(-150% - 0.75rem))' :
                                'translateX(0)',
                     backgroundColor: slidePhase === 'together' ? 'transparent' : 'transparent'
                   }}>
@@ -137,7 +141,7 @@ export default function HeroSlider() {
                     'ml-1 md:ml-1.5'
                   }`} style={{
                     transform: slidePhase === 'together' ? 'translateX(0)' :
-                               slidePhase === 'sliding' ? 'translateX(calc(100% + 0.5rem + 0.5rem))' :
+                               slidePhase === 'sliding' ? 'translateX(calc(150% + 0.75rem + 0.75rem))' :
                                'translateX(0)',
                     backgroundColor: slidePhase === 'together' ? 'transparent' : 'transparent'
                   }}>
