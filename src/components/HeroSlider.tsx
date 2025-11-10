@@ -42,28 +42,40 @@ export default function HeroSlider() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [showBitcoinText, setShowBitcoinText] = useState(false);
-  const [slidePhase, setSlidePhase] = useState<'together' | 'sliding' | 'fading' | 'complete'>('together');
+  const [typedText, setTypedText] = useState('');
+  const [showCursor, setShowCursor] = useState(false);
+  
+  const fullText = 'coin in eigen';
 
-  // Start with Bit and beheer together, then slide apart
+  // Typewriter effect for "coin in eigen"
   useEffect(() => {
-    // Start with Bit and beheer together
-    setSlidePhase('together');
-    setTimeout(() => {
-      // After 2 seconds, start sliding apart smoothly
-      setSlidePhase('sliding');
-      setTimeout(() => {
-        // After sliding animation completes, show coin in eigen
-        setSlidePhase('fading');
-        setTimeout(() => {
-          // After coin in eigen is visible, set to complete phase to keep positions
-          setSlidePhase('complete');
+    // Start showing cursor after 2 seconds
+    const cursorTimer = setTimeout(() => {
+      setShowCursor(true);
+    }, 2000);
+
+    // Start typing after 2.5 seconds
+    const typeTimer = setTimeout(() => {
+      let currentIndex = 0;
+      const typeInterval = setInterval(() => {
+        if (currentIndex <= fullText.length) {
+          setTypedText(fullText.substring(0, currentIndex));
+          currentIndex++;
+        } else {
+          clearInterval(typeInterval);
+          setShowCursor(false);
+          // Show slider text after typing is done
           setTimeout(() => {
-            // Start slider after coin in eigen is visible
             setShowBitcoinText(true);
           }, 300);
-        }, 400); // Wait for coin in eigen to fade in quickly
-      }, 800); // Shorter slide animation for snappier feel
-    }, 2000); // Wait 2 seconds before sliding
+        }
+      }, 80); // Type each character every 80ms
+    }, 2500);
+
+    return () => {
+      clearTimeout(cursorTimer);
+      clearTimeout(typeTimer);
+    };
   }, []);
 
   // Auto-advance main slides - start later after animation completes
@@ -112,45 +124,27 @@ export default function HeroSlider() {
           <div className="text-center mb-4 h-[100px] md:h-[120px] flex flex-col items-center justify-center">
             <div className="relative w-full mb-3 h-full flex items-center justify-center">
               <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center h-full relative">
-                {/* All text in flex layout to maintain spacing */}
-                <div className="relative z-10 flex items-center justify-center">
-                  <span className={`inline-block transition-all duration-800 ${
-                    slidePhase === 'together' ? 'mr-0' :
-                    slidePhase === 'sliding' ? 'mr-0' :
-                    'mr-0'
-                  }`} style={{
-                    transform: slidePhase === 'together' ? 'translateX(0)' :
-                               slidePhase === 'sliding' ? 'translateX(calc(-100% - 0.5rem))' :
-                               'translateX(0)',
-                    backgroundColor: slidePhase === 'together' ? 'transparent' : 'transparent',
-                    transitionTimingFunction: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-                  }}>
+                {/* Typewriter animation */}
+                <div className="relative z-10 flex items-center justify-center whitespace-nowrap">
+                  <span className="inline-block">
                     Bit
                   </span>
-                  <span className={`inline-block text-orange-200 transition-all duration-600 ${
-                    slidePhase === 'together' ? 'opacity-0 w-0 overflow-hidden mx-0' :
-                    slidePhase === 'sliding' ? 'opacity-0 w-0 overflow-hidden mx-0' :
-                    'opacity-100 mx-1 md:mx-1.5'
+                  <span className={`inline-block text-orange-200 ml-1 md:ml-1.5 ${
+                    showCursor ? 'animate-blink' : ''
                   }`} style={{
-                    whiteSpace: 'nowrap',
-                    transitionDelay: slidePhase === 'fading' ? '0.2s' : '0s',
-                    minWidth: slidePhase === 'together' || slidePhase === 'sliding' ? '0' : 'auto'
+                    minWidth: '1em',
+                    visibility: showCursor || typedText.length > 0 ? 'visible' : 'hidden'
                   }}>
-                    coin in eigen
+                    _
                   </span>
-                  <span className={`inline-block transition-all duration-800 ${
-                    slidePhase === 'together' ? 'ml-0' :
-                    slidePhase === 'sliding' ? 'ml-0' :
-                    'ml-1 md:ml-1.5'
-                  }`} style={{
-                    transform: slidePhase === 'together' ? 'translateX(0)' :
-                               slidePhase === 'sliding' ? 'translateX(calc(100% + 0.5rem))' :
-                               'translateX(0)',
-                    backgroundColor: slidePhase === 'together' ? 'transparent' : 'transparent',
-                    transitionTimingFunction: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-                  }}>
-                    beheer
+                  <span className="inline-block text-orange-200 ml-0">
+                    {typedText}
                   </span>
+                  {typedText.length === fullText.length && (
+                    <span className="inline-block ml-1 md:ml-1.5">
+                      beheer
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
