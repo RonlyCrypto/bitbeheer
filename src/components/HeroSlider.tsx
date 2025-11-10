@@ -135,6 +135,7 @@ export default function HeroSlider() {
                     transform: slidePhase === 'together' ? 'translateX(0)' :
                                slidePhase === 'sliding' ? 'translateX(calc(-150% - 0.75rem))' :
                                slidePhase === 'fading' ? 'translateX(0)' :
+                               slidePhase === 'complete' ? 'translateX(0)' :
                                'translateX(0)',
                     backgroundColor: slidePhase === 'together' ? 'transparent' : 'transparent'
                   }}>
