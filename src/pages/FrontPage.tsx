@@ -13,87 +13,85 @@ export default function FrontPage() {
       {/* Hero Slider Section */}
       <HeroSlider />
 
-      {/* What We Offer - Only for logged in users */}
+      {/* My Story Section - Only for logged in users */}
       {isAuthenticated && (
         <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-4xl mx-auto">
               <div className="text-center mb-16">
                 <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                  Wat We Willen Bereiken
+                  Het Verhaal van BitBeheer
                 </h2>
-                <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                  Onze missie: jou helpen Bitcoin veilig en met volledige controle te beheren
+                <p className="text-xl text-gray-600 leading-relaxed">
+                  Waarom we BitBeheer hebben opgericht en wat we willen bereiken
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8 hover:shadow-lg transition-all">
-                  <div className="flex items-center gap-3 mb-4">
-                    <CheckCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
-                    <h3 className="text-xl font-bold text-gray-900">Bitcoin veilig kopen</h3>
+              <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
+                <div>
+                  <h3 className="text-3xl font-bold text-gray-900 mb-6">
+                    Waarom BitBeheer bestaat
+                  </h3>
+                  <div className="space-y-6 text-lg text-gray-600 leading-relaxed">
+                    <p>
+                      BitBeheer is ontstaan uit de behoefte om mensen te helpen veilig en verstandig te investeren in Bitcoin. 
+                      Sinds 2017 hebben we gezien hoe de cryptomarkt groeide, maar ook hoe veel beginners hun geld kwijtraakten door gebrek aan kennis, 
+                      verkeerde keuzes en oplichting. Zonder de juiste begeleiding kan investeren in Bitcoin al snel overweldigend zijn.
+                    </p>
+                    <p>
+                      Steeds meer mensen willen investeren in Bitcoin, maar weten niet waar ze moeten beginnen. Er is veel informatie beschikbaar, 
+                      maar veel ervan is verwarrend, misleidend of gericht op hype. Veel beginners verliezen geld door niet te weten welke exchanges 
+                      betrouwbaar zijn, Bitcoin op exchanges te bewaren in plaats van eigen beheer, of te vallen voor scams en oplichting.
+                    </p>
+                    <p>
+                      <strong>Daarom hebben we BitBeheer opgericht.</strong> We willen mensen helpen die interesse hebben in Bitcoin, maar niet goed weten waar ze moeten beginnen. 
+                      Met persoonlijke 1-op-1 begeleiding, praktische kennis en echte voorbeelden helpen we je stap voor stap om veilig Bitcoin te kopen en in eigen beheer te houden.
+                    </p>
+                    <p className="text-orange-600 font-semibold">
+                      Ons doel is duidelijk: mensen helpen begrijpen hoe je veilig Bitcoin aankoopt en in eigen beheer bewaart, zonder poespas, zonder hype, gewoon eerlijk en duidelijk. 
+                      Bitcoin voor beginners in Nederland, met Nederlandse begeleiding.
+                    </p>
                   </div>
-                  <p className="text-gray-700 leading-relaxed">
-                    We leren je hoe je Bitcoin op een veilige manier koopt via betrouwbare exchanges en wat je vooraf moet weten.
-                  </p>
                 </div>
-
-                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8 hover:shadow-lg transition-all">
-                  <div className="flex items-center gap-3 mb-4">
-                    <CheckCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
-                    <h3 className="text-xl font-bold text-gray-900">Weten wanneer je het beste kan instappen</h3>
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="bg-orange-500 p-3 rounded-xl">
+                      <Shield className="w-8 h-8 text-white" />
+                    </div>
+                    <h4 className="text-2xl font-bold text-gray-900">Onze Begeleiding</h4>
                   </div>
-                  <p className="text-gray-700 leading-relaxed">
-                    Leer hoe je markttrends leest en ontdek waarom consistent investeren (DCA) een effectieve strategie is.
-                  </p>
-                </div>
-
-                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8 hover:shadow-lg transition-all">
-                  <div className="flex items-center gap-3 mb-4">
-                    <CheckCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
-                    <h3 className="text-xl font-bold text-gray-900">Versturen en ontvangen</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                      <span className="text-gray-700">Persoonlijke 1-op-1 ondersteuning</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                      <span className="text-gray-700">Stap voor stap uitleg</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                      <span className="text-gray-700">Praktische voorbeelden</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                      <span className="text-gray-700">Veilig en vertrouwd</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                      <span className="text-gray-700">Altijd beschikbaar voor vragen</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                      <span className="text-gray-700">Gekwalificeerde begeleiders</span>
+                    </div>
                   </div>
-                  <p className="text-gray-700 leading-relaxed">
-                    Beheers je Bitcoin transacties met vertrouwen. We leggen uit hoe je veilig Bitcoin stuurt en ontvangt.
-                  </p>
-                </div>
-
-                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8 hover:shadow-lg transition-all">
-                  <div className="flex items-center gap-3 mb-4">
-                    <CheckCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
-                    <h3 className="text-xl font-bold text-gray-900">Bewaren in eigen beheer</h3>
+                  <div className="mt-6 p-4 bg-white rounded-lg">
+                    <p className="text-sm text-gray-600 italic">
+                      "Bitcoin investeren in Nederland hoeft niet moeilijk te zijn. Met de juiste begeleiding en kennis kun je veilig en verstandig beginnen met Bitcoin."
+                    </p>
                   </div>
-                  <p className="text-gray-700 leading-relaxed">
-                    Het belangrijkste: volledig eigenaarschap van je Bitcoin. Geen exchanges, geen risico's, alleen jij.
-                  </p>
                 </div>
-
-                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8 hover:shadow-lg transition-all">
-                  <div className="flex items-center gap-3 mb-4">
-                    <CheckCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
-                    <h3 className="text-xl font-bold text-gray-900">24/7 elke seconde je balans inzien</h3>
-                  </div>
-                  <p className="text-gray-700 leading-relaxed">
-                    Volg je portfolio real-time met ons dashboard. Altijd beschikbaar, altijd actueel, altijd veilig.
-                  </p>
-                </div>
-
-                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8 hover:shadow-lg transition-all">
-                  <div className="flex items-center gap-3 mb-4">
-                    <CheckCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
-                    <h3 className="text-xl font-bold text-gray-900">Altijd bij je geld kunnen</h3>
-                  </div>
-                  <p className="text-gray-700 leading-relaxed">
-                    Jouw Bitcoin, jouw controle, jouw keuzes. Geen instanties die je blokkeren, altijd volledige vrijheid.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-16 bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-8 text-white text-center">
-                <p className="text-lg italic max-w-2xl mx-auto">
-                  "Ons doel is duidelijk: jou helpen begrijpen hoe je veilig Bitcoin aankoopt en in eigen beheer bewaart, 
-                  zonder poespas, zonder hype, gewoon eerlijk en duidelijk."
-                </p>
               </div>
             </div>
           </div>
@@ -252,94 +250,86 @@ export default function FrontPage() {
         </>
       )}
 
-      {/* What We Offer Section */}
+      {/* What We Offer Section - Replaced with Goals */}
       <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                Wat we je leren
+                Wat We Willen Bereiken
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Persoonlijke begeleiding in drie essentiële stappen
+                Onze missie: jou helpen Bitcoin veilig en met volledige controle te beheren
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-              <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all">
-                <div className="bg-orange-100 p-4 rounded-xl w-fit mb-6">
-                  <BookOpen className="w-8 h-8 text-orange-600" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8 hover:shadow-lg transition-all">
+                <div className="flex items-center gap-3 mb-4">
+                  <CheckCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
+                  <h3 className="text-xl font-bold text-gray-900">Bitcoin veilig kopen</h3>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">Hoe Koop Je Bitcoin</h3>
-                <p className="text-gray-600 leading-relaxed mb-6">
-                  We leren je stap voor stap hoe je veilig Bitcoin koopt via betrouwbare exchanges 
-                  en wat je moet weten voordat je begint.
+                <p className="text-gray-700 leading-relaxed">
+                  We leren je hoe je Bitcoin op een veilige manier koopt via betrouwbare exchanges en wat je vooraf moet weten.
                 </p>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2 text-gray-600">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    Welke exchanges zijn betrouwbaar?
-                  </li>
-                  <li className="flex items-center gap-2 text-gray-600">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    Hoe maak je een account aan?
-                  </li>
-                  <li className="flex items-center gap-2 text-gray-600">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    Wat zijn de kosten en risico's?
-                  </li>
-                </ul>
               </div>
 
-              <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all">
-                <div className="bg-orange-100 p-4 rounded-xl w-fit mb-6">
-                  <Shield className="w-8 h-8 text-orange-600" />
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8 hover:shadow-lg transition-all">
+                <div className="flex items-center gap-3 mb-4">
+                  <CheckCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
+                  <h3 className="text-xl font-bold text-gray-900">Weten wanneer je het beste kan instappen</h3>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">Veilig Bewaren</h3>
-                <p className="text-gray-600 leading-relaxed mb-6">
-                  Het belangrijkste onderdeel: hoe bewaar je je Bitcoin veilig en houd je 
-                  volledige controle over je eigen geld.
+                <p className="text-gray-700 leading-relaxed">
+                  Leer hoe je markttrends leest en ontdek waarom consistent investeren (DCA) een effectieve strategie is.
                 </p>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2 text-gray-600">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    Wat zijn hardware wallets?
-                  </li>
-                  <li className="flex items-center gap-2 text-gray-600">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    Hoe bewaar je je private keys?
-                  </li>
-                  <li className="flex items-center gap-2 text-gray-600">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    Wat zijn de risico's van exchanges?
-                  </li>
-                </ul>
               </div>
 
-              <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all">
-                <div className="bg-orange-100 p-4 rounded-xl w-fit mb-6">
-                  <Target className="w-8 h-8 text-orange-600" />
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8 hover:shadow-lg transition-all">
+                <div className="flex items-center gap-3 mb-4">
+                  <CheckCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
+                  <h3 className="text-xl font-bold text-gray-900">Versturen en ontvangen</h3>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">Eigen Beheer</h3>
-                <p className="text-gray-600 leading-relaxed mb-6">
-                  De ultieme stap: volledige controle over je Bitcoin. 
-                  Geen derde partijen, geen risico's, alleen jij en je Bitcoin.
+                <p className="text-gray-700 leading-relaxed">
+                  Beheers je Bitcoin transacties met vertrouwen. We leggen uit hoe je veilig Bitcoin stuurt en ontvangt.
                 </p>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2 text-gray-600">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    Wat betekent "not your keys, not your coins"?
-                  </li>
-                  <li className="flex items-center gap-2 text-gray-600">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    Hoe stel je een backup in?
-                  </li>
-                  <li className="flex items-center gap-2 text-gray-600">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    Wat als je je wallet verliest?
-                  </li>
-                </ul>
               </div>
+
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8 hover:shadow-lg transition-all">
+                <div className="flex items-center gap-3 mb-4">
+                  <CheckCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
+                  <h3 className="text-xl font-bold text-gray-900">Bewaren in eigen beheer</h3>
+                </div>
+                <p className="text-gray-700 leading-relaxed">
+                  Het belangrijkste: volledig eigenaarschap van je Bitcoin. Geen exchanges, geen risico's, alleen jij.
+                </p>
+              </div>
+
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8 hover:shadow-lg transition-all">
+                <div className="flex items-center gap-3 mb-4">
+                  <CheckCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
+                  <h3 className="text-xl font-bold text-gray-900">24/7 elke seconde je balans inzien</h3>
+                </div>
+                <p className="text-gray-700 leading-relaxed">
+                  Volg je portfolio real-time met ons dashboard. Altijd beschikbaar, altijd actueel, altijd veilig.
+                </p>
+              </div>
+
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8 hover:shadow-lg transition-all">
+                <div className="flex items-center gap-3 mb-4">
+                  <CheckCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
+                  <h3 className="text-xl font-bold text-gray-900">Altijd bij je geld kunnen</h3>
+                </div>
+                <p className="text-gray-700 leading-relaxed">
+                  Jouw Bitcoin, jouw controle, jouw keuzes. Geen instanties die je blokkeren, altijd volledige vrijheid.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-16 bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-8 text-white text-center">
+              <p className="text-lg italic max-w-2xl mx-auto">
+                "Ons doel is duidelijk: jou helpen begrijpen hoe je veilig Bitcoin aankoopt en in eigen beheer bewaart, 
+                zonder poespas, zonder hype, gewoon eerlijk en duidelijk."
+              </p>
             </div>
           </div>
         </div>
