@@ -127,15 +127,13 @@ export default function HeroSlider() {
                 
                 {/* Foreground layer: Bit and beheer */}
                 <div className="relative z-10 flex items-center">
-                  <span className={`inline-block transition-all duration-700 ease-in-out mr-0 ${
-                    slidePhase === 'together' ? '' :
-                    slidePhase === 'sliding' ? '' :
-                    ''
+                  <span className={`inline-block transition-all duration-700 ease-in-out ${
+                    slidePhase === 'together' ? 'mr-0' :
+                    slidePhase === 'sliding' ? 'mr-0' :
+                    'mr-0'
                   }`} style={{
                     transform: slidePhase === 'together' ? 'translateX(0)' :
                                slidePhase === 'sliding' ? 'translateX(calc(-150% - 0.75rem))' :
-                               slidePhase === 'fading' ? 'translateX(0)' :
-                               slidePhase === 'complete' ? 'translateX(0)' :
                                'translateX(0)',
                     backgroundColor: slidePhase === 'together' ? 'transparent' : 'transparent'
                   }}>
@@ -144,14 +142,10 @@ export default function HeroSlider() {
                   <span className={`inline-block transition-all duration-700 ease-in-out ${
                     slidePhase === 'together' ? 'ml-0' :
                     slidePhase === 'sliding' ? 'ml-0' :
-                    slidePhase === 'fading' ? 'ml-1 md:ml-1.5' :
-                    slidePhase === 'complete' ? 'ml-1 md:ml-1.5' :
                     'ml-1 md:ml-1.5'
                   }`} style={{
                     transform: slidePhase === 'together' ? 'translateX(0)' :
                                slidePhase === 'sliding' ? 'translateX(calc(150% + 0.75rem + 0.75rem))' :
-                               slidePhase === 'fading' ? 'translateX(0)' :
-                               slidePhase === 'complete' ? 'translateX(0)' :
                                'translateX(0)',
                     backgroundColor: slidePhase === 'together' ? 'transparent' : 'transparent'
                   }}>
