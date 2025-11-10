@@ -45,8 +45,8 @@ export default function FrontPage() {
                     </p>
                   </div>
                   
-                  {/* Small list of benefits - vertical */}
-                  <div className="mt-8 pt-8 border-t border-gray-200">
+                  {/* Benefits wrapper - can be positioned flexibly */}
+                  <div className="benefits-list mt-8 pt-8 border-t border-gray-200">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0" />
