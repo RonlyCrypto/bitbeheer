@@ -16,7 +16,7 @@ const slides: Slide[] = [
     id: 1,
     title: '',
     subtitle: '',
-    description: 'Laat ons de kennis en skills geven om je eigen Bitcoin in eigen beheer te houden.',
+    description: 'Wij maken het makkelijk en begrijpbaar voor je.',
     icon: <Bitcoin className="w-16 h-16" />,
     keywords: ['Bitcoin eigen beheer', 'Bitcoin kennis', 'Bitcoin skills', 'Bitcoin begeleiding']
   },
