@@ -43,14 +43,15 @@ export default function Header() {
   return (
     <>
     <header className="bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg">
-      <div className="container mx-auto px-4 py-4 md:py-6">
-        <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 md:gap-4">
+      <div className="w-full px-4 py-4 md:py-6">
+        <div className="flex items-center justify-between gap-4">
+          {/* Logo - Left */}
+          <Link to="/" className="flex items-center gap-2 md:gap-4 flex-shrink-0">
             <div className="bg-white bg-opacity-20 p-2 md:p-3 rounded-xl backdrop-blur-sm">
               <Bitcoin className="w-6 h-6 md:w-8 md:h-8" />
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-xl md:text-3xl font-bold tracking-tight">BitBeheer</h1>
+              <h1 className="text-xl md:text-2xl font-bold tracking-tight">BitBeheer</h1>
               <p className="text-orange-100 text-xs md:text-sm">Persoonlijke begeleiding bij het investeren in Bitcoin.</p>
             </div>
             <div className="sm:hidden">
@@ -59,7 +60,7 @@ export default function Header() {
           </Link>
           
           {/* Navigation Menu - Desktop Only - Centered */}
-          <nav className="hidden md:flex items-center gap-4 flex-1 justify-center">
+          <nav className="hidden md:flex items-center gap-6 flex-1 justify-center">
             {/* Admin Dashboard - Only visible for admins when not impersonating */}
             {!isImpersonating && canAccessAdmin && (
               <Link 
@@ -169,7 +170,8 @@ export default function Header() {
             )}
           </nav>
           
-          <div className="flex items-center gap-2 md:gap-4">
+          {/* Right Side - Settings/Login */}
+          <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
             {/* Settings Menu or Login/Register */}
             {isAuthenticated || isImpersonating ? (
               <div className="flex items-center gap-3">
@@ -177,12 +179,12 @@ export default function Header() {
                 <div className="relative settings-dropdown">
                   <button 
                     onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
-                    className="flex items-center gap-2 md:gap-3 bg-white bg-opacity-20 px-2 md:px-4 py-2 md:py-3 rounded-xl backdrop-blur-sm hover:bg-opacity-30 transition-all duration-300"
+                    className="flex items-center gap-2 md:gap-3 bg-white bg-opacity-20 px-3 md:px-4 py-2 md:py-3 rounded-xl backdrop-blur-sm hover:bg-opacity-30 transition-all duration-300"
                   >
-                    <div className="w-7 h-7 md:w-8 md:h-8 bg-white bg-opacity-30 rounded-full flex items-center justify-center">
+                    <div className="w-7 h-7 md:w-8 md:h-8 bg-white bg-opacity-30 rounded-full flex items-center justify-center flex-shrink-0">
                       <Settings className="w-4 h-4 md:w-5 md:h-5" />
                     </div>
-                    <span className="font-medium text-sm md:text-base hidden sm:inline">
+                    <span className="font-medium text-sm md:text-base hidden sm:inline truncate">
                       {getDisplayName(user, isImpersonating, impersonatedUser, null)}
                     </span>
                   </button>
