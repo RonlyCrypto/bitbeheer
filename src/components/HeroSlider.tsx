@@ -112,20 +112,7 @@ export default function HeroSlider() {
           <div className="text-center mb-4 h-[100px] md:h-[120px] flex flex-col items-center justify-center">
             <div className="relative w-full mb-3 h-full flex items-center justify-center">
               <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center h-full relative">
-                {/* Background layer: coin in eigen - always present but behind Bit and beheer */}
-                <span className={`absolute text-orange-200 transition-all duration-700 mx-0 ml-1 md:ml-1.5 ${
-                  slidePhase === 'together' ? 'opacity-0' :
-                  slidePhase === 'sliding' ? 'opacity-0' :
-                  'opacity-100'
-                }`} style={{
-                  whiteSpace: 'nowrap',
-                  zIndex: 0,
-                  transitionDelay: slidePhase === 'fading' ? '0.3s' : '0s'
-                }}>
-                  coin in eigen
-                </span>
-                
-                {/* Foreground layer: Bit and beheer */}
+                {/* All text in flex layout to maintain spacing */}
                 <div className="relative z-10 flex items-center">
                   <span className={`inline-block transition-all duration-700 ease-in-out ${
                     slidePhase === 'together' ? 'mr-0' :
@@ -138,6 +125,17 @@ export default function HeroSlider() {
                     backgroundColor: slidePhase === 'together' ? 'transparent' : 'transparent'
                   }}>
                     Bit
+                  </span>
+                  <span className={`inline-block text-orange-200 transition-all duration-700 ${
+                    slidePhase === 'together' ? 'opacity-0 w-0 overflow-hidden mx-0' :
+                    slidePhase === 'sliding' ? 'opacity-0 w-0 overflow-hidden mx-0' :
+                    'opacity-100 mx-1 md:mx-1.5'
+                  }`} style={{
+                    whiteSpace: 'nowrap',
+                    transitionDelay: slidePhase === 'fading' ? '0.3s' : '0s',
+                    minWidth: slidePhase === 'together' || slidePhase === 'sliding' ? '0' : 'auto'
+                  }}>
+                    coin in eigen
                   </span>
                   <span className={`inline-block transition-all duration-700 ease-in-out ${
                     slidePhase === 'together' ? 'ml-0' :
