@@ -104,38 +104,46 @@ export default function HeroSlider() {
           {/* Animated Brand Name - Fixed height container */}
           <div className="text-center mb-4 h-[100px] md:h-[120px] flex flex-col items-center justify-center">
             <div className="relative w-full mb-3 h-full flex items-center justify-center">
-              <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center h-full">
-                <span className={`inline-block transition-all duration-700 ease-in-out mr-0 ${
-                  slidePhase === 'together' ? '' :
-                  slidePhase === 'sliding' ? '' :
-                  ''
+              <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center h-full relative">
+                {/* Background layer: coin in eigen - always present but behind Bit and beheer */}
+                <span className={`absolute text-orange-200 transition-all duration-700 mx-0 ml-1 md:ml-1.5 ${
+                  slidePhase === 'together' ? 'opacity-0' :
+                  slidePhase === 'sliding' ? 'opacity-100' :
+                  'opacity-100'
                 }`} style={{
-                  transform: slidePhase === 'together' ? 'translateX(0)' :
-                             slidePhase === 'sliding' ? 'translateX(calc(-100% - 0.5rem))' :
-                             'translateX(0)'
-                }}>
-                  Bit
-                </span>
-                <span className={`inline-block text-orange-200 transition-all duration-700 ${
-                  slidePhase === 'together' || slidePhase === 'sliding' ? 'opacity-0 w-0 overflow-hidden flex-shrink-0 flex-grow-0 mx-0' :
-                  slidePhase === 'fading' ? 'animate-coin-in-eigen mx-0' : 'opacity-100 scale-x-100 mx-0'
-                }`} style={{
-                  transformOrigin: 'center',
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  zIndex: 0
                 }}>
                   coin in eigen
                 </span>
-                <span className={`inline-block transition-all duration-700 ease-in-out ${
-                  slidePhase === 'together' ? 'ml-0' :
-                  slidePhase === 'sliding' ? 'ml-0' :
-                  'ml-1 md:ml-1.5'
-                }`} style={{
-                  transform: slidePhase === 'together' ? 'translateX(0)' :
-                             slidePhase === 'sliding' ? 'translateX(calc(100% + 0.5rem + 0.5rem))' :
-                             'translateX(0)'
-                }}>
-                  beheer
-                </span>
+                
+                {/* Foreground layer: Bit and beheer */}
+                <div className="relative z-10 flex items-center">
+                  <span className={`inline-block transition-all duration-700 ease-in-out mr-0 ${
+                    slidePhase === 'together' ? '' :
+                    slidePhase === 'sliding' ? '' :
+                    ''
+                  }`} style={{
+                    transform: slidePhase === 'together' ? 'translateX(0)' :
+                               slidePhase === 'sliding' ? 'translateX(calc(-100% - 0.5rem))' :
+                               'translateX(0)',
+                    backgroundColor: slidePhase === 'together' ? 'transparent' : 'transparent'
+                  }}>
+                    Bit
+                  </span>
+                  <span className={`inline-block transition-all duration-700 ease-in-out ${
+                    slidePhase === 'together' ? 'ml-0' :
+                    slidePhase === 'sliding' ? 'ml-0' :
+                    'ml-1 md:ml-1.5'
+                  }`} style={{
+                    transform: slidePhase === 'together' ? 'translateX(0)' :
+                               slidePhase === 'sliding' ? 'translateX(calc(100% + 0.5rem + 0.5rem))' :
+                               'translateX(0)',
+                    backgroundColor: slidePhase === 'together' ? 'transparent' : 'transparent'
+                  }}>
+                    beheer
+                  </span>
+                </div>
               </div>
             </div>
           </div>
