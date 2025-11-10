@@ -13,12 +13,12 @@ interface Slide {
 
 const slides: Slide[] = [
   {
-    id: 1,
+    id: 3,
     title: '',
     subtitle: '',
-    description: 'Wij maken het makkelijk en begrijpbaar voor je.',
-    icon: <Bitcoin className="w-16 h-16" />,
-    keywords: ['Bitcoin eigen beheer', 'Bitcoin kennis', 'Bitcoin skills', 'Bitcoin begeleiding']
+    description: 'Volledige controle over je eigen geld, zonder tussenpersonen. Veilig, privé en altijd beschikbaar.',
+    icon: <Lock className="w-16 h-16" />,
+    keywords: ['Bitcoin controle', 'Bitcoin veiligheid', 'Bitcoin privé', 'Bitcoin beschikbaar']
   },
   {
     id: 2,
@@ -29,12 +29,12 @@ const slides: Slide[] = [
     keywords: ['Bitcoin toegang', 'Bitcoin privacy', 'Bitcoin veiligheid', 'Bitcoin controle']
   },
   {
-    id: 3,
+    id: 1,
     title: '',
     subtitle: '',
-    description: 'Volledige controle over je eigen geld, zonder tussenpersonen. Veilig, privé en altijd beschikbaar.',
-    icon: <Lock className="w-16 h-16" />,
-    keywords: ['Bitcoin controle', 'Bitcoin veiligheid', 'Bitcoin privé', 'Bitcoin beschikbaar']
+    description: 'Wij maken het makkelijk en begrijpbaar voor je.',
+    icon: <Bitcoin className="w-16 h-16" />,
+    keywords: ['Bitcoin eigen beheer', 'Bitcoin kennis', 'Bitcoin skills', 'Bitcoin begeleiding']
   }
 ];
 
