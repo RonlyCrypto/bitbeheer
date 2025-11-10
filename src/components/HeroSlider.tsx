@@ -43,18 +43,12 @@ export default function HeroSlider() {
   const [isAnimating, setIsAnimating] = useState(false);
   const [showBitcoinText, setShowBitcoinText] = useState(false);
   const [typedText, setTypedText] = useState('');
-  const [showCursor, setShowCursor] = useState(false);
   
   const fullText = 'coin in eigen';
 
   // Typewriter effect for "coin in eigen"
   useEffect(() => {
-    // Start showing cursor after 2 seconds
-    const cursorTimer = setTimeout(() => {
-      setShowCursor(true);
-    }, 2000);
-
-    // Start typing after 2.5 seconds
+    // Start typing after 2 seconds
     const typeTimer = setTimeout(() => {
       let currentIndex = 0;
       const typeInterval = setInterval(() => {
@@ -63,17 +57,15 @@ export default function HeroSlider() {
           currentIndex++;
         } else {
           clearInterval(typeInterval);
-          setShowCursor(false);
           // Show slider text after typing is done
           setTimeout(() => {
             setShowBitcoinText(true);
           }, 300);
         }
       }, 80); // Type each character every 80ms
-    }, 2500);
+    }, 2000);
 
     return () => {
-      clearTimeout(cursorTimer);
       clearTimeout(typeTimer);
     };
   }, []);
