@@ -374,7 +374,7 @@ export default function PortfolioPage() {
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900">Wallets</h3>
               </div>
-              <p className="text-3xl font-bold text-gray-900">{wallets.length}</p>
+              <p className="text-2xl font-bold text-gray-900">{wallets.length}</p>
               <p className="text-sm text-gray-600">Gekoppelde wallets</p>
             </div>
 
@@ -385,7 +385,7 @@ export default function PortfolioPage() {
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900">Totaal BTC</h3>
               </div>
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-gray-900">
                 {showBalances ? totalBalance.toFixed(4) : '••••'}
               </p>
               <p className="text-sm text-gray-600">Bitcoin saldo</p>
@@ -398,7 +398,7 @@ export default function PortfolioPage() {
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900">Transacties</h3>
               </div>
-              <p className="text-3xl font-bold text-gray-900">{totalTransactions}</p>
+              <p className="text-2xl font-bold text-gray-900">{totalTransactions}</p>
               <p className="text-sm text-gray-600">Totaal aantal</p>
             </div>
 
@@ -409,7 +409,7 @@ export default function PortfolioPage() {
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900">Waarde</h3>
               </div>
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-gray-900">
                 {showBalances ? `€${totalValue.toLocaleString('nl-NL')}` : '••••'}
               </p>
               <p className="text-sm text-gray-600">Huidige waarde</p>
@@ -436,7 +436,7 @@ export default function PortfolioPage() {
                 className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-xl font-semibold hover:bg-gray-700 transition-colors"
               >
                 {showBalances ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                {showBalances ? 'Verberg Saldi' : 'Toon Saldi'}
+                {showBalances ? 'Verberg Saldo' : 'Toon Saldo'}
               </button>
             )}
           </div>
