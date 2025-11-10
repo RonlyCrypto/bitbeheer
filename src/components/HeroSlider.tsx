@@ -60,9 +60,9 @@ export default function HeroSlider() {
           setTimeout(() => {
             // Start slider after coin in eigen is visible
             setShowBitcoinText(true);
-          }, 200);
-        }, 500); // Wait for coin in eigen to fade in
-      }, 1200); // Wait for slide animation to complete (slightly longer for smoothness)
+          }, 300);
+        }, 400); // Wait for coin in eigen to fade in quickly
+      }, 800); // Shorter slide animation for snappier feel
     }, 2000); // Wait 2 seconds before sliding
   }, []);
 
@@ -113,39 +113,41 @@ export default function HeroSlider() {
             <div className="relative w-full mb-3 h-full flex items-center justify-center">
               <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center h-full relative">
                 {/* All text in flex layout to maintain spacing */}
-                <div className="relative z-10 flex items-center">
-                  <span className={`inline-block transition-all duration-1200 ease-out ${
+                <div className="relative z-10 flex items-center justify-center">
+                  <span className={`inline-block transition-all duration-800 ${
                     slidePhase === 'together' ? 'mr-0' :
                     slidePhase === 'sliding' ? 'mr-0' :
                     'mr-0'
                   }`} style={{
                     transform: slidePhase === 'together' ? 'translateX(0)' :
-                               slidePhase === 'sliding' ? 'translateX(calc(-150% - 0.75rem))' :
+                               slidePhase === 'sliding' ? 'translateX(calc(-100% - 0.5rem))' :
                                'translateX(0)',
-                    backgroundColor: slidePhase === 'together' ? 'transparent' : 'transparent'
+                    backgroundColor: slidePhase === 'together' ? 'transparent' : 'transparent',
+                    transitionTimingFunction: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
                   }}>
                     Bit
                   </span>
-                  <span className={`inline-block text-orange-200 transition-all duration-700 ${
+                  <span className={`inline-block text-orange-200 transition-all duration-600 ${
                     slidePhase === 'together' ? 'opacity-0 w-0 overflow-hidden mx-0' :
                     slidePhase === 'sliding' ? 'opacity-0 w-0 overflow-hidden mx-0' :
                     'opacity-100 mx-1 md:mx-1.5'
                   }`} style={{
                     whiteSpace: 'nowrap',
-                    transitionDelay: slidePhase === 'fading' ? '0.4s' : '0s',
+                    transitionDelay: slidePhase === 'fading' ? '0.2s' : '0s',
                     minWidth: slidePhase === 'together' || slidePhase === 'sliding' ? '0' : 'auto'
                   }}>
                     coin in eigen
                   </span>
-                  <span className={`inline-block transition-all duration-1200 ease-out ${
+                  <span className={`inline-block transition-all duration-800 ${
                     slidePhase === 'together' ? 'ml-0' :
                     slidePhase === 'sliding' ? 'ml-0' :
                     'ml-1 md:ml-1.5'
                   }`} style={{
                     transform: slidePhase === 'together' ? 'translateX(0)' :
-                               slidePhase === 'sliding' ? 'translateX(calc(150% + 0.75rem + 0.75rem))' :
+                               slidePhase === 'sliding' ? 'translateX(calc(100% + 0.5rem))' :
                                'translateX(0)',
-                    backgroundColor: slidePhase === 'together' ? 'transparent' : 'transparent'
+                    backgroundColor: slidePhase === 'together' ? 'transparent' : 'transparent',
+                    transitionTimingFunction: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
                   }}>
                     beheer
                   </span>
