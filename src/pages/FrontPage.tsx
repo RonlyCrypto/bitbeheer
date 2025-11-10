@@ -278,12 +278,6 @@ export default function FrontPage() {
               </div>
             </div>
 
-            <div className="mt-16 bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-8 text-white text-center">
-              <p className="text-lg italic max-w-2xl mx-auto">
-                "Ons doel is duidelijk: jou helpen begrijpen hoe je veilig Bitcoin aankoopt en in eigen beheer bewaart, 
-                zonder poespas, zonder hype, gewoon eerlijk en duidelijk."
-              </p>
-            </div>
           </div>
         </div>
       </section>
