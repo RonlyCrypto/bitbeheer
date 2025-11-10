@@ -44,32 +44,6 @@ export default function FrontPage() {
                       Bitcoin voor beginners in Nederland, met Nederlandse begeleiding.
                     </p>
                   </div>
-                  
-                  {/* Benefits wrapper - can be positioned flexibly */}
-                  <div className="benefits-list mt-8 pt-8 border-t border-gray-200">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0" />
-                        <span className="text-xs text-gray-700">Persoonlijke 1-op-1 ondersteuning</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0" />
-                        <span className="text-xs text-gray-700">Stap voor stap uitleg</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0" />
-                        <span className="text-xs text-gray-700">Praktische voorbeelden</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0" />
-                        <span className="text-xs text-gray-700">Veilig en vertrouwd</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0" />
-                        <span className="text-xs text-gray-700">Altijd beschikbaar voor vragen</span>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
