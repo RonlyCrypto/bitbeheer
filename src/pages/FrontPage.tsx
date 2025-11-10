@@ -45,28 +45,28 @@ export default function FrontPage() {
                     </p>
                   </div>
                   
-                  {/* Small list of benefits - grid layout */}
+                  {/* Small list of benefits - vertical */}
                   <div className="mt-8 pt-8 border-t border-gray-200">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-700">Persoonlijke 1-op-1 ondersteuning</span>
+                        <span className="text-xs text-gray-700">Persoonlijke 1-op-1 ondersteuning</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-700">Stap voor stap uitleg</span>
+                        <span className="text-xs text-gray-700">Stap voor stap uitleg</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-700">Praktische voorbeelden</span>
+                        <span className="text-xs text-gray-700">Praktische voorbeelden</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-700">Veilig en vertrouwd</span>
+                        <span className="text-xs text-gray-700">Veilig en vertrouwd</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-700">Altijd beschikbaar voor vragen</span>
+                        <span className="text-xs text-gray-700">Altijd beschikbaar voor vragen</span>
                       </div>
                     </div>
                   </div>
