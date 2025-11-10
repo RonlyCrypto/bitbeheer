@@ -140,11 +140,9 @@ export default function HeroSlider() {
                   <span className="inline-block text-orange-200 ml-0">
                     {typedText}
                   </span>
-                  {typedText.length === fullText.length && (
-                    <span className="inline-block ml-1 md:ml-1.5">
-                      beheer
-                    </span>
-                  )}
+                  <span className="inline-block ml-1 md:ml-1.5">
+                    beheer
+                  </span>
                 </div>
               </div>
             </div>
