@@ -129,20 +129,14 @@ export default function HeroSlider() {
                   <span className="inline-block">
                     Bit
                   </span>
-                  <span className={`inline-block text-orange-200 ml-1 md:ml-1.5 ${
-                    showCursor ? 'animate-blink' : ''
-                  }`} style={{
-                    minWidth: '1em',
-                    visibility: showCursor || typedText.length > 0 ? 'visible' : 'hidden'
-                  }}>
-                    _
-                  </span>
-                  <span className="inline-block text-orange-200 ml-0">
+                  <span className="inline-block text-orange-200">
                     {typedText}
                   </span>
-                  <span className="inline-block ml-1 md:ml-1.5">
-                    beheer
-                  </span>
+                  {typedText.length === fullText.length && (
+                    <span className="inline-block ml-1 md:ml-1.5">
+                      beheer
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
