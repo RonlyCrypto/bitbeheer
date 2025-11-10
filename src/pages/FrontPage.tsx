@@ -45,9 +45,9 @@ export default function FrontPage() {
                     </p>
                   </div>
                   
-                  {/* Small list of benefits - horizontal */}
+                  {/* Small list of benefits - grid layout */}
                   <div className="mt-8 pt-8 border-t border-gray-200">
-                    <div className="flex flex-wrap gap-6">
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0" />
                         <span className="text-sm text-gray-700">Persoonlijke 1-op-1 ondersteuning</span>
