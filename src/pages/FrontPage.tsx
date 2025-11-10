@@ -359,7 +359,7 @@ export default function FrontPage() {
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900">Veilig & Verstandig</p>
-                      <p className="text-gray-600 text-sm">Geen risico's, alleen kennis</p>
+                      <p className="text-gray-600 text-sm">risico beperken met kennis</p>
                     </div>
                   </div>
                 </div>
