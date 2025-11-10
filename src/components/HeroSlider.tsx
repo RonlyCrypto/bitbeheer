@@ -42,7 +42,7 @@ export default function HeroSlider() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [showBitcoinText, setShowBitcoinText] = useState(false);
-  const [slidePhase, setSlidePhase] = useState<'together' | 'sliding' | 'fading'>('together');
+  const [slidePhase, setSlidePhase] = useState<'together' | 'sliding' | 'fading' | 'complete'>('together');
 
   // Start with Bit and beheer together, then slide apart
   useEffect(() => {
@@ -55,8 +55,12 @@ export default function HeroSlider() {
         // After sliding animation completes, show coin in eigen
         setSlidePhase('fading');
         setTimeout(() => {
-          // Start slider after coin in eigen is visible
-          setShowBitcoinText(true);
+          // After coin in eigen is visible, set to complete phase to keep positions
+          setSlidePhase('complete');
+          setTimeout(() => {
+            // Start slider after coin in eigen is visible
+            setShowBitcoinText(true);
+          }, 100);
         }, 300); // Small delay to ensure coin in eigen is visible
       }, 1000); // Wait for slide animation to complete
     }, 2000); // Wait 2 seconds before sliding
@@ -139,10 +143,14 @@ export default function HeroSlider() {
                   <span className={`inline-block transition-all duration-700 ease-in-out ${
                     slidePhase === 'together' ? 'ml-0' :
                     slidePhase === 'sliding' ? 'ml-0' :
+                    slidePhase === 'fading' ? 'ml-1 md:ml-1.5' :
+                    slidePhase === 'complete' ? 'ml-1 md:ml-1.5' :
                     'ml-1 md:ml-1.5'
                   }`} style={{
                     transform: slidePhase === 'together' ? 'translateX(0)' :
                                slidePhase === 'sliding' ? 'translateX(calc(150% + 0.75rem + 0.75rem))' :
+                               slidePhase === 'fading' ? 'translateX(0)' :
+                               slidePhase === 'complete' ? 'translateX(0)' :
                                'translateX(0)',
                     backgroundColor: slidePhase === 'together' ? 'transparent' : 'transparent'
                   }}>
