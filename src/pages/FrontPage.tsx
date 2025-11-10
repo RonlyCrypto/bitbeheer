@@ -17,21 +17,9 @@ export default function FrontPage() {
       {isAuthenticated && (
         <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <div className="text-center mb-16">
-                <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                  Het Verhaal van BitBeheer
-                </h2>
-                <p className="text-xl text-gray-600 leading-relaxed">
-                  Waarom we BitBeheer hebben opgericht en wat we willen bereiken
-                </p>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
+            <div className="max-w-5xl mx-auto">
+              <div className="grid md:grid-cols-2 gap-12 items-start">
                 <div>
-                  <h3 className="text-3xl font-bold text-gray-900 mb-6">
-                    Waarom BitBeheer bestaat
-                  </h3>
                   <div className="space-y-6 text-lg text-gray-600 leading-relaxed">
                     <p>
                       BitBeheer is ontstaan uit de behoefte om mensen te helpen veilig en verstandig te investeren in Bitcoin. 
@@ -43,6 +31,10 @@ export default function FrontPage() {
                       maar veel ervan is verwarrend, misleidend of gericht op hype. Veel beginners verliezen geld door niet te weten welke exchanges 
                       betrouwbaar zijn, Bitcoin op exchanges te bewaren in plaats van eigen beheer, of te vallen voor scams en oplichting.
                     </p>
+                  </div>
+                </div>
+                <div>
+                  <div className="space-y-6 text-lg text-gray-600 leading-relaxed">
                     <p>
                       <strong>Daarom hebben we BitBeheer opgericht.</strong> We willen mensen helpen die interesse hebben in Bitcoin, maar niet goed weten waar ze moeten beginnen. 
                       Met persoonlijke 1-op-1 begeleiding, praktische kennis en echte voorbeelden helpen we je stap voor stap om veilig Bitcoin te kopen en in eigen beheer te houden.
@@ -52,44 +44,31 @@ export default function FrontPage() {
                       Bitcoin voor beginners in Nederland, met Nederlandse begeleiding.
                     </p>
                   </div>
-                </div>
-                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="bg-orange-500 p-3 rounded-xl">
-                      <Shield className="w-8 h-8 text-white" />
+                  
+                  {/* Small list of benefits */}
+                  <div className="mt-8 pt-8 border-t border-gray-200">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0" />
+                        <span className="text-sm text-gray-700">Persoonlijke 1-op-1 ondersteuning</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0" />
+                        <span className="text-sm text-gray-700">Stap voor stap uitleg</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0" />
+                        <span className="text-sm text-gray-700">Praktische voorbeelden</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0" />
+                        <span className="text-sm text-gray-700">Veilig en vertrouwd</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0" />
+                        <span className="text-sm text-gray-700">Altijd beschikbaar voor vragen</span>
+                      </div>
                     </div>
-                    <h4 className="text-2xl font-bold text-gray-900">Onze Begeleiding</h4>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
-                      <span className="text-gray-700">Persoonlijke 1-op-1 ondersteuning</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
-                      <span className="text-gray-700">Stap voor stap uitleg</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
-                      <span className="text-gray-700">Praktische voorbeelden</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
-                      <span className="text-gray-700">Veilig en vertrouwd</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
-                      <span className="text-gray-700">Altijd beschikbaar voor vragen</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
-                      <span className="text-gray-700">Gekwalificeerde begeleiders</span>
-                    </div>
-                  </div>
-                  <div className="mt-6 p-4 bg-white rounded-lg">
-                    <p className="text-sm text-gray-600 italic">
-                      "Bitcoin investeren in Nederland hoeft niet moeilijk te zijn. Met de juiste begeleiding en kennis kun je veilig en verstandig beginnen met Bitcoin."
-                    </p>
                   </div>
                 </div>
               </div>
