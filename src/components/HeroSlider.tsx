@@ -49,7 +49,7 @@ export default function HeroSlider() {
     // Start with Bit and beheer together
     setSlidePhase('together');
     setTimeout(() => {
-      // After 2 seconds, start sliding apart
+      // After 2 seconds, start sliding apart smoothly
       setSlidePhase('sliding');
       setTimeout(() => {
         // After sliding animation completes, show coin in eigen
@@ -60,9 +60,9 @@ export default function HeroSlider() {
           setTimeout(() => {
             // Start slider after coin in eigen is visible
             setShowBitcoinText(true);
-          }, 100);
-        }, 300); // Small delay to ensure coin in eigen is visible
-      }, 1000); // Wait for slide animation to complete
+          }, 200);
+        }, 500); // Wait for coin in eigen to fade in
+      }, 1200); // Wait for slide animation to complete (slightly longer for smoothness)
     }, 2000); // Wait 2 seconds before sliding
   }, []);
 
@@ -114,7 +114,7 @@ export default function HeroSlider() {
               <div className="text-4xl md:text-6xl font-bold tracking-tight text-center flex items-center justify-center h-full relative">
                 {/* All text in flex layout to maintain spacing */}
                 <div className="relative z-10 flex items-center">
-                  <span className={`inline-block transition-all duration-700 ease-in-out ${
+                  <span className={`inline-block transition-all duration-1200 ease-out ${
                     slidePhase === 'together' ? 'mr-0' :
                     slidePhase === 'sliding' ? 'mr-0' :
                     'mr-0'
@@ -132,12 +132,12 @@ export default function HeroSlider() {
                     'opacity-100 mx-1 md:mx-1.5'
                   }`} style={{
                     whiteSpace: 'nowrap',
-                    transitionDelay: slidePhase === 'fading' ? '0.3s' : '0s',
+                    transitionDelay: slidePhase === 'fading' ? '0.4s' : '0s',
                     minWidth: slidePhase === 'together' || slidePhase === 'sliding' ? '0' : 'auto'
                   }}>
                     coin in eigen
                   </span>
-                  <span className={`inline-block transition-all duration-700 ease-in-out ${
+                  <span className={`inline-block transition-all duration-1200 ease-out ${
                     slidePhase === 'together' ? 'ml-0' :
                     slidePhase === 'sliding' ? 'ml-0' :
                     'ml-1 md:ml-1.5'
