@@ -823,18 +823,28 @@ export default function BitcoinHistory() {
             </button>
           </div>
 
-          {/* Chart Layer Controls */}
-          <div className="mb-4 bg-gray-50 rounded-xl p-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          {/* Chart Layer Controls - Disabled when Live is active */}
+          <div className={`mb-4 rounded-xl p-4 transition-all ${
+            timeRange === 'live' 
+              ? 'bg-gray-200 opacity-50 cursor-not-allowed' 
+              : 'bg-gray-50'
+          }`}>
+            <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${
+              timeRange === 'live' 
+                ? 'text-gray-500' 
+                : 'text-gray-900'
+            }`}>
               <Layers className="w-5 h-5" />
               Chart Lagen
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className={`grid grid-cols-2 md:grid-cols-5 gap-4 ${
+              timeRange === 'live' ? 'pointer-events-none' : ''
+            }`}>
               <button
                 onClick={() => setShowPriceChart(!showPriceChart)}
-                disabled={!dcaResult}
+                disabled={!dcaResult || timeRange === 'live'}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                  !dcaResult
+                  !dcaResult || timeRange === 'live'
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : showPriceChart
                     ? 'bg-gray-500 text-white'
@@ -847,8 +857,11 @@ export default function BitcoinHistory() {
               
               <button
                 onClick={() => setShowCyclePhases(!showCyclePhases)}
+                disabled={timeRange === 'live'}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                  showCyclePhases
+                  timeRange === 'live'
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : showCyclePhases
                     ? 'bg-blue-500 text-white'
                     : 'bg-white text-gray-700 border border-gray-300'
                 }`}
@@ -859,8 +872,11 @@ export default function BitcoinHistory() {
               
               <button
                 onClick={() => setShowHalvingEvents(!showHalvingEvents)}
+                disabled={timeRange === 'live'}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                  showHalvingEvents
+                  timeRange === 'live'
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : showHalvingEvents
                     ? 'bg-purple-500 text-white'
                     : 'bg-white text-gray-700 border border-gray-300'
                 }`}
@@ -871,8 +887,11 @@ export default function BitcoinHistory() {
               
               <button
                 onClick={() => setShowMajorEvents(!showMajorEvents)}
+                disabled={timeRange === 'live'}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                  showMajorEvents
+                  timeRange === 'live'
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : showMajorEvents
                     ? 'bg-green-500 text-white'
                     : 'bg-white text-gray-700 border border-gray-300'
                 }`}
@@ -883,8 +902,11 @@ export default function BitcoinHistory() {
               
               <button
                 onClick={() => setShowDCALayer(!showDCALayer)}
+                disabled={timeRange === 'live'}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                  showDCALayer
+                  timeRange === 'live'
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : showDCALayer
                     ? 'bg-emerald-500 text-white'
                     : 'bg-white text-gray-700 border border-gray-300'
                 }`}
