@@ -3,10 +3,11 @@ export interface BitcoinTransaction {
   hash: string;
   time: number;
   value: number; // in satoshis
-  price: number; // EUR price at time of transaction
-  currentValue: number; // Current EUR value
-  profit: number; // Profit/loss in EUR
+  price: number; // USD price at time of transaction
+  currentValue: number; // Current USD value
+  profit: number; // Profit/loss in USD
   profitPercent: number; // Profit/loss percentage
+  valueInBTC?: number; // Value in BTC for reference
 }
 
 export interface BitcoinWallet {
@@ -46,6 +47,9 @@ class BitcoinApiService {
       // Verwerk transacties
       const processedTransactions: BitcoinTransaction[] = [];
       
+      // Get current price once
+      const currentPrice = await this.getCurrentPrice();
+      
       for (const tx of transactions.slice(0, 10)) { // Laatste 10 transacties
         const txResponse = await fetch(`${this.baseUrl}/tx/${tx.txid}`);
         const txData = await txResponse.json();
@@ -58,16 +62,20 @@ class BitcoinApiService {
         if (relevantOutput) {
           const valueInBTC = relevantOutput.value / 100000000; // Convert satoshis to BTC
           const priceAtTime = await this.getHistoricalPrice(tx.status.block_time);
-          const currentPrice = await this.getCurrentPrice();
+          const currentValueUSD = valueInBTC * currentPrice;
+          const priceAtTimeUSD = valueInBTC * priceAtTime;
+          const profitUSD = currentValueUSD - priceAtTimeUSD;
+          const profitPercent = priceAtTime > 0 ? ((currentPrice - priceAtTime) / priceAtTime) * 100 : 0;
           
           processedTransactions.push({
             hash: tx.txid,
             time: tx.status.block_time,
             value: relevantOutput.value,
             price: priceAtTime,
-            currentValue: valueInBTC * currentPrice,
-            profit: (valueInBTC * currentPrice) - (valueInBTC * priceAtTime),
-            profitPercent: ((currentPrice - priceAtTime) / priceAtTime) * 100
+            currentValue: currentValueUSD,
+            profit: profitUSD,
+            profitPercent: profitPercent,
+            valueInBTC: valueInBTC
           });
         }
       }
@@ -88,7 +96,7 @@ class BitcoinApiService {
     }
   }
 
-  // Haal historische Bitcoin prijs op - gebruik Supabase data
+  // Haal historische Bitcoin prijs op in USD
   private async getHistoricalPrice(timestamp: number): Promise<number> {
     try {
       const date = new Date(timestamp * 1000);
@@ -98,26 +106,26 @@ class BitcoinApiService {
       const { supabase } = await import('../lib/supabase');
       const { data, error } = await supabase
         .from('bitcoin_price_data')
-        .select('price_eur, price_usd')
+        .select('price_usd, price_eur')
         .eq('date', dateStr)
         .single();
       
       if (!error && data) {
-        // Use EUR price if available, otherwise USD
-        return data.price_eur || data.price_usd || 50000;
+        // Use USD price if available, otherwise EUR
+        return data.price_usd || data.price_eur || 50000;
       }
       
       // If not found, try to find closest date
       const { data: closestData } = await supabase
         .from('bitcoin_price_data')
-        .select('price_eur, price_usd, date')
+        .select('price_usd, price_eur, date')
         .lte('date', dateStr)
         .order('date', { ascending: false })
         .limit(1)
         .single();
       
       if (closestData) {
-        return closestData.price_eur || closestData.price_usd || 50000;
+        return closestData.price_usd || closestData.price_eur || 50000;
       }
       
       // Fallback naar CoinGecko
@@ -125,19 +133,19 @@ class BitcoinApiService {
         `https://api.coingecko.com/api/v3/coins/bitcoin/history?date=${dateStr}`
       );
       const coinGeckoData = await coinGeckoResponse.json();
-      return coinGeckoData.market_data?.current_price?.eur || 50000;
+      return coinGeckoData.market_data?.current_price?.usd || 50000;
     } catch (error) {
       console.error('Error fetching historical price:', error);
       return 50000; // Fallback prijs
     }
   }
 
-  // Haal huidige Bitcoin prijs op
+  // Haal huidige Bitcoin prijs op in USD
   async getCurrentPrice(): Promise<number> {
     try {
-      const response = await fetch(`${this.priceUrl}/simple/price?ids=bitcoin&vs_currencies=eur`);
+      const response = await fetch(`${this.priceUrl}/simple/price?ids=bitcoin&vs_currencies=usd`);
       const data = await response.json();
-      return data.bitcoin.eur;
+      return data.bitcoin.usd;
     } catch (error) {
       console.error('Error fetching current price:', error);
       return 96640; // Fallback prijs

@@ -136,10 +136,13 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
         <div className="bg-gray-50 rounded-lg p-4">
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
             <Euro className="w-4 h-4" />
-            <span>Inkoop Prijs</span>
+            <span>Waarde bij Aankoop</span>
           </div>
           <p className="text-lg font-semibold text-gray-900">
-            €{transaction.price.toLocaleString('nl-NL')}
+            ${(transaction.price * (transaction.value / 100000000)).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            {transaction.valueInBTC?.toFixed(8) || (transaction.value / 100000000).toFixed(8)} BTC
           </p>
         </div>
 
@@ -150,7 +153,7 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
             <span>Huidige Waarde</span>
           </div>
           <p className="text-lg font-semibold text-gray-900">
-            €{transaction.currentValue.toLocaleString('nl-NL')}
+            ${transaction.currentValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}
           </p>
         </div>
 
@@ -171,7 +174,7 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
           <p className={`text-lg font-semibold ${
             isProfit ? 'text-green-700' : 'text-red-700'
           }`}>
-            {isProfit ? '+' : ''}€{transaction.profit.toLocaleString('nl-NL')}
+            {isProfit ? '+' : ''}${transaction.profit.toLocaleString('en-US', { maximumFractionDigits: 0 })}
           </p>
           <p className={`text-sm ${
             isProfit ? 'text-green-600' : 'text-red-600'
