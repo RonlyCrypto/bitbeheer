@@ -176,10 +176,10 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
             <span className="font-semibold">Inkoopprijs / BTC</span>
           </div>
           <p className="text-2xl font-bold text-blue-900">
-            ${(transaction.price / (transaction.value / 100000000)).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+            ${transaction.price.toLocaleString('en-US', { maximumFractionDigits: 0 })}
           </p>
           <p className="text-xs text-blue-600 mt-1">
-            Prijs per Bitcoin op moment van aankoop
+            BTC prijs op blockchain op moment van transactie
           </p>
         </div>
 
