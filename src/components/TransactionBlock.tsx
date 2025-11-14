@@ -11,23 +11,39 @@ interface TransactionBlockProps {
 export default function TransactionBlock({ transaction, index, onTransactionClick }: TransactionBlockProps) {
   const formatDate = (timestamp: number | string | Date) => {
     try {
+      // Debug logging
+      if (!timestamp) {
+        console.warn('formatDate: No timestamp provided', { timestamp, transactionTime: transaction.time });
+        return 'Invalid Date';
+      }
+
       let date: Date;
       
       // Handle different timestamp formats
       if (typeof timestamp === 'number') {
-        // Assume it's Unix timestamp in seconds
-        date = new Date(timestamp * 1000);
+        // Check if it's a valid Unix timestamp
+        // Unix timestamps are typically between 1e9 and 2e9 (for dates 2001-2033)
+        // If larger, assume it's already in milliseconds
+        if (timestamp > 1e11) {
+          // Already in milliseconds
+          date = new Date(timestamp);
+        } else {
+          // In seconds, convert to milliseconds
+          date = new Date(timestamp * 1000);
+        }
       } else if (typeof timestamp === 'string') {
         // Try parsing as ISO string or other formats
         date = new Date(timestamp);
       } else if (timestamp instanceof Date) {
         date = timestamp;
       } else {
+        console.warn('formatDate: Unknown timestamp type', { type: typeof timestamp, timestamp });
         return 'Invalid Date';
       }
       
       // Check if date is valid
       if (isNaN(date.getTime())) {
+        console.warn('formatDate: Invalid date after parsing', { timestamp, date: date.toString() });
         return 'Invalid Date';
       }
       
