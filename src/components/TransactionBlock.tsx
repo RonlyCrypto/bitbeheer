@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, TrendingDown, Calendar, Hash, Coins, Euro } from 'lucide-react';
+import { TrendingUp, TrendingDown, Calendar, Hash, Coins, Euro, CheckCircle } from 'lucide-react';
 import { BitcoinTransaction } from '../services/bitcoinApiService';
 
 interface TransactionBlockProps {
@@ -167,38 +167,41 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
         </div>
       </div>
 
-      {/* Price Information */}
-      <div className="grid md:grid-cols-4 gap-4 mb-4">
-        {/* Inkoop Prijs per Bitcoin */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+      {/* Pricing Details - First Row */}
+      <div className="grid md:grid-cols-2 gap-4 mb-4">
+        {/* Inkoopprijs per Bitcoin */}
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+          <div className="flex items-center gap-2 text-sm text-blue-700 mb-2">
             <Euro className="w-4 h-4" />
-            <span>Inkoopprijs / BTC</span>
+            <span className="font-semibold">Inkoopprijs / BTC</span>
           </div>
-          <p className="text-lg font-semibold text-gray-900">
+          <p className="text-2xl font-bold text-blue-900">
             ${transaction.price.toLocaleString('en-US', { maximumFractionDigits: 0 })}
           </p>
-          <p className="text-xs text-gray-500 mt-1">
-            per Bitcoin
+          <p className="text-xs text-blue-600 mt-1">
+            Gemiddelde prijs per Bitcoin op moment van aankoop
           </p>
         </div>
 
         {/* Waarde bij Aankoop */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
+          <div className="flex items-center gap-2 text-sm text-orange-700 mb-2">
             <Euro className="w-4 h-4" />
-            <span>Waarde bij Aankoop</span>
+            <span className="font-semibold">Waarde bij Aankoop</span>
           </div>
-          <p className="text-lg font-semibold text-gray-900">
+          <p className="text-2xl font-bold text-orange-900">
             ${(transaction.price * (transaction.value / 100000000)).toLocaleString('en-US', { maximumFractionDigits: 0 })}
           </p>
-          <p className="text-xs text-gray-500 mt-1">
-            {transaction.valueInBTC?.toFixed(8) || (transaction.value / 100000000).toFixed(8)} BTC
+          <p className="text-xs text-orange-600 mt-1">
+            {transaction.valueInBTC?.toFixed(8) || (transaction.value / 100000000).toFixed(8)} BTC gekocht
           </p>
         </div>
+      </div>
 
+      {/* Performance Details - Second Row */}
+      <div className="grid md:grid-cols-3 gap-4 mb-4">
         {/* Huidige Waarde */}
-        <div className="bg-gray-50 rounded-lg p-4">
+        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
             <TrendingUp className="w-4 h-4" />
             <span>Huidige Waarde</span>
@@ -206,31 +209,48 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
           <p className="text-lg font-semibold text-gray-900">
             ${transaction.currentValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}
           </p>
+          <p className="text-xs text-gray-500 mt-1">
+            Vandaag
+          </p>
         </div>
 
         {/* Profit/Loss */}
-        <div className={`rounded-lg p-4 ${
-          isProfit ? 'bg-green-50' : 'bg-red-50'
+        <div className={`rounded-lg p-4 border-2 ${
+          isProfit ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
         }`}>
-          <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+          <div className="flex items-center gap-2 text-sm mb-1">
             {isProfit ? (
               <TrendingUp className="w-4 h-4 text-green-600" />
             ) : (
               <TrendingDown className="w-4 h-4 text-red-600" />
             )}
-            <span className={isProfit ? 'text-green-700' : 'text-red-700'}>
+            <span className={isProfit ? 'text-green-700 font-semibold' : 'text-red-700 font-semibold'}>
               {isProfit ? 'Winst' : 'Verlies'}
             </span>
           </div>
-          <p className={`text-lg font-semibold ${
+          <p className={`text-lg font-bold ${
             isProfit ? 'text-green-700' : 'text-red-700'
           }`}>
             {isProfit ? '+' : ''}${transaction.profit.toLocaleString('en-US', { maximumFractionDigits: 0 })}
           </p>
-          <p className={`text-sm ${
+          <p className={`text-sm font-semibold ${
             isProfit ? 'text-green-600' : 'text-red-600'
           }`}>
             {isProfit ? '+' : ''}{transaction.profitPercent.toFixed(2)}%
+          </p>
+        </div>
+
+        {/* Buy Status Indicator */}
+        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+          <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+            <CheckCircle className="w-4 h-4 text-green-600" />
+            <span className="font-semibold">Status</span>
+          </div>
+          <p className="text-lg font-semibold text-gray-900">
+            Gekocht
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            {transaction.valueInBTC?.toFixed(4) || (transaction.value / 100000000).toFixed(4)} BTC
           </p>
         </div>
       </div>
