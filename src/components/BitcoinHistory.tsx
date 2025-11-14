@@ -211,70 +211,6 @@ export default function BitcoinHistory() {
   }, [dcaResult]);
 
   // Live data fetch function
-  const fetchLiveData = async () => {
-    try {
-      const vsCurrency = currency.toLowerCase();
-      let days = 1;
-      let interval = 'hourly';
-      
-      // Adjust parameters based on interval
-      switch (liveInterval) {
-        case '1m':
-          days = 1;
-          interval = 'hourly';
-          break;
-        case '15m':
-          days = 1;
-          interval = 'hourly';
-          break;
-        case '30m':
-          days = 1;
-          interval = 'hourly';
-          break;
-      }
-      
-      const response = await fetch(`https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=${vsCurrency}&days=${days}&interval=${interval}`);
-      if (response.ok) {
-        const data = await response.json();
-        const livePrices = data.prices.map(([timestamp, price]: [number, number]) => ({
-          date: new Date(timestamp).toISOString().split('T')[0],
-          price: price
-        }));
-        setLiveData(livePrices);
-        setLastUpdateTime(new Date());
-        
-        // Save to CSV
-        await saveLiveDataToCSV(livePrices);
-      }
-    } catch (error) {
-      console.error('Error fetching live data:', error);
-    }
-  };
-
-  // Save live data to CSV
-  const saveLiveDataToCSV = async (livePrices: PriceData[]) => {
-    try {
-      const response = await fetch('/api/saveLiveData', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          data: livePrices,
-          interval: liveInterval,
-          currency: currency
-        }),
-      });
-      
-      if (response.ok) {
-        console.log('Live data saved to CSV successfully');
-      } else {
-        console.error('Failed to save live data to CSV');
-      }
-    } catch (error) {
-      console.error('Error saving live data to CSV:', error);
-    }
-  };
 
   useEffect(() => {
     // Reload data when currency changes
@@ -288,44 +224,6 @@ export default function BitcoinHistory() {
     initializeData();
   }, [currency]);
 
-  // Live mode effect
-  useEffect(() => {
-    if (isLiveMode) {
-      fetchLiveData(); // Initial fetch
-      
-      // Set update interval based on selected interval
-      let updateInterval = 2 * 60 * 1000; // Default 2 minutes
-      switch (liveInterval) {
-        case '1m':
-          updateInterval = 1 * 60 * 1000; // 1 minute
-          break;
-        case '15m':
-          updateInterval = 15 * 60 * 1000; // 15 minutes
-          break;
-        case '30m':
-          updateInterval = 30 * 60 * 1000; // 30 minutes
-          break;
-      }
-      
-      const interval = setInterval(fetchLiveData, updateInterval);
-      return () => clearInterval(interval);
-    }
-  }, [isLiveMode, currency, liveInterval]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Element;
-      if (!target.closest('.live-dropdown-container')) {
-        setShowLiveDropdown(false);
-      }
-    };
-
-    if (showLiveDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showLiveDropdown]);
 
   const loadAllPriceData = async () => {
     setLoading(true);
@@ -847,7 +745,6 @@ export default function BitcoinHistory() {
                 setZoomStartDate(null);
                 setZoomEndDate(null);
                 setIsLiveMode(false);
-                setShowLiveDropdown(false);
               }}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 timeRange === '1y'
@@ -864,7 +761,6 @@ export default function BitcoinHistory() {
                 setZoomStartDate(null);
                 setZoomEndDate(null);
                 setIsLiveMode(false);
-                setShowLiveDropdown(false);
               }}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 timeRange === '3y'
@@ -881,7 +777,6 @@ export default function BitcoinHistory() {
                 setZoomStartDate(null);
                 setZoomEndDate(null);
                 setIsLiveMode(false);
-                setShowLiveDropdown(false);
               }}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 timeRange === '5y'
@@ -898,7 +793,6 @@ export default function BitcoinHistory() {
                 setZoomStartDate(null);
                 setZoomEndDate(null);
                 setIsLiveMode(false);
-                setShowLiveDropdown(false);
               }}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 timeRange === 'all'
@@ -908,82 +802,25 @@ export default function BitcoinHistory() {
             >
               Alles
             </button>
-            <div className="relative live-dropdown-container">
-              <button
-                onClick={() => {
-                  if (timeRange === 'live') {
-                    // Toggle dropdown
-                    setShowLiveDropdown(!showLiveDropdown);
-                  } else {
-                    // Switch to live mode (first click - no dropdown)
-                    setTimeRange('live');
-                    setSelectedCycle(null);
-                    setZoomStartDate(null);
-                    setZoomEndDate(null);
-                    setIsLiveMode(true);
-                    setShowLiveDropdown(false); // Don't open dropdown on first click
-                  }
-                }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 relative ${
-                  timeRange === 'live'
-                    ? 'bg-green-500 text-white shadow-md'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                }`}
-              >
-                Live
-                {isLiveMode && (
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                )}
-                {timeRange === 'live' && (
-                  <svg 
-                    className={`w-4 h-4 transition-transform duration-200 ${showLiveDropdown ? 'rotate-180' : ''}`}
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                )}
-                
-                {/* Interval Badge */}
-                {timeRange === 'live' && (
-                  <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold border-2 border-white shadow-sm">
-                    {liveInterval}
-                  </div>
-                )}
-              </button>
-              
-              {/* Live Interval Dropdown with Animation */}
-              {timeRange === 'live' && (
-                <div 
-                  className={`absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10 transition-all duration-200 ease-in-out ${
-                    showLiveDropdown 
-                      ? 'opacity-100 transform translate-y-0' 
-                      : 'opacity-0 transform -translate-y-2 pointer-events-none'
-                  }`}
-                >
-                  <div className="p-2">
-                    <div className="text-xs text-gray-500 mb-2">Update Interval:</div>
-                    {(['1m', '15m', '30m'] as const).map((interval) => (
-                      <button
-                        key={interval}
-                        onClick={() => {
-                          setLiveInterval(interval);
-                          setShowLiveDropdown(false);
-                        }}
-                        className={`w-full text-left px-3 py-2 text-sm rounded transition-colors duration-150 ${
-                          liveInterval === interval 
-                            ? 'bg-green-100 text-green-700 font-medium' 
-                            : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                      >
-                        {interval}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+            <button
+              onClick={() => {
+                setTimeRange('live');
+                setSelectedCycle(null);
+                setZoomStartDate(null);
+                setZoomEndDate(null);
+                setIsLiveMode(true);
+              }}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                timeRange === 'live'
+                  ? 'bg-green-500 text-white shadow-md'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+              }`}
+            >
+              Live
+              {isLiveMode && (
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
               )}
-            </div>
+            </button>
           </div>
 
           {/* Chart Layer Controls */}
