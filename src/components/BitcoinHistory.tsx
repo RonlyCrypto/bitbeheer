@@ -6,6 +6,7 @@ import { bitcoinDataManager } from '../services/bitcoinDataManager';
 import { PriceData, SimulationResult } from '../types';
 import PriceChart from './PriceChart';
 import LiveCandleChart from './LiveCandleChart';
+import TradingViewChart from './TradingViewChart';
 import DCASimulator from './DCASimulator';
 import LiveBitcoinPrice from './LiveBitcoinPrice';
 import CurrencyToggle from './CurrencyToggle';
@@ -187,9 +188,6 @@ export default function BitcoinHistory() {
   const [isLiveMode, setIsLiveMode] = useState(false);
   const [liveData, setLiveData] = useState<PriceData[]>([]);
   const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
-  const [chartView, setChartView] = useState<'historical' | 'live'>('historical');
-  const [liveInterval, setLiveInterval] = useState<'1m' | '15m' | '30m'>('15m');
-  const [showLiveDropdown, setShowLiveDropdown] = useState(false);
 
   // Chart layer visibility - All OFF by default
   const [showPriceChart, setShowPriceChart] = useState(false);
@@ -1060,35 +1058,15 @@ export default function BitcoinHistory() {
             </div>
           </div>
 
-          {/* Chart View Toggle */}
-          <div className="flex gap-3 mb-6">
-            <button
-              onClick={() => setChartView('historical')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                chartView === 'historical'
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              📊 Historisch
-            </button>
-            <button
-              onClick={() => setChartView('live')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
-                chartView === 'live'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              <div className="w-2 h-2 bg-current rounded-full animate-pulse"></div>
-              Live
-            </button>
+          {/* TradingView Chart - Live Real-Time */}
+          <div className="mb-6">
+            <TradingViewChart height={500} />
           </div>
 
-          {/* Main Chart */}
-          {chartView === 'historical' ? (
-            <div className="bg-gray-50 rounded-xl p-6 mb-6">
-              <PriceChart
+          {/* Historical Chart - Below Live */}
+          <div className="bg-gray-50 rounded-xl p-6 mb-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">📊 Historische Analyse</h3>
+            <PriceChart
               data={cleanedFilteredData}
               height={400}
               color="#f97316"
@@ -1125,8 +1103,8 @@ export default function BitcoinHistory() {
               onZoomChange={(startDate, endDate) => {
                 setZoomStartDate(startDate);
                 setZoomEndDate(endDate);
-                setSelectedCycle(null); // Clear cycle selection when zooming
-                setTimeRange('all'); // Clear time range when zooming
+                setSelectedCycle(null);
+                setTimeRange('all');
               }}
               onMetricChange={(metric) => {
                 setSelectedMetric(metric);
@@ -1141,12 +1119,7 @@ export default function BitcoinHistory() {
               isLiveMode={isLiveMode}
               lastUpdateTime={lastUpdateTime}
             />
-            </div>
-          ) : (
-            <div className="bg-gray-50 rounded-xl p-6 mb-6">
-              <LiveCandleChart />
-            </div>
-          )}
+          </div>
 
           {/* DCA Simulator - Compact below chart */}
           {showDCALayer && (
