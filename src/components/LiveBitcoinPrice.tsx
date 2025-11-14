@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { bitcoinPriceTracker } from '../services/bitcoinPriceTracker';
 
 interface BitcoinPriceData {
   price: number;
@@ -69,6 +70,26 @@ const LiveBitcoinPrice: React.FC = () => {
         
         setPriceData(newPriceData);
         savePriceData(newPriceData);
+        
+        // Save to database automatically (hourly tracking)
+        // This will store in bitcoin_price_history for live charts
+        if (vsCurrency === 'usd') {
+          try {
+            const priceForDb = {
+              price_usd: bitcoin.usd,
+              price_eur: bitcoin.eur || 0,
+              volume_24h: bitcoin.usd_24h_vol || 0,
+              market_cap: bitcoin.usd_market_cap || 0,
+              price_change_24h: bitcoin.usd_24h_change || 0
+            };
+            await bitcoinPriceTracker.saveHourlyPrice(priceForDb);
+            console.log('✅ Bitcoin price saved to database:', priceForDb);
+          } catch (dbError) {
+            console.error('⚠️ Error saving price to database:', dbError);
+            // Don't break on DB save error
+          }
+        }
+        
         console.log('Bitcoin price updated successfully:', newPriceData);
       } else {
         throw new Error('Invalid price data received');

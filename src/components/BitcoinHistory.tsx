@@ -644,12 +644,12 @@ export default function BitcoinHistory() {
           </div>
         </div>
 
-        {/* Live Bitcoin Price and Currency Toggle */}
+        {/* Live Bitcoin Price */}
         <div className="flex items-center gap-4">
           <div className="lg:max-w-xs">
             <LiveBitcoinPrice />
           </div>
-          <CurrencyToggle />
+          {/* Currency toggle removed from admin view */}
         </div>
       </div>
 
