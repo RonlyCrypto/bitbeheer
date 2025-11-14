@@ -579,15 +579,16 @@ export default function PortfolioPage() {
                   </div>
 
                   <div className="grid md:grid-cols-3 gap-4 mb-4">
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-sm text-gray-600 mb-1">Bitcoin Adres</p>
-                      <div className="flex items-center gap-2">
-                        <code className="text-sm bg-gray-100 px-2 py-1 rounded font-mono">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <code className="text-sm bg-gray-100 px-2 py-1 rounded font-mono truncate">
                           {wallet.address.slice(0, 8)}...{wallet.address.slice(-8)}
                         </code>
                         <button
                           onClick={() => copyAddress(wallet.address)}
-                          className="p-1 text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                          className="p-1 text-gray-600 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
+                          title="Kopieer adres"
                         >
                           {copiedAddress === wallet.address ? (
                             <Check className="w-4 h-4 text-green-600" />
@@ -598,16 +599,16 @@ export default function PortfolioPage() {
                       </div>
                     </div>
 
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-sm text-gray-600 mb-1">Saldo</p>
-                      <p className="text-lg font-semibold text-gray-900">
+                      <p className="text-lg font-semibold text-gray-900 truncate">
                         {showBalances ? `${wallet.balance.toFixed(4)} BTC` : '•••• BTC'}
                       </p>
                     </div>
 
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-sm text-gray-600 mb-1">Transacties</p>
-                      <p className="text-lg font-semibold text-gray-900">{wallet.transactions}</p>
+                      <p className="text-lg font-semibold text-gray-900 truncate">{wallet.transactions}</p>
                     </div>
                   </div>
 
