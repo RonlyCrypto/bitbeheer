@@ -751,6 +751,24 @@ export default function PortfolioPage() {
                   </button>
                 </div>
 
+                <div className="flex gap-2 mb-6 pb-4 border-b">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(selectedTransaction.hash);
+                      alert('Hash gekopieerd!');
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+                  >
+                    📋 Hash Kopieren
+                  </button>
+                  <button
+                    onClick={() => window.open(`https://www.blockchain.com/en/btc/tx/${selectedTransaction.hash}`, '_blank')}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 rounded-lg text-sm font-medium text-blue-700 transition-colors"
+                  >
+                    🔗 Blockchain.com
+                  </button>
+                </div>
+
                 <div className="space-y-4">
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
