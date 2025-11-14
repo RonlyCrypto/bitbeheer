@@ -52,23 +52,27 @@ class BitcoinApiService {
       
       for (const tx of transactions.slice(0, 10)) { // Laatste 10 transacties
         try {
-          // Haal volledige TX data op via Blockchain.com API
-          const txResponse = await fetch(`https://blockchain.info/rawtx/${tx.txid}?format=json`);
+          const txResponse = await fetch(`${this.baseUrl}/tx/${tx.txid}`);
           const txData = await txResponse.json();
           
-          // Controleer of dit adres Bitcoin ONTVANGT in deze transactie (out)
-          const relevantOutputs = txData.out.filter((output: any) => 
-            output.addr === address
+          // Controleer of dit adres Bitcoin ONTVANGT in deze transactie (vout)
+          const relevantOutputs = txData.vout.filter((vout: any) => 
+            vout.scriptpubkey_address === address
           );
 
           // Alleen receive transacties registreren (waar je BTC ontvangt)
           if (relevantOutputs.length > 0) {
             // Bereken totaal ontvangen in deze transactie
-            const totalReceived = relevantOutputs.reduce((sum: number, output: any) => sum + output.value, 0);
+            const totalReceived = relevantOutputs.reduce((sum: number, vout: any) => sum + vout.value, 0);
             const valueInBTC = totalReceived / 100000000;
             
-            // Gebruik timestamp uit blockchain (in seconden)
-            const blockTime = txData.time || Math.floor(Date.now() / 1000);
+            // Gebruik block_time uit status (dit is de correcte timestamp)
+            const blockTime = txData.status?.block_time;
+            if (!blockTime) {
+              console.warn(`No block time for transaction ${tx.txid}`);
+              continue;
+            }
+            
             const priceAtTime = await this.getHistoricalPrice(blockTime);
             const currentValueUSD = valueInBTC * currentPrice;
             const priceAtTimeUSD = valueInBTC * priceAtTime;
