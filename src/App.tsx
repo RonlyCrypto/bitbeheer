@@ -27,13 +27,15 @@ import ImpersonationBanner from './components/ImpersonationBanner';
 import SystemStatusDebug from './components/SystemStatusDebug';
 import MobileBottomNav from './components/MobileBottomNav';
 import { initVisitorTracking } from './utils/visitorTracking';
+import { initBitcoinPriceTracking } from './lib/initPriceTracking';
 
 function AppContent() {
   const { showWelcomePopup, setShowWelcomePopup, user } = useSupabaseAuth();
 
-  // Initialize visitor tracking
+  // Initialize visitor tracking and Bitcoin price tracking
   useEffect(() => {
     initVisitorTracking();
+    initBitcoinPriceTracking(); // Start automatic price updates
   }, []);
 
   return (
