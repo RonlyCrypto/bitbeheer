@@ -95,27 +95,40 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
             </p>
             {(() => {
               // Calculate age of transaction
-              const txDate = new Date(transaction.time * 1000);
-              const now = new Date();
-              const ageMs = now.getTime() - txDate.getTime();
-              const ageDays = Math.floor(ageMs / (1000 * 60 * 60 * 24));
-              const ageYears = Math.floor(ageDays / 365);
-              const ageMonths = Math.floor((ageDays % 365) / 30);
-              
-              let ageStr = '';
-              if (ageYears > 0) {
-                ageStr = `${ageYears}y${ageMonths > 0 ? ` ${ageMonths}m` : ''}`;
-              } else if (ageMonths > 0) {
-                ageStr = `${ageMonths}m ${ageDays % 30}d`;
-              } else {
-                ageStr = `${ageDays}d`;
+              try {
+                if (!transaction.time || typeof transaction.time !== 'number') {
+                  return <p className="text-xs text-gray-500 mt-1">Age: Unknown</p>;
+                }
+                
+                const txDate = new Date(transaction.time * 1000);
+                if (isNaN(txDate.getTime())) {
+                  return <p className="text-xs text-gray-500 mt-1">Age: Invalid</p>;
+                }
+                
+                const now = new Date();
+                const ageMs = now.getTime() - txDate.getTime();
+                const ageDays = Math.floor(ageMs / (1000 * 60 * 60 * 24));
+                const ageYears = Math.floor(ageDays / 365);
+                const ageMonths = Math.floor((ageDays % 365) / 30);
+                
+                let ageStr = '';
+                if (ageYears > 0) {
+                  ageStr = `${ageYears}y${ageMonths > 0 ? ` ${ageMonths}m` : ''}`;
+                } else if (ageMonths > 0) {
+                  ageStr = `${ageMonths}m ${ageDays % 30}d`;
+                } else {
+                  ageStr = `${ageDays}d`;
+                }
+                
+                return (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Age: {ageStr}
+                  </p>
+                );
+              } catch (e) {
+                console.error('Error calculating age:', e);
+                return <p className="text-xs text-gray-500 mt-1">Age: Error</p>;
               }
-              
-              return (
-                <p className="text-xs text-gray-500 mt-1">
-                  Age: {ageStr}
-                </p>
-              );
             })()}
           </div>
         </div>
