@@ -1,0 +1,9 @@
+{
+  "functions": [
+    {
+      "slug": "fill-bitcoin-prices",
+      "importMap": "./import_map.json"
+    }
+  ]
+}
+
