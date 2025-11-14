@@ -1,5 +1,5 @@
-import React from 'react';
-import { TrendingUp, TrendingDown, Calendar, Hash, Coins, DollarSign, CheckCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { TrendingUp, TrendingDown, Calendar, Hash, Coins, DollarSign, CheckCircle, Copy, Check, ExternalLink } from 'lucide-react';
 import { BitcoinTransaction } from '../services/bitcoinApiService';
 
 interface TransactionBlockProps {
@@ -9,6 +9,18 @@ interface TransactionBlockProps {
 }
 
 export default function TransactionBlock({ transaction, index, onTransactionClick }: TransactionBlockProps) {
+  const [copiedHash, setCopiedHash] = useState(false);
+
+  const copyHash = () => {
+    navigator.clipboard.writeText(transaction.hash);
+    setCopiedHash(true);
+    setTimeout(() => setCopiedHash(false), 2000);
+  };
+
+  const openBlockchain = () => {
+    window.open(`https://www.blockchain.com/en/btc/tx/${transaction.hash}`, '_blank');
+  };
+
   const formatDate = (timestamp: number | string | Date) => {
     try {
       // Debug logging
@@ -161,9 +173,31 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
             <Hash className="w-4 h-4" />
             <span>Transactie Hash</span>
           </div>
-          <p className="text-sm font-mono text-gray-700 break-all">
-            {transaction.hash.slice(0, 16)}...{transaction.hash.slice(-8)}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-mono text-gray-700 break-all flex-1">
+              {transaction.hash.slice(0, 16)}...{transaction.hash.slice(-8)}
+            </p>
+            <div className="flex gap-2 flex-shrink-0">
+              <button
+                onClick={copyHash}
+                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Kopieren"
+              >
+                {copiedHash ? (
+                  <Check className="w-4 h-4 text-green-600" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
+              </button>
+              <button
+                onClick={openBlockchain}
+                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Open op blockchain.com"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
