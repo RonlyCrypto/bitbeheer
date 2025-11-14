@@ -1649,8 +1649,10 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 <div className="bg-white rounded-lg p-4 border border-blue-100">
                   <div className="text-sm text-gray-600 mb-2">Laatste Transactie</div>
                   {(() => {
-                    const hasLastTx = walletData.last_transaction_time || (walletData.lastTransaction && walletData.lastTransaction.time);
-                    if (!hasLastTx) {
+                    // Use the first (most recent) transaction from walletTransactions array
+                    const lastTx = walletTransactions && walletTransactions.length > 0 ? walletTransactions[0] : null;
+                    
+                    if (!lastTx) {
                       return <div className="text-xs text-gray-500 break-words">Geen transacties</div>;
                     }
 
@@ -1658,41 +1660,20 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                     let txTime: string | null = null;
                     let txHash: string | null = null;
 
-                    // Try to get date from lastTransaction first (Unix timestamp in seconds)
-                    if (walletData.lastTransaction?.time) {
-                      try {
-                        const timeMs = typeof walletData.lastTransaction.time === 'number' 
-                          ? walletData.lastTransaction.time * 1000 
-                          : new Date(walletData.lastTransaction.time).getTime();
-                        txDate = new Date(timeMs);
+                    try {
+                      // lastTx.time is a Unix timestamp in seconds
+                      if (lastTx.time) {
+                        txDate = new Date(lastTx.time * 1000);
                         if (!isNaN(txDate.getTime())) {
                           txTime = txDate.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
                         }
-                        txHash = walletData.lastTransaction.hash || null;
-                      } catch (e) {
-                        console.error('Error parsing lastTransaction time:', e);
+                        txHash = lastTx.hash || null;
                       }
-                    }
-
-                    // Fallback to last_transaction_time (can be Date string or Date object)
-                    if (!txDate && walletData.last_transaction_time) {
-                      try {
-                        txDate = new Date(walletData.last_transaction_time);
-                        if (!isNaN(txDate.getTime())) {
-                          txTime = txDate.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
-                        }
-                        txHash = walletData.last_transaction_hash || null;
-                      } catch (e) {
-                        console.error('Error parsing last_transaction_time:', e);
-                      }
+                    } catch (e) {
+                      console.error('Error parsing transaction time:', e);
                     }
 
                     if (!txDate || isNaN(txDate.getTime())) {
-                      console.log('DEBUG: No valid transaction date found', {
-                        lastTransaction: walletData.lastTransaction,
-                        last_transaction_time: walletData.last_transaction_time,
-                        txDate
-                      });
                       return <div className="text-xs text-gray-500 break-words">Geen transacties</div>;
                     }
 
