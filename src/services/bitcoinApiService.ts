@@ -73,7 +73,27 @@ class BitcoinApiService {
               continue;
             }
             
-            const priceAtTime = await this.getHistoricalPrice(blockTime);
+            // Haal de BTC prijs op voor de exacte datum van de transactie
+            let priceAtTime = 50000; // Fallback
+            
+            try {
+              // Gebruik CoinGecko API met exacte datum van transactie
+              const txDate = new Date(blockTime * 1000);
+              const dateStr = txDate.toISOString().split('T')[0]; // YYYY-MM-DD formaat
+              
+              const priceResponse = await fetch(
+                `https://api.coingecko.com/api/v3/coins/bitcoin/history?date=${dateStr}&localization=false`
+              );
+              const priceData = await priceResponse.json();
+              
+              if (priceData.market_data?.current_price?.usd) {
+                priceAtTime = priceData.market_data.current_price.usd;
+                console.log(`✓ BTC Price op ${dateStr}: $${priceAtTime}`);
+              }
+            } catch (e) {
+              console.error('Error fetching historical price:', e);
+            }
+            
             const currentValueUSD = valueInBTC * currentPrice;
             const priceAtTimeUSD = valueInBTC * priceAtTime;
             const profitUSD = currentValueUSD - priceAtTimeUSD;
