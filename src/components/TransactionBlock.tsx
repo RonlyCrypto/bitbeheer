@@ -168,8 +168,22 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
       </div>
 
       {/* Price Information */}
-      <div className="grid md:grid-cols-3 gap-4 mb-4">
-        {/* Inkoop Prijs */}
+      <div className="grid md:grid-cols-4 gap-4 mb-4">
+        {/* Inkoop Prijs per Bitcoin */}
+        <div className="bg-gray-50 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+            <Euro className="w-4 h-4" />
+            <span>Inkoopprijs / BTC</span>
+          </div>
+          <p className="text-lg font-semibold text-gray-900">
+            ${transaction.price.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            per Bitcoin
+          </p>
+        </div>
+
+        {/* Waarde bij Aankoop */}
         <div className="bg-gray-50 rounded-lg p-4">
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
             <Euro className="w-4 h-4" />
