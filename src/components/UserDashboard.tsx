@@ -1651,7 +1651,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   {(() => {
                     const hasLastTx = walletData.last_transaction_time || (walletData.lastTransaction && walletData.lastTransaction.time);
                     if (!hasLastTx) {
-                      return <div className="text-sm text-gray-500">Geen transacties</div>;
+                      return <div className="text-xs text-gray-500 break-words">Geen transacties</div>;
                     }
 
                     let txDate: Date | null = null;
@@ -1685,7 +1685,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                     }
 
                     if (!txDate || isNaN(txDate.getTime())) {
-                      return <div className="text-sm text-gray-500">Geen transacties</div>;
+                      return <div className="text-xs text-gray-500 break-words">Geen transacties</div>;
                     }
 
                     return (

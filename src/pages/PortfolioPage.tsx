@@ -403,13 +403,13 @@ export default function PortfolioPage() {
             </div>
 
             <div className="bg-white rounded-xl p-6 shadow-lg">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="bg-purple-100 p-2 rounded-lg">
+              <div className="flex items-center gap-3 mb-3 min-w-0">
+                <div className="bg-purple-100 p-2 rounded-lg flex-shrink-0">
                   <ExternalLink className="w-6 h-6 text-purple-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">Waarde</h3>
+                <h3 className="text-lg font-semibold text-gray-900 truncate">Waarde</h3>
               </div>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-gray-900 break-words">
                 {showBalances ? `€${totalValue.toLocaleString('nl-NL')}` : '••••'}
               </p>
               <p className="text-sm text-gray-600">Huidige waarde</p>
