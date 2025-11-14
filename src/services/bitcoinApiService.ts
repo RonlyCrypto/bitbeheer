@@ -74,40 +74,27 @@ class BitcoinApiService {
             }
             
             // Haal de BTC prijs op voor de exacte datum van de transactie
-            // Probeer eerst Supabase, dan CoinGecko
             let priceAtTime = 50000; // Fallback
             
             try {
               const txDate = new Date(blockTime * 1000);
               const dateStr = txDate.toISOString().split('T')[0]; // YYYY-MM-DD formaat
               
-              // Probeer eerst Supabase
-              try {
-                const { supabase } = await import('../lib/supabase');
-                const { data: priceData } = await supabase
-                  .from('bitcoin_price_data')
-                  .select('price_usd')
-                  .eq('date', dateStr)
-                  .single();
-                
-                if (priceData?.price_usd) {
-                  priceAtTime = priceData.price_usd;
-                  console.log(`✓ BTC Price op ${dateStr} (van Supabase): $${priceAtTime}`);
-                }
-              } catch (supabaseError) {
-                // Fallback naar CoinGecko als Supabase geen match heeft
-                const priceResponse = await fetch(
-                  `https://api.coingecko.com/api/v3/coins/bitcoin/history?date=${dateStr}&localization=false`
-                );
-                const priceData = await priceResponse.json();
-                
-                if (priceData.market_data?.current_price?.usd) {
-                  priceAtTime = priceData.market_data.current_price.usd;
-                  console.log(`✓ BTC Price op ${dateStr} (van CoinGecko): $${priceAtTime}`);
-                }
+              // Probeer eerst CoinGecko (sneller en betrouwbaarder)
+              const priceResponse = await fetch(
+                `https://api.coingecko.com/api/v3/coins/bitcoin/history?date=${dateStr}&localization=false`
+              );
+              const priceData = await priceResponse.json();
+              
+              if (priceData.market_data?.current_price?.usd) {
+                priceAtTime = priceData.market_data.current_price.usd;
+                console.log(`✓ BTC Price op ${dateStr}: $${priceAtTime}`);
+              } else {
+                console.warn(`⚠ Geen prijs gevonden voor ${dateStr}, gebruik fallback: $${priceAtTime}`);
               }
             } catch (e) {
               console.error('Error fetching historical price:', e);
+              // Fallback blijft $50000
             }
             
             const currentValueUSD = valueInBTC * currentPrice;
