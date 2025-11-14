@@ -895,12 +895,14 @@ export default function BitcoinHistory() {
             </div>
           </div>
 
-          {/* TradingView Chart - Live Real-Time */}
-          <div className="mb-6">
-            <TradingViewChart height={500} />
-          </div>
-
-          {/* Historical Chart - Below Live */}
+          {/* Chart Section - Toggle between Live (TradingView) and Historical */}
+          {timeRange === 'live' ? (
+            // Live Chart
+            <div className="mb-6">
+              <TradingViewChart height={500} />
+            </div>
+          ) : (
+            // Historical Chart
           <div className="bg-gray-50 rounded-xl p-6 mb-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">📊 Historische Analyse</h3>
             <PriceChart
@@ -957,6 +959,7 @@ export default function BitcoinHistory() {
               lastUpdateTime={lastUpdateTime}
             />
           </div>
+          )}
 
           {/* DCA Simulator - Compact below chart */}
           {showDCALayer && (
