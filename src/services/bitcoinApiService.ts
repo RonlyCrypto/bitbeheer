@@ -51,40 +51,44 @@ class BitcoinApiService {
       const currentPrice = await this.getCurrentPrice();
       
       for (const tx of transactions.slice(0, 10)) { // Laatste 10 transacties
-        const txResponse = await fetch(`${this.baseUrl}/tx/${tx.txid}`);
-        const txData = await txResponse.json();
-        
-        // Controleer of dit adres Bitcoin ONTVANGT in deze transactie (vout)
-        const relevantOutputs = txData.vout.filter((vout: any) => 
-          vout.scriptpubkey_address === address
-        );
-
-        // Als er inputs van dit adres zijn, controleer SENT bedrag
-        const relevantInputs = txData.vin.filter((vin: any) => 
-          vin.prevout && vin.prevout.scriptpubkey_address === address
-        );
-
-        // Alleen receive transacties registreren (waar je BTC ontvangt)
-        if (relevantOutputs.length > 0) {
-          // Bereken totaal ontvangen in deze transactie
-          const totalReceived = relevantOutputs.reduce((sum: number, vout: any) => sum + vout.value, 0);
-          const valueInBTC = totalReceived / 100000000;
-          const priceAtTime = await this.getHistoricalPrice(tx.status.block_time);
-          const currentValueUSD = valueInBTC * currentPrice;
-          const priceAtTimeUSD = valueInBTC * priceAtTime;
-          const profitUSD = currentValueUSD - priceAtTimeUSD;
-          const profitPercent = priceAtTime > 0 ? ((currentPrice - priceAtTime) / priceAtTime) * 100 : 0;
+        try {
+          // Haal volledige TX data op via Blockchain.com API
+          const txResponse = await fetch(`https://blockchain.info/rawtx/${tx.txid}?format=json`);
+          const txData = await txResponse.json();
           
-          processedTransactions.push({
-            hash: tx.txid,
-            time: tx.status.block_time,
-            value: totalReceived,
-            price: priceAtTime,
-            currentValue: currentValueUSD,
-            profit: profitUSD,
-            profitPercent: profitPercent,
-            valueInBTC: valueInBTC
-          });
+          // Controleer of dit adres Bitcoin ONTVANGT in deze transactie (out)
+          const relevantOutputs = txData.out.filter((output: any) => 
+            output.addr === address
+          );
+
+          // Alleen receive transacties registreren (waar je BTC ontvangt)
+          if (relevantOutputs.length > 0) {
+            // Bereken totaal ontvangen in deze transactie
+            const totalReceived = relevantOutputs.reduce((sum: number, output: any) => sum + output.value, 0);
+            const valueInBTC = totalReceived / 100000000;
+            
+            // Gebruik timestamp uit blockchain (in seconden)
+            const blockTime = txData.time || Math.floor(Date.now() / 1000);
+            const priceAtTime = await this.getHistoricalPrice(blockTime);
+            const currentValueUSD = valueInBTC * currentPrice;
+            const priceAtTimeUSD = valueInBTC * priceAtTime;
+            const profitUSD = currentValueUSD - priceAtTimeUSD;
+            const profitPercent = priceAtTime > 0 ? ((currentPrice - priceAtTime) / priceAtTime) * 100 : 0;
+            
+            processedTransactions.push({
+              hash: tx.txid,
+              time: blockTime,
+              value: totalReceived,
+              price: priceAtTime,
+              currentValue: currentValueUSD,
+              profit: profitUSD,
+              profitPercent: profitPercent,
+              valueInBTC: valueInBTC
+            });
+          }
+        } catch (error) {
+          console.error(`Error processing transaction ${tx.txid}:`, error);
+          // Continue to next transaction on error
         }
       }
 
