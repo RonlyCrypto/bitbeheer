@@ -1629,7 +1629,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 <div className="bg-white rounded-lg p-4 border border-blue-100">
                   <div className="text-sm text-gray-600 mb-1">Wallet Waarde</div>
                   <div className="text-2xl font-bold text-gray-900">
-                    €{((walletData.balance || 0) * bitcoinPrice).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ${((walletData.balance || 0) * bitcoinPrice).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
                     {walletData.balance?.toFixed(8) || '0.00000000'} BTC
@@ -1803,7 +1803,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-medium text-gray-900">
-                    €{goal.currentAmount.toLocaleString()} / €{goal.targetAmount.toLocaleString()}
+                    ${goal.currentAmount.toLocaleString('en-US')} / ${goal.targetAmount.toLocaleString('en-US')}
                   </p>
                   <div className="w-20 bg-gray-200 rounded-full h-2 mt-1">
                     <div 
@@ -1921,7 +1921,7 @@ function GoalsTab({ goals, setGoals }: any) {
         goal = {
           id: Date.now().toString(),
           title: `${newGoal.targetBitcoinAmount} Bitcoin Doel`,
-          description: `Maandelijks €${newGoal.monthlyInvestment.toLocaleString()} investeren om ${newGoal.targetBitcoinAmount} BTC te bereiken (${monthsNeeded} maanden)`,
+          description: `Maandelijks $${newGoal.monthlyInvestment.toLocaleString('en-US')} investeren om ${newGoal.targetBitcoinAmount} BTC te bereiken (${monthsNeeded} maanden)`,
           targetAmount: newGoal.targetBitcoinAmount * bitcoinPrice,
           currentAmount: newGoal.currentBitcoinAmount * bitcoinPrice,
           targetDate: newGoal.targetDate,
@@ -2079,7 +2079,7 @@ function GoalsTab({ goals, setGoals }: any) {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Maandelijkse Investering (€)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Maandelijkse Investering ($)</label>
                   <input
                     type="number"
                     value={newGoal.monthlyInvestment}
@@ -2107,7 +2107,7 @@ function GoalsTab({ goals, setGoals }: any) {
                       <p className="text-orange-900 font-bold">
                         {(newGoal.targetBitcoinAmount - newGoal.currentBitcoinAmount).toFixed(8)} BTC
                         <span className="text-xs text-gray-600 ml-2">
-                          (€{((newGoal.targetBitcoinAmount - newGoal.currentBitcoinAmount) * bitcoinPrice).toLocaleString()})
+                          (${((newGoal.targetBitcoinAmount - newGoal.currentBitcoinAmount) * bitcoinPrice).toLocaleString('en-US')})
                         </span>
                       </p>
                     </div>
@@ -2119,7 +2119,7 @@ function GoalsTab({ goals, setGoals }: any) {
                     </div>
                     <div>
                       <span className="text-orange-700 font-medium">Maandelijks inleggen:</span>
-                      <p className="text-orange-900 font-bold">€{newGoal.monthlyInvestment.toLocaleString()}</p>
+                      <p className="text-orange-900 font-bold">${newGoal.monthlyInvestment.toLocaleString('en-US')}</p>
                     </div>
                   </div>
                 </div>
@@ -2153,7 +2153,7 @@ function GoalsTab({ goals, setGoals }: any) {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Doelbedrag (€)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Doelbedrag ($)</label>
                 <input
                   type="number"
                   value={newGoal.targetAmount}
@@ -2236,7 +2236,7 @@ function GoalsTab({ goals, setGoals }: any) {
                     <p className="text-xs text-green-600 mt-1">
                       {(goal as any).isBitcoinGoal 
                         ? `${((goal as any).currentBitcoinAmount || 0).toFixed(8)} BTC bereikt`
-                        : `€${goal.currentAmount.toLocaleString()} bereikt`
+                        : `$${goal.currentAmount.toLocaleString('en-US')} bereikt`
                       }
                     </p>
                   </div>
@@ -2292,11 +2292,11 @@ function GoalsTab({ goals, setGoals }: any) {
                         <>
                           {((goal as any).currentBitcoinAmount || 0).toFixed(8)} / {((goal as any).targetBitcoinAmount || 0).toFixed(8)} BTC
                           <span className="text-xs text-gray-500 ml-2">
-                            (€{goal.currentAmount.toLocaleString()} / €{goal.targetAmount.toLocaleString()})
+                            (${goal.currentAmount.toLocaleString('en-US')} / ${goal.targetAmount.toLocaleString('en-US')})
                           </span>
                         </>
                       ) : (
-                        <>€{goal.currentAmount.toLocaleString()} / €{goal.targetAmount.toLocaleString()}</>
+                        <>${goal.currentAmount.toLocaleString('en-US')} / ${goal.targetAmount.toLocaleString('en-US')}</>
                       )}
                     </span>
                   </div>
@@ -2317,7 +2317,7 @@ function GoalsTab({ goals, setGoals }: any) {
                   {isBitcoinGoal && (goal as any).monthlyInvestment && (
                     <div className="mt-2 pt-2 border-t border-gray-200">
                       <p className="text-xs text-gray-600">
-                        Maandelijks: €{((goal as any).monthlyInvestment || 0).toLocaleString()}
+                        Maandelijks: ${((goal as any).monthlyInvestment || 0).toLocaleString('en-US')}
                       </p>
                     </div>
                   )}
@@ -2344,10 +2344,10 @@ function PortfolioTab({ portfolio, setPortfolio }: any) {
           </div>
           <div className="text-right">
             <p className="text-3xl font-bold text-gray-900">
-              €{portfolio?.value?.toLocaleString() || '0'}
+              ${portfolio?.value?.toLocaleString('en-US') || '0'}
             </p>
             <p className={`text-sm ${portfolio?.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {portfolio?.change >= 0 ? '+' : ''}€{portfolio?.change?.toLocaleString() || '0'} 
+              {portfolio?.change >= 0 ? '+' : ''}${portfolio?.change?.toLocaleString('en-US') || '0'} 
               ({portfolio?.changePercent >= 0 ? '+' : ''}{portfolio?.changePercent || 0}%)
             </p>
           </div>
@@ -2361,7 +2361,7 @@ function PortfolioTab({ portfolio, setPortfolio }: any) {
                 <span className="text-sm text-gray-600">{asset.symbol}</span>
               </div>
               <div className="space-y-1">
-                <p className="text-lg font-semibold text-gray-900">€{asset.value.toLocaleString()}</p>
+                <p className="text-lg font-semibold text-gray-900">${asset.value.toLocaleString('en-US')}</p>
                 <p className="text-sm text-gray-600">{asset.percentage}% van portfolio</p>
                 <p className="text-xs text-gray-500">{asset.amount} stuks</p>
               </div>

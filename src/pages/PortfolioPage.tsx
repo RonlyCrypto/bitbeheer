@@ -410,7 +410,7 @@ export default function PortfolioPage() {
                 <h3 className="text-lg font-semibold text-gray-900 truncate">Waarde</h3>
               </div>
               <p className="text-2xl font-bold text-gray-900 break-words">
-                {showBalances ? `€${totalValue.toLocaleString('nl-NL')}` : '••••'}
+                {showBalances ? `$${totalValue.toLocaleString('en-US')}` : '••••'}
               </p>
               <p className="text-sm text-gray-600">Huidige waarde</p>
             </div>
@@ -652,7 +652,7 @@ export default function PortfolioPage() {
                       ? 'bg-green-100 text-green-700' 
                       : 'bg-red-100 text-red-700'
                   }`}>
-                    {totalProfit >= 0 ? '+' : ''}€{totalProfit.toLocaleString('nl-NL')} totaal
+                    {totalProfit >= 0 ? '+' : ''}${totalProfit.toLocaleString('en-US')} totaal
                   </div>
                 </div>
               </div>
@@ -777,7 +777,7 @@ export default function PortfolioPage() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Inkoop Prijs</label>
                       <p className="text-lg font-semibold text-gray-900">
-                        €{selectedTransaction.price.toLocaleString('nl-NL')}
+                        ${selectedTransaction.price.toLocaleString('en-US')}
                       </p>
                     </div>
                   </div>
@@ -786,7 +786,7 @@ export default function PortfolioPage() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Huidige Waarde</label>
                       <p className="text-lg font-semibold text-gray-900">
-                        €{selectedTransaction.currentValue.toLocaleString('nl-NL')}
+                        ${selectedTransaction.currentValue.toLocaleString('en-US')}
                       </p>
                     </div>
                     <div>
@@ -794,7 +794,7 @@ export default function PortfolioPage() {
                       <p className={`text-lg font-semibold ${
                         selectedTransaction.profit >= 0 ? 'text-green-600' : 'text-red-600'
                       }`}>
-                        {selectedTransaction.profit >= 0 ? '+' : ''}€{selectedTransaction.profit.toLocaleString('nl-NL')}
+                        {selectedTransaction.profit >= 0 ? '+' : ''}${selectedTransaction.profit.toLocaleString('en-US')}
                         ({selectedTransaction.profitPercent >= 0 ? '+' : ''}{selectedTransaction.profitPercent.toFixed(2)}%)
                       </p>
                     </div>
