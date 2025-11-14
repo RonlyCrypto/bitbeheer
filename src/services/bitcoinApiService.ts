@@ -54,13 +54,21 @@ class BitcoinApiService {
         const txResponse = await fetch(`${this.baseUrl}/tx/${tx.txid}`);
         const txData = await txResponse.json();
         
-        // Zoek de relevante output voor dit adres
-        const relevantOutput = txData.vout.find((vout: any) => 
+        // Controleer of dit adres Bitcoin ONTVANGT in deze transactie (vout)
+        const relevantOutputs = txData.vout.filter((vout: any) => 
           vout.scriptpubkey_address === address
         );
 
-        if (relevantOutput) {
-          const valueInBTC = relevantOutput.value / 100000000; // Convert satoshis to BTC
+        // Als er inputs van dit adres zijn, controleer SENT bedrag
+        const relevantInputs = txData.vin.filter((vin: any) => 
+          vin.prevout && vin.prevout.scriptpubkey_address === address
+        );
+
+        // Alleen receive transacties registreren (waar je BTC ontvangt)
+        if (relevantOutputs.length > 0) {
+          // Bereken totaal ontvangen in deze transactie
+          const totalReceived = relevantOutputs.reduce((sum: number, vout: any) => sum + vout.value, 0);
+          const valueInBTC = totalReceived / 100000000;
           const priceAtTime = await this.getHistoricalPrice(tx.status.block_time);
           const currentValueUSD = valueInBTC * currentPrice;
           const priceAtTimeUSD = valueInBTC * priceAtTime;
@@ -70,7 +78,7 @@ class BitcoinApiService {
           processedTransactions.push({
             hash: tx.txid,
             time: tx.status.block_time,
-            value: relevantOutput.value,
+            value: totalReceived,
             price: priceAtTime,
             currentValue: currentValueUSD,
             profit: profitUSD,
