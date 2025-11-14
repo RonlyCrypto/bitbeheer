@@ -1658,10 +1658,13 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                     let txTime: string | null = null;
                     let txHash: string | null = null;
 
-                    // Try to get date from lastTransaction first
+                    // Try to get date from lastTransaction first (Unix timestamp in seconds)
                     if (walletData.lastTransaction?.time) {
                       try {
-                        txDate = new Date(walletData.lastTransaction.time * 1000);
+                        const timeMs = typeof walletData.lastTransaction.time === 'number' 
+                          ? walletData.lastTransaction.time * 1000 
+                          : new Date(walletData.lastTransaction.time).getTime();
+                        txDate = new Date(timeMs);
                         if (!isNaN(txDate.getTime())) {
                           txTime = txDate.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
                         }
@@ -1671,7 +1674,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                       }
                     }
 
-                    // Fallback to last_transaction_time
+                    // Fallback to last_transaction_time (can be Date string or Date object)
                     if (!txDate && walletData.last_transaction_time) {
                       try {
                         txDate = new Date(walletData.last_transaction_time);
@@ -1685,6 +1688,11 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                     }
 
                     if (!txDate || isNaN(txDate.getTime())) {
+                      console.log('DEBUG: No valid transaction date found', {
+                        lastTransaction: walletData.lastTransaction,
+                        last_transaction_time: walletData.last_transaction_time,
+                        txDate
+                      });
                       return <div className="text-xs text-gray-500 break-words">Geen transacties</div>;
                     }
 
