@@ -88,9 +88,14 @@ const LiveCandleChart: React.FC = () => {
       }
 
       if (!priceHistory || priceHistory.length === 0) {
-        console.log('No price history available');
+        console.warn('⚠️  No price history available in database');
+        console.log('📝 To populate test data, run: node populate-price-history.js');
+        setCandles([]);
+        setLoading(false);
         return;
       }
+
+      console.log(`✅ Fetched ${priceHistory.length} price records`);
 
       // Convert to candles (group by time intervals)
       const candleData = convertToCandles(priceHistory, timeRange);
