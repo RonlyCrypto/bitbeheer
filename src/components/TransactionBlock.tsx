@@ -9,14 +9,39 @@ interface TransactionBlockProps {
 }
 
 export default function TransactionBlock({ transaction, index, onTransactionClick }: TransactionBlockProps) {
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleDateString('nl-NL', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const formatDate = (timestamp: number | string | Date) => {
+    try {
+      let date: Date;
+      
+      // Handle different timestamp formats
+      if (typeof timestamp === 'number') {
+        // Assume it's Unix timestamp in seconds
+        date = new Date(timestamp * 1000);
+      } else if (typeof timestamp === 'string') {
+        // Try parsing as ISO string or other formats
+        date = new Date(timestamp);
+      } else if (timestamp instanceof Date) {
+        date = timestamp;
+      } else {
+        return 'Invalid Date';
+      }
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+      }
+      
+      return date.toLocaleDateString('nl-NL', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      console.error('Error formatting date:', e, timestamp);
+      return 'Invalid Date';
+    }
   };
 
   const formatValue = (value: number) => {
