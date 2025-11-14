@@ -1,13 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
-import fetch from 'node-fetch';
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+// Read from vite config or environment
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://xvbsdnfjibcyibpgcqeb.supabase.co';
+const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('❌ Supabase credentials missing!');
+if (!supabaseUrl) {
+  console.error('❌ VITE_SUPABASE_URL missing!');
   process.exit(1);
 }
+
+if (!supabaseKey) {
+  console.error('❌ VITE_SUPABASE_ANON_KEY missing!');
+  process.exit(1);
+}
+
+console.log(`🔗 Connecting to Supabase: ${supabaseUrl}\n`);
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
