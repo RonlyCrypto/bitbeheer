@@ -189,9 +189,9 @@ export default function BitcoinHistory() {
   const [liveData, setLiveData] = useState<PriceData[]>([]);
   const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
 
-  // Chart layer visibility - All OFF by default
+  // Chart layer visibility - Inkoop ON by default, others OFF
   const [showPriceChart, setShowPriceChart] = useState(false);
-  const [showDCALayer, setShowDCALayer] = useState(false);
+  const [showDCALayer, setShowDCALayer] = useState(true);  // ✅ Inkoop layer ON by default
   const [showCyclePhases, setShowCyclePhases] = useState(false);
   const [showHalvingEvents, setShowHalvingEvents] = useState(false);
   const [showMajorEvents, setShowMajorEvents] = useState(false);

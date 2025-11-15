@@ -178,17 +178,17 @@ export default function DCASimulator({ startDate: propStartDate, endDate: propEn
           <div class="header">
             <h1>DCA Simulatie Rapport</h1>
             <p>${coin} - ${startDate} tot ${endDate}</p>
-            <p>Maandelijks bedrag: €${monthlyAmount}</p>
+            <p>Maandelijks bedrag: $${monthlyAmount}</p>
           </div>
           
           <div class="stats">
             <div class="stat-box">
               <div class="stat-label">Totaal Geïnvesteerd</div>
-              <div class="stat-value">€${result.totalInvested.toLocaleString()}</div>
+              <div class="stat-value">$${result.totalInvested.toLocaleString()}</div>
             </div>
             <div class="stat-box">
               <div class="stat-label">Huidige Waarde</div>
-              <div class="stat-value">€${result.currentValue.toLocaleString()}</div>
+              <div class="stat-value">$${result.currentValue.toLocaleString()}</div>
             </div>
             <div class="stat-box">
               <div class="stat-label">ROI</div>
@@ -196,7 +196,7 @@ export default function DCASimulator({ startDate: propStartDate, endDate: propEn
         </div>
             <div class="stat-box">
               <div class="stat-label">Gemiddelde Aankoopprijs</div>
-              <div class="stat-value">€${formatPrice(result.averageBuyPrice)}</div>
+              <div class="stat-value">$${formatPrice(result.averageBuyPrice)}</div>
         </div>
       </div>
 
@@ -205,22 +205,22 @@ export default function DCASimulator({ startDate: propStartDate, endDate: propEn
             <thead>
               <tr>
                 <th>Datum</th>
-                <th>Prijs (€)</th>
-                <th>Ingelegd (€)</th>
+                <th>Prijs ($)</th>
+                <th>Ingelegd ($)</th>
                 <th>BTC Gekocht</th>
                 <th>Totaal BTC</th>
-                <th>Portfolio Waarde (€)</th>
+                <th>Portfolio Waarde ($)</th>
               </tr>
             </thead>
             <tbody>
               ${result.purchaseDetails.map(purchase => `
                 <tr>
                   <td>${purchase.date}</td>
-                  <td>€${purchase.price.toFixed(8)}</td>
-                  <td>€${purchase.amount.toFixed(2)}</td>
+                  <td>$${purchase.price.toFixed(8)}</td>
+                  <td>$${purchase.amount.toFixed(2)}</td>
                   <td>${purchase.btcAcquired.toFixed(8)}</td>
                   <td>${(purchase.btcAcquired * purchase.monthNumber).toFixed(8)}</td>
-                  <td>€${purchase.currentValue.toFixed(2)}</td>
+                  <td>$${purchase.currentValue.toFixed(2)}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -370,7 +370,7 @@ Bekijk de volledige simulatie op Crypto DCA Academy!`;
                       </div>
                       <h4 className="text-sm font-semibold text-green-900">Totaal Ingelegd</h4>
               </div>
-                    <p className="text-lg font-bold text-green-800">€{result.totalInvested.toLocaleString()}</p>
+                    <p className="text-lg font-bold text-green-800">${result.totalInvested.toLocaleString()}</p>
                     <p className="text-xs text-green-700 mt-1">
                       {result.totalPurchases} keer ingekocht
               </p>
@@ -383,7 +383,7 @@ Bekijk de volledige simulatie op Crypto DCA Academy!`;
                       </div>
                       <h4 className="text-sm font-semibold text-blue-900">Gemiddelde Prijs</h4>
               </div>
-                    <p className="text-lg font-bold text-blue-800">€{formatPrice(result.averageBuyPrice)}</p>
+                    <p className="text-lg font-bold text-blue-800">${formatPrice(result.averageBuyPrice)}</p>
             </div>
 
                   <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-3">
@@ -393,9 +393,9 @@ Bekijk de volledige simulatie op Crypto DCA Academy!`;
               </div>
                       <h4 className="text-sm font-semibold text-orange-900">Cycle ATH Waarde</h4>
             </div>
-                    <p className="text-lg font-bold text-orange-800">€{result.cycleATHValue.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="text-lg font-bold text-orange-800">${result.cycleATHValue.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                     <p className="text-xs text-orange-700 mt-1">
-                      Huidige waarde: €{result.currentValue.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      Huidige waarde: ${result.currentValue.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
           </div>
