@@ -56,6 +56,8 @@ interface PriceChartProps {
   isLiveMode?: boolean;
   lastUpdateTime?: Date | null;
   highlightedEvent?: string | null; // Date of highlighted event
+  selectedCycle?: string | null; // Selected cycle ID
+  bitcoinCycles?: any[]; // Cycle data for filtering phases
 }
 
 export default function PriceChart({
@@ -81,7 +83,9 @@ export default function PriceChart({
   currentTimeRange = 'all',
   isLiveMode = false,
   lastUpdateTime = null,
-  highlightedEvent = null
+  highlightedEvent = null,
+  selectedCycle = null,
+  bitcoinCycles = []
 }: PriceChartProps) {
   const { getCurrencySymbol, formatPrice } = useCurrency();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -107,6 +111,84 @@ export default function PriceChart({
   const [isManualZoom, setIsManualZoom] = useState(false);
   const [selectedPhaseType, setSelectedPhaseType] = useState<string | null>(null);
   const [showPhaseDropdown, setShowPhaseDropdown] = useState<{ [key: string]: boolean }>({});
+  
+  // Get cycle date range if cycle is selected
+  const cycleData = selectedCycle && bitcoinCycles.length > 0 
+    ? bitcoinCycles.find(c => c.id === selectedCycle)
+    : null;
+  
+  // Get filtered phases for the selected cycle or all phases
+  const filteredCyclePhases = selectedCycle && cycleData
+    ? cyclePhases.filter(phase => {
+        const phaseStart = new Date(phase.start);
+        const cycleStart = new Date(cycleData.phases.accumulation?.start || cycleData.startDate);
+        const cycleEnd = new Date(cycleData.phases.bearMarket?.end || cycleData.endDate);
+        return phaseStart >= cycleStart && phaseStart <= cycleEnd;
+      })
+    : cyclePhases;
+  
+  // Get cycle date range for slider adjustment
+  const cycleStartDate = cycleData 
+    ? new Date(cycleData.phases.accumulation?.start || cycleData.startDate)
+    : null;
+  const cycleEndDate = cycleData 
+    ? new Date(cycleData.phases.bearMarket?.end || cycleData.endDate)
+    : null;
+  
+  // Calculate cycle position in global data range
+  const getCycleGlobalPosition = () => {
+    if (!cycleData || !cycleStartDate || !cycleEndDate || data.length === 0) {
+      return { start: 0, end: 100, range: 100 };
+    }
+    
+    const dataStartDate = new Date(data[0].date);
+    const dataEndDate = new Date(data[data.length - 1].date);
+    const totalDataRange = dataEndDate.getTime() - dataStartDate.getTime();
+    
+    const cycleStart_global = Math.max(0, (cycleStartDate.getTime() - dataStartDate.getTime()) / totalDataRange * 100);
+    const cycleEnd_global = Math.min(100, (cycleEndDate.getTime() - dataStartDate.getTime()) / totalDataRange * 100);
+    const cycleRange = cycleEnd_global - cycleStart_global;
+    
+    return { start: cycleStart_global, end: cycleEnd_global, range: cycleRange };
+  };
+  
+  const cycleGlobalPos = getCycleGlobalPosition();
+  
+  // Convert slider position to display position (accounting for cycle offset)
+  const getDisplaySliderPosition = (percent: number): number => {
+    if (!cycleData) return percent;
+    return cycleGlobalPos.start + (percent / 100) * cycleGlobalPos.range;
+  };
+  
+  // Function to convert between global data coordinates and cycle-relative coordinates
+  const getSliderPosition = (globalStart: number, globalEnd: number) => {
+    if (!cycleData || !cycleStartDate || !cycleEndDate || data.length === 0) {
+      return { start: globalStart, end: globalEnd };
+    }
+    
+    const cycleRange = cycleGlobalPos.range;
+    
+    // Convert global positions to cycle-relative
+    const cycleRelativeStart = cycleRange > 0 ? (globalStart - cycleGlobalPos.start) / cycleRange * 100 : 0;
+    const cycleRelativeEnd = cycleRange > 0 ? (globalEnd - cycleGlobalPos.start) / cycleRange * 100 : 100;
+    
+    return { start: cycleRelativeStart, end: cycleRelativeEnd };
+  };
+  
+  // Function to convert cycle-relative positions back to global
+  const getGlobalPosition = (cycleStart: number, cycleEnd: number) => {
+    if (!cycleData || !cycleStartDate || !cycleEndDate || data.length === 0) {
+      return { start: cycleStart, end: cycleEnd };
+    }
+    
+    const cycleRange = cycleGlobalPos.range;
+    
+    // Convert cycle-relative positions to global
+    const globalStart = cycleGlobalPos.start + (cycleStart / 100) * cycleRange;
+    const globalEnd = cycleGlobalPos.start + (cycleEnd / 100) * cycleRange;
+    
+    return { start: globalStart, end: globalEnd };
+  };
 
   // Function to zoom to a specific phase
   const zoomToPhase = (phase: CyclePhase) => {
@@ -255,8 +337,17 @@ export default function PriceChart({
     const chartHeight = height - padding.top - padding.bottom;
 
     // Filter data based on zoom range for display only
-    const startIndex = Math.floor((zoomRange.start / 100) * (data.length - 1));
-    const endIndex = Math.ceil((zoomRange.end / 100) * (data.length - 1));
+    // Convert to global percentages if in cycle mode
+    let displayStart = zoomRange.start;
+    let displayEnd = zoomRange.end;
+    
+    if (cycleData && cycleGlobalPos.range > 0) {
+      displayStart = cycleGlobalPos.start + (zoomRange.start / 100) * cycleGlobalPos.range;
+      displayEnd = cycleGlobalPos.start + (zoomRange.end / 100) * cycleGlobalPos.range;
+    }
+    
+    const startIndex = Math.floor((displayStart / 100) * (data.length - 1));
+    const endIndex = Math.ceil((displayEnd / 100) * (data.length - 1));
     const visibleData = data.slice(startIndex, endIndex + 1);
 
     ctx.clearRect(0, 0, rect.width, height);
@@ -933,11 +1024,21 @@ export default function PriceChart({
     
     const rect = sliderTrackRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+    const globalPercentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+    
+    // Convert global percentage to cycle-relative if cycle is selected
+    const percentage = cycleData 
+      ? ((globalPercentage - cycleGlobalPos.start) / cycleGlobalPos.range) * 100
+      : globalPercentage;
+    
+    // Clamp to 0-100 range when in cycle mode
+    const clampedPercentage = cycleData
+      ? Math.max(0, Math.min(100, percentage))
+      : globalPercentage;
     
     if (isDragging === 'start') {
       const currentRange = zoomRangeRef.current;
-      const newStart = Math.min(percentage, currentRange.end - 2); // Minimum 2% range
+      const newStart = Math.min(clampedPercentage, currentRange.end - 2); // Minimum 2% range
       const newRange = {
         start: newStart,
         end: currentRange.end
@@ -946,7 +1047,7 @@ export default function PriceChart({
       zoomRangeRef.current = newRange;
     } else if (isDragging === 'end') {
       const currentRange = zoomRangeRef.current;
-      const newEnd = Math.max(percentage, currentRange.start + 2); // Minimum 2% range
+      const newEnd = Math.max(clampedPercentage, currentRange.start + 2); // Minimum 2% range
       const newRange = {
         start: currentRange.start,
         end: newEnd
@@ -959,15 +1060,20 @@ export default function PriceChart({
       if (!dragStartRef.current) {
         // Initialize drag start position
         dragStartRef.current = {
-          startPercent: percentage,
+          startPercent: clampedPercentage,
           rangeStart: currentRange.start,
           rangeEnd: currentRange.end
         };
       } else {
         // Calculate offset from initial drag position
-        const offset = percentage - dragStartRef.current.startPercent;
+        const offset = clampedPercentage - dragStartRef.current.startPercent;
         const rangeWidth = dragStartRef.current.rangeEnd - dragStartRef.current.rangeStart;
-        const newStart = Math.max(0, Math.min(100 - rangeWidth, dragStartRef.current.rangeStart + offset));
+        
+        // When in cycle mode, constrain movement to within the cycle
+        const minStart = cycleData ? 0 : 0;
+        const maxStart = cycleData ? (100 - rangeWidth) : (100 - rangeWidth);
+        
+        const newStart = Math.max(minStart, Math.min(maxStart, dragStartRef.current.rangeStart + offset));
         const newRange = {
           start: newStart,
           end: newStart + rangeWidth
@@ -983,8 +1089,17 @@ export default function PriceChart({
       // Use the ref to get the most current zoomRange value
       const currentZoomRange = { ...zoomRangeRef.current };
       
-      const startIndex = Math.max(0, Math.floor((currentZoomRange.start / 100) * (data.length - 1)));
-      const endIndex = Math.min(data.length - 1, Math.floor((currentZoomRange.end / 100) * (data.length - 1)));
+      // Convert to global percentages if in cycle mode
+      let globalStart = currentZoomRange.start;
+      let globalEnd = currentZoomRange.end;
+      
+      if (cycleData && cycleGlobalPos.range > 0) {
+        globalStart = cycleGlobalPos.start + (currentZoomRange.start / 100) * cycleGlobalPos.range;
+        globalEnd = cycleGlobalPos.start + (currentZoomRange.end / 100) * cycleGlobalPos.range;
+      }
+      
+      const startIndex = Math.max(0, Math.floor((globalStart / 100) * (data.length - 1)));
+      const endIndex = Math.min(data.length - 1, Math.floor((globalEnd / 100) * (data.length - 1)));
       
       // Set manual zoom FIRST to prevent useEffect from resetting
       setIsManualZoom(true);
@@ -1123,7 +1238,7 @@ export default function PriceChart({
       
 
       {/* Market Phase Navigator - Always visible under chart */}
-      {data.length > 0 && cyclePhases && cyclePhases.length > 0 && (
+      {data.length > 0 && filteredCyclePhases && filteredCyclePhases.length > 0 && (
         <div className="mt-4 p-3 bg-gray-50 rounded-lg w-full min-w-full border-t">
           <div className="mb-3">
             <label className="text-sm font-medium text-gray-700 mb-2 block">📊 Chart Navigator:</label>
@@ -1148,12 +1263,12 @@ export default function PriceChart({
               </button>
               
               {/* Market Phase Buttons */}
-              {cyclePhases && cyclePhases.length > 0 && (() => {
+              {filteredCyclePhases && filteredCyclePhases.length > 0 && (() => {
                 // Get phases that are within the current data range
                 const dataStartDate = new Date(data[0].date);
                 const dataEndDate = new Date(data[data.length - 1].date);
                 
-                const availablePhases = cyclePhases.filter(phase => {
+                const availablePhases = filteredCyclePhases.filter(phase => {
                   const phaseStart = new Date(phase.start);
                   const phaseEnd = new Date(phase.end);
                   return phaseStart <= dataEndDate && phaseEnd >= dataStartDate;
@@ -1221,10 +1336,16 @@ export default function PriceChart({
                     const phaseStart = startDate.getTime() - dataStart.getTime();
                     const phaseEnd = endDate.getTime() - dataStart.getTime();
                     
-                    const startPercent = Math.max(0, (phaseStart / totalRange) * 100);
-                    const endPercent = Math.min(100, (phaseEnd / totalRange) * 100);
+                    let startPercent = Math.max(0, (phaseStart / totalRange) * 100);
+                    let endPercent = Math.min(100, (phaseEnd / totalRange) * 100);
                     
-                    setZoomRange({ start: startPercent, end: endPercent });
+                    // If in cycle mode, convert to cycle-relative percentages
+                    if (cycleData && cycleGlobalPos.range > 0) {
+                      startPercent = ((startPercent - cycleGlobalPos.start) / cycleGlobalPos.range) * 100;
+                      endPercent = ((endPercent - cycleGlobalPos.start) / cycleGlobalPos.range) * 100;
+                    }
+                    
+                    setZoomRange({ start: Math.max(0, startPercent), end: Math.min(100, endPercent) });
                     setIsManualZoom(true);
                     onTimeRangeChange?.('all');
                     setShowPhaseDropdown({ ...showPhaseDropdown, [type]: false });
@@ -1290,16 +1411,43 @@ export default function PriceChart({
             {/* Background track - smaller for compact design */}
             <div 
               ref={sliderTrackRef}
-              className="w-full h-6 bg-gray-200 rounded-lg relative cursor-pointer"
+              className="w-full h-6 bg-gray-300 rounded-lg relative cursor-pointer"
               style={{ minWidth: '100%' }}
             >
+              
+              {/* Cycle background - only visible when cycle is selected */}
+              {cycleData && cycleStartDate && cycleEndDate && (() => {
+                const dataStartDate = new Date(data[0].date);
+                const dataEndDate = new Date(data[data.length - 1].date);
+                const totalDataRange = dataEndDate.getTime() - dataStartDate.getTime();
+                
+                const cycleStart_global = Math.max(0, (cycleStartDate.getTime() - dataStartDate.getTime()) / totalDataRange * 100);
+                const cycleEnd_global = Math.min(100, (cycleEndDate.getTime() - dataStartDate.getTime()) / totalDataRange * 100);
+                
+                return (
+                  <div
+                    className="absolute bg-gray-200 rounded-lg h-full"
+                    style={{
+                      left: `${cycleStart_global}%`,
+                      width: `${cycleEnd_global - cycleStart_global}%`,
+                      zIndex: 0
+                    }}
+                  />
+                );
+              })()}
               
               {/* Selected range - draggable background */}
               <div 
                 className="absolute bg-blue-500 rounded-lg border-2 border-blue-600 cursor-move"
                 style={{
-                  left: `${zoomRange.start}%`,
-                  width: `${zoomRange.end - zoomRange.start}%`,
+                  left: `${cycleData && cycleGlobalPos.range > 0
+                    ? cycleGlobalPos.start + (zoomRange.start / 100) * cycleGlobalPos.range
+                    : zoomRange.start
+                  }%`,
+                  width: `${cycleData && cycleGlobalPos.range > 0
+                    ? ((zoomRange.end - zoomRange.start) / 100) * cycleGlobalPos.range
+                    : zoomRange.end - zoomRange.start
+                  }%`,
                   height: '100%',
                   minHeight: '24px',
                   minWidth: '0%',
@@ -1340,7 +1488,7 @@ export default function PriceChart({
               <div
                 className="slider-handle absolute top-1/2 left-0 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-blue-600 rounded-full cursor-ew-resize hover:bg-blue-700 transition-colors flex items-center justify-center shadow-lg border-2 border-white z-20"
                 style={{
-                  left: `${zoomRange.start}%`,
+                  left: `${getDisplaySliderPosition(zoomRange.start)}%`,
                   pointerEvents: 'auto'
                 }}
                 onMouseDown={(e) => {
@@ -1358,7 +1506,7 @@ export default function PriceChart({
               <div
                 className="slider-handle absolute top-1/2 left-0 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-blue-600 rounded-full cursor-ew-resize hover:bg-blue-700 transition-colors flex items-center justify-center shadow-lg border-2 border-white z-20"
                 style={{
-                  left: `${zoomRange.end}%`,
+                  left: `${getDisplaySliderPosition(zoomRange.end)}%`,
                   pointerEvents: 'auto'
                 }}
                 onMouseDown={(e) => {
@@ -1376,10 +1524,22 @@ export default function PriceChart({
             {/* Date labels */}
             <div className="flex justify-between mt-3 text-sm text-gray-600 font-medium">
               <span className="bg-white px-2 py-1 rounded border">
-                {new Date(data[Math.floor((zoomRange.start / 100) * (data.length - 1))].date).toLocaleDateString('nl-NL')}
+                {(() => {
+                  let startPercent = zoomRange.start;
+                  if (cycleData && cycleGlobalPos.range > 0) {
+                    startPercent = cycleGlobalPos.start + (zoomRange.start / 100) * cycleGlobalPos.range;
+                  }
+                  return new Date(data[Math.floor((startPercent / 100) * (data.length - 1))].date).toLocaleDateString('nl-NL');
+                })()}
               </span>
               <span className="bg-white px-2 py-1 rounded border">
-                {new Date(data[Math.floor((zoomRange.end / 100) * (data.length - 1))].date).toLocaleDateString('nl-NL')}
+                {(() => {
+                  let endPercent = zoomRange.end;
+                  if (cycleData && cycleGlobalPos.range > 0) {
+                    endPercent = cycleGlobalPos.start + (zoomRange.end / 100) * cycleGlobalPos.range;
+                  }
+                  return new Date(data[Math.floor((endPercent / 100) * (data.length - 1))].date).toLocaleDateString('nl-NL');
+                })()}
               </span>
             </div>
             

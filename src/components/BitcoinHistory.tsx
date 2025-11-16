@@ -979,6 +979,8 @@ export default function BitcoinHistory() {
               currentTimeRange={timeRange}
               isLiveMode={isLiveMode}
               lastUpdateTime={lastUpdateTime}
+              selectedCycle={selectedCycle}
+              bitcoinCycles={bitcoinCycles}
             />
           </div>
           )}
