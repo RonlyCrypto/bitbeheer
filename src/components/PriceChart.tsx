@@ -105,6 +105,8 @@ export default function PriceChart({
   const [zoomRange, setZoomRange] = useState<{ start: number; end: number }>({ start: 0, end: 100 });
   const [isDragging, setIsDragging] = useState<'start' | 'end' | 'range' | null>(null);
   const [isManualZoom, setIsManualZoom] = useState(false);
+  const [selectedPhaseType, setSelectedPhaseType] = useState<string | null>(null);
+  const [showPhaseDropdown, setShowPhaseDropdown] = useState<{ [key: string]: boolean }>({});
 
   // Function to zoom to a specific phase
   const zoomToPhase = (phase: CyclePhase) => {
@@ -1120,11 +1122,11 @@ export default function PriceChart({
       </div>
       
 
-      {/* Market Phase Navigator - Only for DCA charts */}
-      {showZoomSlider && data.length > 0 && cyclePhases && cyclePhases.length > 0 && (
-        <div className="mt-4 p-3 bg-gray-50 rounded-lg w-full min-w-full">
+      {/* Market Phase Navigator - Always visible under chart */}
+      {data.length > 0 && cyclePhases && cyclePhases.length > 0 && (
+        <div className="mt-4 p-3 bg-gray-50 rounded-lg w-full min-w-full border-t">
           <div className="mb-3">
-            <label className="text-sm font-medium text-gray-700 mb-2 block">Market Phase Navigator:</label>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">📊 Chart Navigator:</label>
             
             {/* Market Phase Buttons */}
             <div className="flex gap-2 mb-3 flex-wrap">
@@ -1208,47 +1210,76 @@ export default function PriceChart({
                   // Check if this phase type is currently active (simplified)
                   const isActive = isManualZoom && zoomRange.start > 0 && zoomRange.end < 100;
 
+                  // Function to zoom to a specific phase
+                  const zoomToPhaseType = (targetPhase: CyclePhase) => {
+                    const startDate = new Date(targetPhase.start);
+                    const endDate = new Date(targetPhase.end);
+                    
+                    const dataStart = new Date(data[0].date);
+                    const dataEnd = new Date(data[data.length - 1].date);
+                    const totalRange = dataEnd.getTime() - dataStart.getTime();
+                    const phaseStart = startDate.getTime() - dataStart.getTime();
+                    const phaseEnd = endDate.getTime() - dataStart.getTime();
+                    
+                    const startPercent = Math.max(0, (phaseStart / totalRange) * 100);
+                    const endPercent = Math.min(100, (phaseEnd / totalRange) * 100);
+                    
+                    setZoomRange({ start: startPercent, end: endPercent });
+                    setIsManualZoom(true);
+                    onTimeRangeChange?.('all');
+                    setShowPhaseDropdown({ ...showPhaseDropdown, [type]: false });
+                  };
+
                   return (
-                    <button
-                      key={type}
-                      onClick={() => {
-                        // Find the first phase of this type
-                        const targetPhase = phases[0];
-                        if (!targetPhase) return;
-                        
-                        // Zoom to the target phase
-                        const startDate = new Date(targetPhase.start);
-                        const endDate = new Date(targetPhase.end);
-                        
-                        // Calculate zoom range based on phase dates
-                        const dataStart = new Date(data[0].date);
-                        const dataEnd = new Date(data[data.length - 1].date);
-                        const totalRange = dataEnd.getTime() - dataStart.getTime();
-                        const phaseStart = startDate.getTime() - dataStart.getTime();
-                        const phaseEnd = endDate.getTime() - dataStart.getTime();
-                        
-                        const startPercent = Math.max(0, (phaseStart / totalRange) * 100);
-                        const endPercent = Math.min(100, (phaseEnd / totalRange) * 100);
-                        
-                        setZoomRange({ start: startPercent, end: endPercent });
-                        setIsManualZoom(true);
-                        onTimeRangeChange?.('all');
-                      }}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all border flex items-center gap-2 ${
-                        isActive
-                          ? `${phaseConfig.bgColor} ${phaseConfig.textColor} ${phaseConfig.borderColor} ${phaseConfig.hoverColor}`
-                          : `${phaseConfig.inactiveBgColor} ${phaseConfig.inactiveTextColor} ${phaseConfig.inactiveBorderColor} hover:bg-gray-200`
-                      }`}
-                    >
-                      <span>{phaseConfig.label}</span>
-                      {phases.length > 1 && (
-                        <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${
-                          isActive ? 'bg-white bg-opacity-50' : 'bg-gray-200'
-                        }`}>
-                          {phases.length}
-                        </span>
+                    <div key={type} className="relative group">
+                      <button
+                        onClick={() => {
+                          if (phases.length > 1) {
+                            // Toggle dropdown
+                            setShowPhaseDropdown({
+                              ...showPhaseDropdown,
+                              [type]: !showPhaseDropdown[type]
+                            });
+                          } else {
+                            // Zoom to single phase
+                            zoomToPhaseType(phases[0]);
+                          }
+                        }}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all border flex items-center gap-2 ${
+                          isActive
+                            ? `${phaseConfig.bgColor} ${phaseConfig.textColor} ${phaseConfig.borderColor} ${phaseConfig.hoverColor}`
+                            : `${phaseConfig.inactiveBgColor} ${phaseConfig.inactiveTextColor} ${phaseConfig.inactiveBorderColor} hover:bg-gray-200`
+                        }`}
+                      >
+                        <span>{phaseConfig.label}</span>
+                        {phases.length > 1 && (
+                          <>
+                            <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${
+                              isActive ? 'bg-white bg-opacity-50' : 'bg-gray-200'
+                            }`}>
+                              {phases.length}
+                            </span>
+                            <span className="text-xs">▼</span>
+                          </>
+                        )}
+                      </button>
+
+                      {/* Dropdown for multiple phases */}
+                      {phases.length > 1 && showPhaseDropdown[type] && (
+                        <div className="absolute z-10 mt-1 w-48 bg-white border border-gray-300 rounded-lg shadow-lg">
+                          {phases.map((phase, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => zoomToPhaseType(phase)}
+                              className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700 border-b last:border-b-0 transition-colors"
+                            >
+                              <div className="font-medium">{phaseConfig.label} {idx + 1}</div>
+                              <div className="text-xs text-gray-500">{phase.start} tot {phase.end}</div>
+                            </button>
+                          ))}
+                        </div>
                       )}
-                    </button>
+                    </div>
                   );
                 });
               })()}
