@@ -10,7 +10,6 @@ import TradingViewChart from './TradingViewChart';
 import DCASimulator from './DCASimulator';
 import LiveBitcoinPrice from './LiveBitcoinPrice';
 import CurrencyToggle from './CurrencyToggle';
-import ChartTimelineSlider from './ChartTimelineSlider';
 import { useCurrency } from '../contexts/CurrencyContext';
 
 const halvingEvents = [
@@ -981,21 +980,6 @@ export default function BitcoinHistory() {
               isLiveMode={isLiveMode}
               lastUpdateTime={lastUpdateTime}
             />
-            
-            {/* Chart Timeline Slider */}
-            {allPriceData.length > 0 && (
-              <ChartTimelineSlider
-                allData={allPriceData}
-                currentStartDate={zoomStartDate || allPriceData[0].date}
-                currentEndDate={zoomEndDate || allPriceData[allPriceData.length - 1].date}
-                onRangeChange={(startDate, endDate) => {
-                  setZoomStartDate(startDate);
-                  setZoomEndDate(endDate);
-                  setSelectedCycle(null);
-                  setTimeRange('all');
-                }}
-              />
-            )}
           </div>
           )}
 
