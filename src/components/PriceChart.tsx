@@ -121,9 +121,12 @@ export default function PriceChart({
   const filteredCyclePhases = selectedCycle && cycleData
     ? cyclePhases.filter(phase => {
         const phaseStart = new Date(phase.start);
+        const phaseEnd = new Date(phase.end);
         const cycleStart = new Date(cycleData.phases.accumulation?.start || cycleData.startDate);
         const cycleEnd = new Date(cycleData.phases.bearMarket?.end || cycleData.endDate);
-        return phaseStart >= cycleStart && phaseStart <= cycleEnd;
+        
+        // Check if phase overlaps with cycle
+        return phaseEnd >= cycleStart && phaseStart <= cycleEnd;
       })
     : cyclePhases;
   
@@ -134,6 +137,24 @@ export default function PriceChart({
   const cycleEndDate = cycleData 
     ? new Date(cycleData.phases.bearMarket?.end || cycleData.endDate)
     : null;
+  
+  // Calculate cycle bounds as percentages of total data range
+  const getCycleBounds = () => {
+    if (!cycleData || !cycleStartDate || !cycleEndDate || data.length === 0) {
+      return { start: 0, end: 100 };
+    }
+    
+    const dataStartDate = new Date(data[0].date);
+    const dataEndDate = new Date(data[data.length - 1].date);
+    const totalDataRange = dataEndDate.getTime() - dataStartDate.getTime();
+    
+    const cycleStart_percent = Math.max(0, (cycleStartDate.getTime() - dataStartDate.getTime()) / totalDataRange * 100);
+    const cycleEnd_percent = Math.min(100, (cycleEndDate.getTime() - dataStartDate.getTime()) / totalDataRange * 100);
+    
+    return { start: cycleStart_percent, end: cycleEnd_percent };
+  };
+  
+  const cycleBounds = getCycleBounds();
   
 
   // Function to zoom to a specific phase
@@ -191,16 +212,17 @@ export default function PriceChart({
     }
   }, [data, isManualZoom]);
 
-  // Update zoom range when cycle phases change (but not during dragging)
+  // Track when cycle selection changes (not just phase count)
+  const prevSelectedCycleRef = useRef<string | null>(null);
+  
   useEffect(() => {
-    if (filteredCyclePhases && filteredCyclePhases.length > 0 && data.length > 0 && !isDragging) {
-      // Set cycle zoom state (not manual zoom, but also not "all" view)
-      setIsManualZoom(true); // This will make "Alles" button gray
-      
-      // Reset zoom slider to full range (0-100%) for manual zooming within cycle
+    // Only reset when cycle SELECTION changes, not when phases change
+    if (selectedCycle && selectedCycle !== prevSelectedCycleRef.current) {
+      prevSelectedCycleRef.current = selectedCycle;
+      setIsManualZoom(true);
       setZoomRange({ start: 0, end: 100 });
     }
-  }, [filteredCyclePhases, data, isDragging]);
+  }, [selectedCycle]);
 
   // Function to generate dynamic x-axis labels based on zoom level
   const generateXAxisLabels = (data: PriceData[], chartWidth: number) => {
@@ -963,9 +985,13 @@ export default function PriceChart({
     const x = e.clientX - rect.left;
     const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
     
+    // If cycle is selected, constrain to cycle bounds
+    const minBound = selectedCycle ? cycleBounds.start : 0;
+    const maxBound = selectedCycle ? cycleBounds.end : 100;
+    
     if (isDragging === 'start') {
       const currentRange = zoomRangeRef.current;
-      const newStart = Math.min(percentage, currentRange.end - 2); // Minimum 2% range
+      const newStart = Math.min(Math.max(percentage, minBound), currentRange.end - 2); // Minimum 2% range
       const newRange = {
         start: newStart,
         end: currentRange.end
@@ -974,7 +1000,7 @@ export default function PriceChart({
       zoomRangeRef.current = newRange;
     } else if (isDragging === 'end') {
       const currentRange = zoomRangeRef.current;
-      const newEnd = Math.max(percentage, currentRange.start + 2); // Minimum 2% range
+      const newEnd = Math.max(Math.min(percentage, maxBound), currentRange.start + 2); // Minimum 2% range
       const newRange = {
         start: currentRange.start,
         end: newEnd
@@ -995,7 +1021,12 @@ export default function PriceChart({
         // Calculate offset from initial drag position
         const offset = percentage - dragStartRef.current.startPercent;
         const rangeWidth = dragStartRef.current.rangeEnd - dragStartRef.current.rangeStart;
-        const newStart = Math.max(0, Math.min(100 - rangeWidth, dragStartRef.current.rangeStart + offset));
+        
+        // Constrain to cycle bounds if cycle is selected
+        const constrainedMin = minBound;
+        const constrainedMax = maxBound - rangeWidth;
+        
+        const newStart = Math.max(constrainedMin, Math.min(constrainedMax, dragStartRef.current.rangeStart + offset));
         const newRange = {
           start: newStart,
           end: newStart + rangeWidth
@@ -1322,6 +1353,17 @@ export default function PriceChart({
               style={{ minWidth: '100%' }}
             >
               
+              {/* Cycle indicator - orange background when cycle is selected */}
+              {selectedCycle && cycleBounds.start < cycleBounds.end && (
+                <div
+                  className="absolute bg-orange-300 rounded-lg h-full opacity-60"
+                  style={{
+                    left: `${cycleBounds.start}%`,
+                    width: `${cycleBounds.end - cycleBounds.start}%`,
+                    zIndex: 0
+                  }}
+                />
+              )}
               
               {/* Selected range - draggable background */}
               <div 
