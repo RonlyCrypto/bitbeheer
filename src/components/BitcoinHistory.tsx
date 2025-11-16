@@ -191,7 +191,7 @@ export default function BitcoinHistory() {
 
   // Chart layer visibility - Inkoop ON by default, others OFF
   const [showPriceChart, setShowPriceChart] = useState(false);
-  const [showDCALayer, setShowDCALayer] = useState(true);  // ✅ Inkoop layer ON by default
+  const [showDCALayer, setShowDCALayer] = useState(false);  // Inkoop layer OFF by default
   const [showCyclePhases, setShowCyclePhases] = useState(false);
   const [showHalvingEvents, setShowHalvingEvents] = useState(false);
   const [showMajorEvents, setShowMajorEvents] = useState(false);
