@@ -757,7 +757,6 @@ export default function BitcoinHistory() {
             <button
               onClick={() => {
                 setTimeRange('3y');
-                setSelectedCycle(null);
                 setZoomStartDate(null);
                 setZoomEndDate(null);
                 setIsLiveMode(false);
@@ -773,7 +772,6 @@ export default function BitcoinHistory() {
             <button
               onClick={() => {
                 setTimeRange('5y');
-                setSelectedCycle(null);
                 setZoomStartDate(null);
                 setZoomEndDate(null);
                 setIsLiveMode(false);
