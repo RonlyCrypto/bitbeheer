@@ -1196,15 +1196,17 @@ export default function PriceChart({
                     // If cycle is selected, zoom to full cycle (cycleBounds)
                     setZoomRange({ start: 0, end: 100 });
                     setIsManualZoom(true);
+                    setSelectedPhaseType(null); // Clear selected phase
                   } else {
                     // If no cycle, reset to full chart view
                     setIsManualZoom(false);
                     setZoomRange({ start: 0, end: 100 });
+                    setSelectedPhaseType(null);
                     onTimeRangeChange?.('all');
                   }
                 }}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
-                  !isManualZoom && zoomRange.start === 0 && zoomRange.end === 100
+                  selectedPhaseType === null && zoomRange.start === 0 && zoomRange.end === 100
                     ? 'bg-orange-500 text-white border-orange-500 shadow-md'
                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
                 }`}
@@ -1272,8 +1274,8 @@ export default function PriceChart({
 
                   if (!phaseConfig) return null;
 
-                  // Check if this phase type is currently active (simplified)
-                  const isActive = isManualZoom && zoomRange.start > 0 && zoomRange.end < 100;
+                  // Check if this phase type is currently selected
+                  const isActive = selectedPhaseType === type;
 
                   // Function to zoom to a specific phase
                   const zoomToPhaseType = (targetPhase: CyclePhase) => {
@@ -1291,6 +1293,7 @@ export default function PriceChart({
                     
                     setZoomRange({ start: startPercent, end: endPercent });
                     setIsManualZoom(true);
+                    setSelectedPhaseType(type); // Mark this phase type as selected
                     // Don't call onTimeRangeChange - keep cycle selection active
                     setShowPhaseDropdown({ ...showPhaseDropdown, [type]: false });
                   };
