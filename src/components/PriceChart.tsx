@@ -1291,7 +1291,7 @@ export default function PriceChart({
                     
                     setZoomRange({ start: startPercent, end: endPercent });
                     setIsManualZoom(true);
-                    onTimeRangeChange?.('all');
+                    // Don't call onTimeRangeChange - keep cycle selection active
                     setShowPhaseDropdown({ ...showPhaseDropdown, [type]: false });
                   };
 
