@@ -1,0 +1,53 @@
+name: Daily Bitcoin Price Sync
+
+on:
+  schedule:
+    # Every day at 00:01 UTC
+    - cron: '1 0 * * *'
+  
+  # Allow manual trigger from GitHub Actions tab
+  workflow_dispatch:
+
+jobs:
+  sync-prices:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Trigger daily price sync
+        run: |
+          echo "🚀 Triggering daily Bitcoin price sync..."
+          
+          RESPONSE=$(curl -s -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -w "\n%{http_code}" \
+            ${{ secrets.SUPABASE_URL }}/functions/v1/daily-price-sync)
+          
+          # Extract HTTP status code (last line)
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          # Extract response body (all but last line)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+          
+          echo "📊 Response: $BODY"
+          echo "📡 HTTP Status: $HTTP_CODE"
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Price sync completed successfully!"
+            exit 0
+          else
+            echo "❌ Price sync failed with status $HTTP_CODE"
+            echo "Response: $BODY"
+            exit 1
+          fi
+      
+      - name: Log completion
+        if: success()
+        run: echo "✨ Daily price sync completed at $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+      
+      - name: Log failure
+        if: failure()
+        run: echo "⚠️ Daily price sync failed at $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+
