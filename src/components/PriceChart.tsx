@@ -793,7 +793,7 @@ export default function PriceChart({
       });
     }
 
-  }, [data, height, showGrid, color, purchasePoints, averageBuyPrice, minMaxLines, halvingEvents, majorEvents, purchaseDetails, cyclePhases, highlightedEvent]);
+  }, [data, height, showGrid, color, purchasePoints, averageBuyPrice, minMaxLines, halvingEvents, majorEvents, purchaseDetails, cyclePhases, highlightedEvent, zoomRange]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
