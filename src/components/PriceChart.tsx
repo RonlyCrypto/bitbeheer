@@ -1189,13 +1189,19 @@ export default function PriceChart({
             
             {/* Market Phase Buttons */}
             <div className="flex gap-2 mb-3 flex-wrap">
-              {/* Alles button */}
+              {/* Full Cycle / Alles button */}
               <button
                 onClick={() => {
-                  // Reset to full view when "Alles" is clicked
-                  setIsManualZoom(false);
-                  setZoomRange({ start: 0, end: 100 });
-                  onTimeRangeChange?.('all');
+                  if (selectedCycle) {
+                    // If cycle is selected, zoom to full cycle (cycleBounds)
+                    setZoomRange({ start: 0, end: 100 });
+                    setIsManualZoom(true);
+                  } else {
+                    // If no cycle, reset to full chart view
+                    setIsManualZoom(false);
+                    setZoomRange({ start: 0, end: 100 });
+                    onTimeRangeChange?.('all');
+                  }
                 }}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
                   !isManualZoom && zoomRange.start === 0 && zoomRange.end === 100
@@ -1203,7 +1209,7 @@ export default function PriceChart({
                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
                 }`}
               >
-                Alles
+                {selectedCycle ? 'Full Cycle' : 'Alles'}
               </button>
               
               {/* Market Phase Buttons */}
