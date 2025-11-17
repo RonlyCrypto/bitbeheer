@@ -140,35 +140,35 @@ const bitcoinCycles = [
     description: 'Accumulatie: $150 → $400 | Bull: $400 → $19,700 | Bear: $19,700 → $3,200',
     halving: '2016-07-09',
     phases: {
-      accumulation: { start: '2015-01-14', end: '2016-05-01', priceRange: '$150 → $400', type: 'accumulation' },
-      bullRun: { start: '2016-05-01', end: '2017-12-17', priceRange: '$400 → $19,700', type: 'bullRun' },
+      accumulation: { start: '2015-01-01', end: '2016-07-01', priceRange: '$150 → $400', type: 'accumulation' },
+      bullRun: { start: '2016-07-01', end: '2017-12-17', priceRange: '$400 → $19,700', type: 'bullRun' },
       bearMarket: { start: '2017-12-18', end: '2018-12-15', priceRange: '$19,700 → $3,200', type: 'bearMarket' }
     }
   },
   {
     id: 'cycle3',
     name: '3e Cycle', 
-    startYear: 2018,
-    endYear: 2021,
+    startYear: 2019,
+    endYear: 2022,
     description: 'Accumulatie: $3,200 → $7,000 | Bull: $7,000 → $69,000 | Bear: $69,000 → $15,500',
     halving: '2020-05-11',
     phases: {
-      accumulation: { start: '2018-12-15', end: '2019-10-31', priceRange: '$3,200 → $7,000', type: 'accumulation' },
-      bullRun: { start: '2019-10-31', end: '2021-11-10', priceRange: '$7,000 → $69,000', type: 'bullRun' },
+      accumulation: { start: '2019-01-01', end: '2020-03-01', priceRange: '$3,200 → $7,000', type: 'accumulation' },
+      bullRun: { start: '2020-03-01', end: '2021-11-10', priceRange: '$7,000 → $69,000', type: 'bullRun' },
       bearMarket: { start: '2021-11-11', end: '2022-12-30', priceRange: '$69,000 → $15,500', type: 'bearMarket' }
     }
   },
   {
     id: 'cycle4',
     name: '4e Cycle',
-    startYear: 2022,
+    startYear: 2023,
     endYear: 2026,
     description: 'Accumulatie: $16,000 → $30,000 | Bull: Nov 2023 → midden 2025 | Bear: eind 2025 → 2026',
     halving: '2024-04-19',
     phases: {
-      accumulation: { start: '2022-12-30', end: '2023-10-31', priceRange: '$16,000 → $30,000', type: 'accumulation' },
-      bullRun: { start: '2023-10-31', end: '2025-06-30', priceRange: 'Bull Run richting top', type: 'bullRun' },
-      bearMarket: { start: '2025-07-01', end: '2026-12-31', priceRange: 'Bear Market cicle', type: 'bearMarket' }
+      accumulation: { start: '2023-01-01', end: '2023-10-31', priceRange: '$16,000 → $30,000', type: 'accumulation' },
+      bullRun: { start: '2023-10-31', end: '2025-12-31', priceRange: 'Verwachte top: midden 2025', type: 'bullRun' },
+      bearMarket: { start: '2025-12-31', end: '2026-12-31', priceRange: 'Verwacht eind 2025', type: 'bearMarket' }
     }
   }
 ];
