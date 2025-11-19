@@ -62,12 +62,15 @@ export default function PortfolioPage() {
   useEffect(() => {
     const loadWallets = async () => {
       if (!effectiveUserEmail) {
+        console.log('⚠️ No email provided for wallet loading');
         setLoadingWallets(false);
         return;
       }
 
       try {
         setLoadingWallets(true);
+        console.log(`🔄 Loading wallets for email: ${effectiveUserEmail}`);
+        
         const { data: walletsData, error } = await supabase
           .from('wallets')
           .select('*')
@@ -75,14 +78,14 @@ export default function PortfolioPage() {
           .order('created_at', { ascending: false });
 
         if (error) {
-          console.error('Error loading wallets:', error);
+          console.error('❌ Error loading wallets:', error);
           setWallets([]);
           setLoadingWallets(false);
           return;
         }
 
         if (walletsData && walletsData.length > 0) {
-          console.log('📦 Loaded wallets from Supabase:', walletsData.length);
+          console.log(`📦 Loaded ${walletsData.length} wallet(s) from Supabase`, walletsData);
           // Convert Supabase wallet data to WalletData format
           const walletsList: WalletData[] = await Promise.all(
             walletsData.map(async (wallet: any) => {
@@ -440,13 +443,25 @@ export default function PortfolioPage() {
       <div className="container mx-auto px-4 py-6 md:py-12 pb-20 md:pb-12">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Bitcoin Portfolio Beheer
-            </h1>
-            <p className="text-xl text-gray-600">
-              Koppel je Bitcoin wallets en bekijk je inkoop geschiedenis op de chart
-            </p>
+          <div className="mb-8 flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                Bitcoin Portfolio Beheer
+              </h1>
+              <p className="text-xl text-gray-600">
+                Koppel je Bitcoin wallets en bekijk je inkoop geschiedenis op de chart
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                console.log('🔄 Manual wallet refresh triggered');
+                window.location.reload();
+              }}
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Herlaad pagina"
+            >
+              <RefreshCw className="w-6 h-6" />
+            </button>
           </div>
 
           {/* Stats Cards */}
