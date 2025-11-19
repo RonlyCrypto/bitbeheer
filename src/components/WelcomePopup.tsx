@@ -78,7 +78,7 @@ export default function WelcomePopup({ userName, onClose }: WelcomePopupProps) {
                 <span className="text-orange-500 text-xl">🛠️</span>
                 <div>
                   <h5 className="font-medium text-gray-800">Tools & Resources</h5>
-                  <p className="text-sm text-gray-600">Toegang tot alle Bitcoin tools, charts en educatieve content</p>
+                  <p className="text-sm text-gray-600">Je kennis opdoen van amatuer naar ervaren Bitcoin belegger</p>
                 </div>
               </div>
             </div>
@@ -99,7 +99,7 @@ export default function WelcomePopup({ userName, onClose }: WelcomePopupProps) {
 
           {/* Contact info */}
           <div className="text-center bg-gray-100 rounded-lg p-4">
-            <h4 className="font-semibold text-gray-800 mb-2">📞 Direct Contact</h4>
+            <h4 className="font-semibold text-gray-800 mb-2">💬 Direct Contact</h4>
             <p className="text-sm text-gray-600 mb-2">
               Heb je vragen? Giovanni staat klaar om je te helpen!
             </p>

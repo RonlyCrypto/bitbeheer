@@ -56,13 +56,9 @@ const BitcoinLivePrice: React.FC = () => {
         return;
       }
 
-      // Last resort: use cached/default price
-      if (!price) {
-        setPrice({
-          price: currency === 'EUR' ? 95000 : 103000,
-          change24h: 0,
-          changePercent24h: 0
-        });
+      // Last resort: show error state - don't use mock prices
+      if (!price && !error) {
+        setError('Kon Bitcoin prijs niet laden uit cache of API');
       }
     } catch (err) {
       setError('Kon prijs niet laden');

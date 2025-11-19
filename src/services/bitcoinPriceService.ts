@@ -41,17 +41,9 @@ export class BitcoinPriceService {
         return this.priceCache;
       }
       
-      // Return fallback price
-      const fallbackPrice: BitcoinPrice = {
-        price: 97000,
-        change24h: 0,
-        changePercent24h: 0,
-        lastUpdated: new Date().toISOString()
-      };
-      
-      this.priceCache = fallbackPrice;
-      this.lastFetch = now;
-      return fallbackPrice;
+      // Return empty state instead of mock price - let component handle error
+      throw new Error('Unable to fetch Bitcoin price from any source');
+      // Note: Component using this service should handle the error gracefully
     }
   }
 

@@ -157,6 +157,35 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
     loadHistoricalData();
   }, [currency]);
 
+  // Resize canvas based on container width (responsive)
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const updateCanvasSize = () => {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      
+      // Set canvas resolution to match display size
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(500 * dpr);
+      
+      // Scale context to ensure correct drawing
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.scale(dpr, dpr);
+      }
+    };
+
+    updateCanvasSize();
+    
+    // Handle window resize
+    const resizeObserver = new ResizeObserver(updateCanvasSize);
+    resizeObserver.observe(canvas.parentElement!);
+    
+    return () => resizeObserver.disconnect();
+  }, []);
+
   // Teken de chart
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -165,8 +194,9 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const width = canvas.width;
-    const height = canvas.height;
+    const dpr = window.devicePixelRatio || 1;
+    const width = canvas.width / dpr;
+    const height = canvas.height / dpr;
 
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
@@ -298,20 +328,37 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
             
             // Teken cirkel (groen voor winst, rood voor verlies)
             const profit = tx.profit !== undefined ? tx.profit : (tx.currentValue || 0) - (txPrice * (tx.value || 0) / 100000000);
-            ctx.fillStyle = profit >= 0 ? '#10b981' : '#ef4444';
+            const isProfit = profit >= 0;
+            const circleColor = isProfit ? '#10b981' : '#ef4444';
+            
+            // Teken grote achtergrond cirkel voor extra zichtbaarheid
+            ctx.fillStyle = circleColor;
+            ctx.globalAlpha = 0.2;
             ctx.beginPath();
-            ctx.arc(x, y, 10, 0, 2 * Math.PI); // Larger radius for visibility
+            ctx.arc(x, y, 16, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            
+            // Teken hoofdcirkel (groter: 14px i.p.v. 10px)
+            ctx.fillStyle = circleColor;
+            ctx.beginPath();
+            ctx.arc(x, y, 14, 0, 2 * Math.PI);
             ctx.fill();
             
-            // Teken witte border voor betere zichtbaarheid
-            ctx.strokeStyle = 'white';
-            ctx.lineWidth = 3;
+            // Teken dikke witte/gele border voor maximale zichtbaarheid
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            
+            // Teken dunne outer border voor contrast
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.lineWidth = 1;
             ctx.stroke();
             
             // Teken nummer (optioneel - alleen als er niet te veel transacties zijn)
             if (sortedTransactions.length <= 20) {
               ctx.fillStyle = 'white';
-              ctx.font = 'bold 11px Arial';
+              ctx.font = 'bold 12px Arial';
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
               ctx.fillText((index + 1).toString(), x, y);
@@ -357,12 +404,21 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
         const x = ((txTime - chartStartTime) / chartTimeRange) * width;
         const y = height - ((hoveredTransaction.price - minPrice) / priceRange) * height;
         
-        // Teken highlight cirkel
+        // Teken highlight cirkel (groter voor zichtbaarheid)
         ctx.strokeStyle = '#fbbf24';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.arc(x, y, 8, 0, 2 * Math.PI);
+        ctx.arc(x, y, 20, 0, 2 * Math.PI);
         ctx.stroke();
+        
+        // Teken tweede highlight ring
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        ctx.arc(x, y, 26, 0, 2 * Math.PI);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
       }
     }
 
@@ -373,8 +429,11 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const dpr = window.devicePixelRatio || 1;
+    
+    // Corrigeer voor DPR scaling
+    const x = (e.clientX - rect.left) * dpr;
+    const y = (e.clientY - rect.top) * dpr;
 
     // Check of mouse over transaction point
     const now = Date.now();
@@ -410,18 +469,18 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
       const txTime = tx.time < 10000000000 ? tx.time * 1000 : tx.time;
       
       if (txTime >= chartStartTime && txTime <= chartEndTime) {
-        const txX = ((txTime - chartStartTime) / chartTimeRange) * canvas.width;
+        const txX = ((txTime - chartStartTime) / chartTimeRange) * (canvas.width / dpr) * dpr;
         
         // Use transaction price if available, otherwise use current price
         const txPrice = tx.price || currentPrice;
         const clampedPrice = Math.max(minPrice, Math.min(maxPrice, txPrice));
         const txY = priceRange > 0 
-          ? canvas.height - ((clampedPrice - minPrice) / priceRange) * canvas.height
-          : canvas.height / 2;
+          ? (canvas.height / dpr - ((clampedPrice - minPrice) / priceRange) * (canvas.height / dpr)) * dpr
+          : (canvas.height / dpr / 2) * dpr;
         
-        // Increase hover radius for better UX (12px instead of 10px)
+        // Increase hover radius for better UX (12px * DPR for scaling)
         const distance = Math.sqrt((x - txX) ** 2 + (y - txY) ** 2);
-        if (distance <= 12) {
+        if (distance <= 12 * dpr) {
           foundTransaction = tx;
         }
       }
@@ -485,12 +544,13 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
       </div>
 
       {/* Chart Canvas */}
-      <div className="relative">
+      <div className="relative w-full bg-gray-50 rounded-lg p-4 border border-gray-200">
         <canvas
           ref={canvasRef}
           width={800}
-          height={400}
-          className="w-full h-64 border border-gray-200 rounded-lg cursor-crosshair"
+          height={500}
+          className="w-full border border-gray-200 rounded-lg cursor-crosshair"
+          style={{ display: 'block', maxHeight: '500px', height: 'auto' }}
           onMouseMove={handleMouseMove}
           onClick={() => {
             if (hoveredTransaction) {
@@ -523,24 +583,24 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
       {/* Chart Info */}
       <div className="mt-4 text-sm text-gray-600">
         {transactions.length > 0 ? (
-          <div className="flex items-center gap-4">
-            <p className="flex-1">Hover over de groene/rode punten om transactie details te zien. Klik om meer informatie te bekijken.</p>
-            <div className="flex items-center gap-4 text-xs">
+          <div className="flex flex-col gap-3">
+            <p className="text-blue-600 font-medium">💡 Hover over de cirkels op de chart voor transactie details. De punten zijn genummerd!</p>
+            <div className="flex items-center gap-6 text-xs">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span>Winstgevend</span>
+                <div className="w-4 h-4 rounded-full bg-green-500 border-2 border-white shadow-md"></div>
+                <span className="text-gray-700"><strong>Groen</strong> = Winstgevend</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <span>Verliesgevend</span>
+                <div className="w-4 h-4 rounded-full bg-red-500 border-2 border-white shadow-md"></div>
+                <span className="text-gray-700"><strong>Rood</strong> = Verliesgevend</span>
               </div>
-              <div className="text-gray-500">
-                {transactions.length} transactie{transactions.length !== 1 ? 's' : ''} op chart
+              <div className="text-gray-500 ml-auto">
+                ✅ <strong>{transactions.length}</strong> transactie{transactions.length !== 1 ? 's' : ''} zichtbaar op chart
               </div>
             </div>
           </div>
         ) : (
-          <p>Voeg een wallet toe met transacties om je inkoop punten op de chart te zien.</p>
+          <p className="text-orange-600">Voeg een wallet toe met transacties om je inkoop punten op de chart te zien.</p>
         )}
       </div>
     </div>
