@@ -147,69 +147,42 @@ class BitcoinApiService {
               continue;
             }
             
-            // Haal de BTC prijs op voor de exacte datum van de transactie
+            // Haal de BTC prijs op voor de exacte datum van de transactie (ALLEEN uit Supabase)
             let priceAtTime: number | null = null;
             
             try {
               const txDate = new Date(blockTime * 1000);
               const dateStr = txDate.toISOString().split('T')[0]; // YYYY-MM-DD formaat
               
-              // Probeer eerst onze eigen database (Supabase)
+              // Haal prijs uit onze eigen Supabase database
               try {
                 const { supabase } = await import('../lib/supabase');
                 const { data: priceData, error: supabaseErr } = await supabase
                   .from('bitcoin_price_data')
                   .select('price_usd')
                   .eq('date', dateStr)
-                  .maybeSingle(); // Use maybeSingle instead of single for better error handling
+                  .maybeSingle();
                 
                 if (priceData?.price_usd) {
                   priceAtTime = priceData.price_usd;
                   console.log(`✓ BTC Price op ${dateStr} (Supabase): $${priceAtTime}`);
-                } else if (supabaseErr) {
-                  console.warn(`⚠️ Supabase error for ${dateStr}:`, supabaseErr.message);
+                } else {
+                  // Prijs niet gevonden in onze database - use current price as fallback
+                  console.log(`ℹ️ Prijs voor ${dateStr} niet in database, gebruik huidige prijs: $${currentPrice}`);
+                  priceAtTime = currentPrice;
                 }
               } catch (supabaseError) {
-                console.warn(`⚠️ Supabase price fetch failed for ${dateStr}`);
-              }
-              
-              // Fallback naar CoinGecko als niet in Supabase
-              if (!priceAtTime) {
-                try {
-                  const priceResponse = await fetch(
-                    `https://api.coingecko.com/api/v3/coins/bitcoin/history?date=${dateStr}&localization=false`,
-                    { signal: AbortSignal.timeout(5000) } // 5 second timeout
-                  );
-                  
-                  if (!priceResponse.ok) {
-                    console.warn(`⚠️ CoinGecko HTTP ${priceResponse.status} for ${dateStr}`);
-                  } else {
-                    const cgData = await priceResponse.json();
-                    if (cgData.market_data?.current_price?.usd) {
-                      priceAtTime = cgData.market_data.current_price.usd;
-                      console.log(`✓ BTC Price op ${dateStr} (CoinGecko): $${priceAtTime}`);
-                    }
-                  }
-                } catch (cgError: any) {
-                  // Silent fail - we'll use alternative approach
-                  if (cgError?.name !== 'AbortError') {
-                    console.warn(`⚠️ CoinGecko fetch skipped for ${dateStr}`);
-                  }
-                }
-              }
-              
-              // Last resort: Use current price as fallback with warning
-              if (!priceAtTime) {
-                console.log(`ℹ️ Using current price ($${currentPrice}) as fallback for ${dateStr}`);
-                priceAtTime = currentPrice; // Use current price as fallback
+                console.warn(`⚠️ Supabase price fetch failed for ${dateStr}, using current price: $${currentPrice}`);
+                priceAtTime = currentPrice;
               }
             } catch (e) {
               console.error('Error fetching historical price:', e);
+              priceAtTime = currentPrice; // Fallback
             }
             
-            // Now we always have a price (current price as fallback)
-            if (!priceAtTime) {
-              console.error(`❌ Critical: No price available for ${tx.txid}`);
+            // Nu hebben we ALTIJD een prijs
+            if (!priceAtTime || priceAtTime <= 0) {
+              console.error(`❌ Critical: Invalid price for ${tx.txid}`);
               continue;
             }
             
