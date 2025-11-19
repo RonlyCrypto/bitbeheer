@@ -40,15 +40,44 @@ class BitcoinApiService {
       const walletResponse = await fetch(`${this.baseUrl}/address/${address}`);
       const walletData = await walletResponse.json();
 
-      // Haal transacties op van Blockstream (max 25 per page)
-      console.log(`🔄 Fetching transactions (limit: ${limit}) for ${address}...`);
+      // Haal ALLE transacties op van Blockstream (paginate through all results)
+      console.log(`🔄 Fetching ALL transactions for ${address}...`);
       
-      const url = `${this.baseUrl}/address/${address}/txs`;
-      const response = await fetch(url);
-      const transactions = await response.json();
+      let allTransactions = [];
+      let afterTxid: string | null = null;
+      let page = 0;
       
-      if (!Array.isArray(transactions)) {
-        console.warn(`⚠️ Unexpected response format for ${address}`);
+      // Keep fetching until we have all transactions
+      while (true) {
+        page++;
+        const url = afterTxid 
+          ? `${this.baseUrl}/address/${address}/txs?after_txid=${afterTxid}`
+          : `${this.baseUrl}/address/${address}/txs`;
+        
+        console.log(`📄 Fetching page ${page}...`);
+        const response = await fetch(url);
+        const pageTransactions = await response.json();
+        
+        if (!Array.isArray(pageTransactions) || pageTransactions.length === 0) {
+          break;
+        }
+        
+        allTransactions = allTransactions.concat(pageTransactions);
+        console.log(`📄 Page ${page}: got ${pageTransactions.length} transactions (total: ${allTransactions.length})`);
+        
+        // If we got less than 25, we've reached the end
+        if (pageTransactions.length < 25) {
+          break;
+        }
+        
+        // Set up next page
+        afterTxid = pageTransactions[pageTransactions.length - 1].txid;
+      }
+      
+      const transactions = allTransactions;
+      
+      if (!Array.isArray(transactions) || transactions.length === 0) {
+        console.warn(`⚠️ No transactions found for ${address}`);
         return {
           address,
           balance: 0,
@@ -61,7 +90,7 @@ class BitcoinApiService {
         };
       }
       
-      console.log(`📄 Fetched ${transactions.length} transaction hashes from blockchain (will process first ${limit})`);
+      console.log(`📄 Fetched ${transactions.length} transaction hashes from blockchain (will process all of them)`);
 
       // Verwerk transacties
       const processedTransactions: BitcoinTransaction[] = [];
@@ -71,9 +100,9 @@ class BitcoinApiService {
       // Get current price once
       const currentPrice = await this.getCurrentPrice();
       
-      console.log(`🔍 Processing first ${Math.min(limit, transactions.length)} transactions from blockchain...`);
+      console.log(`🔍 Processing ALL ${transactions.length} transactions from blockchain...`);
       
-      for (let i = 0; i < Math.min(limit, transactions.length); i++) {
+      for (let i = 0; i < transactions.length; i++) {
         const tx = transactions[i]; // Verwerk alleen eerste 'limit' transacties
         try {
           const txResponse = await fetch(`${this.baseUrl}/tx/${tx.txid}`);
