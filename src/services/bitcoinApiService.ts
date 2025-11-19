@@ -139,12 +139,18 @@ class BitcoinApiService {
             const totalReceived = relevantOutputs.reduce((sum: number, vout: any) => sum + vout.value, 0);
             const valueInBTC = totalReceived / 100000000;
             
-            // Gebruik block_time uit status (dit is de correcte timestamp)
-            const blockTime = txData.status?.block_time;
+            // Gebruik block_time (confirmed) of tx.time (unconfirmed) als fallback
+            let blockTime = txData.status?.block_time;
+            
+            // Fallback naar tx.time als block_time niet beschikbaar (unconfirmed)
             if (!blockTime) {
-              console.warn(`⏭️ Skipping ${tx.txid} - no block time`);
-              skippedCount++;
-              continue;
+              blockTime = tx.time || txData.time;
+              if (!blockTime) {
+                console.warn(`⏭️ Skipping ${tx.txid} - no timestamp at all`);
+                skippedCount++;
+                continue;
+              }
+              console.log(`ℹ️ Using tx.time for unconfirmed tx ${tx.txid.slice(0, 8)}...`);
             }
             
             // Haal de BTC prijs op voor de exacte datum van de transactie (ALLEEN uit Supabase)
