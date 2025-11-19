@@ -46,32 +46,52 @@ class BitcoinApiService {
       let allTransactions = [];
       let afterTxid: string | null = null;
       let page = 0;
+      let maxPages = 100; // Safety limit
       
       // Keep fetching until we have all transactions
-      while (true) {
+      while (page < maxPages) {
         page++;
         const url = afterTxid 
           ? `${this.baseUrl}/address/${address}/txs?after_txid=${afterTxid}`
           : `${this.baseUrl}/address/${address}/txs`;
         
         console.log(`📄 Fetching page ${page}...`);
-        const response = await fetch(url);
-        const pageTransactions = await response.json();
         
-        if (!Array.isArray(pageTransactions) || pageTransactions.length === 0) {
+        try {
+          const response = await fetch(url);
+          if (!response.ok) {
+            console.error(`❌ Blockstream API error on page ${page}: ${response.status}`);
+            break;
+          }
+          
+          const pageTransactions = await response.json();
+          
+          if (!Array.isArray(pageTransactions)) {
+            console.warn(`⚠️ Page ${page} returned non-array response:`, pageTransactions);
+            break;
+          }
+          
+          if (pageTransactions.length === 0) {
+            console.log(`📄 Page ${page}: got 0 transactions - end of results`);
+            break;
+          }
+          
+          allTransactions = allTransactions.concat(pageTransactions);
+          console.log(`📄 Page ${page}: got ${pageTransactions.length} transactions (total: ${allTransactions.length})`);
+          
+          // If we got less than 25, we've reached the end
+          if (pageTransactions.length < 25) {
+            console.log(`📄 Page ${page} returned < 25 transactions, end of results`);
+            break;
+          }
+          
+          // Set up next page - use last txid
+          afterTxid = pageTransactions[pageTransactions.length - 1].txid;
+          console.log(`📄 Next page will use after_txid: ${afterTxid.slice(0, 8)}...`);
+        } catch (paginationError) {
+          console.error(`❌ Error fetching page ${page}:`, paginationError);
           break;
         }
-        
-        allTransactions = allTransactions.concat(pageTransactions);
-        console.log(`📄 Page ${page}: got ${pageTransactions.length} transactions (total: ${allTransactions.length})`);
-        
-        // If we got less than 25, we've reached the end
-        if (pageTransactions.length < 25) {
-          break;
-        }
-        
-        // Set up next page
-        afterTxid = pageTransactions[pageTransactions.length - 1].txid;
       }
       
       const transactions = allTransactions;
