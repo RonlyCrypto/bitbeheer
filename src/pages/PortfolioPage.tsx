@@ -51,6 +51,7 @@ export default function PortfolioPage() {
   const [selectedTransaction, setSelectedTransaction] = useState<BitcoinTransaction | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Get effective user email (considering impersonation)
   const effectiveUserEmail = (isImpersonating && impersonatedUser) 
@@ -117,7 +118,8 @@ export default function PortfolioPage() {
               } else {
                 // Only fetch from API if we don't have balance data
                 try {
-                  realData = await bitcoinApiService.getWalletData(wallet.address);
+                  // Initially load only first 25 transactions for faster UX
+                  realData = await bitcoinApiService.getWalletData(wallet.address, 25);
                 } catch (error) {
                   console.error('Error fetching wallet data from API:', error);
                   // Fallback: use basic data from database
@@ -237,6 +239,41 @@ export default function PortfolioPage() {
     updateTransactions();
   }, [wallets]);
 
+  // Lazy load next batch of transactions
+  const loadMoreTransactions = async () => {
+    const nextPage = currentPage + 1;
+    const maxPages = Math.ceil(allTransactions.length / itemsPerPage);
+    
+    // Check if we need to load more data
+    if (nextPage > maxPages) {
+      console.log('🔄 Loading next batch of transactions...');
+      setIsLoadingMore(true);
+      
+      try {
+        for (const wallet of wallets) {
+          if (wallet.realData?.address) {
+            try {
+              const moreData = await bitcoinApiService.getTransactionsPage(wallet.realData.address, nextPage, itemsPerPage);
+              
+              if (moreData.length > 0) {
+                setAllTransactions(prev => [...prev, ...moreData]);
+                console.log(`✅ Loaded ${moreData.length} more transactions`);
+              } else {
+                console.log('✓ No more transactions to load');
+              }
+            } catch (error) {
+              console.error('Error loading more transactions:', error);
+            }
+          }
+        }
+      } finally {
+        setIsLoadingMore(false);
+      }
+    }
+    
+    setCurrentPage(nextPage);
+  };
+
   // Refresh transaction prices from blockchain
   const refreshTransactionPrices = async () => {
     setLoadingWallets(true);
@@ -245,8 +282,8 @@ export default function PortfolioPage() {
       
       for (const wallet of wallets) {
         try {
-          // Fetch fresh data from blockchain
-          const freshData = await bitcoinApiService.getWalletData(wallet.address);
+          // Fetch fresh data from blockchain (get current amount of transactions)
+          const freshData = await bitcoinApiService.getWalletData(wallet.address, allTransactions.length);
           
           // Update Supabase with fresh wallet data
           await supabase
@@ -280,7 +317,7 @@ export default function PortfolioPage() {
     }
   };
 
-  const addWallet = async () => {
+      const addWallet = async () => {
     if (newWalletAddress && newWalletName) {
       // Valideer Bitcoin adres
       if (!bitcoinApiService.validateBitcoinAddress(newWalletAddress)) {
@@ -290,8 +327,8 @@ export default function PortfolioPage() {
 
       setLoading(true);
       try {
-        // Haal echte wallet data op
-        const realData = await bitcoinApiService.getWalletData(newWalletAddress);
+        // Initially load only first 25 transactions for faster UX
+        const realData = await bitcoinApiService.getWalletData(newWalletAddress, 25);
         
         const newWallet: WalletData = {
           id: Date.now().toString(),
@@ -752,11 +789,11 @@ export default function PortfolioPage() {
                     ← Vorige
                   </button>
                   <button
-                    onClick={() => setCurrentPage(Math.min(Math.ceil(allTransactions.length / itemsPerPage), currentPage + 1))}
-                    disabled={currentPage >= Math.ceil(allTransactions.length / itemsPerPage)}
+                    onClick={loadMoreTransactions}
+                    disabled={isLoadingMore}
                     className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                   >
-                    Volgende →
+                    {isLoadingMore ? 'Laden...' : 'Volgende →'}
                   </button>
                 </div>
               </div>
@@ -793,11 +830,11 @@ export default function PortfolioPage() {
                     ← Vorige
                   </button>
                   <button
-                    onClick={() => setCurrentPage(Math.min(Math.ceil(allTransactions.length / itemsPerPage), currentPage + 1))}
-                    disabled={currentPage >= Math.ceil(allTransactions.length / itemsPerPage)}
+                    onClick={loadMoreTransactions}
+                    disabled={isLoadingMore}
                     className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                   >
-                    Volgende →
+                    {isLoadingMore ? 'Laden...' : 'Volgende →'}
                   </button>
                 </div>
               </div>

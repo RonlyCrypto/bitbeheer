@@ -33,46 +33,35 @@ class BitcoinApiService {
   private baseUrl = 'https://blockstream.info/api';
   private priceUrl = 'https://api.coingecko.com/api/v3';
 
-  // Haal wallet data op van Blockstream API
-  async getWalletData(address: string): Promise<BitcoinWallet> {
+  // Haal wallet data op van Blockstream API (met lazy loading)
+  async getWalletData(address: string, limit: number = 25): Promise<BitcoinWallet> {
     try {
       // Haal wallet info op
       const walletResponse = await fetch(`${this.baseUrl}/address/${address}`);
       const walletData = await walletResponse.json();
 
-      // Haal ALLE transacties op (Blockstream retourneert max 25 per page)
-      let transactions: any[] = [];
-      let lastTxid: string | undefined;
-      let hasMore = true;
+      // Haal transacties op van Blockstream (max 25 per page)
+      console.log(`🔄 Fetching transactions (limit: ${limit}) for ${address}...`);
       
-      console.log(`🔄 Fetching all transactions for ${address}...`);
+      const url = `${this.baseUrl}/address/${address}/txs`;
+      const response = await fetch(url);
+      const transactions = await response.json();
       
-      while (hasMore) {
-        let url = `${this.baseUrl}/address/${address}/txs`;
-        if (lastTxid) {
-          url += `?after_txid=${lastTxid}`;
-        }
-        
-        const response = await fetch(url);
-        const pageData = await response.json();
-        
-        if (!Array.isArray(pageData) || pageData.length === 0) {
-          hasMore = false;
-          break;
-        }
-        
-        transactions.push(...pageData);
-        console.log(`📄 Fetched ${pageData.length} transactions (total: ${transactions.length})`);
-        
-        // Blockstream returns max 25 transactions per page
-        if (pageData.length < 25) {
-          hasMore = false;
-        } else {
-          lastTxid = pageData[pageData.length - 1].txid;
-        }
+      if (!Array.isArray(transactions)) {
+        console.warn(`⚠️ Unexpected response format for ${address}`);
+        return {
+          address,
+          balance: 0,
+          totalReceived: 0,
+          totalSent: 0,
+          transactionCount: 0,
+          firstSeen: Date.now(),
+          lastSeen: Date.now(),
+          transactions: []
+        };
       }
       
-      console.log(`✅ Fetched all ${transactions.length} transactions from blockchain`);
+      console.log(`📄 Fetched ${transactions.length} transaction hashes from blockchain (will process first ${limit})`);
 
       // Verwerk transacties
       const processedTransactions: BitcoinTransaction[] = [];
@@ -82,9 +71,10 @@ class BitcoinApiService {
       // Get current price once
       const currentPrice = await this.getCurrentPrice();
       
-      console.log(`🔍 Processing all ${transactions.length} transactions from blockchain...`);
+      console.log(`🔍 Processing first ${Math.min(limit, transactions.length)} transactions from blockchain...`);
       
-      for (const tx of transactions) { // Alle transacties verwerken
+      for (let i = 0; i < Math.min(limit, transactions.length); i++) {
+        const tx = transactions[i]; // Verwerk alleen eerste 'limit' transacties
         try {
           const txResponse = await fetch(`${this.baseUrl}/tx/${tx.txid}`);
           const txData = await txResponse.json();
@@ -204,6 +194,132 @@ class BitcoinApiService {
     } catch (error) {
       console.error('Error fetching wallet data:', error);
       throw new Error('Kon wallet data niet ophalen');
+    }
+  }
+
+  // Haal volgende batch transacties op (lazy loading)
+  async getTransactionsPage(address: string, page: number = 1, pageSize: number = 25): Promise<BitcoinTransaction[]> {
+    try {
+      const offset = (page - 1) * pageSize;
+      
+      console.log(`🔄 Loading transactions page ${page} (offset: ${offset}, limit: ${pageSize})...`);
+      
+      // Haal alle tx hashes op in één keer
+      const url = `${this.baseUrl}/address/${address}/txs`;
+      const allTxResponse = await fetch(url);
+      const allTxs = await allTxResponse.json();
+      
+      if (!Array.isArray(allTxs)) {
+        console.warn(`⚠️ No transactions for ${address}`);
+        return [];
+      }
+      
+      // Haal transactions voor deze pagina op
+      const pageTxs = allTxs.slice(offset, offset + pageSize);
+      
+      if (pageTxs.length === 0) {
+        console.log(`✓ No more transactions to load`);
+        return [];
+      }
+      
+      console.log(`📄 Processing ${pageTxs.length} transactions from page ${page}...`);
+      
+      const processedTransactions: BitcoinTransaction[] = [];
+      let skippedCount = 0;
+      let priceErrorCount = 0;
+      
+      const currentPrice = await this.getCurrentPrice();
+      
+      for (const tx of pageTxs) {
+        try {
+          const txResponse = await fetch(`${this.baseUrl}/tx/${tx.txid}`);
+          const txData = await txResponse.json();
+          
+          const relevantOutputs = txData.vout.filter((vout: any) => 
+            vout.scriptpubkey_address === address
+          );
+
+          if (relevantOutputs.length > 0) {
+            const totalReceived = relevantOutputs.reduce((sum: number, vout: any) => sum + vout.value, 0);
+            const valueInBTC = totalReceived / 100000000;
+            const blockTime = txData.status?.block_time;
+            
+            if (!blockTime) {
+              skippedCount++;
+              continue;
+            }
+            
+            let priceAtTime: number | null = null;
+            
+            try {
+              const txDate = new Date(blockTime * 1000);
+              const dateStr = txDate.toISOString().split('T')[0];
+              
+              try {
+                const { supabase } = await import('../lib/supabase');
+                const { data: priceData } = await supabase
+                  .from('bitcoin_price_data')
+                  .select('price_usd')
+                  .eq('date', dateStr)
+                  .single();
+                
+                if (priceData?.price_usd) {
+                  priceAtTime = priceData.price_usd;
+                }
+              } catch (supabaseError) {
+                // Fallback to CoinGecko
+                try {
+                  const priceResponse = await fetch(
+                    `https://api.coingecko.com/api/v3/coins/bitcoin/history?date=${dateStr}&localization=false`
+                  );
+                  const cgData = await priceResponse.json();
+                  
+                  if (cgData.market_data?.current_price?.usd) {
+                    priceAtTime = cgData.market_data.current_price.usd;
+                  }
+                } catch (cgError) {
+                  console.error(`Error fetching price for ${dateStr}:`, cgError);
+                }
+              }
+            } catch (e) {
+              console.error('Error fetching historical price:', e);
+            }
+            
+            if (!priceAtTime) {
+              priceErrorCount++;
+              continue;
+            }
+            
+            const currentValueUSD = valueInBTC * currentPrice;
+            const priceAtTimeUSD = valueInBTC * priceAtTime;
+            const profitUSD = currentValueUSD - priceAtTimeUSD;
+            const profitPercent = priceAtTime > 0 ? ((currentPrice - priceAtTime) / priceAtTime) * 100 : 0;
+            
+            processedTransactions.push({
+              hash: tx.txid,
+              time: blockTime,
+              value: totalReceived,
+              price: priceAtTime,
+              currentValue: currentValueUSD,
+              profit: profitUSD,
+              profitPercent: profitPercent,
+              valueInBTC: valueInBTC
+            });
+          } else {
+            skippedCount++;
+          }
+        } catch (error) {
+          console.error(`Error processing transaction ${tx.txid}:`, error);
+          skippedCount++;
+        }
+      }
+      
+      console.log(`✅ Processed ${processedTransactions.length} transactions from page ${page}`);
+      
+      return processedTransactions;
+    } catch (error) {
+      console.error('Error loading transactions page:', error);
+      throw error;
     }
   }
 
