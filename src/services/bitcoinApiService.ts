@@ -108,46 +108,59 @@ class BitcoinApiService {
               // Probeer eerst onze eigen database (Supabase)
               try {
                 const { supabase } = await import('../lib/supabase');
-                const { data: priceData } = await supabase
+                const { data: priceData, error: supabaseErr } = await supabase
                   .from('bitcoin_price_data')
                   .select('price_usd')
                   .eq('date', dateStr)
-                  .single();
+                  .maybeSingle(); // Use maybeSingle instead of single for better error handling
                 
                 if (priceData?.price_usd) {
                   priceAtTime = priceData.price_usd;
                   console.log(`✓ BTC Price op ${dateStr} (Supabase): $${priceAtTime}`);
+                } else if (supabaseErr) {
+                  console.warn(`⚠️ Supabase error for ${dateStr}:`, supabaseErr.message);
                 }
               } catch (supabaseError) {
-                console.warn(`⚠️ Supabase price fetch failed for ${dateStr}:`, supabaseError);
+                console.warn(`⚠️ Supabase price fetch failed for ${dateStr}`);
               }
               
               // Fallback naar CoinGecko als niet in Supabase
               if (!priceAtTime) {
                 try {
                   const priceResponse = await fetch(
-                    `https://api.coingecko.com/api/v3/coins/bitcoin/history?date=${dateStr}&localization=false`
+                    `https://api.coingecko.com/api/v3/coins/bitcoin/history?date=${dateStr}&localization=false`,
+                    { signal: AbortSignal.timeout(5000) } // 5 second timeout
                   );
-                  const cgData = await priceResponse.json();
                   
-                  if (cgData.market_data?.current_price?.usd) {
-                    priceAtTime = cgData.market_data.current_price.usd;
-                    console.log(`✓ BTC Price op ${dateStr} (CoinGecko): $${priceAtTime}`);
+                  if (!priceResponse.ok) {
+                    console.warn(`⚠️ CoinGecko HTTP ${priceResponse.status} for ${dateStr}`);
                   } else {
-                    console.warn(`⚠️ CoinGecko no data for ${dateStr}`);
+                    const cgData = await priceResponse.json();
+                    if (cgData.market_data?.current_price?.usd) {
+                      priceAtTime = cgData.market_data.current_price.usd;
+                      console.log(`✓ BTC Price op ${dateStr} (CoinGecko): $${priceAtTime}`);
+                    }
                   }
-                } catch (cgError) {
-                  console.error(`✗ CoinGecko fetch error for ${dateStr}:`, cgError);
+                } catch (cgError: any) {
+                  // Silent fail - we'll use alternative approach
+                  if (cgError?.name !== 'AbortError') {
+                    console.warn(`⚠️ CoinGecko fetch skipped for ${dateStr}`);
+                  }
                 }
+              }
+              
+              // Last resort: Use current price as fallback with warning
+              if (!priceAtTime) {
+                console.log(`ℹ️ Using current price ($${currentPrice}) as fallback for ${dateStr}`);
+                priceAtTime = currentPrice; // Use current price as fallback
               }
             } catch (e) {
               console.error('Error fetching historical price:', e);
             }
             
-            // Skip transaction if price couldn't be determined
+            // Now we always have a price (current price as fallback)
             if (!priceAtTime) {
-              console.warn(`⏭️ Skipping ${tx.txid} - price not available for ${new Date(blockTime * 1000).toISOString()}`);
-              priceErrorCount++;
+              console.error(`❌ Critical: No price available for ${tx.txid}`);
               continue;
             }
             
