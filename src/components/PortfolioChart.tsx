@@ -96,10 +96,29 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
   }, [currency]);
 
   // Convert transactions to purchase points for the chart
-  const purchasePoints = showTransactions ? transactions.map(tx => ({
-    date: new Date(tx.time * 1000).toISOString().split('T')[0],
-    price: tx.price
-  })) : [];
+  const purchasePoints = showTransactions ? transactions.map(tx => {
+    // Validate transaction data
+    if (!tx.time || !tx.price || isNaN(tx.time) || isNaN(tx.price)) {
+      console.warn(`⚠️ Invalid transaction data:`, tx);
+      return null;
+    }
+    return {
+      date: new Date(tx.time * 1000).toISOString().split('T')[0],
+      price: tx.price
+    };
+  }).filter(Boolean) as Array<{ date: string; price: number }> : [];
+
+  if (showTransactions && transactions.length > 0) {
+    console.log(`📊 Purchase Points Summary:`, {
+      totalTransactions: transactions.length,
+      validPurchasePoints: purchasePoints.length,
+      sampleTransactions: transactions.slice(0, 3).map(t => ({
+        time: t.time,
+        price: t.price,
+        date: new Date(t.time * 1000).toISOString().split('T')[0]
+      }))
+    });
+  }
 
   // Filter chart data based on time range
   const getFilteredChartData = () => {
