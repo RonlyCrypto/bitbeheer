@@ -179,7 +179,10 @@ class BitcoinApiService {
       
       if (!error && data) {
         // Use USD price if available, otherwise EUR
-        return data.price_usd || data.price_eur || 50000;
+        if (data.price_usd) return data.price_usd;
+        if (data.price_eur) return data.price_eur;
+        // No price found in database
+        console.warn(`⚠️ No price found in Supabase for ${dateStr}`);
       }
       
       // If not found, try to find closest date
@@ -192,18 +195,29 @@ class BitcoinApiService {
         .single();
       
       if (closestData) {
-        return closestData.price_usd || closestData.price_eur || 50000;
+        const closestPrice = closestData.price_usd || closestData.price_eur;
+        if (closestPrice) {
+          console.log(`✓ Using closest price from ${closestData.date}: $${closestPrice}`);
+          return closestPrice;
+        }
       }
       
       // Fallback naar CoinGecko
+      console.log(`Fetching from CoinGecko for ${dateStr}...`);
       const coinGeckoResponse = await fetch(
         `https://api.coingecko.com/api/v3/coins/bitcoin/history?date=${dateStr}`
       );
       const coinGeckoData = await coinGeckoResponse.json();
-      return coinGeckoData.market_data?.current_price?.usd || 50000;
+      const coingeckoPrice = coinGeckoData.market_data?.current_price?.usd;
+      
+      if (!coingeckoPrice) {
+        throw new Error(`No price data available for ${dateStr}`);
+      }
+      
+      return coingeckoPrice;
     } catch (error) {
-      console.error('Error fetching historical price:', error);
-      return 50000; // Fallback prijs
+      console.error('❌ Error fetching historical price:', error);
+      throw error; // Throw error instead of returning mock price
     }
   }
 
@@ -212,10 +226,13 @@ class BitcoinApiService {
     try {
       const response = await fetch(`${this.priceUrl}/simple/price?ids=bitcoin&vs_currencies=usd`);
       const data = await response.json();
-      return data.bitcoin.usd;
+      if (data.bitcoin?.usd) {
+        return data.bitcoin.usd;
+      }
+      throw new Error('Invalid price data from CoinGecko');
     } catch (error) {
-      console.error('Error fetching current price:', error);
-      return 96640; // Fallback prijs
+      console.error('❌ Error fetching current price:', error);
+      throw error; // Throw instead of returning mock price
     }
   }
 

@@ -11,13 +11,18 @@ interface PortfolioChartProps {
   onTransactionClick?: (transaction: BitcoinTransaction) => void;
 }
 
+type TimeRange = '1m' | '6m' | '1y' | 'all';
+
 export default function PortfolioChart({ transactions, currentPrice, onTransactionClick }: PortfolioChartProps) {
   const { currency, formatPrice } = useCurrency();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [priceData, setPriceData] = useState<BitcoinPriceData | null>(null);
   const [showTransactions, setShowTransactions] = useState(true);
   const [hoveredTransaction, setHoveredTransaction] = useState<BitcoinTransaction | null>(null);
   const [historicalPriceData, setHistoricalPriceData] = useState<Array<{ time: number; price: number }>>([]);
+  const [timeRange, setTimeRange] = useState<TimeRange>('1y');
+  const [zoomLevel, setZoomLevel] = useState(1);
 
   // Fetch price data and save to Supabase - use Supabase Edge Function to avoid CORS
   useEffect(() => {
@@ -160,15 +165,17 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
   // Resize canvas based on container width (responsive)
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
 
     const updateCanvasSize = () => {
-      const rect = canvas.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
+      const containerWidth = container.offsetWidth;
+      const containerHeight = 550; // Fixed height for consistent display
       
       // Set canvas resolution to match display size
-      canvas.width = Math.floor(rect.width * dpr);
-      canvas.height = Math.floor(500 * dpr);
+      canvas.width = Math.floor((containerWidth - 32) * dpr); // Subtract padding
+      canvas.height = Math.floor(containerHeight * dpr);
       
       // Scale context to ensure correct drawing
       const ctx = canvas.getContext('2d');
@@ -181,9 +188,14 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
     
     // Handle window resize
     const resizeObserver = new ResizeObserver(updateCanvasSize);
-    resizeObserver.observe(canvas.parentElement!);
+    resizeObserver.observe(container);
     
-    return () => resizeObserver.disconnect();
+    window.addEventListener('resize', updateCanvasSize);
+    
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateCanvasSize);
+    };
   }, []);
 
   // Teken de chart
@@ -201,14 +213,31 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
 
-    // Use complete historical price data from Supabase
+    // Use complete historical price data from Supabase - filtered by timeRange
     const now = Date.now();
     let pricePoints: Array<{ time: number; price: number }> = [];
     
+    // Calculate time cutoff based on selected range
+    let cutoffTime = now;
+    switch(timeRange) {
+      case '1m':
+        cutoffTime = now - (30 * 24 * 60 * 60 * 1000); // 30 days
+        break;
+      case '6m':
+        cutoffTime = now - (180 * 24 * 60 * 60 * 1000); // 180 days
+        break;
+      case '1y':
+        cutoffTime = now - (365 * 24 * 60 * 60 * 1000); // 365 days
+        break;
+      case 'all':
+        cutoffTime = 0; // Show all data
+        break;
+    }
+    
     if (historicalPriceData.length > 0) {
-      // Use complete historical data - show all data points
+      // Filter by time range and show only data after cutoff
       pricePoints = historicalPriceData
-        .filter(point => point.time <= now)
+        .filter(point => point.time <= now && point.time >= cutoffTime)
         .sort((a, b) => a.time - b.time);
       
       // For performance, sample data if we have too many points (keep max 500 points for smooth rendering)
@@ -217,17 +246,8 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
         pricePoints = pricePoints.filter((_, index) => index % step === 0);
       }
     } else {
-      // Fallback: Generate sample data for last 30 days if no historical data available
-      const days30 = 30 * 24 * 60 * 60 * 1000;
-      const hours30days = 30 * 24;
-      for (let i = 0; i < hours30days; i++) {
-        const time = now - (i * 60 * 60 * 1000);
-        const basePrice = currentPrice;
-        const variation = (Math.random() - 0.5) * 0.05; // 5% variatie
-        const price = basePrice * (1 + variation);
-        pricePoints.push({ time, price });
-      }
-      pricePoints.reverse();
+      // Fallback: No historical data
+      pricePoints = [];
     }
 
     // Teken prijs lijn
@@ -422,7 +442,7 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
       }
     }
 
-  }, [transactions, currentPrice, showTransactions, hoveredTransaction, historicalPriceData]);
+  }, [transactions, currentPrice, showTransactions, hoveredTransaction, historicalPriceData, timeRange]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -522,7 +542,51 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
+          {/* Time Range Buttons */}
+          <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+            <button
+              onClick={() => setTimeRange('1m')}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                timeRange === '1m' 
+                  ? 'bg-orange-500 text-white' 
+                  : 'text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              1M
+            </button>
+            <button
+              onClick={() => setTimeRange('6m')}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                timeRange === '6m' 
+                  ? 'bg-orange-500 text-white' 
+                  : 'text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              6M
+            </button>
+            <button
+              onClick={() => setTimeRange('1y')}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                timeRange === '1y' 
+                  ? 'bg-orange-500 text-white' 
+                  : 'text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              1Y
+            </button>
+            <button
+              onClick={() => setTimeRange('all')}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                timeRange === 'all' 
+                  ? 'bg-orange-500 text-white' 
+                  : 'text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Alles
+            </button>
+          </div>
+
           <button
             onClick={() => setShowTransactions(!showTransactions)}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
@@ -537,20 +601,23 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
             </span>
           </button>
 
-          <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+          <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors ml-auto">
             <RefreshCw className="w-4 h-4" />
           </button>
         </div>
       </div>
 
       {/* Chart Canvas */}
-      <div className="relative w-full bg-gray-50 rounded-lg p-4 border border-gray-200">
+      <div ref={containerRef} className="relative w-full bg-gray-50 rounded-lg p-4 border border-gray-200 overflow-hidden">
         <canvas
           ref={canvasRef}
-          width={800}
-          height={500}
-          className="w-full border border-gray-200 rounded-lg cursor-crosshair"
-          style={{ display: 'block', maxHeight: '500px', height: 'auto' }}
+          className="block w-full cursor-crosshair"
+          style={{ 
+            display: 'block',
+            maxWidth: '100%',
+            border: '1px solid #e5e7eb',
+            borderRadius: '0.5rem'
+          }}
           onMouseMove={handleMouseMove}
           onClick={() => {
             if (hoveredTransaction) {
