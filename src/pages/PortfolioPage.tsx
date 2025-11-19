@@ -49,6 +49,8 @@ export default function PortfolioPage() {
   const [currentPrice, setCurrentPrice] = useState<number>(96640);
   const [allTransactions, setAllTransactions] = useState<BitcoinTransaction[]>([]);
   const [selectedTransaction, setSelectedTransaction] = useState<BitcoinTransaction | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
 
   // Get effective user email (considering impersonation)
   const effectiveUserEmail = (isImpersonating && impersonatedUser) 
@@ -714,17 +716,90 @@ export default function PortfolioPage() {
                 </div>
               </div>
 
+              {/* Pagination Controls */}
+              <div className="bg-white rounded-lg p-4 border border-gray-200 mb-6 flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-gray-700">Per pagina:</span>
+                  <div className="flex gap-2">
+                    {[25, 50, 100].map(num => (
+                      <button
+                        key={num}
+                        onClick={() => {
+                          setItemsPerPage(num);
+                          setCurrentPage(1);
+                        }}
+                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                          itemsPerPage === num
+                            ? 'bg-orange-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">
+                    Pagina {currentPage} van {Math.ceil(allTransactions.length / itemsPerPage)}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                  >
+                    ← Vorige
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(Math.min(Math.ceil(allTransactions.length / itemsPerPage), currentPage + 1))}
+                    disabled={currentPage >= Math.ceil(allTransactions.length / itemsPerPage)}
+                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                  >
+                    Volgende →
+                  </button>
+                </div>
+              </div>
+
               <div className="grid gap-6">
                 {allTransactions
                   .sort((a, b) => b.time - a.time) // Nieuwste eerst
+                  .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                   .map((transaction, index) => (
                     <TransactionBlock
                       key={`${transaction.hash}-${index}`}
                       transaction={transaction}
-                      index={index}
+                      index={(currentPage - 1) * itemsPerPage + index + 1}
                       onTransactionClick={setSelectedTransaction}
                     />
                   ))}
+              </div>
+
+              {/* Bottom Pagination */}
+              <div className="bg-white rounded-lg p-4 border border-gray-200 mt-6 flex items-center justify-between">
+                <span className="text-sm text-gray-600">
+                  {allTransactions.length > 0 ? (
+                    `${(currentPage - 1) * itemsPerPage + 1} tot ${Math.min(currentPage * itemsPerPage, allTransactions.length)} van ${allTransactions.length} transacties`
+                  ) : (
+                    'Geen transacties'
+                  )}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                  >
+                    ← Vorige
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(Math.min(Math.ceil(allTransactions.length / itemsPerPage), currentPage + 1))}
+                    disabled={currentPage >= Math.ceil(allTransactions.length / itemsPerPage)}
+                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                  >
+                    Volgende →
+                  </button>
+                </div>
               </div>
             </div>
           )}
