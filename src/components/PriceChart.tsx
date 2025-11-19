@@ -52,6 +52,7 @@ interface PriceChartProps {
   onZoomChange?: (startDate: string, endDate: string) => void;
   onMetricChange?: (metric: 'price' | 'marketCap') => void;
   onTimeRangeChange?: (range: '1y' | '3y' | '5y' | 'all' | 'live') => void;
+  onTransactionClick?: (transaction: any) => void;
   currentTimeRange?: '1y' | '3y' | '5y' | 'all' | 'live';
   isLiveMode?: boolean;
   lastUpdateTime?: Date | null;
@@ -80,6 +81,7 @@ export default function PriceChart({
   onZoomChange,
   onMetricChange,
   onTimeRangeChange,
+  onTransactionClick,
   currentTimeRange = 'all',
   isLiveMode = false,
   lastUpdateTime = null,
@@ -1104,6 +1106,11 @@ export default function PriceChart({
           style={{ width: '100%', height: `${height}px` }}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
+          onClick={() => {
+            if (hoveredPoint?.isPurchase && onTransactionClick) {
+              onTransactionClick(hoveredPoint);
+            }
+          }}
           className="cursor-crosshair"
         />
         {hoveredPoint && (
