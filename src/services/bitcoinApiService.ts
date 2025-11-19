@@ -220,13 +220,23 @@ class BitcoinApiService {
       console.log(`   Total from blockchain: ${transactions.length}`);
       console.log(`   Successfully processed: ${processedTransactions.length}`);
       console.log(`   Skipped (no receive output): ${skippedCount}`);
-      console.log(`   Skipped (price error): ${priceErrorCount}`);
+      console.log(`   Skipped (no timestamp): ${priceErrorCount}`);
+      
+      const fundedSatoshis = walletData.chain_stats.funded_txo_sum;
+      const spentSatoshis = walletData.chain_stats.spent_txo_sum;
+      const balanceSatoshis = fundedSatoshis - spentSatoshis;
+      
+      console.log(`💰 Wallet Stats:`);
+      console.log(`   Total Received: ${(fundedSatoshis / 100000000).toFixed(8)} BTC`);
+      console.log(`   Total Sent: ${(spentSatoshis / 100000000).toFixed(8)} BTC`);
+      console.log(`   Current Balance: ${(balanceSatoshis / 100000000).toFixed(8)} BTC`);
+      console.log(`   TX Count: ${walletData.chain_stats.tx_count}`);
 
       return {
         address,
-        balance: walletData.chain_stats.funded_txo_sum / 100000000 - walletData.chain_stats.spent_txo_sum / 100000000,
-        totalReceived: walletData.chain_stats.funded_txo_sum / 100000000,
-        totalSent: walletData.chain_stats.spent_txo_sum / 100000000,
+        balance: balanceSatoshis / 100000000,
+        totalReceived: fundedSatoshis / 100000000,
+        totalSent: spentSatoshis / 100000000,
         transactionCount: walletData.chain_stats.tx_count,
         firstSeen: walletData.chain_stats.funded_txo_count > 0 ? Date.now() : 0,
         lastSeen: Date.now(),

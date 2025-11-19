@@ -121,8 +121,8 @@ export default function PortfolioPage() {
               } else {
                 // Only fetch from API if we don't have balance data
                 try {
-                  // Initially load only first 25 transactions for faster UX
-                  realData = await bitcoinApiService.getWalletData(wallet.address, 25);
+                  // Load ALL transactions from blockchain for accurate data
+                  realData = await bitcoinApiService.getWalletData(wallet.address);
                 } catch (error) {
                   console.error('Error fetching wallet data from API:', error);
                   // Fallback: use basic data from database
@@ -176,7 +176,7 @@ export default function PortfolioPage() {
                 id: wallet.id,
                 name: wallet.name || 'Mijn Bitcoin Wallet',
                 address: wallet.address,
-                balance: wallet.balance || 0,
+                balance: realData?.balance || wallet.balance || 0,
                 transactions: wallet.transaction_count || 0,
                 firstSeen: firstSeenDate,
                 realData
