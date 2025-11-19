@@ -40,12 +40,44 @@ class BitcoinApiService {
       const walletResponse = await fetch(`${this.baseUrl}/address/${address}`);
       const walletData = await walletResponse.json();
 
-      // Haal transacties op
-      const transactionsResponse = await fetch(`${this.baseUrl}/address/${address}/txs`);
-      const transactions = await transactionsResponse.json();
+      // Haal ALLE transacties op (Blockstream retourneert max 25 per page)
+      let transactions: any[] = [];
+      let lastTxid: string | undefined;
+      let hasMore = true;
+      
+      console.log(`🔄 Fetching all transactions for ${address}...`);
+      
+      while (hasMore) {
+        let url = `${this.baseUrl}/address/${address}/txs`;
+        if (lastTxid) {
+          url += `?after_txid=${lastTxid}`;
+        }
+        
+        const response = await fetch(url);
+        const pageData = await response.json();
+        
+        if (!Array.isArray(pageData) || pageData.length === 0) {
+          hasMore = false;
+          break;
+        }
+        
+        transactions.push(...pageData);
+        console.log(`📄 Fetched ${pageData.length} transactions (total: ${transactions.length})`);
+        
+        // Blockstream returns max 25 transactions per page
+        if (pageData.length < 25) {
+          hasMore = false;
+        } else {
+          lastTxid = pageData[pageData.length - 1].txid;
+        }
+      }
+      
+      console.log(`✅ Fetched all ${transactions.length} transactions from blockchain`);
 
       // Verwerk transacties
       const processedTransactions: BitcoinTransaction[] = [];
+      let skippedCount = 0;
+      let priceErrorCount = 0;
       
       // Get current price once
       const currentPrice = await this.getCurrentPrice();
@@ -71,7 +103,8 @@ class BitcoinApiService {
             // Gebruik block_time uit status (dit is de correcte timestamp)
             const blockTime = txData.status?.block_time;
             if (!blockTime) {
-              console.warn(`No block time for transaction ${tx.txid}`);
+              console.warn(`⏭️ Skipping ${tx.txid} - no block time`);
+              skippedCount++;
               continue;
             }
             
@@ -123,7 +156,8 @@ class BitcoinApiService {
             
             // Skip transaction if price couldn't be determined
             if (!priceAtTime) {
-              console.warn(`⚠️ Skipping transaction ${tx.txid} - price not available for ${new Date(blockTime * 1000).toISOString()}`);
+              console.warn(`⏭️ Skipping ${tx.txid} - price not available for ${new Date(blockTime * 1000).toISOString()}`);
+              priceErrorCount++;
               continue;
             }
             
@@ -142,12 +176,20 @@ class BitcoinApiService {
               profitPercent: profitPercent,
               valueInBTC: valueInBTC
             });
+          } else {
+            skippedCount++;
           }
         } catch (error) {
           console.error(`Error processing transaction ${tx.txid}:`, error);
-          // Continue to next transaction on error
+          skippedCount++;
         }
       }
+
+      console.log(`📊 Transaction Summary:`);
+      console.log(`   Total from blockchain: ${transactions.length}`);
+      console.log(`   Successfully processed: ${processedTransactions.length}`);
+      console.log(`   Skipped (no receive output): ${skippedCount}`);
+      console.log(`   Skipped (price error): ${priceErrorCount}`);
 
       return {
         address,
