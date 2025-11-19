@@ -12,7 +12,8 @@ import {
   AlertCircle,
   Shield,
   Loader2,
-  X
+  X,
+  RefreshCw
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PortfolioChart from '../components/PortfolioChart';
@@ -233,6 +234,49 @@ export default function PortfolioPage() {
     updateTransactions();
   }, [wallets]);
 
+  // Refresh transaction prices from blockchain
+  const refreshTransactionPrices = async () => {
+    setLoadingWallets(true);
+    try {
+      const updatedWallets: WalletData[] = [];
+      
+      for (const wallet of wallets) {
+        try {
+          // Fetch fresh data from blockchain
+          const freshData = await bitcoinApiService.getWalletData(wallet.address);
+          
+          // Update Supabase with fresh wallet data
+          await supabase
+            .from('wallets')
+            .update({
+              wallet_data: { transactions: freshData.transactions },
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', wallet.id);
+          
+          // Update local state with fresh data
+          updatedWallets.push({
+            ...wallet,
+            realData: freshData
+          });
+          
+          console.log(`✅ Refreshed transactions for ${wallet.name}`);
+        } catch (error) {
+          console.error(`Error refreshing wallet ${wallet.address}:`, error);
+          updatedWallets.push(wallet);
+        }
+      }
+      
+      setWallets(updatedWallets);
+      console.log('✅ All transactions refreshed with latest prices from blockchain');
+    } catch (error) {
+      console.error('Error refreshing transactions:', error);
+      alert('Kon transacties niet verversen. Probeer het later opnieuw.');
+    } finally {
+      setLoadingWallets(false);
+    }
+  };
+
   const addWallet = async () => {
     if (newWalletAddress && newWalletName) {
       // Valideer Bitcoin adres
@@ -437,6 +481,18 @@ export default function PortfolioPage() {
               >
                 {showBalances ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 {showBalances ? 'Verberg Saldo' : 'Toon Saldo'}
+              </button>
+            )}
+
+            {/* Refresh transactions button */}
+            {wallets.length > 0 && (
+              <button
+                onClick={refreshTransactionPrices}
+                disabled={loadingWallets}
+                className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <RefreshCw className={`w-5 h-5 ${loadingWallets ? 'animate-spin' : ''}`} />
+                {loadingWallets ? 'Verversen...' : 'Prijzen Verversen'}
               </button>
             )}
           </div>
