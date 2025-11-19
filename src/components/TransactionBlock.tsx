@@ -204,7 +204,10 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
       {/* Pricing Details - First Row */}
       <div className="grid md:grid-cols-2 gap-4 mb-4">
         {/* Inkoopprijs per Bitcoin */}
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+        <button 
+          onClick={() => onTransactionClick?.(transaction)}
+          className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer text-left"
+        >
           <div className="flex items-center gap-2 text-sm text-blue-700 mb-2">
             <DollarSign className="w-4 h-4" />
             <span className="font-semibold">Inkoopprijs / BTC</span>
@@ -213,9 +216,9 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
             ${transaction.price.toLocaleString('en-US', { maximumFractionDigits: 0 })}
           </p>
           <p className="text-xs text-blue-600 mt-1">
-            BTC prijs op blockchain op moment van transactie
+            BTC prijs op blockchain op moment van transactie (Klik voor details)
           </p>
-        </div>
+        </button>
 
         {/* Waarde bij Aankoop */}
         <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">

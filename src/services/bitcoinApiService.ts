@@ -50,7 +50,9 @@ class BitcoinApiService {
       // Get current price once
       const currentPrice = await this.getCurrentPrice();
       
-      for (const tx of transactions.slice(0, 10)) { // Laatste 10 transacties
+      console.log(`🔍 Processing all ${transactions.length} transactions from blockchain...`);
+      
+      for (const tx of transactions) { // Alle transacties verwerken
         try {
           const txResponse = await fetch(`${this.baseUrl}/tx/${tx.txid}`);
           const txData = await txResponse.json();

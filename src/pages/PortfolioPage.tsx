@@ -18,6 +18,7 @@ import {
 import { Link } from 'react-router-dom';
 import PortfolioChart from '../components/PortfolioChart';
 import TransactionBlock from '../components/TransactionBlock';
+import TransactionDetailsPopup from '../components/TransactionDetailsPopup';
 import CurrencyToggle from '../components/CurrencyToggle';
 import { bitcoinApiService, BitcoinWallet, BitcoinTransaction } from '../services/bitcoinApiService';
 import { supabase } from '../lib/supabase';
@@ -795,97 +796,11 @@ export default function PortfolioPage() {
 
           {/* Selected Transaction Modal */}
           {selectedTransaction && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900">Transactie Details</h3>
-                  <button
-                    onClick={() => setSelectedTransaction(null)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                <div className="flex gap-2 mb-6 pb-4 border-b">
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(selectedTransaction.hash);
-                      alert('Hash gekopieerd!');
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
-                  >
-                    📋 Hash Kopieren
-                  </button>
-                  <button
-                    onClick={() => window.open(`https://www.blockchain.com/en/btc/tx/${selectedTransaction.hash}`, '_blank')}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 rounded-lg text-sm font-medium text-blue-700 transition-colors"
-                  >
-                    🔗 Blockchain.com
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Hash</label>
-                      <p className="text-sm font-mono text-gray-900 break-all">
-                        {selectedTransaction.hash}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Datum</label>
-                      <p className="text-sm text-gray-900">
-                        {new Date(selectedTransaction.time * 1000).toLocaleString('nl-NL')}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Bitcoin Bedrag</label>
-                      <p className="text-lg font-semibold text-gray-900">
-                        {(selectedTransaction.value / 100000000).toFixed(8)} BTC
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Inkoop Prijs</label>
-                      <p className="text-lg font-semibold text-gray-900">
-                        ${selectedTransaction.price.toLocaleString('en-US')}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Huidige Waarde</label>
-                      <p className="text-lg font-semibold text-gray-900">
-                        ${selectedTransaction.currentValue.toLocaleString('en-US')}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Winst/Verlies</label>
-                      <p className={`text-lg font-semibold ${
-                        selectedTransaction.profit >= 0 ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {selectedTransaction.profit >= 0 ? '+' : ''}${selectedTransaction.profit.toLocaleString('en-US')}
-                        ({selectedTransaction.profitPercent >= 0 ? '+' : ''}{selectedTransaction.profitPercent.toFixed(2)}%)
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6 flex justify-end">
-                  <button
-                    onClick={() => setSelectedTransaction(null)}
-                    className="px-6 py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 transition-colors"
-                  >
-                    Sluiten
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          <TransactionDetailsPopup
+            transaction={selectedTransaction}
+            onClose={() => setSelectedTransaction(null)}
+          />
+        )}
         </div>
       </div>
 
