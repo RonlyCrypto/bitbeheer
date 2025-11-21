@@ -143,6 +143,44 @@ export default function UserDashboard() {
     targetDate: ''
   });
 
+  // First: Check account status BEFORE loading other data
+  useEffect(() => {
+    const checkAccountStatusFirst = async () => {
+      if (!user?.email) return;
+
+      try {
+        console.log('🔍 Checking account status first for:', user.email);
+        const { data: accountData, error } = await supabase
+          .from('accounts')
+          .select('first_appointment_completed, email_verified, account_approved')
+          .eq('email', user.email)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error fetching account status:', error);
+          return;
+        }
+
+        if (accountData) {
+          console.log('📋 Account status found:', {
+            email: user.email,
+            first_appointment_completed: accountData.first_appointment_completed,
+            email_verified: accountData.email_verified,
+            account_approved: accountData.account_approved
+          });
+
+          setEmailVerified(accountData.email_verified || false);
+          setFirstAppointmentCompleted(accountData.first_appointment_completed || false);
+          setAccountApproved(accountData.account_approved || false);
+        }
+      } catch (error) {
+        console.error('Error in account status check:', error);
+      }
+    };
+
+    checkAccountStatusFirst();
+  }, [user?.email]);
+
   // Load user data
   useEffect(() => {
     const loadUserData = async () => {

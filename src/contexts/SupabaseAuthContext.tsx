@@ -78,8 +78,10 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
                 async (event, session) => {
                   logger.log('Auth state change:', event);
                   setUser(session?.user ?? null);
+                  setLoading(false);
                   
                   // Show account status loader on sign in or admin impersonation
+                  // This is just a quick connection check, not a full data load wait
                   if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user?.email) {
                     console.log('🔐 Showing account status loader for:', session.user.email);
                     setShowAccountStatusLoader(true);
@@ -89,8 +91,6 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
                   if (event === 'SIGNED_OUT') {
                     setShowAccountStatusLoader(false);
                   }
-                  
-                  setLoading(false);
                   
                   // Show welcome popup for new users on first login
                   if (event === 'SIGNED_IN' && session?.user) {

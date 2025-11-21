@@ -27,112 +27,56 @@ export default function AccountStatusLoader({
         
         console.log(`🔍 Checking account status for ${userEmail}... (${elapsedSeconds.toFixed(1)}s)`);
         
-        // Timeout: if loading takes more than 10 seconds, force through
-        if (elapsedSeconds > 10) {
-          console.warn('⏱️ Account loading timeout (10s), allowing access');
+        // Timeout: if loading takes more than 3 seconds, force through
+        // The page will handle refreshing data anyway
+        if (elapsedSeconds > 3) {
+          console.warn('⏱️ Account loading timeout (3s), allowing access');
           setStatusMessage('Account geladen!');
           setIsAccountReady(true);
           onAccountReady();
           return;
         }
         
-        // Check in users table
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('first_appointment_completed, email_verified, account_approved')
+        // Quick check - just verify we can reach the database
+        const { data: accountInfo, error } = await supabase
+          .from('accounts')
+          .select('first_appointment_completed')
           .eq('email', userEmail)
           .maybeSingle();
 
-        if (userError) {
-          if (userError.code !== 'PGRST116') {
-            console.error('❌ Error fetching user data:', {
-              code: userError.code,
-              message: userError.message,
-              status: (userError as any).status,
-              details: (userError as any).details
-            });
-          }
-        }
-
-        // Also check in accounts table as backup
-        let accountData = userData;
-        let accountError = userError;
-        
-        if (!accountData) {
-          const response = await supabase
-            .from('accounts')
-            .select('first_appointment_completed, email_verified, account_approved')
-            .eq('email', userEmail)
-            .maybeSingle();
-          
-          accountData = response.data;
-          accountError = response.error;
-
-          if (accountError) {
-            if (accountError.code !== 'PGRST116') {
-              console.error('❌ Error fetching account data:', {
-                code: accountError.code,
-                message: accountError.message,
-                status: (accountError as any).status,
-                details: (accountError as any).details
-              });
-            }
-          }
-        }
-
-        // Use whichever has data
-        const accountInfo = accountData;
-
-        if (!accountInfo) {
-          console.warn(`⚠️ No account data found for ${userEmail}`);
-          // On 3rd attempt, just let it through (user might not have account data yet)
-          if (checkAttempts >= 3) {
-            console.log('ℹ️ No account data after 3 attempts, allowing access anyway');
-            setIsAccountReady(true);
-            onAccountReady();
-            return;
-          }
-          setStatusMessage('Account data aan het synchen...');
-          setCheckAttempts(prev => prev + 1);
+        if (error) {
+          console.error('❌ Error checking account:', error.message);
+          // If we get an error, just allow through after 1 attempt
+          setIsAccountReady(true);
+          onAccountReady();
           return;
         }
 
-        console.log('📋 Account info:', {
-          email: userEmail,
-          first_appointment_completed: accountInfo.first_appointment_completed,
-          email_verified: accountInfo.email_verified,
-          account_approved: accountInfo.account_approved
-        });
-
-        // Check if account is fully ready
-        // Account is ready when first_appointment_completed is true or truthy (not false/null/0)
-        // This covers: true, 1, or any truthy value
-        const isReady = Boolean(accountInfo.first_appointment_completed);
-        
-        if (isReady) {
-          console.log('✅ Account is fully ready!');
-          setStatusMessage('Account geladen!');
+        if (accountInfo) {
+          console.log(`✅ Account found, first_appointment_completed: ${accountInfo.first_appointment_completed}`);
           setIsAccountReady(true);
           onAccountReady();
-        } else {
-          console.log('⏳ Account not ready yet, waiting for appointment completion');
-          setStatusMessage('Wachten op appointment completion...');
-          setCheckAttempts(prev => prev + 1);
+          return;
         }
+
+        console.log('⏳ Retry checking account...');
+        setCheckAttempts(prev => prev + 1);
       } catch (error) {
         console.error('Error checking account status:', error);
-        setStatusMessage('Fout bij controleren account...');
+        // On any error, just allow through
+        setIsAccountReady(true);
+        onAccountReady();
       }
     };
 
     // Initial check
     checkAccountStatus();
 
-    // Poll every 2 seconds until account is ready
-    const interval = setInterval(checkAccountStatus, 2000);
+    // Poll every 1 second until account is ready (max 3 seconds)
+    const interval = setInterval(checkAccountStatus, 1000);
 
     return () => clearInterval(interval);
-  }, [isVisible, userEmail, isAccountReady, onAccountReady]);
+  }, [isVisible, userEmail, isAccountReady, onAccountReady, checkAttempts]);
 
   if (!isVisible || isAccountReady) {
     return null;
