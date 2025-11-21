@@ -1,4 +1,6 @@
 // Bitcoin Price Service
+import { supabase } from '../lib/supabase';
+
 export interface BitcoinPrice {
   price: number;
   change24h: number;
@@ -28,59 +30,71 @@ export class BitcoinPriceService {
     }
 
     try {
-      // Try multiple APIs for reliability
-      const price = await this.fetchFromCoinGecko();
-      this.priceCache = price;
-      this.lastFetch = now;
-      return price;
+      // Get today's price from Supabase
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('bitcoin_price_data')
+        .select('price_eur, price_usd')
+        .eq('date', today)
+        .maybeSingle();
+
+      if (error) {
+        console.error('❌ Error fetching from Supabase:', error);
+        throw error;
+      }
+
+      if (data) {
+        const price: BitcoinPrice = {
+          price: data.price_eur,
+          change24h: 0, // Could calculate from yesterday's price if needed
+          changePercent24h: 0,
+          lastUpdated: new Date().toISOString()
+        };
+        
+        this.priceCache = price;
+        this.lastFetch = now;
+        return price;
+      }
+
+      // If no data for today, try to get the latest price
+      const { data: latestData, error: latestError } = await supabase
+        .from('bitcoin_price_data')
+        .select('price_eur, date')
+        .order('date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (latestError) {
+        throw latestError;
+      }
+
+      if (latestData) {
+        console.log(`ℹ️ Using latest price from ${latestData.date}`);
+        const price: BitcoinPrice = {
+          price: latestData.price_eur,
+          change24h: 0,
+          changePercent24h: 0,
+          lastUpdated: new Date().toISOString()
+        };
+        
+        this.priceCache = price;
+        this.lastFetch = now;
+        return price;
+      }
+
+      throw new Error('No price data available in Supabase');
     } catch (error) {
-      // Error fetching Bitcoin price (logged silently)
+      console.error('❌ Error fetching Bitcoin price:', error);
       
       // Return cached price if available
       if (this.priceCache) {
+        console.log('ℹ️ Returning cached price as fallback');
         return this.priceCache;
       }
       
       // Return empty state instead of mock price - let component handle error
       throw new Error('Unable to fetch Bitcoin price from any source');
       // Note: Component using this service should handle the error gracefully
-    }
-  }
-
-  private async fetchFromCoinGecko(): Promise<BitcoinPrice> {
-    try {
-      const response = await fetch(
-        'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur&include_24hr_change=true',
-        {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-          },
-          // Add timeout
-          signal: AbortSignal.timeout(10000)
-        }
-      );
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch from CoinGecko: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      const bitcoin = data.bitcoin;
-      
-      if (!bitcoin || !bitcoin.eur) {
-        throw new Error('Invalid data from CoinGecko');
-      }
-      
-      return {
-        price: bitcoin.eur,
-        change24h: bitcoin.eur_24h_change || 0,
-        changePercent24h: bitcoin.eur_24h_change || 0,
-        lastUpdated: new Date().toISOString()
-      };
-    } catch (error) {
-      // CoinGecko API error (logged silently)
-      throw error;
     }
   }
 

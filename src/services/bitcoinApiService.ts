@@ -435,12 +435,33 @@ class BitcoinApiService {
   // Haal huidige Bitcoin prijs op in USD
   async getCurrentPrice(): Promise<number> {
     try {
-      const response = await fetch(`${this.priceUrl}/simple/price?ids=bitcoin&vs_currencies=usd`);
-      const data = await response.json();
-      if (data.bitcoin?.usd) {
-        return data.bitcoin.usd;
+      // Get today's price from Supabase
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('bitcoin_price_data')
+        .select('price_usd')
+        .eq('date', today)
+        .maybeSingle();
+
+      if (!error && data?.price_usd) {
+        console.log(`✓ Current price from Supabase: $${data.price_usd}`);
+        return data.price_usd;
       }
-      throw new Error('Invalid price data from CoinGecko');
+
+      // If no data for today, get the latest price
+      const { data: latestData, error: latestError } = await supabase
+        .from('bitcoin_price_data')
+        .select('price_usd')
+        .order('date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!latestError && latestData?.price_usd) {
+        console.log(`ℹ️ Using latest price from Supabase: $${latestData.price_usd}`);
+        return latestData.price_usd;
+      }
+
+      throw new Error('No price data available');
     } catch (error) {
       console.error('❌ Error fetching current price:', error);
       throw error; // Throw instead of returning mock price
@@ -450,25 +471,47 @@ class BitcoinApiService {
   // Haal live prijs data op voor chart
   async getPriceData(): Promise<BitcoinPriceData> {
     try {
-      const response = await fetch(`${this.priceUrl}/simple/price?ids=bitcoin&vs_currencies=eur&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true`);
-      const data = await response.json();
-      
-      return {
-        price: data.bitcoin.eur,
-        change24h: data.bitcoin.eur_24h_change,
-        changePercent24h: data.bitcoin.eur_24h_change,
-        marketCap: data.bitcoin.eur_market_cap,
-        volume24h: data.bitcoin.eur_24h_vol
-      };
+      // Get today's price from Supabase
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('bitcoin_price_data')
+        .select('price_eur, price_usd')
+        .eq('date', today)
+        .maybeSingle();
+
+      if (!error && data?.price_eur) {
+        return {
+          price: data.price_eur,
+          change24h: 0, // Could calculate from yesterday if needed
+          changePercent24h: 0,
+          marketCap: 0,
+          volume24h: 0
+        };
+      }
+
+      // If no data for today, get the latest price
+      const { data: latestData, error: latestError } = await supabase
+        .from('bitcoin_price_data')
+        .select('price_eur')
+        .order('date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!latestError && latestData?.price_eur) {
+        console.log(`ℹ️ Using latest price from Supabase`);
+        return {
+          price: latestData.price_eur,
+          change24h: 0,
+          changePercent24h: 0,
+          marketCap: 0,
+          volume24h: 0
+        };
+      }
+
+      throw new Error('No price data available in Supabase');
     } catch (error) {
-      console.error('Error fetching price data:', error);
-      return {
-        price: 96640,
-        change24h: 0,
-        changePercent24h: 0,
-        marketCap: 0,
-        volume24h: 0
-      };
+      console.error('❌ Error fetching price data:', error);
+      throw error; // Throw error instead of returning mock data
     }
   }
 

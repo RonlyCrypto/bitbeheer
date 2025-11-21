@@ -148,8 +148,13 @@ export default function UserDashboard() {
     const loadUserData = async () => {
       try {
         // Load Bitcoin price
-        const price = await bitcoinPriceService.getCurrentPrice();
-        setBitcoinPrice(price);
+        try {
+          const price = await bitcoinPriceService.getCurrentPrice();
+          setBitcoinPrice(price);
+        } catch (priceError) {
+          console.warn('⚠️ Could not fetch Bitcoin price:', priceError);
+          // Continue anyway, price is not critical
+        }
 
         // Load user profile from database
         if (user) {

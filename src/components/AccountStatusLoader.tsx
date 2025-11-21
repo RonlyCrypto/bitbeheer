@@ -43,28 +43,55 @@ export default function AccountStatusLoader({
           .eq('email', userEmail)
           .maybeSingle();
 
-        if (userError && userError.code !== 'PGRST116') {
-          console.error('Error fetching user data:', userError);
-          setStatusMessage('Fout bij laden account...');
-          return;
+        if (userError) {
+          if (userError.code !== 'PGRST116') {
+            console.error('❌ Error fetching user data:', {
+              code: userError.code,
+              message: userError.message,
+              status: (userError as any).status,
+              details: (userError as any).details
+            });
+          }
         }
 
         // Also check in accounts table as backup
-        const { data: accountData, error: accountError } = await supabase
-          .from('accounts')
-          .select('first_appointment_completed, email_verified, account_approved')
-          .eq('email', userEmail)
-          .maybeSingle();
+        let accountData = userData;
+        let accountError = userError;
+        
+        if (!accountData) {
+          const response = await supabase
+            .from('accounts')
+            .select('first_appointment_completed, email_verified, account_approved')
+            .eq('email', userEmail)
+            .maybeSingle();
+          
+          accountData = response.data;
+          accountError = response.error;
 
-        if (accountError && accountError.code !== 'PGRST116') {
-          console.error('Error fetching account data:', accountError);
+          if (accountError) {
+            if (accountError.code !== 'PGRST116') {
+              console.error('❌ Error fetching account data:', {
+                code: accountError.code,
+                message: accountError.message,
+                status: (accountError as any).status,
+                details: (accountError as any).details
+              });
+            }
+          }
         }
 
-        // Use whichever has data, prefer users table
-        const accountInfo = userData || accountData;
+        // Use whichever has data
+        const accountInfo = accountData;
 
         if (!accountInfo) {
           console.warn(`⚠️ No account data found for ${userEmail}`);
+          // On 3rd attempt, just let it through (user might not have account data yet)
+          if (checkAttempts >= 3) {
+            console.log('ℹ️ No account data after 3 attempts, allowing access anyway');
+            setIsAccountReady(true);
+            onAccountReady();
+            return;
+          }
           setStatusMessage('Account data aan het synchen...');
           setCheckAttempts(prev => prev + 1);
           return;
