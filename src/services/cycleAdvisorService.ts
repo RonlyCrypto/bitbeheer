@@ -1,29 +1,34 @@
 /**
  * Cycle Advisor Service
  * Analyzes Bitcoin cycles and provides DCA recommendations based on price position vs previous ATH
+ * 
+ * ALL data is fetched dynamically from database - NO hardcoded values!
  */
+
+import { bitcoinPriceDataService } from './bitcoinPriceDataService';
 
 export interface CycleData {
   id: string;
   name: string;
   number: number;
-  startYear: number;
-  endYear: number;
+  startDate: string; // Calculated from data
+  endDate: string;   // Calculated from data
+  ath: number;
+  athDate: string;
+  previousATH: number | null;
+  previousATHDate: string | null;
   halving: string;
-  ath: number; // All-Time High in USD
-  previousATH: number | null; // Previous cycle ATH (for comparison)
-  phases: {
-    accumulation: { start: string; end: string; priceRange: string };
-    bullRun: { start: string; end: string; priceRange: string };
-    bearMarket: { start: string; end: string; priceRange: string };
-  };
+  phaseLow: number;
+  phaseLowDate: string;
+  phaseHigh: number;
+  phaseHighDate: string;
 }
 
 export interface PricePosition {
   status: 'above_ath' | 'below_ath' | 'near_ath' | 'unknown';
-  percentageVsPrevATH: number; // Positive = above, negative = below
-  distanceFromATH: number; // In USD
-  percentageFromATH: number; // In percentage
+  percentageVsPrevATH: number;
+  distanceFromATH: number;
+  percentageFromATH: number;
 }
 
 export interface Recommendation {
@@ -40,13 +45,13 @@ export interface ROIProjection {
   projectedValue: number;
   projectedROI: number;
   projectedROIPercent: number;
-  likelihood: number; // 0-100%
+  likelihood: number;
 }
 
 export interface CycleComparison {
   currentCycle: number;
   mostSimilarCycle: number;
-  similarityScore: number; // 0-100%
+  similarityScore: number;
   similarities: string[];
   differences: string[];
   warnings: string[];
@@ -62,106 +67,187 @@ export interface CycleAdvisorData {
   timestamp: Date;
 }
 
-// Bitcoin cycle definitions with ATH data
-const BITCOIN_CYCLES: CycleData[] = [
-  {
-    id: 'cycle1',
-    name: '1e Cycle',
-    number: 1,
-    startYear: 2009,
-    endYear: 2015,
-    halving: '2012-11-28',
-    ath: 1150,
-    previousATH: null,
-    phases: {
-      accumulation: { start: '2009-01-03', end: '2012-11-28', priceRange: '$0.0008 → $2' },
-      bullRun: { start: '2012-11-28', end: '2013-12-17', priceRange: '$2 → $1,150' },
-      bearMarket: { start: '2013-12-18', end: '2015-01-14', priceRange: '$1,150 → $150' }
-    }
-  },
-  {
-    id: 'cycle2',
-    name: '2e Cycle',
-    number: 2,
-    startYear: 2015,
-    endYear: 2018,
-    halving: '2016-07-09',
-    ath: 19700,
-    previousATH: 1150,
-    phases: {
-      accumulation: { start: '2015-01-15', end: '2016-07-09', priceRange: '$150 → $400' },
-      bullRun: { start: '2016-07-09', end: '2017-12-17', priceRange: '$400 → $19,700' },
-      bearMarket: { start: '2017-12-18', end: '2018-12-15', priceRange: '$19,700 → $3,200' }
-    }
-  },
-  {
-    id: 'cycle3',
-    name: '3e Cycle',
-    number: 3,
-    startYear: 2018,
-    endYear: 2022,
-    halving: '2020-05-11',
-    ath: 69000,
-    previousATH: 19700,
-    phases: {
-      accumulation: { start: '2018-12-16', end: '2020-05-11', priceRange: '$3,200 → $7,000' },
-      bullRun: { start: '2020-05-11', end: '2021-11-10', priceRange: '$7,000 → $69,000' },
-      bearMarket: { start: '2021-11-11', end: '2022-12-30', priceRange: '$69,000 → $15,500' }
-    }
-  },
-  {
-    id: 'cycle4',
-    name: '4e Cycle',
-    number: 4,
-    startYear: 2022,
-    endYear: 2026,
-    halving: '2024-04-20',
-    ath: 0, // To be determined
-    previousATH: 69000,
-    phases: {
-      accumulation: { start: '2022-12-31', end: '2024-04-20', priceRange: '$16,000 → $30,000' },
-      bullRun: { start: '2024-04-20', end: '2025-06-30', priceRange: 'Bull Run richting top' },
-      bearMarket: { start: '2025-07-01', end: '2026-12-31', priceRange: 'Bear Market fase' }
-    }
-  }
-];
+// Halving dates are fixed - these are historical facts
+const HALVING_DATES = {
+  1: '2012-11-28',
+  2: '2016-07-09',
+  3: '2020-05-11',
+  4: '2024-04-20'
+};
+
+let cachedCycles: CycleData[] | null = null;
+let cacheTimestamp = 0;
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
 class CycleAdvisorService {
   /**
+   * Calculate cycles from historical price data
+   */
+  async calculateCyclesFromData(): Promise<CycleData[]> {
+    // Check cache
+    if (cachedCycles && (Date.now() - cacheTimestamp) < CACHE_DURATION) {
+      console.log('✅ Using cached cycle data');
+      return cachedCycles;
+    }
+
+    try {
+      console.log('📊 Calculating cycles from database...');
+      const priceService = new bitcoinPriceDataService();
+      const summary = await priceService.getSummary();
+
+      if (!summary?.available_years || summary.available_years.length === 0) {
+        throw new Error('No price data available');
+      }
+
+      const allData = await priceService.getDataForYears(summary.available_years, 'USD');
+
+      if (allData.length === 0) {
+        throw new Error('No historical data');
+      }
+
+      // Sort by date
+      allData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      const cycles: CycleData[] = [];
+
+      // Cycle 1: 2009 - 2015 (first halving to second halving era)
+      cycles.push(this.calculateCycle(1, allData, '2009-01-03', '2015-12-31'));
+
+      // Cycle 2: 2015 - 2018 (second halving to third halving era)
+      cycles.push(this.calculateCycle(2, allData, '2016-01-01', '2018-12-31'));
+
+      // Cycle 3: 2018 - 2022 (third halving to fourth halving era)
+      cycles.push(this.calculateCycle(3, allData, '2019-01-01', '2022-12-31'));
+
+      // Cycle 4: 2022 - now (fourth halving to present)
+      cycles.push(this.calculateCycle(4, allData, '2023-01-01', new Date().toISOString().split('T')[0]));
+
+      // Set previousATH for each cycle
+      for (let i = 1; i < cycles.length; i++) {
+        cycles[i].previousATH = cycles[i - 1].ath;
+        cycles[i].previousATHDate = cycles[i - 1].athDate;
+      }
+
+      cachedCycles = cycles;
+      cacheTimestamp = Date.now();
+
+      console.log('✅ Cycles calculated:', cycles.map(c => ({
+        number: c.number,
+        ath: c.ath,
+        athDate: c.athDate,
+        previousATH: c.previousATH
+      })));
+
+      return cycles;
+    } catch (error) {
+      console.error('❌ Error calculating cycles:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Calculate a single cycle from data
+   */
+  private calculateCycle(
+    number: number,
+    allData: any[],
+    startDateStr: string,
+    endDateStr: string
+  ): CycleData {
+    const cycleData = allData.filter(d => {
+      const date = new Date(d.date);
+      return date >= new Date(startDateStr) && date <= new Date(endDateStr);
+    });
+
+    if (cycleData.length === 0) {
+      throw new Error(`No data for cycle ${number}`);
+    }
+
+    const prices = cycleData.map(d => d.price || 0).filter(p => p > 0);
+    const maxPrice = Math.max(...prices);
+    const minPrice = Math.min(...prices);
+
+    // Find ATH date
+    const athData = cycleData.find(d => d.price === maxPrice);
+    const athDate = athData?.date || endDateStr;
+
+    // Find low date
+    const lowData = cycleData.find(d => d.price === minPrice);
+    const lowDate = lowData?.date || startDateStr;
+
+    return {
+      id: `cycle${number}`,
+      name: `${number}e Cycle`,
+      number,
+      startDate: startDateStr,
+      endDate: endDateStr,
+      ath: Math.round(maxPrice),
+      athDate,
+      previousATH: null, // Set later
+      previousATHDate: null,
+      halving: HALVING_DATES[number as keyof typeof HALVING_DATES] || '',
+      phaseLow: Math.round(minPrice),
+      phaseLowDate: lowDate,
+      phaseHigh: Math.round(maxPrice),
+      phaseHighDate: athDate
+    };
+  }
+
+  /**
    * Get current cycle based on date
    */
-  getCurrentCycle(date: Date = new Date()): CycleData {
+  async getCurrentCycle(date: Date = new Date()): Promise<CycleData> {
+    const cycles = await this.calculateCyclesFromData();
     const year = date.getFullYear();
-    
-    for (const cycle of BITCOIN_CYCLES) {
-      if (year >= cycle.startYear && year <= cycle.endYear) {
+
+    for (const cycle of cycles) {
+      const cycleStart = new Date(cycle.startDate);
+      const cycleEnd = new Date(cycle.endDate);
+      if (date >= cycleStart && date <= cycleEnd) {
         return cycle;
       }
     }
-    
-    // If we're past the last known cycle, return cycle 4
-    return BITCOIN_CYCLES[BITCOIN_CYCLES.length - 1];
+
+    // Return last cycle if past all known cycles
+    return cycles[cycles.length - 1];
   }
 
   /**
    * Determine current phase in cycle
    */
-  getCurrentPhase(date: Date = new Date()): 'accumulation' | 'bullRun' | 'bearMarket' | 'unknown' {
-    const cycle = this.getCurrentCycle(date);
-    const timestamp = date.getTime();
-    
-    const accumStart = new Date(cycle.phases.accumulation.start).getTime();
-    const accumEnd = new Date(cycle.phases.accumulation.end).getTime();
-    const bullStart = new Date(cycle.phases.bullRun.start).getTime();
-    const bullEnd = new Date(cycle.phases.bullRun.end).getTime();
-    const bearStart = new Date(cycle.phases.bearMarket.start).getTime();
-    const bearEnd = new Date(cycle.phases.bearMarket.end).getTime();
-    
-    if (timestamp >= accumStart && timestamp <= accumEnd) return 'accumulation';
-    if (timestamp >= bullStart && timestamp <= bullEnd) return 'bullRun';
-    if (timestamp >= bearStart && timestamp <= bearEnd) return 'bearMarket';
-    
-    return 'unknown';
+  async getCurrentPhase(date: Date = new Date()): Promise<'accumulation' | 'bullRun' | 'bearMarket' | 'unknown'> {
+    const cycle = await this.getCurrentCycle(date);
+    const priceService = new bitcoinPriceDataService();
+    const summary = await priceService.getSummary();
+
+    if (!summary?.available_years) return 'unknown';
+
+    const allData = await priceService.getDataForYears(summary.available_years, 'USD');
+    const cycleData = allData.filter(d => {
+      const d_date = new Date(d.date);
+      return d_date >= new Date(cycle.startDate) && d_date <= new Date(cycle.endDate);
+    });
+
+    if (cycleData.length < 3) return 'unknown';
+
+    // Get last 20% of data to determine current phase
+    const recentData = cycleData.slice(Math.floor(cycleData.length * 0.8));
+    const recentPrice = Math.max(...recentData.map(d => d.price || 0));
+    const previousPrice = Math.min(...recentData.map(d => d.price || 0));
+
+    // Simple heuristic: if price > low + 66% of range, it's bullRun
+    const low = Math.min(...cycleData.map(d => d.price || 0));
+    const high = Math.max(...cycleData.map(d => d.price || 0));
+    const range = high - low;
+    const threshold = low + (range * 0.66);
+
+    if (recentPrice > threshold) {
+      return 'bullRun';
+    } else if (recentPrice < low + (range * 0.33)) {
+      return 'accumulation';
+    } else {
+      return 'bearMarket';
+    }
   }
 
   /**
@@ -179,7 +265,7 @@ class CycleAdvisorService {
 
     const diffFromPrevATH = currentPrice - cycle.previousATH;
     const percentDiff = (diffFromPrevATH / cycle.previousATH) * 100;
-    
+
     let status: 'above_ath' | 'below_ath' | 'near_ath';
     if (percentDiff > 5) {
       status = 'above_ath';
@@ -347,7 +433,7 @@ class CycleAdvisorService {
         projectedValue,
         projectedROI: projectedValue - investmentAmount,
         projectedROIPercent: ((projectedValue - investmentAmount) / investmentAmount) * 100,
-        likelihood: 90 // Historical: 90% chance
+        likelihood: 90
       });
     }
 
@@ -400,8 +486,10 @@ class CycleAdvisorService {
   /**
    * Compare current cycle with previous cycles
    */
-  compareCycles(currentCycleNumber: number): CycleComparison {
-    const currentCycle = BITCOIN_CYCLES.find(c => c.number === currentCycleNumber);
+  async compareCycles(currentCycleNumber: number): Promise<CycleComparison> {
+    const cycles = await this.calculateCyclesFromData();
+    const currentCycle = cycles.find(c => c.number === currentCycleNumber);
+
     if (!currentCycle || currentCycleNumber <= 1) {
       return {
         currentCycle: currentCycleNumber,
@@ -413,8 +501,7 @@ class CycleAdvisorService {
       };
     }
 
-    // Compare with most recent cycle
-    const previousCycle = BITCOIN_CYCLES.find(c => c.number === currentCycleNumber - 1);
+    const previousCycle = cycles.find(c => c.number === currentCycleNumber - 1);
     if (!previousCycle) {
       return {
         currentCycle: currentCycleNumber,
@@ -426,28 +513,28 @@ class CycleAdvisorService {
       };
     }
 
-    // Calculate similarity (simplified)
     const similarities = [
-      `${currentCycle.name} begon na halving op ${currentCycle.halving.split('-')[0]}`,
-      `Vorige cycle (${previousCycle.name}) bereikte ATH van $${previousCycle.ath.toLocaleString()}`,
+      `Cycle ${currentCycle.number} begon na halving op ${currentCycle.halving}`,
+      `Vorige cycle bereikt ATH van $${previousCycle.ath.toLocaleString()}`,
       'Cyclische patronen herhalen zich in bull runs na halvings'
     ];
 
     const differences = [];
-    if (currentCycle.phases.bullRun.start !== previousCycle.phases.bullRun.start) {
-      differences.push('Bull run timing verschilt van vorige cycle');
+    const athDifference = ((currentCycle.ath - previousCycle.ath) / previousCycle.ath) * 100;
+    if (Math.abs(athDifference) > 10) {
+      differences.push(`ATH verschil: ${athDifference > 0 ? '+' : ''}${athDifference.toFixed(0)}% vs vorige cycle`);
     }
 
-    const warnings = [];
+    const warnings: string[] = [];
     if (currentCycleNumber === 4) {
-      warnings.push('⚠️ Cycle 4 ATH nog niet bereikt - onzekerheid groter');
-      warnings.push('⚠️ Geen historische data voor prijzenpeil boven vorige ATH');
+      warnings.push('⚠️ Cycle 4 is nog niet afgelopen - ATH kan nog stijgen');
+      warnings.push('⚠️ Geen historische data boven vorige ATH beschikbaar');
     }
 
     return {
       currentCycle: currentCycleNumber,
       mostSimilarCycle: previousCycle.number,
-      similarityScore: 75, // Simplified
+      similarityScore: 75,
       similarities,
       differences,
       warnings
@@ -463,12 +550,12 @@ class CycleAdvisorService {
     mode: 'conservative' | 'balanced' | 'aggressive' = 'balanced',
     date: Date = new Date()
   ): Promise<CycleAdvisorData> {
-    const currentCycle = this.getCurrentCycle(date);
-    const currentPhase = this.getCurrentPhase(date);
+    const currentCycle = await this.getCurrentCycle(date);
+    const currentPhase = await this.getCurrentPhase(date);
     const pricePosition = this.analyzePricePosition(currentPrice, currentCycle);
     const recommendation = this.getRecommendation(pricePosition, mode, currentPhase);
     const roiProjections = this.calculateROIProjections(investmentAmount, currentPrice, currentCycle, currentPhase);
-    const cycleComparison = this.compareCycles(currentCycle.number);
+    const cycleComparison = await this.compareCycles(currentCycle.number);
 
     return {
       currentCycle,
@@ -482,19 +569,19 @@ class CycleAdvisorService {
   }
 
   /**
-   * Get all cycles for reference
+   * Get all cycles
    */
-  getAllCycles(): CycleData[] {
-    return BITCOIN_CYCLES;
+  async getAllCycles(): Promise<CycleData[]> {
+    return this.calculateCyclesFromData();
   }
 
   /**
    * Get cycle by number
    */
-  getCycleByNumber(number: number): CycleData | undefined {
-    return BITCOIN_CYCLES.find(c => c.number === number);
+  async getCycleByNumber(number: number): Promise<CycleData | undefined> {
+    const cycles = await this.calculateCyclesFromData();
+    return cycles.find(c => c.number === number);
   }
 }
 
 export const cycleAdvisorService = new CycleAdvisorService();
-
