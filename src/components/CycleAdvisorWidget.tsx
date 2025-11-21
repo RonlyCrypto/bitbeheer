@@ -33,11 +33,6 @@ export default function CycleAdvisorWidget({
   const [expandedSection, setExpandedSection] = useState<'recommendation' | 'projections' | 'comparison' | null>(null);
 
   useEffect(() => {
-    // Initialize ATH data once on mount
-    cycleAdvisorService.initializeATHData();
-  }, []);
-
-  useEffect(() => {
     loadData();
   }, [currentPrice, investmentAmount, user?.id]);
 
