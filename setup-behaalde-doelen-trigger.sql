@@ -1,5 +1,8 @@
--- Create goals table if it doesn't exist
-CREATE TABLE IF NOT EXISTS goals (
+-- Drop existing goals table if it exists (to fix any issues)
+DROP TABLE IF EXISTS goals CASCADE;
+
+-- Create goals table
+CREATE TABLE goals (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   email VARCHAR(255) NOT NULL,
@@ -47,27 +50,35 @@ CREATE POLICY goals_delete ON goals
 -- Create function to handle signup completion and create/update behaalde doelen
 CREATE OR REPLACE FUNCTION on_signup_completion()
 RETURNS TRIGGER AS $$
+DECLARE
+  v_user_id UUID;
 BEGIN
   -- When an account is approved (first_appointment_completed = true)
   -- Create a "Behaalde Doelen: Aanmelding Voltooid" goal for the user
-  IF NEW.first_appointment_completed = true AND OLD.first_appointment_completed != true THEN
-    INSERT INTO goals (user_id, email, title, description, category, status, target_amount, current_amount, target_date)
-    VALUES (
-      NEW.user_id,
-      NEW.email,
-      'Aanmelding Voltooid',
-      'Je hebt alle stappen van het aanmeldingsproces voltooid!',
-      'Aanmelding',
-      'completed',
-      1,
-      1,
-      NOW()::date
-    )
-    ON CONFLICT (user_id, title) 
-    DO UPDATE SET 
-      status = 'completed',
-      updated_at = TIMEZONE('utc'::text, NOW())
-    WHERE EXCLUDED.status != 'completed';
+  IF NEW.first_appointment_completed = true AND (OLD.first_appointment_completed != true OR OLD.first_appointment_completed IS NULL) THEN
+    -- Try to find the user_id from auth.users
+    SELECT id INTO v_user_id FROM auth.users WHERE email = NEW.email LIMIT 1;
+    
+    -- Only insert if we found a user_id
+    IF v_user_id IS NOT NULL THEN
+      INSERT INTO goals (user_id, email, title, description, category, status, target_amount, current_amount, target_date)
+      VALUES (
+        v_user_id,
+        NEW.email,
+        'Aanmelding Voltooid',
+        'Je hebt alle stappen van het aanmeldingsproces voltooid!',
+        'Aanmelding',
+        'completed',
+        1,
+        1,
+        NOW()::date
+      )
+      ON CONFLICT (user_id, title) 
+      DO UPDATE SET 
+        status = 'completed',
+        updated_at = TIMEZONE('utc'::text, NOW())
+      WHERE EXCLUDED.status != 'completed';
+    END IF;
   END IF;
 
   RETURN NEW;
@@ -124,6 +135,7 @@ FOR EACH ROW
 EXECUTE FUNCTION sync_goals_user_id();
 
 -- Backfill existing completed accounts with the "Aanmelding Voltooid" goal
+-- First, try to insert with user_id from auth.users
 INSERT INTO goals (user_id, email, title, description, category, status, target_amount, current_amount, target_date)
 SELECT 
   u.id,
@@ -136,11 +148,11 @@ SELECT
   1,
   a.updated_at::date
 FROM accounts a
-LEFT JOIN auth.users u ON u.email = a.email
+INNER JOIN auth.users u ON u.email = a.email
 WHERE a.first_appointment_completed = true
 AND NOT EXISTS (
   SELECT 1 FROM goals 
-  WHERE email = a.email 
+  WHERE user_id = u.id
   AND title = 'Aanmelding Voltooid'
 )
 ON CONFLICT (user_id, title) DO NOTHING;
