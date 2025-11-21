@@ -910,13 +910,10 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
       setAppointmentsLoading(true);
       try {
         // Get effective user email (considering impersonation)
-        const { data: authData } = await supabase.auth.getUser();
-        const sessionEmail = authData?.user?.email;
-        
-        // Use impersonated user email if impersonating, otherwise use session email
+        // Use impersonated user email if impersonating, otherwise use user prop
         const effectiveEmail = (isImpersonating && impersonatedUser) 
           ? impersonatedUser 
-          : sessionEmail;
+          : user?.email;
         
         if (!effectiveEmail) {
           setAppointmentsLoading(false);
@@ -972,7 +969,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
       window.removeEventListener('refreshAppointments', handleRefresh);
       document.removeEventListener('visibilitychange', visibilityChangeHandler);
     };
-  }, [user, isImpersonating, impersonatedUser]);
+  }, [isImpersonating, impersonatedUser]);
   
   // Find user's appointment (pending or confirmed) - prioritize confirmed, then pending
   // For the green block: show ANY pending/confirmed appointment (regardless of date)
