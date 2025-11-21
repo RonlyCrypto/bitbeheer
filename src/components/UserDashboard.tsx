@@ -239,9 +239,22 @@ export default function UserDashboard() {
           }
         }
 
-        // Load goals from database (if goals table exists)
-        // TODO: Implement goals table and load real goals
-        setGoals([]);
+        // Load goals from database
+        if (user?.email) {
+          const { data: goalsData, error: goalsError } = await supabase
+            .from('goals')
+            .select('*')
+            .eq('email', user.email)
+            .order('created_at', { ascending: false });
+          
+          if (!goalsError && goalsData) {
+            console.log('📋 Loaded goals:', goalsData);
+            setGoals(goalsData);
+          } else {
+            console.log('⚠️ Could not load goals:', goalsError?.message);
+            setGoals([]);
+          }
+        }
 
         // Load appointments/goals/portfolio from DB — TODO: implement when schema is ready
         setShowFirstAppointmentPrompt(false);
