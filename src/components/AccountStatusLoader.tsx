@@ -1,0 +1,146 @@
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { Loader2, CheckCircle } from 'lucide-react';
+
+interface AccountStatusLoaderProps {
+  userEmail: string | undefined;
+  isVisible: boolean;
+  onAccountReady: () => void;
+}
+
+export default function AccountStatusLoader({
+  userEmail,
+  isVisible,
+  onAccountReady
+}: AccountStatusLoaderProps) {
+  const [isAccountReady, setIsAccountReady] = useState(false);
+  const [checkAttempts, setCheckAttempts] = useState(0);
+  const [statusMessage, setStatusMessage] = useState('Account aan het laden...');
+
+  useEffect(() => {
+    if (!isVisible || !userEmail || isAccountReady) return;
+
+    const checkAccountStatus = async () => {
+      try {
+        console.log(`🔍 Checking account status for ${userEmail}...`);
+        
+        // Check in users table
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('first_appointment_completed, email_verified, account_approved')
+          .eq('email', userEmail)
+          .maybeSingle();
+
+        if (userError && userError.code !== 'PGRST116') {
+          console.error('Error fetching user data:', userError);
+          setStatusMessage('Fout bij laden account...');
+          return;
+        }
+
+        // Also check in accounts table as backup
+        const { data: accountData, error: accountError } = await supabase
+          .from('accounts')
+          .select('first_appointment_completed, email_verified, account_approved')
+          .eq('email', userEmail)
+          .maybeSingle();
+
+        if (accountError && accountError.code !== 'PGRST116') {
+          console.error('Error fetching account data:', accountError);
+        }
+
+        // Use whichever has data, prefer users table
+        const accountInfo = userData || accountData;
+
+        if (!accountInfo) {
+          console.warn(`⚠️ No account data found for ${userEmail}`);
+          setStatusMessage('Account data aan het synchen...');
+          setCheckAttempts(prev => prev + 1);
+          return;
+        }
+
+        console.log('📋 Account info:', {
+          email: userEmail,
+          first_appointment_completed: accountInfo.first_appointment_completed,
+          email_verified: accountInfo.email_verified,
+          account_approved: accountInfo.account_approved
+        });
+
+        // Check if account is fully ready
+        // Account is ready when first_appointment_completed is true
+        if (accountInfo.first_appointment_completed === true) {
+          console.log('✅ Account is fully ready!');
+          setStatusMessage('Account geladen!');
+          setIsAccountReady(true);
+          onAccountReady();
+        } else {
+          console.log('⏳ Account not ready yet, waiting for appointment completion');
+          setStatusMessage('Wachten op appointment completion...');
+          setCheckAttempts(prev => prev + 1);
+        }
+      } catch (error) {
+        console.error('Error checking account status:', error);
+        setStatusMessage('Fout bij controleren account...');
+      }
+    };
+
+    // Initial check
+    checkAccountStatus();
+
+    // Poll every 2 seconds until account is ready
+    const interval = setInterval(checkAccountStatus, 2000);
+
+    return () => clearInterval(interval);
+  }, [isVisible, userEmail, isAccountReady, onAccountReady]);
+
+  if (!isVisible || isAccountReady) {
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+      <div className="bg-white rounded-2xl p-12 max-w-md w-full mx-4 shadow-2xl">
+        <div className="flex flex-col items-center">
+          {/* Loading Animation */}
+          <div className="relative mb-6">
+            <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-orange-50 rounded-full flex items-center justify-center">
+              <Loader2 className="w-10 h-10 text-orange-600 animate-spin" />
+            </div>
+          </div>
+
+          {/* Title */}
+          <h3 className="text-2xl font-bold text-gray-900 mb-2 text-center">
+            Account Aan Het Laden
+          </h3>
+
+          {/* Status Message */}
+          <p className="text-gray-600 text-center mb-4">
+            {statusMessage}
+          </p>
+
+          {/* Progress Info */}
+          <div className="text-sm text-gray-500 text-center">
+            <p>We controleren of je account volledig is geopend...</p>
+            <p className="mt-2 text-xs">
+              {userEmail && <span>📧 {userEmail}</span>}
+            </p>
+          </div>
+
+          {/* Check Attempts Counter */}
+          {checkAttempts > 5 && (
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+              ⏱️ Account aan het synchen... Dit kan even duren.
+            </div>
+          )}
+
+          {/* Subtle Animation Dots */}
+          <div className="flex gap-2 mt-6">
+            <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+            <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+            <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+

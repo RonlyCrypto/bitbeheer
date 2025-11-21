@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, signUpUser, signInUser, signOutUser, getCurrentUser } from '../lib/supabase';
 import type { User } from '@supabase/supabase-js';
 import logger from '../utils/logger';
+import AccountStatusLoader from '../components/AccountStatusLoader';
 
 interface SupabaseAuthContextType {
   user: User | null;
@@ -22,6 +23,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [showWelcomePopup, setShowWelcomePopup] = useState(false);
+  const [showAccountStatusLoader, setShowAccountStatusLoader] = useState(false);
 
   useEffect(() => {
     // Test Supabase connection first (only in dev)
@@ -57,11 +59,37 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     testSupabaseConnection();
     getInitialSession();
 
+    // Listen for impersonation events
+    const handleImpersonationStarted = () => {
+      console.log('🔐 Impersonation started, showing account status loader');
+      setShowAccountStatusLoader(true);
+    };
+
+    const handleImpersonationStopped = () => {
+      console.log('🛑 Impersonation stopped, hiding account status loader');
+      setShowAccountStatusLoader(false);
+    };
+
+    window.addEventListener('impersonationStarted', handleImpersonationStarted);
+    window.addEventListener('impersonationStopped', handleImpersonationStopped);
+
               // Listen for auth changes
               const { data: { subscription } } = supabase.auth.onAuthStateChange(
                 async (event, session) => {
                   logger.log('Auth state change:', event);
                   setUser(session?.user ?? null);
+                  
+                  // Show account status loader on sign in or admin impersonation
+                  if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user?.email) {
+                    console.log('🔐 Showing account status loader for:', session.user.email);
+                    setShowAccountStatusLoader(true);
+                  }
+                  
+                  // Once account is fully loaded, hide loader
+                  if (event === 'SIGNED_OUT') {
+                    setShowAccountStatusLoader(false);
+                  }
+                  
                   setLoading(false);
                   
                   // Show welcome popup for new users on first login
@@ -78,7 +106,11 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
                 }
               );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('impersonationStarted', handleImpersonationStarted);
+      window.removeEventListener('impersonationStopped', handleImpersonationStopped);
+    };
   }, []);
 
   const signUp = async (email: string, password: string, userData?: any) => {
@@ -140,9 +172,19 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
   };
 
   return (
-    <SupabaseAuthContext.Provider value={value}>
-      {children}
-    </SupabaseAuthContext.Provider>
+    <>
+      <AccountStatusLoader 
+        userEmail={user?.email}
+        isVisible={showAccountStatusLoader}
+        onAccountReady={() => {
+          console.log('✅ Account fully loaded, hiding loader');
+          setShowAccountStatusLoader(false);
+        }}
+      />
+      <SupabaseAuthContext.Provider value={value}>
+        {children}
+      </SupabaseAuthContext.Provider>
+    </>
   );
 }
 
