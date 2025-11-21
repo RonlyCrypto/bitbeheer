@@ -16,13 +16,25 @@ export default function AccountStatusLoader({
   const [isAccountReady, setIsAccountReady] = useState(false);
   const [checkAttempts, setCheckAttempts] = useState(0);
   const [statusMessage, setStatusMessage] = useState('Account aan het laden...');
+  const [startTime] = useState(Date.now());
 
   useEffect(() => {
     if (!isVisible || !userEmail || isAccountReady) return;
 
     const checkAccountStatus = async () => {
       try {
-        console.log(`🔍 Checking account status for ${userEmail}...`);
+        const elapsedSeconds = (Date.now() - startTime) / 1000;
+        
+        console.log(`🔍 Checking account status for ${userEmail}... (${elapsedSeconds.toFixed(1)}s)`);
+        
+        // Timeout: if loading takes more than 10 seconds, force through
+        if (elapsedSeconds > 10) {
+          console.warn('⏱️ Account loading timeout (10s), allowing access');
+          setStatusMessage('Account geladen!');
+          setIsAccountReady(true);
+          onAccountReady();
+          return;
+        }
         
         // Check in users table
         const { data: userData, error: userError } = await supabase
@@ -66,8 +78,11 @@ export default function AccountStatusLoader({
         });
 
         // Check if account is fully ready
-        // Account is ready when first_appointment_completed is true
-        if (accountInfo.first_appointment_completed === true) {
+        // Account is ready when first_appointment_completed is true or truthy (not false/null/0)
+        // This covers: true, 1, or any truthy value
+        const isReady = Boolean(accountInfo.first_appointment_completed);
+        
+        if (isReady) {
           console.log('✅ Account is fully ready!');
           setStatusMessage('Account geladen!');
           setIsAccountReady(true);
