@@ -20,6 +20,7 @@ import PortfolioChart from '../components/PortfolioChart';
 import TransactionBlock from '../components/TransactionBlock';
 import TransactionDetailsPopup from '../components/TransactionDetailsPopup';
 import CurrencyToggle from '../components/CurrencyToggle';
+import CycleAdvisorWidget from '../components/CycleAdvisorWidget';
 import { bitcoinApiService, BitcoinWallet, BitcoinTransaction } from '../services/bitcoinApiService';
 import { supabase } from '../lib/supabase';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
@@ -514,6 +515,16 @@ export default function PortfolioPage() {
               <p className="text-sm text-gray-600">Huidige waarde</p>
             </div>
           </div>
+
+          {/* Cycle Advisor Widget */}
+          {wallets.length > 0 && currentPrice > 0 && (
+            <div className="mb-8">
+              <CycleAdvisorWidget 
+                currentPrice={currentPrice}
+                investmentAmount={500}
+              />
+            </div>
+          )}
 
           {/* Controls - Only show if no wallets or wallets exist */}
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
