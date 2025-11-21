@@ -143,44 +143,6 @@ export default function UserDashboard() {
     targetDate: ''
   });
 
-  // First: Check account status BEFORE loading other data
-  useEffect(() => {
-    const checkAccountStatusFirst = async () => {
-      if (!user?.email) return;
-
-      try {
-        console.log('🔍 Checking account status first for:', user.email);
-        const { data: accountData, error } = await supabase
-          .from('accounts')
-          .select('first_appointment_completed, email_verified, account_approved')
-          .eq('email', user.email)
-          .maybeSingle();
-
-        if (error) {
-          console.error('Error fetching account status:', error);
-          return;
-        }
-
-        if (accountData) {
-          console.log('📋 Account status found:', {
-            email: user.email,
-            first_appointment_completed: accountData.first_appointment_completed,
-            email_verified: accountData.email_verified,
-            account_approved: accountData.account_approved
-          });
-
-          setEmailVerified(accountData.email_verified || false);
-          setFirstAppointmentCompleted(accountData.first_appointment_completed || false);
-          setAccountApproved(accountData.account_approved || false);
-        }
-      } catch (error) {
-        console.error('Error in account status check:', error);
-      }
-    };
-
-    checkAccountStatusFirst();
-  }, [user?.email]);
-
   // Load user data
   useEffect(() => {
     const loadUserData = async () => {
@@ -1804,16 +1766,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
           {/* Aanmeldproces Stappen */}
-          {(() => {
-            // Debug: log why component is shown or hidden
-            console.log('🔍 SignupProcessFlow visibility check:', {
-              accountApproved,
-              emailVerified,
-              firstAppointmentCompleted,
-              shouldShow: !accountApproved
-            });
-            return null;
-          })()}
           {!accountApproved && (
             <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Jouw Aanmeldproces</h3>
