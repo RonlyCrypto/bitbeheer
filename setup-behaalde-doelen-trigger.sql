@@ -24,18 +24,24 @@ CREATE INDEX IF NOT EXISTS idx_goals_email ON goals(email);
 -- Enable Row Level Security
 ALTER TABLE goals ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing RLS policies if they exist
+DROP POLICY IF EXISTS goals_select ON goals;
+DROP POLICY IF EXISTS goals_insert ON goals;
+DROP POLICY IF EXISTS goals_update ON goals;
+DROP POLICY IF EXISTS goals_delete ON goals;
+
 -- RLS policies for goals
-CREATE POLICY IF NOT EXISTS goals_select ON goals
+CREATE POLICY goals_select ON goals
   FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS goals_insert ON goals
+CREATE POLICY goals_insert ON goals
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS goals_update ON goals
+CREATE POLICY goals_update ON goals
   FOR UPDATE USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS goals_delete ON goals
+CREATE POLICY goals_delete ON goals
   FOR DELETE USING (auth.uid() = user_id);
 
 -- Create function to handle signup completion and create/update behaalde doelen
@@ -69,7 +75,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Drop existing trigger if it exists
-DROP TRIGGER IF NOT EXISTS account_signup_completion_trigger ON accounts;
+DROP TRIGGER IF EXISTS account_signup_completion_trigger ON accounts;
 
 -- Create trigger on accounts table
 CREATE TRIGGER account_signup_completion_trigger
@@ -87,7 +93,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Drop existing timestamp trigger if it exists
-DROP TRIGGER IF NOT EXISTS goals_update_timestamp ON goals;
+DROP TRIGGER IF EXISTS goals_update_timestamp ON goals;
 
 -- Create timestamp trigger for goals
 CREATE TRIGGER goals_update_timestamp
@@ -109,7 +115,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Drop existing user_id sync trigger if it exists
-DROP TRIGGER IF NOT EXISTS goals_sync_user_id ON goals;
+DROP TRIGGER IF EXISTS goals_sync_user_id ON goals;
 
 -- Create user_id sync trigger
 CREATE TRIGGER goals_sync_user_id
