@@ -443,37 +443,6 @@ export default function UserDashboard() {
     
     window.addEventListener('refreshAccounts', handleAccountRefresh);
     
-    // Periodic refresh of account status (every 30 seconds)
-    const accountStatusInterval = setInterval(() => {
-      if (user?.email) {
-        const effectiveEmail = (isImpersonating && impersonatedUser) 
-          ? impersonatedUser 
-          : (user.email || null);
-        
-        if (effectiveEmail) {
-          supabase
-            .from('accounts')
-            .select('account_approved, first_appointment_completed, email_verified')
-            .eq('email', effectiveEmail)
-            .maybeSingle()
-            .then(({ data: accountData, error: accountError }) => {
-              if (accountError) {
-                console.error('🔍 Periodic refresh error:', accountError);
-              } else if (accountData) {
-                console.log('🔍 Periodic refresh - Loaded from accounts table:', {
-                  account_approved: accountData.account_approved,
-                  first_appointment_completed: accountData.first_appointment_completed,
-                  email_verified: accountData.email_verified
-                });
-                setAccountApproved(accountData.account_approved || false);
-                setFirstAppointmentCompleted(accountData.first_appointment_completed || false);
-                setEmailVerified(accountData.email_verified || false);
-              }
-            });
-        }
-      }
-    }, 30000); // Refresh every 30 seconds
-    
     // Function to check and update unread chat count
     const checkUnreadMessages = async () => {
       const effectiveEmail = (isImpersonating && impersonatedUser) 
@@ -527,7 +496,6 @@ export default function UserDashboard() {
 
     return () => {
       clearInterval(interval);
-      clearInterval(accountStatusInterval);
       window.removeEventListener('refreshAccounts', handleAccountRefresh);
       window.removeEventListener('newAdminMessage', handleNewMessage);
     };
@@ -1736,7 +1704,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
       )}
       
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
           <div className="flex items-center gap-4">
             <div className="bg-blue-100 p-3 rounded-lg">
@@ -1752,7 +1720,19 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
           <div className="flex items-center gap-4">
             <div className="bg-green-100 p-3 rounded-lg">
-              <Calendar className="w-6 h-6 text-green-600" />
+              <CheckCircle2 className="w-6 h-6 text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Behaalde Doelen</p>
+              <p className="text-2xl font-bold text-gray-900">{goals.filter((g: Goal) => (g.status as string) === 'completed').length}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+          <div className="flex items-center gap-4">
+            <div className="bg-orange-100 p-3 rounded-lg">
+              <Calendar className="w-6 h-6 text-orange-600" />
             </div>
             <div>
               <p className="text-sm text-gray-600">Aankomende Afspraken</p>
