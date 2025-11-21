@@ -39,21 +39,21 @@ ALTER TABLE cycle_advisor_log ENABLE ROW LEVEL SECURITY;
 
 -- RLS policies for cycle_advisor_settings
 CREATE POLICY cycle_advisor_settings_select ON cycle_advisor_settings
-  FOR SELECT USING (auth.uid() = user_id OR (SELECT user_type FROM users WHERE id = auth.uid()) = 'admin');
+  FOR SELECT USING (auth.uid() = user_id);
 
 CREATE POLICY cycle_advisor_settings_insert ON cycle_advisor_settings
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY cycle_advisor_settings_update ON cycle_advisor_settings
-  FOR UPDATE USING (auth.uid() = user_id OR (SELECT user_type FROM users WHERE id = auth.uid()) = 'admin')
-  WITH CHECK (auth.uid() = user_id OR (SELECT user_type FROM users WHERE id = auth.uid()) = 'admin');
+  FOR UPDATE USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY cycle_advisor_settings_delete ON cycle_advisor_settings
   FOR DELETE USING (auth.uid() = user_id);
 
 -- RLS policies for cycle_advisor_log
 CREATE POLICY cycle_advisor_log_select ON cycle_advisor_log
-  FOR SELECT USING (auth.uid() = user_id OR (SELECT user_type FROM users WHERE id = auth.uid()) = 'admin');
+  FOR SELECT USING (auth.uid() = user_id);
 
 CREATE POLICY cycle_advisor_log_insert ON cycle_advisor_log
   FOR INSERT WITH CHECK (auth.uid() = user_id);
