@@ -44,9 +44,9 @@ export default function Header() {
     <>
     <header className="bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg">
       <div className="w-full px-4 py-4 md:py-6">
-        <div className="flex items-center justify-between gap-4">
-          {/* Logo - Left */}
-          <Link to="/" className="flex items-center gap-2 md:gap-4 flex-shrink-0">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          {/* Logo - Left with margin */}
+          <Link to="/" className="flex items-center gap-2 md:gap-4 flex-shrink-0 ml-4">
             <div className="bg-white bg-opacity-20 p-2 md:p-3 rounded-xl backdrop-blur-sm">
               <Bitcoin className="w-6 h-6 md:w-8 md:h-8" />
             </div>
@@ -60,7 +60,7 @@ export default function Header() {
           </Link>
           
           {/* Navigation Menu - Desktop Only - Centered */}
-          <nav className="hidden md:flex items-center gap-6 flex-1 justify-center">
+          <nav className="hidden md:flex items-center gap-6 flex-1 justify-center mx-auto">
             {/* Admin Dashboard - Only visible for admins when not impersonating */}
             {!isImpersonating && canAccessAdmin && (
               <Link 
@@ -170,8 +170,8 @@ export default function Header() {
             )}
           </nav>
           
-          {/* Right Side - Settings/Login */}
-          <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
+          {/* Right Side - Settings/Login - Right with margin */}
+          <div className="flex items-center gap-2 md:gap-4 flex-shrink-0 mr-4">
             {/* Settings Menu or Login/Register */}
             {isAuthenticated || isImpersonating ? (
               <div className="flex items-center gap-3">
