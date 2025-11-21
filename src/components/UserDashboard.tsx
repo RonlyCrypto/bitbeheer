@@ -626,7 +626,6 @@ export default function UserDashboard() {
               {[
                 { id: 'overview', label: 'Overzicht', icon: BarChart3, alwaysEnabled: true },
                 { id: 'goals', label: 'Doelen', icon: Target, alwaysEnabled: false },
-                { id: 'behaalde-doelen', label: 'Behaalde Doelen', icon: CheckCircle2, alwaysEnabled: false },
                 { id: 'portfolio', label: 'Portfolio', icon: PieChart, alwaysEnabled: false },
                 { id: 'appointments', label: 'Afspraken', icon: Calendar, alwaysEnabled: true },
                 { id: 'helpdesk', label: 'Helpdesk', icon: Mail, alwaysEnabled: false, badge: unreadChatCount > 0 ? unreadChatCount : undefined },
@@ -694,46 +693,6 @@ export default function UserDashboard() {
               firstAppointmentCompleted={firstAppointmentCompleted}
             />}
             {activeTab === 'goals' && (accountApproved || hasApprovedOneOnOne) && <GoalsTab goals={goals} setGoals={setGoals} />}
-            {activeTab === 'behaalde-doelen' && (accountApproved || hasApprovedOneOnOne) && (
-              <div className="bg-white rounded-xl shadow-sm p-8 border border-gray-200">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                  <CheckCircle className="w-8 h-8 text-green-600" />
-                  Behaalde Doelen
-                </h2>
-                {goals.filter((g: Goal) => g.status === 'completed').length === 0 ? (
-                  <div className="text-center py-12">
-                    <CheckCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-600 text-lg">Je hebt nog geen doelen behaald</p>
-                    <p className="text-gray-500 text-sm mt-2">Zodra je doelen compleet zijn, zullen ze hier verschijnen!</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {goals
-                      .filter((g: Goal) => g.status === 'completed')
-                      .map((goal: Goal) => (
-                        <div key={goal.id} className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm p-6 border-2 border-green-300 relative">
-                          <div className="absolute top-4 right-4">
-                            <CheckCircle className="w-8 h-8 text-green-600" />
-                          </div>
-                          <div className="mb-4">
-                            <h3 className="font-bold text-green-900 text-lg">{goal.title}</h3>
-                            <p className="text-sm text-green-700 capitalize mt-1">{goal.category}</p>
-                          </div>
-                          <div className="bg-white rounded-lg p-3 mb-3">
-                            <p className="text-sm text-green-800 font-medium">🎉 Doel behaald!</p>
-                            <p className="text-xs text-green-600 mt-1">
-                              {goal.description}
-                            </p>
-                          </div>
-                          <div className="text-xs text-green-700 pt-2 border-t border-green-300">
-                            Bereikt op: {goal.createdAt ? new Date(goal.createdAt).toLocaleDateString('nl-NL') : 'Onbekend'}
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                )}
-              </div>
-            )}
             {activeTab === 'portfolio' && (accountApproved || hasApprovedOneOnOne) && <PortfolioPage />}
             {activeTab === 'appointments' && <AppointmentsTab 
               appointments={appointments} 
@@ -2356,6 +2315,40 @@ function GoalsTab({ goals, setGoals }: any) {
             );
           })}
       </div>
+
+      {/* Behaalde Doelen Section */}
+      {goals.filter((g: Goal) => g.status === 'completed').length > 0 && (
+        <div className="mt-12 pt-8 border-t border-gray-200">
+          <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+            <CheckCircle className="w-8 h-8 text-green-600" />
+            Behaalde Doelen
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {goals
+              .filter((g: Goal) => g.status === 'completed')
+              .map((goal: Goal) => (
+                <div key={goal.id} className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm p-6 border-2 border-green-300 relative">
+                  <div className="absolute top-4 right-4">
+                    <CheckCircle className="w-8 h-8 text-green-600" />
+                  </div>
+                  <div className="mb-4">
+                    <h3 className="font-bold text-green-900 text-lg">{goal.title}</h3>
+                    <p className="text-sm text-green-700 capitalize mt-1">{goal.category}</p>
+                  </div>
+                  <div className="bg-white rounded-lg p-3 mb-3">
+                    <p className="text-sm text-green-800 font-medium">🎉 Doel behaald!</p>
+                    <p className="text-xs text-green-600 mt-1">
+                      {goal.description}
+                    </p>
+                  </div>
+                  <div className="text-xs text-green-700 pt-2 border-t border-green-300">
+                    Bereikt op: {goal.createdAt ? new Date(goal.createdAt).toLocaleDateString('nl-NL') : 'Onbekend'}
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
