@@ -51,11 +51,13 @@ function AppContent() {
           <SystemStatusDebug />
 
           <Routes>
-                {/* Root route: redirect to dashboard if logged in, otherwise show front page */}
+                {/* Root route: show dashboard if logged in, otherwise show front page */}
                 <Route 
                   path="/" 
                   element={user ? <UserDashboard /> : <FrontPage />}
                 />
+                {/* Dedicated front page route - accessible even when logged in */}
+                <Route path="/home" element={<FrontPage />} />
                 <Route path="/aanmelden" element={<AanmeldenPage />} />
                 <Route 
                   path="/admin" 
