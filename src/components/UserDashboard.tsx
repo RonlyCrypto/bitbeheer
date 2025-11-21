@@ -2202,7 +2202,7 @@ function GoalsTab({ goals, setGoals }: any) {
 
 
       {/* Behaalde Doelen Section */}
-      {goals.filter((g: Goal) => g.currentAmount >= g.targetAmount && g.status === 'active').length > 0 && (
+      {goals.filter((g: Goal) => g.status === 'completed').length > 0 && (
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-green-600" />
@@ -2210,7 +2210,7 @@ function GoalsTab({ goals, setGoals }: any) {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
             {goals
-              .filter((g: Goal) => g.currentAmount >= g.targetAmount && g.status === 'active')
+              .filter((g: Goal) => g.status === 'completed')
               .map((goal: Goal) => (
                 <div key={goal.id} className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm p-6 border-2 border-green-300 relative">
                   <div className="absolute top-4 right-4">
