@@ -45,8 +45,8 @@ export default function Header() {
     <header className="bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg">
       <div className="w-full px-4 py-4 md:py-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          {/* Logo - Left */}
-          <Link to="/" className="flex items-center gap-2 md:gap-4 flex-shrink-0">
+          {/* Logo - Left - Goes to home page */}
+          <Link to="/home" className="flex items-center gap-2 md:gap-4 flex-shrink-0">
             <div className="bg-white bg-opacity-20 p-2 md:p-3 rounded-xl backdrop-blur-sm">
               <Bitcoin className="w-6 h-6 md:w-8 md:h-8" />
             </div>
