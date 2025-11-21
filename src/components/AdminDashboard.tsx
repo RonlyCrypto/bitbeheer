@@ -33,6 +33,7 @@ import ReferralLinksBeheer from './ReferralLinksBeheer';
 import SEOAnalytics from './SEOAnalytics';
 import EmailManagementTab from './EmailManagementTab';
 import NotificationManagement from './NotificationManagement';
+import AdminCycleAdvisor from './AdminCycleAdvisor';
 import ProfilePopup from './ProfilePopup';
 import { useProfilePopup } from '../contexts/ProfilePopupContext';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
@@ -468,6 +469,16 @@ export default function AdminDashboard() {
                   SEO & Analytics
                 </button>
                 <button
+                  onClick={() => setActiveTab('cycle-advisor')}
+                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
+                    activeTab === 'cycle-advisor'
+                      ? 'border-orange-500 text-orange-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  🚀 Cycle Advisor
+                </button>
+                <button
                   onClick={() => setActiveTab('settings')}
                   className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
                     activeTab === 'settings'
@@ -847,6 +858,13 @@ export default function AdminDashboard() {
           {activeTab === 'seo-analytics' && (
             <div className="space-y-6">
               <SEOAnalytics />
+            </div>
+          )}
+
+          {/* Cycle Advisor Tab */}
+          {activeTab === 'cycle-advisor' && (
+            <div className="space-y-6">
+              <AdminCycleAdvisor />
             </div>
           )}
 
