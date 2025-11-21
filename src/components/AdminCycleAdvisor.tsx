@@ -4,7 +4,7 @@ import {
   Users, 
   TrendingUp, 
   BarChart3, 
-  Toggle2, 
+  ToggleLeft,
   Settings,
   Search,
   Filter,
@@ -358,7 +358,7 @@ export default function AdminCycleAdvisor() {
                               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                           } disabled:opacity-50`}
                         >
-                          <Toggle2 className="w-4 h-4 mr-1" />
+                          <ToggleLeft className="w-4 h-4 mr-1" />
                           {user.cycle_advisor_settings?.enabled ? 'Aan' : 'Uit'}
                         </button>
                       </td>
