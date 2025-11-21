@@ -972,7 +972,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
       window.removeEventListener('refreshAppointments', handleRefresh);
       document.removeEventListener('visibilitychange', visibilityChangeHandler);
     };
-  }, [isImpersonating, impersonatedUser]);
+  }, [user, isImpersonating, impersonatedUser]);
   
   // Find user's appointment (pending or confirmed) - prioritize confirmed, then pending
   // For the green block: show ANY pending/confirmed appointment (regardless of date)
@@ -1838,25 +1838,29 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Recente Doelen</h3>
           <div className="space-y-3">
-            {goals.slice(0, 3).map((goal: Goal) => (
-              <div key={goal.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-gray-900">{goal.title}</p>
-                  <p className="text-sm text-gray-600">{goal.category}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">
-                    ${goal.currentAmount.toLocaleString('en-US')} / ${goal.targetAmount.toLocaleString('en-US')}
-                  </p>
-                  <div className="w-20 bg-gray-200 rounded-full h-2 mt-1">
-                    <div 
-                      className="bg-orange-500 h-2 rounded-full" 
-                      style={{ width: `${(goal.currentAmount / goal.targetAmount) * 100}%` }}
-                    ></div>
+            {goals && goals.length > 0 ? (
+              goals.slice(0, 3).map((goal: Goal) => (
+                <div key={goal.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium text-gray-900">{goal.title}</p>
+                    <p className="text-sm text-gray-600">{goal.category}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-gray-900">
+                      ${goal.currentAmount.toLocaleString('en-US')} / ${goal.targetAmount.toLocaleString('en-US')}
+                    </p>
+                    <div className="w-20 bg-gray-200 rounded-full h-2 mt-1">
+                      <div 
+                        className="bg-orange-500 h-2 rounded-full" 
+                        style={{ width: `${(goal.currentAmount / goal.targetAmount) * 100}%` }}
+                      ></div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-sm text-gray-500">Geen doelen ingesteld</p>
+            )}
           </div>
         </div>
 
