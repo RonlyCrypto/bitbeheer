@@ -143,6 +143,30 @@ export default function UserDashboard() {
     targetDate: ''
   });
 
+  // Function to refresh account status (called after admin updates or periodically)
+  const refreshAccountStatus = async () => {
+    if (!user?.email) return;
+    try {
+      const { data: userData, error: userError } = await supabase
+        .from('accounts')
+        .select('account_approved, first_appointment_completed, email_verified')
+        .eq('email', user.email)
+        .maybeSingle();
+      
+      if (!userError && userData) {
+        console.log('🔄 Refreshed account status:', {
+          first_appointment_completed: userData.first_appointment_completed,
+          account_approved: userData.account_approved
+        });
+        setAccountApproved(userData.account_approved || false);
+        setFirstAppointmentCompleted(userData.first_appointment_completed || false);
+        setEmailVerified(userData.email_verified || false);
+      }
+    } catch (error) {
+      console.error('Error refreshing account status:', error);
+    }
+  };
+
   // Load user data
   useEffect(() => {
     const loadUserData = async () => {
@@ -456,6 +480,13 @@ export default function UserDashboard() {
     
     window.addEventListener('refreshAccounts', handleAccountRefresh);
     
+    // Listen for account status refresh events (from admin updates, etc)
+    const handleStatusRefresh = () => {
+      console.log('📌 Refreshing account status after admin update');
+      refreshAccountStatus();
+    };
+    window.addEventListener('refreshAccountStatus', handleStatusRefresh);
+    
     // Function to check and update unread chat count
     const checkUnreadMessages = async () => {
       const effectiveEmail = (isImpersonating && impersonatedUser) 
@@ -510,6 +541,7 @@ export default function UserDashboard() {
     return () => {
       clearInterval(interval);
       window.removeEventListener('refreshAccounts', handleAccountRefresh);
+      window.removeEventListener('refreshAccountStatus', handleStatusRefresh);
       window.removeEventListener('newAdminMessage', handleNewMessage);
     };
   }, [user, isImpersonating, impersonatedUser]);
