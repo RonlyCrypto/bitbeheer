@@ -221,9 +221,46 @@ export default function BitcoinHistory() {
   useEffect(() => {
     const loadPriceData = async () => {
       try {
-        // Get current price
-        const price = await bitcoinApiService.getCurrentPrice();
-        setCurrentPrice(Math.round(price));
+        let price = 0;
+
+        // Try to get current price from BTC Live price element
+        const btcLiveElement = document.querySelector('[class*="btc"], [class*="BTC"], [data-price]');
+        if (btcLiveElement) {
+          const priceText = btcLiveElement.textContent || '';
+          const priceMatch = priceText.match(/[\$₿]?\s*([0-9,]+\.?[0-9]*)/);
+          if (priceMatch) {
+            const extractedPrice = parseFloat(priceMatch[1].replace(/,/g, ''));
+            if (!isNaN(extractedPrice) && extractedPrice > 0) {
+              price = extractedPrice;
+              console.log('💰 BTC Live price found:', price);
+            }
+          }
+        }
+
+        // Fallback: Try bitcoinApiService
+        if (price === 0) {
+          try {
+            price = await bitcoinApiService.getCurrentPrice();
+            console.log('💰 Current price from API:', price);
+          } catch (apiError) {
+            console.warn('⚠️ API price fetch failed:', apiError);
+          }
+        }
+
+        // Fallback: Use cached price from localStorage
+        if (price === 0) {
+          const cached = localStorage.getItem('btc_last_price');
+          if (cached) {
+            price = parseFloat(cached);
+            console.log('💾 Using cached price:', price);
+          }
+        }
+
+        // Save price to localStorage for next session
+        if (price > 0) {
+          localStorage.setItem('btc_last_price', price.toString());
+          setCurrentPrice(Math.round(price));
+        }
 
         // Get all price data to calculate ATHs
         const priceData = allPriceData;
@@ -243,9 +280,15 @@ export default function BitcoinHistory() {
           }
         }
 
-        console.log('✅ Market Status prices loaded:', { price, latestATH, previousATH });
+        console.log('✅ Market Status prices loaded:', { price, latestATH: Math.round(Math.max(...priceData.map(p => p.price))), previousATH });
       } catch (error) {
         console.error('❌ Error loading price data:', error);
+        
+        // Fallback to cached price
+        const cached = localStorage.getItem('btc_last_price');
+        if (cached) {
+          setCurrentPrice(Math.round(parseFloat(cached)));
+        }
       }
     };
 
