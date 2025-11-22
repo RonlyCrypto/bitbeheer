@@ -196,7 +196,6 @@ export default function BitcoinHistory() {
   const [showCyclePhases, setShowCyclePhases] = useState(false);
   const [showHalvingEvents, setShowHalvingEvents] = useState(false);
   const [showMajorEvents, setShowMajorEvents] = useState(false);
-  const [showMarketStatus, setShowMarketStatus] = useState(false); // Collapsible state
 
   // DCA results state
   const [dcaResult, setDcaResult] = useState<SimulationResult | null>(null);
@@ -987,33 +986,22 @@ export default function BitcoinHistory() {
           </div>
           )}
 
-          {/* Market Status Widget - Collapsible Above DCA Simulator */}
+          {/* Market Status Widget - Above DCA Simulator with ATH prices */}
           {showDCALayer && (
-            <div className="mb-6">
-              <button
-                onClick={() => setShowMarketStatus(!showMarketStatus)}
-                className="w-full bg-white rounded-xl p-4 border border-gray-200 shadow-sm hover:shadow-md transition-shadow text-left"
-              >
+            <div className="mb-6 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="bg-gradient-to-r from-orange-50 to-orange-50 px-6 py-3 border-b border-orange-200">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold text-gray-900">📊 Markt Positie Analyse</h3>
-                    <span className={`transform transition-transform ${showMarketStatus ? 'rotate-180' : ''}`}>
-                      ▼
-                    </span>
-                  </div>
-                  <div className="text-xs text-gray-600">
-                    <span className="font-mono">Vorige ATH: $19,700</span>
+                  <h3 className="text-sm font-semibold text-gray-900">📊 Markt Positie Analyse</h3>
+                  <div className="text-xs text-gray-600 space-x-2">
+                    <span className="font-mono bg-white px-2 py-1 rounded border border-gray-200">Vorige ATH: €19.700</span>
                     <span className="mx-2">•</span>
-                    <span className="font-mono">Huidge ATH: $69,000</span>
+                    <span className="font-mono bg-white px-2 py-1 rounded border border-gray-200">Huidge ATH: €69.000</span>
                   </div>
                 </div>
-              </button>
-              
-              {showMarketStatus && (
-                <div className="bg-white border border-t-0 border-gray-200 rounded-b-xl p-4 shadow-sm">
-                  <MarketStatusWidget position="between_aths" compact={false} />
-                </div>
-              )}
+              </div>
+              <div className="p-6">
+                <MarketStatusWidget position="between_aths" compact={false} />
+              </div>
             </div>
           )}
 
