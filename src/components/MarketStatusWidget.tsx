@@ -72,43 +72,49 @@ export default function MarketStatusWidget({ position = 'unknown', compact = fal
       <div className={`${status.bgColor} border-2 ${status.borderColor} rounded-xl p-3`}>
         {/* Compact Stoplicht */}
         <div className="flex gap-3 items-center">
-          {/* Mini Traffic Light with white rim */}
-          <div className="flex-shrink-0">
-            {/* Outer black border */}
-            <div className="w-14 h-20 bg-black rounded-2xl p-0.5">
-              {/* White rim */}
-              <div className="w-full h-full bg-white rounded-2xl p-1 flex flex-col justify-around items-center">
-                {/* Red Light with white circle */}
-                <div className="flex items-center justify-center w-10 h-10 bg-white rounded-full border-2 border-gray-200">
-                  <div
-                    className={`w-7 h-7 rounded-full transition-all ${
-                      position === 'above_latest_ath'
-                        ? 'bg-red-500 shadow-lg shadow-red-400'
-                        : 'bg-red-900 opacity-50'
-                    }`}
-                  ></div>
+          {/* Mini Traffic Light - Realistic style */}
+          <div className="flex-shrink-0 relative">
+            {/* Gray outer rim */}
+            <div className="w-16 bg-gradient-to-b from-gray-300 to-gray-400 rounded-3xl p-1 shadow-lg" style={{ aspectRatio: '1 / 1.4' }}>
+              {/* Black inner casing */}
+              <div className="w-full h-full bg-black rounded-2xl p-2 flex flex-col justify-around items-center relative overflow-hidden">
+                {/* Dark background */}
+                <div className="absolute inset-0 bg-gradient-to-b from-gray-800 to-black rounded-2xl opacity-30"></div>
+                
+                {/* Red Light */}
+                <div className="relative z-10 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-red-600 to-red-800 shadow-inner border border-red-900">
+                    {position === 'above_latest_ath' && (
+                      <div className="w-full h-full rounded-full bg-gradient-to-br from-red-400 to-red-600 shadow-lg shadow-red-500 animate-pulse"></div>
+                    )}
+                    {position !== 'above_latest_ath' && (
+                      <div className="w-full h-full rounded-full bg-red-900 opacity-40 pattern"></div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Orange Light with white circle */}
-                <div className="flex items-center justify-center w-10 h-10 bg-white rounded-full border-2 border-gray-200">
-                  <div
-                    className={`w-7 h-7 rounded-full transition-all ${
-                      position === 'between_aths'
-                        ? 'bg-orange-500 shadow-lg shadow-orange-400'
-                        : 'bg-orange-900 opacity-50'
-                    }`}
-                  ></div>
+                {/* Orange Light */}
+                <div className="relative z-10 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-600 to-orange-800 shadow-inner border border-orange-900">
+                    {position === 'between_aths' && (
+                      <div className="w-full h-full rounded-full bg-gradient-to-br from-orange-400 to-orange-600 shadow-lg shadow-orange-500 animate-pulse"></div>
+                    )}
+                    {position !== 'between_aths' && (
+                      <div className="w-full h-full rounded-full bg-orange-900 opacity-40"></div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Green Light with white circle */}
-                <div className="flex items-center justify-center w-10 h-10 bg-white rounded-full border-2 border-gray-200">
-                  <div
-                    className={`w-7 h-7 rounded-full transition-all ${
-                      position === 'below_previous_ath'
-                        ? 'bg-green-500 shadow-lg shadow-green-400'
-                        : 'bg-green-900 opacity-50'
-                    }`}
-                  ></div>
+                {/* Green Light */}
+                <div className="relative z-10 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-green-600 to-green-800 shadow-inner border border-green-900">
+                    {position === 'below_previous_ath' && (
+                      <div className="w-full h-full rounded-full bg-gradient-to-br from-green-400 to-green-600 shadow-lg shadow-green-500 animate-pulse"></div>
+                    )}
+                    {position !== 'below_previous_ath' && (
+                      <div className="w-full h-full rounded-full bg-green-900 opacity-40"></div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
