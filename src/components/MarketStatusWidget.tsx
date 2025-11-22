@@ -201,54 +201,55 @@ export default function MarketStatusWidget({
 
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="border-t border-current border-opacity-20 p-6 space-y-6">
-          <div className="flex flex-col items-center gap-4">
+        <div className="border-t border-current border-opacity-20 p-6">
+          <div className="flex gap-6">
             {/* Smaller Traffic Light - Like Sidebar */}
-            <div className="w-14 bg-gradient-to-b from-gray-300 to-gray-400 rounded-3xl p-1 shadow-lg" style={{ height: '72px', minHeight: '72px' }}>
-              <div className="w-full h-full bg-black rounded-2xl p-2 flex flex-col justify-around items-center relative">
-                <div className="absolute inset-0 bg-gradient-to-b from-gray-800 to-black rounded-2xl opacity-30"></div>
-                
-                {/* Red Light */}
-                <div className="relative z-10 flex items-center justify-center">
-                  <div className="w-9 h-9 rounded-full border-2 border-gray-600 flex items-center justify-center">
-                    {position === 'above_latest_ath' && (
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-red-400 to-red-600 shadow-lg shadow-red-500 animate-pulse"></div>
-                    )}
-                    {position !== 'above_latest_ath' && (
-                      <div className="w-7 h-7 rounded-full bg-red-900 opacity-30"></div>
-                    )}
+            <div className="flex-shrink-0">
+              <div className="w-14 bg-gradient-to-b from-gray-300 to-gray-400 rounded-3xl p-1 shadow-lg">
+                <div className="w-full bg-black rounded-2xl p-2 flex flex-col justify-around items-center relative" style={{ minHeight: 'auto' }}>
+                  <div className="absolute inset-0 bg-gradient-to-b from-gray-800 to-black rounded-2xl opacity-30"></div>
+                  
+                  {/* Red Light */}
+                  <div className="relative z-10 flex items-center justify-center py-1">
+                    <div className="w-9 h-9 rounded-full border-2 border-gray-600 flex items-center justify-center">
+                      {position === 'above_latest_ath' && (
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-red-400 to-red-600 shadow-lg shadow-red-500 animate-pulse"></div>
+                      )}
+                      {position !== 'above_latest_ath' && (
+                        <div className="w-7 h-7 rounded-full bg-red-900 opacity-30"></div>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                {/* Orange Light */}
-                <div className="relative z-10 flex items-center justify-center">
-                  <div className="w-9 h-9 rounded-full border-2 border-gray-600 flex items-center justify-center">
-                    {position === 'between_aths' && (
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 shadow-lg shadow-orange-500 animate-pulse"></div>
-                    )}
-                    {position !== 'between_aths' && (
-                      <div className="w-7 h-7 rounded-full bg-orange-900 opacity-30"></div>
-                    )}
+                  {/* Orange Light */}
+                  <div className="relative z-10 flex items-center justify-center py-1">
+                    <div className="w-9 h-9 rounded-full border-2 border-gray-600 flex items-center justify-center">
+                      {position === 'between_aths' && (
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 shadow-lg shadow-orange-500 animate-pulse"></div>
+                      )}
+                      {position !== 'between_aths' && (
+                        <div className="w-7 h-7 rounded-full bg-orange-900 opacity-30"></div>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                {/* Green Light */}
-                <div className="relative z-10 flex items-center justify-center">
-                  <div className="w-9 h-9 rounded-full border-2 border-gray-600 flex items-center justify-center">
-                    {position === 'below_previous_ath' && (
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-green-400 to-green-600 shadow-lg shadow-green-500 animate-pulse"></div>
-                    )}
-                    {position !== 'below_previous_ath' && (
-                      <div className="w-7 h-7 rounded-full bg-green-900 opacity-30"></div>
-                    )}
+                  {/* Green Light */}
+                  <div className="relative z-10 flex items-center justify-center py-1">
+                    <div className="w-9 h-9 rounded-full border-2 border-gray-600 flex items-center justify-center">
+                      {position === 'below_previous_ath' && (
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-green-400 to-green-600 shadow-lg shadow-green-500 animate-pulse"></div>
+                      )}
+                      {position !== 'below_previous_ath' && (
+                        <div className="w-7 h-7 rounded-full bg-green-900 opacity-30"></div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* ATH Range Visualization */}
-          <div className="space-y-2">
+            {/* ATH Range Visualization - Beside Traffic Light */}
+            <div className="flex-1 space-y-2">
             <div className="bg-gray-200 rounded-full h-3 relative overflow-hidden shadow-inner">
               <div className="absolute inset-0 flex items-center">
                 {/* Previous ATH position (20%) */}
@@ -285,16 +286,17 @@ export default function MarketStatusWidget({
               </div>
             </div>
             
-            {/* Position percentages */}
-            <div className={`text-xs font-semibold mt-3 px-3 py-2 rounded text-center ${status.bgColor} border border-current border-opacity-30`}>
-              {position === 'above_latest_ath' && '↗️ +15% BOVEN huidge ATH - HOOG RISICO'}
-              {position === 'between_aths' && '➡️ 40% TUSSEN vorige & huidge ATH - NEUTRAAL'}
-              {position === 'below_previous_ath' && '↙️ -30% ONDER vorige ATH - VEILIG'}
+              {/* Position percentages */}
+              <div className={`text-xs font-semibold mt-3 px-3 py-2 rounded text-center ${status.bgColor} border border-current border-opacity-30`}>
+                {position === 'above_latest_ath' && '↗️ +15% BOVEN huidge ATH - HOOG RISICO'}
+                {position === 'between_aths' && '➡️ 40% TUSSEN vorige & huidge ATH - NEUTRAAL'}
+                {position === 'below_previous_ath' && '↙️ -30% ONDER vorige ATH - VEILIG'}
+              </div>
+
+              {/* Advice */}
+              <p className={`text-sm font-semibold text-center ${status.textColor}`}>{status.advice}</p>
             </div>
           </div>
-
-          {/* Advice */}
-          <p className={`text-sm font-semibold text-center ${status.textColor}`}>{status.advice}</p>
         </div>
       )}
     </div>
