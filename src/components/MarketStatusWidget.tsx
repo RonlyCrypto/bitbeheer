@@ -262,17 +262,17 @@ export default function MarketStatusWidget({ position = 'unknown', compact = fal
             <div className="flex justify-between text-xs font-semibold text-gray-700">
               <div className="text-left">
                 <div className="text-gray-600">💙 Vorige ATH</div>
-                <div className="font-mono">€19.700</div>
+                <div className="font-mono">$19,700</div>
               </div>
               <div className="text-center">
                 <div className="text-gray-600">Huige Prijs</div>
                 <div className={`font-mono ${position === 'above_latest_ath' ? 'text-red-600' : position === 'between_aths' ? 'text-orange-600' : 'text-green-600'}`}>
-                  €42.250
+                  $42,250
                 </div>
               </div>
               <div className="text-right">
                 <div className="text-gray-600">❤️ Huidge ATH</div>
-                <div className="font-mono">€69.000</div>
+                <div className="font-mono">$69,000</div>
               </div>
             </div>
             

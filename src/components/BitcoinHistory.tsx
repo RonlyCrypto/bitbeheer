@@ -993,9 +993,9 @@ export default function BitcoinHistory() {
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-gray-900">📊 Markt Positie Analyse</h3>
                   <div className="text-xs text-gray-600 space-x-2">
-                    <span className="font-mono bg-white px-2 py-1 rounded border border-gray-200">Vorige ATH: €19.700</span>
+                    <span className="font-mono bg-white px-2 py-1 rounded border border-gray-200">Vorige ATH: $19,700</span>
                     <span className="mx-2">•</span>
-                    <span className="font-mono bg-white px-2 py-1 rounded border border-gray-200">Huidge ATH: €69.000</span>
+                    <span className="font-mono bg-white px-2 py-1 rounded border border-gray-200">Huidge ATH: $69,000</span>
                   </div>
                 </div>
               </div>
