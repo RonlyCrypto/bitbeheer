@@ -3,6 +3,7 @@ import { TrendingUp, Calendar, Zap, Minus, Maximize, Calculator, Eye, EyeOff, La
 import { Link } from 'react-router-dom';
 import { initializeEarlyBitcoinData, fetchAllBitcoinData } from '../services/priceService';
 import { bitcoinDataManager } from '../services/bitcoinDataManager';
+import { bitcoinApiService } from '../services/bitcoinApiService';
 import { PriceData, SimulationResult } from '../types';
 import PriceChart from './PriceChart';
 import LiveCandleChart from './LiveCandleChart';
@@ -200,6 +201,11 @@ export default function BitcoinHistory() {
   // DCA results state
   const [dcaResult, setDcaResult] = useState<SimulationResult | null>(null);
 
+  // Market Status Widget states
+  const [currentPrice, setCurrentPrice] = useState<number>(0);
+  const [previousATH, setPreviousATH] = useState<number>(19700);
+  const [latestATH, setLatestATH] = useState<number>(69000);
+
   // Debug DCA result changes
   useEffect(() => {
     if (dcaResult) {
@@ -210,6 +216,43 @@ export default function BitcoinHistory() {
       });
     }
   }, [dcaResult]);
+
+  // Load current price and ATH data
+  useEffect(() => {
+    const loadPriceData = async () => {
+      try {
+        // Get current price
+        const price = await bitcoinApiService.getCurrentPrice();
+        setCurrentPrice(Math.round(price));
+
+        // Get all price data to calculate ATHs
+        const priceData = allPriceData;
+        if (priceData && priceData.length > 0) {
+          // Find highest price (current ATH)
+          const maxPrice = Math.max(...priceData.map(p => p.price));
+          setLatestATH(Math.round(maxPrice));
+
+          // Find previous ATH (highest price before last month)
+          const oneMonthAgo = new Date();
+          oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+          const olderData = priceData.filter(p => new Date(p.date) < oneMonthAgo);
+          
+          if (olderData.length > 0) {
+            const prevMax = Math.max(...olderData.map(p => p.price));
+            setPreviousATH(Math.round(prevMax));
+          }
+        }
+
+        console.log('✅ Market Status prices loaded:', { price, latestATH, previousATH });
+      } catch (error) {
+        console.error('❌ Error loading price data:', error);
+      }
+    };
+
+    if (allPriceData.length > 0) {
+      loadPriceData();
+    }
+  }, [allPriceData]);
 
   // Live data fetch function
 
@@ -1000,7 +1043,13 @@ export default function BitcoinHistory() {
                 </div>
               </div>
               <div className="p-6">
-                <MarketStatusWidget position="between_aths" compact={false} />
+                <MarketStatusWidget 
+                  position="between_aths" 
+                  compact={false}
+                  currentPrice={currentPrice}
+                  previousATH={previousATH}
+                  latestATH={latestATH}
+                />
               </div>
             </div>
           )}
