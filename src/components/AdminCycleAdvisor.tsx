@@ -214,24 +214,36 @@ export default function AdminCycleAdvisor() {
     }
   };
 
-  const getRiskColor = (riskLevel: 'low' | 'medium' | 'high' | 'very_high' | undefined) => {
-    switch (riskLevel) {
-      case 'low': return 'bg-green-500'; // Veilig - groen
-      case 'medium': return 'bg-yellow-500'; // Neutraal - oranje/geel
-      case 'high': return 'bg-orange-500'; // Hoog risico - oranje
-      case 'very_high': return 'bg-red-500'; // Zeer hoog risico - rood
-      default: return 'bg-gray-400'; // Onbekend - grijs
+  const getTrafficLightColor = (position: 'below_previous_ath' | 'between_aths' | 'above_latest_ath' | 'unknown' | undefined): 'green' | 'orange' | 'red' | 'gray' => {
+    switch (position) {
+      case 'below_previous_ath': return 'green'; // Veilig - groen
+      case 'between_aths': return 'orange'; // Neutraal - oranje
+      case 'above_latest_ath': return 'red'; // Hoog risico - rood
+      default: return 'gray'; // Onbekend
     }
   };
 
-  const getRiskLabel = (riskLevel: 'low' | 'medium' | 'high' | 'very_high' | undefined) => {
-    switch (riskLevel) {
-      case 'low': return 'Veilig';
-      case 'medium': return 'Neutraal';
-      case 'high': return 'Hoog Risico';
-      case 'very_high': return 'Zeer Hoog';
+  const getTrafficLightLabel = (position: 'below_previous_ath' | 'between_aths' | 'above_latest_ath' | 'unknown' | undefined) => {
+    switch (position) {
+      case 'below_previous_ath': return 'Veilig - Onder vorige ATH';
+      case 'between_aths': return 'Neutraal - Tussen ATHs';
+      case 'above_latest_ath': return 'Hoog Risico - Boven huidige ATH';
       default: return 'Onbekend';
     }
+  };
+
+  const getRiskColor = (position: 'below_previous_ath' | 'between_aths' | 'above_latest_ath' | 'unknown' | undefined) => {
+    const color = getTrafficLightColor(position);
+    switch (color) {
+      case 'green': return 'bg-green-500';
+      case 'orange': return 'bg-orange-500';
+      case 'red': return 'bg-red-500';
+      default: return 'bg-gray-400';
+    }
+  };
+
+  const getRiskLabel = (position: 'below_previous_ath' | 'between_aths' | 'above_latest_ath' | 'unknown' | undefined) => {
+    return getTrafficLightLabel(position);
   };
 
   return (
@@ -350,6 +362,56 @@ export default function AdminCycleAdvisor() {
               <div className="flex justify-between items-center">
                 <span className="text-xs text-gray-600">Aggressive</span>
                 <span className="text-sm font-semibold text-orange-600">{stats.byMode.aggressive}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Market Status - Traffic Light */}
+          <div className="bg-white rounded-lg shadow-lg p-6 md:col-span-3">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  🚦 Huidige Markt Status
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">Bitcoin positie in de huidige cyclus</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-4">
+              {/* Safe - Green */}
+              <div className="border-2 border-green-500 rounded-lg p-6 text-center bg-green-50">
+                <div className="flex justify-center mb-4">
+                  <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center">
+                    <span className="text-4xl">🟢</span>
+                  </div>
+                </div>
+                <h4 className="font-bold text-green-900 text-lg">VEILIG</h4>
+                <p className="text-sm text-green-700 mt-2">Onder vorige ATH</p>
+                <p className="text-xs text-green-600 mt-3 font-medium">Beste koopkans</p>
+              </div>
+
+              {/* Neutral - Orange */}
+              <div className="border-2 border-orange-500 rounded-lg p-6 text-center bg-orange-50">
+                <div className="flex justify-center mb-4">
+                  <div className="w-20 h-20 bg-orange-500 rounded-full flex items-center justify-center">
+                    <span className="text-4xl">🟠</span>
+                  </div>
+                </div>
+                <h4 className="font-bold text-orange-900 text-lg">NEUTRAAL</h4>
+                <p className="text-sm text-orange-700 mt-2">Tussen vorige & huidige ATH</p>
+                <p className="text-xs text-orange-600 mt-3 font-medium">Wachten adviseert</p>
+              </div>
+
+              {/* Risky - Red */}
+              <div className="border-2 border-red-500 rounded-lg p-6 text-center bg-red-50">
+                <div className="flex justify-center mb-4">
+                  <div className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center">
+                    <span className="text-4xl">🔴</span>
+                  </div>
+                </div>
+                <h4 className="font-bold text-red-900 text-lg">HOOG RISICO</h4>
+                <p className="text-sm text-red-700 mt-2">Boven huidige ATH</p>
+                <p className="text-xs text-red-600 mt-3 font-medium">Niet kopen</p>
               </div>
             </div>
           </div>
