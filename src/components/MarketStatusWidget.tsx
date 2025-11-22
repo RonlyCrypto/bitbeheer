@@ -123,8 +123,8 @@ export default function MarketStatusWidget({ position = 'unknown', compact = fal
           {/* Status Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1 mb-1">
-              <Icon className="w-4 h-4 flex-shrink-0" style={{ color: `var(--color-${status.color})` }} />
-              <p className={`text-xs font-bold ${status.textColorBold}`}>{status.title}</p>
+              <Icon className="w-5 h-5 flex-shrink-0" style={{ color: `var(--color-${status.color})` }} />
+              <p className={`text-sm font-bold ${status.textColorBold}`}>{status.title}</p>
             </div>
             <p className={`text-xs ${status.textColor} leading-tight`}>{status.subtitle}</p>
             <p className={`text-xs font-semibold mt-1 ${status.textColor}`}>{status.advice}</p>
