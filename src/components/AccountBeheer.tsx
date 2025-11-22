@@ -1209,59 +1209,6 @@ export default function AccountBeheer() {
             </div>
           </div>
 
-          {/* Market Status Traffic Light */}
-          <div className="mt-8 bg-white rounded-xl shadow-lg overflow-hidden">
-            <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    🚦 Huidige Markt Status
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">Bitcoin positie in de huidige cyclus - Dit bepaalt de koop aanbevelingen voor alle gebruikers</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Safe - Green */}
-                <div className="border-2 border-green-500 rounded-lg p-6 text-center bg-green-50 hover:shadow-md transition-shadow">
-                  <div className="flex justify-center mb-4">
-                    <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
-                      <span className="text-5xl">🟢</span>
-                    </div>
-                  </div>
-                  <h4 className="font-bold text-green-900 text-lg">VEILIG</h4>
-                  <p className="text-sm text-green-700 mt-2 font-medium">Onder vorige ATH</p>
-                  <p className="text-xs text-green-600 mt-3">💡 Beste koopkans - Adviseren DCA kopen</p>
-                </div>
-
-                {/* Neutral - Orange */}
-                <div className="border-2 border-orange-500 rounded-lg p-6 text-center bg-orange-50 hover:shadow-md transition-shadow">
-                  <div className="flex justify-center mb-4">
-                    <div className="w-20 h-20 bg-orange-500 rounded-full flex items-center justify-center shadow-lg">
-                      <span className="text-5xl">🟠</span>
-                    </div>
-                  </div>
-                  <h4 className="font-bold text-orange-900 text-lg">NEUTRAAL</h4>
-                  <p className="text-sm text-orange-700 mt-2 font-medium">Tussen vorige & huidige ATH</p>
-                  <p className="text-xs text-orange-600 mt-3">⏸️ Wachten adviseert - Reduceer DCA</p>
-                </div>
-
-                {/* Risky - Red */}
-                <div className="border-2 border-red-500 rounded-lg p-6 text-center bg-red-50 hover:shadow-md transition-shadow">
-                  <div className="flex justify-center mb-4">
-                    <div className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center shadow-lg">
-                      <span className="text-5xl">🔴</span>
-                    </div>
-                  </div>
-                  <h4 className="font-bold text-red-900 text-lg">HOOG RISICO</h4>
-                  <p className="text-sm text-red-700 mt-2 font-medium">Boven huidige ATH</p>
-                  <p className="text-xs text-red-600 mt-3">⛔ Niet kopen - Alleen hodlen</p>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
