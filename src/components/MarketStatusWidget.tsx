@@ -27,7 +27,7 @@ export default function MarketStatusWidget({ position = 'unknown', compact = fal
           color: 'orange',
           title: 'NEUTRAAL',
           subtitle: 'Tussen vorige & huidige ATH',
-          advice: 'Wachten adviseert',
+          advice: 'Wachten',
           icon: AlertCircle,
           bgColor: 'bg-orange-50',
           borderColor: 'border-orange-300',
