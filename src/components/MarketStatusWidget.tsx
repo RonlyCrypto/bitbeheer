@@ -73,9 +73,9 @@ export default function MarketStatusWidget({ position = 'unknown', compact = fal
         {/* Compact Stoplicht */}
         <div className="flex gap-4 items-start">
           {/* Mini Traffic Light - Realistic style */}
-          <div className="flex-shrink-0 relative pt-1">
+          <div className="flex-shrink-0 relative">
             {/* Gray outer rim */}
-            <div className="w-16 bg-gradient-to-b from-gray-300 to-gray-400 rounded-3xl p-1 shadow-lg" style={{ height: '72px', minHeight: '72px' }}>
+            <div className="w-16 bg-gradient-to-b from-gray-300 to-gray-400 rounded-3xl p-1 shadow-lg" style={{ minHeight: '72px' }}>
               {/* Black inner casing */}
               <div className="w-full h-full bg-black rounded-2xl p-2 flex flex-col justify-around items-center relative">
                 {/* Dark background */}
@@ -83,36 +83,36 @@ export default function MarketStatusWidget({ position = 'unknown', compact = fal
                 
                 {/* Red Light */}
                 <div className="relative z-10 flex items-center justify-center">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-red-600 to-red-800 shadow-inner border border-red-900">
+                  <div className="w-9 h-9 rounded-full border-2 border-gray-600 flex items-center justify-center">
                     {position === 'above_latest_ath' && (
-                      <div className="w-full h-full rounded-full bg-gradient-to-br from-red-400 to-red-600 shadow-lg shadow-red-500 animate-pulse"></div>
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-red-400 to-red-600 shadow-lg shadow-red-500 animate-pulse"></div>
                     )}
                     {position !== 'above_latest_ath' && (
-                      <div className="w-full h-full rounded-full bg-red-900 opacity-40 pattern"></div>
+                      <div className="w-7 h-7 rounded-full bg-red-900 opacity-30"></div>
                     )}
                   </div>
                 </div>
 
                 {/* Orange Light */}
                 <div className="relative z-10 flex items-center justify-center">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-600 to-orange-800 shadow-inner border border-orange-900">
+                  <div className="w-9 h-9 rounded-full border-2 border-gray-600 flex items-center justify-center">
                     {position === 'between_aths' && (
-                      <div className="w-full h-full rounded-full bg-gradient-to-br from-orange-400 to-orange-600 shadow-lg shadow-orange-500 animate-pulse"></div>
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 shadow-lg shadow-orange-500 animate-pulse"></div>
                     )}
                     {position !== 'between_aths' && (
-                      <div className="w-full h-full rounded-full bg-orange-900 opacity-40"></div>
+                      <div className="w-7 h-7 rounded-full bg-orange-900 opacity-30"></div>
                     )}
                   </div>
                 </div>
 
                 {/* Green Light */}
                 <div className="relative z-10 flex items-center justify-center">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-green-600 to-green-800 shadow-inner border border-green-900">
+                  <div className="w-9 h-9 rounded-full border-2 border-gray-600 flex items-center justify-center">
                     {position === 'below_previous_ath' && (
-                      <div className="w-full h-full rounded-full bg-gradient-to-br from-green-400 to-green-600 shadow-lg shadow-green-500 animate-pulse"></div>
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-green-400 to-green-600 shadow-lg shadow-green-500 animate-pulse"></div>
                     )}
                     {position !== 'below_previous_ath' && (
-                      <div className="w-full h-full rounded-full bg-green-900 opacity-40"></div>
+                      <div className="w-7 h-7 rounded-full bg-green-900 opacity-30"></div>
                     )}
                   </div>
                 </div>
