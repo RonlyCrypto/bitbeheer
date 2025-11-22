@@ -10,6 +10,7 @@ import TradingViewChart from './TradingViewChart';
 import DCASimulator from './DCASimulator';
 import LiveBitcoinPrice from './LiveBitcoinPrice';
 import CurrencyToggle from './CurrencyToggle';
+import MarketStatusWidget from './MarketStatusWidget';
 import { useCurrency } from '../contexts/CurrencyContext';
 
 const halvingEvents = [
@@ -983,6 +984,16 @@ export default function BitcoinHistory() {
               bitcoinCycles={bitcoinCycles}
             />
           </div>
+          )}
+
+          {/* Market Status Widget - Above DCA Simulator */}
+          {showDCALayer && (
+            <div className="mb-6">
+              <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+                <h3 className="text-sm font-semibold text-gray-900 mb-4">📊 Markt Positie Analyse</h3>
+                <MarketStatusWidget position="between_aths" compact={true} />
+              </div>
+            </div>
           )}
 
           {/* DCA Simulator - Compact below chart */}

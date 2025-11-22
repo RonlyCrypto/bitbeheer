@@ -21,6 +21,7 @@ import TransactionBlock from '../components/TransactionBlock';
 import TransactionDetailsPopup from '../components/TransactionDetailsPopup';
 import CurrencyToggle from '../components/CurrencyToggle';
 import CycleAdvisorWidget from '../components/CycleAdvisorWidget';
+import MarketStatusWidget from '../components/MarketStatusWidget';
 import { bitcoinApiService, BitcoinWallet, BitcoinTransaction } from '../services/bitcoinApiService';
 import { supabase } from '../lib/supabase';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
@@ -321,7 +322,7 @@ export default function PortfolioPage() {
     }
   };
 
-      const addWallet = async () => {
+  const addWallet = async () => {
     if (newWalletAddress && newWalletName) {
       // Valideer Bitcoin adres
       if (!bitcoinApiService.validateBitcoinAddress(newWalletAddress)) {
@@ -446,12 +447,12 @@ export default function PortfolioPage() {
           {/* Header */}
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                Bitcoin Portfolio Beheer
-              </h1>
-              <p className="text-xl text-gray-600">
-                Koppel je Bitcoin wallets en bekijk je inkoop geschiedenis op de chart
-              </p>
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              Bitcoin Portfolio Beheer
+            </h1>
+            <p className="text-xl text-gray-600">
+              Koppel je Bitcoin wallets en bekijk je inkoop geschiedenis op de chart
+            </p>
             </div>
             <button
               onClick={() => {
@@ -749,9 +750,19 @@ export default function PortfolioPage() {
             </div>
           )}
 
+          {/* Market Status Widget - Above chart */}
+          {wallets.length > 0 && (
+            <div className="mt-12 mb-8">
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Markt Positie Analyse</h3>
+                <MarketStatusWidget position="between_aths" compact={false} />
+              </div>
+            </div>
+          )}
+
           {/* Live Chart Section - Show chart when wallets exist */}
           {wallets.length > 0 && (
-            <div className="mt-12">
+            <div className="mt-8">
               <PortfolioChart 
                 transactions={allTransactions}
                 currentPrice={currentPrice}
@@ -938,7 +949,7 @@ export default function PortfolioPage() {
             transaction={selectedTransaction}
             onClose={() => setSelectedTransaction(null)}
           />
-        )}
+          )}
         </div>
       </div>
 
