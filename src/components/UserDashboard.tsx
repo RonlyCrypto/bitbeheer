@@ -42,7 +42,7 @@ import PortfolioChart from './PortfolioChart';
 import SignupProcessFlow from './SignupProcessFlow';
 import ReferralBlocks from './ReferralBlocks';
 import NotificationDropdown from './NotificationDropdown';
-import MarketTrafficLight from './MarketTrafficLight';
+import MarketStatusWidget from './MarketStatusWidget';
 
 interface UserProfile {
   id: string;
@@ -706,6 +706,11 @@ export default function UserDashboard() {
                 );
               })}
             </nav>
+
+            {/* Market Status Widget - Sidebar */}
+            <div className="mt-6">
+              <MarketStatusWidget position="between_aths" compact={true} />
+            </div>
           </div>
 
           {/* Main Content */}
@@ -1749,17 +1754,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         </div>
       )}
 
-      {/* Market Status Traffic Light */}
-      <div className="bg-white rounded-xl shadow-sm p-8 border border-gray-200">
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Bitcoin Markt Status</h3>
-          <p className="text-sm text-gray-600">Huidige positie bepaalt je koopstrategie</p>
-        </div>
-        <div className="flex justify-center">
-          <MarketTrafficLight position="between_aths" />
-        </div>
-      </div>
-      
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
