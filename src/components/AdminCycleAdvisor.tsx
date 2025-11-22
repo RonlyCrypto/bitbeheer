@@ -13,10 +13,12 @@ import {
   CheckCircle,
   Clock,
   Eye,
-  Loader2
+  Loader2,
+  Circle
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { cycleAdvisorDatabaseService } from '../services/cycleAdvisorDatabaseService';
+import { cycleAdvisorService } from '../services/cycleAdvisorService';
 
 interface UserWithAdvisor {
   id: string;
@@ -29,6 +31,11 @@ interface UserWithAdvisor {
     show_cycle_comparison: boolean;
     notification_on_buy_signal: boolean;
     updated_at: string;
+  };
+  cycleStatus?: {
+    riskLevel: 'low' | 'medium' | 'high' | 'very_high';
+    level: 'strong_buy' | 'buy' | 'wait' | 'hold' | 'caution' | 'risky';
+    description: string;
   };
 }
 
@@ -45,6 +52,7 @@ export default function AdminCycleAdvisor() {
     byMode: { conservative: 0, balanced: 0, aggressive: 0 }
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [userStatusCache, setUserStatusCache] = useState<Record<string, UserWithAdvisor['cycleStatus']>>({});
 
   useEffect(() => {
     loadData();
@@ -84,6 +92,26 @@ export default function AdminCycleAdvisor() {
           cycle_advisor_settings: advisorSettings
         };
       });
+
+      // Load cycle status for each user
+      const statusCache: Record<string, UserWithAdvisor['cycleStatus']> = {};
+      for (const user of usersWithAdvisor) {
+        if (user.cycle_advisor_settings?.enabled) {
+          try {
+            const advisorData = await cycleAdvisorService.getAdvisorData();
+            if (advisorData) {
+              statusCache[user.id] = {
+                riskLevel: advisorData.recommendation.riskLevel,
+                level: advisorData.recommendation.level,
+                description: advisorData.recommendation.description
+              };
+            }
+          } catch (error) {
+            console.warn(`Could not load status for user ${user.email}:`, error);
+          }
+        }
+      }
+      setUserStatusCache(statusCache);
 
       setUsers(usersWithAdvisor);
       setFilteredUsers(usersWithAdvisor);
@@ -183,6 +211,26 @@ export default function AdminCycleAdvisor() {
       case 'balanced': return 'Balanced';
       case 'aggressive': return 'Aggressive';
       default: return 'Unknown';
+    }
+  };
+
+  const getRiskColor = (riskLevel: 'low' | 'medium' | 'high' | 'very_high' | undefined) => {
+    switch (riskLevel) {
+      case 'low': return 'bg-green-500'; // Veilig - groen
+      case 'medium': return 'bg-yellow-500'; // Neutraal - oranje/geel
+      case 'high': return 'bg-orange-500'; // Hoog risico - oranje
+      case 'very_high': return 'bg-red-500'; // Zeer hoog risico - rood
+      default: return 'bg-gray-400'; // Onbekend - grijs
+    }
+  };
+
+  const getRiskLabel = (riskLevel: 'low' | 'medium' | 'high' | 'very_high' | undefined) => {
+    switch (riskLevel) {
+      case 'low': return 'Veilig';
+      case 'medium': return 'Neutraal';
+      case 'high': return 'Hoog Risico';
+      case 'very_high': return 'Zeer Hoog';
+      default: return 'Onbekend';
     }
   };
 
@@ -331,6 +379,7 @@ export default function AdminCycleAdvisor() {
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">E-mail</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Status 🚦</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Enabled</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Mode</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Laatst Gewijzigd</th>
@@ -340,14 +389,28 @@ export default function AdminCycleAdvisor() {
               <tbody>
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                       Geen gebruikers gevonden
                     </td>
                   </tr>
                 ) : (
-                  filteredUsers.map(user => (
+                  filteredUsers.map(user => {
+                    const status = userStatusCache[user.id];
+                    return (
                     <tr key={user.id} className="border-b border-gray-200 hover:bg-gray-50">
                       <td className="px-6 py-4 text-sm text-gray-900">{user.email}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          {status ? (
+                            <>
+                              <Circle className={`w-4 h-4 ${getRiskColor(status.riskLevel)} rounded-full`} fill="currentColor" />
+                              <span className="text-xs font-medium text-gray-700">{getRiskLabel(status.riskLevel)}</span>
+                            </>
+                          ) : (
+                            <span className="text-xs text-gray-500">-</span>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-6 py-4 text-sm">
                         <button
                           onClick={() => handleToggleUser(user)}
@@ -389,7 +452,8 @@ export default function AdminCycleAdvisor() {
                         </button>
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>
