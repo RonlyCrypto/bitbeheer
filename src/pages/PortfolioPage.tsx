@@ -21,7 +21,6 @@ import TransactionBlock from '../components/TransactionBlock';
 import TransactionDetailsPopup from '../components/TransactionDetailsPopup';
 import CurrencyToggle from '../components/CurrencyToggle';
 import CycleAdvisorWidget from '../components/CycleAdvisorWidget';
-import MarketStatusWidget from '../components/MarketStatusWidget';
 import { bitcoinApiService, BitcoinWallet, BitcoinTransaction } from '../services/bitcoinApiService';
 import { supabase } from '../lib/supabase';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
@@ -750,19 +749,9 @@ export default function PortfolioPage() {
             </div>
           )}
 
-          {/* Market Status Widget - Above chart */}
-          {wallets.length > 0 && (
-            <div className="mt-12 mb-8">
-              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Markt Positie Analyse</h3>
-                <MarketStatusWidget position="between_aths" compact={false} />
-              </div>
-            </div>
-          )}
-
           {/* Live Chart Section - Show chart when wallets exist */}
           {wallets.length > 0 && (
-            <div className="mt-8">
+            <div className="mt-12">
               <PortfolioChart 
                 transactions={allTransactions}
                 currentPrice={currentPrice}
