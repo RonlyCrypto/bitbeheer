@@ -4,9 +4,18 @@ import { TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
 interface MarketStatusWidgetProps {
   position?: 'below_previous_ath' | 'between_aths' | 'above_latest_ath' | 'unknown';
   compact?: boolean;
+  currentPrice?: number; // Huige Bitcoin prijs in USD
+  previousATH?: number; // Vorige ATH in USD
+  latestATH?: number; // Huidge ATH in USD
 }
 
-export default function MarketStatusWidget({ position = 'unknown', compact = false }: MarketStatusWidgetProps) {
+export default function MarketStatusWidget({ 
+  position = 'unknown', 
+  compact = false,
+  currentPrice = 42250,
+  previousATH = 19700,
+  latestATH = 69000
+}: MarketStatusWidgetProps) {
   const getStatusInfo = () => {
     switch (position) {
       case 'below_previous_ath':
@@ -262,17 +271,17 @@ export default function MarketStatusWidget({ position = 'unknown', compact = fal
             <div className="flex justify-between text-xs font-semibold text-gray-700">
               <div className="text-left">
                 <div className="text-gray-600">💙 Vorige ATH</div>
-                <div className="font-mono">$19,700</div>
+                <div className="font-mono">${previousATH.toLocaleString('en-US')}</div>
               </div>
               <div className="text-center">
                 <div className="text-gray-600">Huige Prijs</div>
                 <div className={`font-mono ${position === 'above_latest_ath' ? 'text-red-600' : position === 'between_aths' ? 'text-orange-600' : 'text-green-600'}`}>
-                  $42,250
+                  ${currentPrice.toLocaleString('en-US')}
                 </div>
               </div>
               <div className="text-right">
                 <div className="text-gray-600">❤️ Huidge ATH</div>
-                <div className="font-mono">$69,000</div>
+                <div className="font-mono">${latestATH.toLocaleString('en-US')}</div>
               </div>
             </div>
             
