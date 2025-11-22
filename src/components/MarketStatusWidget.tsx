@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
 
 interface MarketStatusWidgetProps {
@@ -122,12 +122,45 @@ export default function MarketStatusWidget({ position = 'unknown', compact = fal
 
           {/* Status Info */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1 mb-1">
+            <div className="flex items-center gap-1 mb-2">
               <Icon className="w-5 h-5 flex-shrink-0" style={{ color: `var(--color-${status.color})` }} />
               <p className={`text-sm font-bold ${status.textColorBold}`}>{status.title}</p>
             </div>
-            <p className={`text-xs ${status.textColor} leading-tight`}>{status.subtitle}</p>
-            <p className={`text-xs font-semibold mt-1 ${status.textColor}`}>{status.advice}</p>
+            <p className={`text-xs ${status.textColor} leading-tight mb-2`}>{status.subtitle}</p>
+            
+            {/* ATH Range Visualization */}
+            <div className="mb-2">
+              <div className="bg-gray-200 rounded-full h-2 relative overflow-hidden shadow-inner">
+                <div className="absolute inset-0 flex items-center">
+                  {/* Previous ATH position (20%) */}
+                  <div className="absolute left-0 h-full w-1 bg-blue-500" style={{ left: '20%' }}></div>
+                  {/* Current position indicator */}
+                  <div 
+                    className={`absolute w-3 h-3 rounded-full top-1/2 transform -translate-y-1/2 -translate-x-1/2 border-2 border-white shadow-lg ${
+                      position === 'above_latest_ath' ? 'bg-red-500' :
+                      position === 'between_aths' ? 'bg-orange-500' :
+                      'bg-green-500'
+                    }`}
+                    style={{ left: position === 'above_latest_ath' ? '85%' : position === 'between_aths' ? '60%' : '30%' }}
+                  ></div>
+                  {/* Latest ATH position (100%) */}
+                  <div className="absolute right-0 h-full w-1 bg-red-500"></div>
+                </div>
+              </div>
+              <div className="flex justify-between text-xs mt-1 text-gray-600">
+                <span>Vorige ATH</span>
+                <span>Huidge ATH</span>
+              </div>
+              
+              {/* Position percentages */}
+              <div className={`text-xs font-semibold mt-2 px-2 py-1 rounded text-center ${status.bgColor}`}>
+                {position === 'above_latest_ath' && '↗️ +15% boven ATH'}
+                {position === 'between_aths' && '➡️ 40% tussen ATHs'}
+                {position === 'below_previous_ath' && '↙️ -30% onder vorige ATH'}
+              </div>
+            </div>
+            
+            <p className={`text-xs font-semibold ${status.textColor}`}>{status.advice}</p>
           </div>
         </div>
       </div>
