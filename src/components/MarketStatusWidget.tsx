@@ -69,15 +69,15 @@ export default function MarketStatusWidget({ position = 'unknown', compact = fal
 
   if (compact) {
     return (
-      <div className={`${status.bgColor} border-2 ${status.borderColor} rounded-xl p-3`}>
+      <div className={`${status.bgColor} border-2 ${status.borderColor} rounded-xl p-4 overflow-visible`}>
         {/* Compact Stoplicht */}
-        <div className="flex gap-3 items-center">
+        <div className="flex gap-4 items-start">
           {/* Mini Traffic Light - Realistic style */}
-          <div className="flex-shrink-0 relative">
+          <div className="flex-shrink-0 relative pt-1">
             {/* Gray outer rim */}
-            <div className="w-16 bg-gradient-to-b from-gray-300 to-gray-400 rounded-3xl p-1 shadow-lg" style={{ aspectRatio: '1 / 1.4' }}>
+            <div className="w-16 bg-gradient-to-b from-gray-300 to-gray-400 rounded-3xl p-1 shadow-lg" style={{ height: '72px', minHeight: '72px' }}>
               {/* Black inner casing */}
-              <div className="w-full h-full bg-black rounded-2xl p-2 flex flex-col justify-around items-center relative overflow-hidden">
+              <div className="w-full h-full bg-black rounded-2xl p-2 flex flex-col justify-around items-center relative">
                 {/* Dark background */}
                 <div className="absolute inset-0 bg-gradient-to-b from-gray-800 to-black rounded-2xl opacity-30"></div>
                 
