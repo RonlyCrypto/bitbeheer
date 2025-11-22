@@ -167,58 +167,94 @@ export default function MarketStatusWidget({ position = 'unknown', compact = fal
     );
   }
 
-  // Full version for main content area (kept for compatibility)
+  // Full version for main content area (with ATH visualization)
   return (
     <div className={`${status.bgColor} border-2 ${status.borderColor} rounded-xl p-8`}>
-      <div className="flex flex-col items-center gap-4">
-        {/* Large Traffic Light */}
-        <div className="w-24 bg-black rounded-3xl p-2 shadow-2xl border-4 border-gray-900">
-          {/* Red Light */}
-          <div
-            className={`w-20 h-20 rounded-full mx-auto mb-2 flex items-center justify-center shadow-inner transition-all ${
-              position === 'above_latest_ath'
-                ? 'bg-red-600 shadow-lg shadow-red-500 animate-pulse'
-                : 'bg-red-900 opacity-30'
-            }`}
-          >
-            {position === 'above_latest_ath' && (
-              <div className="w-16 h-16 bg-red-500 rounded-full shadow-lg shadow-red-400"></div>
-            )}
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col items-center gap-4">
+          {/* Large Traffic Light */}
+          <div className="w-24 bg-black rounded-3xl p-2 shadow-2xl border-4 border-gray-900">
+            {/* Red Light */}
+            <div
+              className={`w-20 h-20 rounded-full mx-auto mb-2 flex items-center justify-center shadow-inner transition-all ${
+                position === 'above_latest_ath'
+                  ? 'bg-red-600 shadow-lg shadow-red-500 animate-pulse'
+                  : 'bg-red-900 opacity-30'
+              }`}
+            >
+              {position === 'above_latest_ath' && (
+                <div className="w-16 h-16 bg-red-500 rounded-full shadow-lg shadow-red-400"></div>
+              )}
+            </div>
+
+            {/* Orange Light */}
+            <div
+              className={`w-20 h-20 rounded-full mx-auto mb-2 flex items-center justify-center shadow-inner transition-all ${
+                position === 'between_aths'
+                  ? 'bg-orange-600 shadow-lg shadow-orange-500 animate-pulse'
+                  : 'bg-orange-900 opacity-30'
+              }`}
+            >
+              {position === 'between_aths' && (
+                <div className="w-16 h-16 bg-orange-500 rounded-full shadow-lg shadow-orange-400"></div>
+              )}
+            </div>
+
+            {/* Green Light */}
+            <div
+              className={`w-20 h-20 rounded-full mx-auto flex items-center justify-center shadow-inner transition-all ${
+                position === 'below_previous_ath'
+                  ? 'bg-green-600 shadow-lg shadow-green-500 animate-pulse'
+                  : 'bg-green-900 opacity-30'
+              }`}
+            >
+              {position === 'below_previous_ath' && (
+                <div className="w-16 h-16 bg-green-500 rounded-full shadow-lg shadow-green-400"></div>
+              )}
+            </div>
           </div>
 
-          {/* Orange Light */}
-          <div
-            className={`w-20 h-20 rounded-full mx-auto mb-2 flex items-center justify-center shadow-inner transition-all ${
-              position === 'between_aths'
-                ? 'bg-orange-600 shadow-lg shadow-orange-500 animate-pulse'
-                : 'bg-orange-900 opacity-30'
-            }`}
-          >
-            {position === 'between_aths' && (
-              <div className="w-16 h-16 bg-orange-500 rounded-full shadow-lg shadow-orange-400"></div>
-            )}
-          </div>
-
-          {/* Green Light */}
-          <div
-            className={`w-20 h-20 rounded-full mx-auto flex items-center justify-center shadow-inner transition-all ${
-              position === 'below_previous_ath'
-                ? 'bg-green-600 shadow-lg shadow-green-500 animate-pulse'
-                : 'bg-green-900 opacity-30'
-            }`}
-          >
-            {position === 'below_previous_ath' && (
-              <div className="w-16 h-16 bg-green-500 rounded-full shadow-lg shadow-green-400"></div>
-            )}
+          {/* Status Text */}
+          <div className="text-center">
+            <h3 className={`text-lg font-bold ${status.textColorBold}`}>{status.title}</h3>
+            <p className={`text-sm ${status.textColor} mt-1`}>{status.subtitle}</p>
           </div>
         </div>
 
-        {/* Status Text */}
-        <div className="text-center">
-          <h3 className={`text-lg font-bold ${status.textColorBold}`}>{status.title}</h3>
-          <p className={`text-sm ${status.textColor} mt-1`}>{status.subtitle}</p>
-          <p className={`text-xs font-semibold mt-2 ${status.textColor}`}>{status.advice}</p>
+        {/* ATH Range Visualization - Full Version */}
+        <div className="space-y-2">
+          <div className="bg-gray-200 rounded-full h-3 relative overflow-hidden shadow-inner">
+            <div className="absolute inset-0 flex items-center">
+              {/* Previous ATH position (20%) */}
+              <div className="absolute left-0 h-full w-1.5 bg-blue-600 rounded-full" style={{ left: '20%' }}></div>
+              {/* Current position indicator */}
+              <div 
+                className={`absolute w-4 h-4 rounded-full top-1/2 transform -translate-y-1/2 -translate-x-1/2 border-2 border-white shadow-lg ${
+                  position === 'above_latest_ath' ? 'bg-red-500' :
+                  position === 'between_aths' ? 'bg-orange-500' :
+                  'bg-green-500'
+                }`}
+                style={{ left: position === 'above_latest_ath' ? '85%' : position === 'between_aths' ? '60%' : '30%' }}
+              ></div>
+              {/* Latest ATH position (100%) */}
+              <div className="absolute right-0 h-full w-1.5 bg-red-600 rounded-full"></div>
+            </div>
+          </div>
+          <div className="flex justify-between text-sm font-semibold text-gray-700">
+            <span>💙 Vorige ATH</span>
+            <span>❤️ Huidge ATH</span>
+          </div>
+          
+          {/* Position percentages */}
+          <div className={`text-sm font-semibold mt-3 px-3 py-2 rounded text-center ${status.bgColor} border border-current border-opacity-30`}>
+            {position === 'above_latest_ath' && '↗️ +15% BOVEN huidge ATH - HOOG RISICO'}
+            {position === 'between_aths' && '➡️ 40% TUSSEN vorige & huidge ATH - NEUTRAAL'}
+            {position === 'below_previous_ath' && '↙️ -30% ONDER vorige ATH - VEILIG'}
+          </div>
         </div>
+
+        {/* Advice */}
+        <p className={`text-sm font-semibold text-center ${status.textColor}`}>{status.advice}</p>
       </div>
     </div>
   );
