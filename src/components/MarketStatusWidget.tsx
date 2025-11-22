@@ -71,33 +71,47 @@ export default function MarketStatusWidget({ position = 'unknown', compact = fal
     return (
       <div className={`${status.bgColor} border-2 ${status.borderColor} rounded-xl p-3`}>
         {/* Compact Stoplicht */}
-        <div className="flex gap-3">
-          {/* Mini Traffic Light */}
-          <div className="w-12 h-16 bg-black rounded-2xl p-1 flex flex-col justify-center gap-1">
-            {/* Red */}
-            <div
-              className={`w-full h-3 rounded-full transition-all ${
-                position === 'above_latest_ath'
-                  ? 'bg-red-500 shadow-lg shadow-red-400'
-                  : 'bg-red-900 opacity-40'
-              }`}
-            ></div>
-            {/* Orange */}
-            <div
-              className={`w-full h-3 rounded-full transition-all ${
-                position === 'between_aths'
-                  ? 'bg-orange-500 shadow-lg shadow-orange-400'
-                  : 'bg-orange-900 opacity-40'
-              }`}
-            ></div>
-            {/* Green */}
-            <div
-              className={`w-full h-3 rounded-full transition-all ${
-                position === 'below_previous_ath'
-                  ? 'bg-green-500 shadow-lg shadow-green-400'
-                  : 'bg-green-900 opacity-40'
-              }`}
-            ></div>
+        <div className="flex gap-3 items-center">
+          {/* Mini Traffic Light with white rim */}
+          <div className="flex-shrink-0">
+            {/* Outer black border */}
+            <div className="w-14 h-20 bg-black rounded-2xl p-0.5">
+              {/* White rim */}
+              <div className="w-full h-full bg-white rounded-2xl p-1 flex flex-col justify-around items-center">
+                {/* Red Light with white circle */}
+                <div className="flex items-center justify-center w-10 h-10 bg-white rounded-full border-2 border-gray-200">
+                  <div
+                    className={`w-7 h-7 rounded-full transition-all ${
+                      position === 'above_latest_ath'
+                        ? 'bg-red-500 shadow-lg shadow-red-400'
+                        : 'bg-red-900 opacity-50'
+                    }`}
+                  ></div>
+                </div>
+
+                {/* Orange Light with white circle */}
+                <div className="flex items-center justify-center w-10 h-10 bg-white rounded-full border-2 border-gray-200">
+                  <div
+                    className={`w-7 h-7 rounded-full transition-all ${
+                      position === 'between_aths'
+                        ? 'bg-orange-500 shadow-lg shadow-orange-400'
+                        : 'bg-orange-900 opacity-50'
+                    }`}
+                  ></div>
+                </div>
+
+                {/* Green Light with white circle */}
+                <div className="flex items-center justify-center w-10 h-10 bg-white rounded-full border-2 border-gray-200">
+                  <div
+                    className={`w-7 h-7 rounded-full transition-all ${
+                      position === 'below_previous_ath'
+                        ? 'bg-green-500 shadow-lg shadow-green-400'
+                        : 'bg-green-900 opacity-50'
+                    }`}
+                  ></div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Status Info */}
