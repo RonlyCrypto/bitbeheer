@@ -363,7 +363,7 @@ export default function MarketStatusWidget({
               <p className={`text-sm font-semibold text-center ${status.textColor}`}>{status.advice}</p>
 
               {/* Investment Calculator */}
-              <div className={`pt-4 border-t border-gray-200 transition-all duration-300 ${calculatedResult ? 'space-y-3' : 'space-y-2'}`}>
+              <div className="space-y-3 pt-4 border-t border-gray-200">
                 <h4 className="text-sm font-semibold text-gray-900">💰 Investering Calculator</h4>
                 
                 <div className="flex gap-4">
@@ -392,9 +392,9 @@ export default function MarketStatusWidget({
                   </div>
 
                   {/* Right: Results - All inline, always visible */}
-                  <div className={`flex-1 grid grid-cols-3 gap-3 transition-all duration-300 ${calculatedResult ? 'items-stretch' : 'items-start'}`}>
+                  <div className="flex-1 grid grid-cols-3 gap-3 items-stretch">
                     {/* BTC Amount */}
-                    <div className={`bg-blue-50 rounded-lg p-3 border border-blue-200 flex flex-col transition-all duration-300 ${calculatedResult ? 'min-h-28' : 'min-h-12'}`}>
+                    <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 flex flex-col">
                       <div className="text-xs font-semibold text-blue-700 mb-auto">Met ${investmentAmount || '0'}:</div>
                       {calculatedResult && (
                         <div className="text-sm font-bold text-gray-900 mt-2">₿ {calculatedResult.btcAmount.toFixed(6)}</div>
@@ -402,7 +402,7 @@ export default function MarketStatusWidget({
                     </div>
 
                     {/* At Previous ATH */}
-                    <div className={`bg-green-50 rounded-lg p-3 border border-green-200 flex flex-col transition-all duration-300 ${calculatedResult ? 'min-h-28' : 'min-h-12'}`}>
+                    <div className="bg-green-50 rounded-lg p-3 border border-green-200 flex flex-col">
                       <div className="text-xs font-semibold text-green-700 mb-auto">📈 Vorige ATH</div>
                       {calculatedResult && (
                         <div className="space-y-1 mt-2">
@@ -421,7 +421,7 @@ export default function MarketStatusWidget({
                     </div>
 
                     {/* At Latest ATH */}
-                    <div className={`bg-blue-50 rounded-lg p-3 border border-blue-200 flex flex-col transition-all duration-300 ${calculatedResult ? 'min-h-28' : 'min-h-12'}`}>
+                    <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 flex flex-col">
                       <div className="text-xs font-semibold text-blue-700 mb-auto">🚀 Huidge ATH</div>
                       {calculatedResult && (
                         <div className="space-y-1 mt-2">
