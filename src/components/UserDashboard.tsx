@@ -123,6 +123,9 @@ export default function UserDashboard() {
   const [showFirstAppointmentPrompt, setShowFirstAppointmentPrompt] = useState(false);
   const [showBitcoinCalculator, setShowBitcoinCalculator] = useState(false);
   const [bitcoinPrice, setBitcoinPrice] = useState<BitcoinPrice | null>(null);
+  const [currentPrice, setCurrentPrice] = useState<number>(0);
+  const [previousATH, setPreviousATH] = useState<number>(69000);
+  const [latestATH, setLatestATH] = useState<number>(124753);
   const [showWalletForm, setShowWalletForm] = useState(false);
   const [walletForm, setWalletForm] = useState({
     address: '',
@@ -662,6 +665,7 @@ export default function UserDashboard() {
                 { id: 'portfolio', label: 'Portfolio', icon: PieChart, alwaysEnabled: false },
                 { id: 'appointments', label: 'Afspraken', icon: Calendar, alwaysEnabled: true },
                 { id: 'helpdesk', label: 'Helpdesk', icon: Mail, alwaysEnabled: false, badge: unreadChatCount > 0 ? unreadChatCount : undefined },
+                { id: 'market-status', label: 'Markt Status', icon: TrendingUp, alwaysEnabled: true },
               ].map((tab) => {
                 // Tab is enabled if always enabled OR account is approved OR one-on-one is approved
                 const isEnabled = tab.alwaysEnabled || accountApproved || hasApprovedOneOnOne;
@@ -732,6 +736,21 @@ export default function UserDashboard() {
             />}
             {activeTab === 'goals' && (accountApproved || hasApprovedOneOnOne) && <GoalsTab goals={goals} setGoals={setGoals} />}
             {activeTab === 'portfolio' && (accountApproved || hasApprovedOneOnOne) && <PortfolioPage />}
+
+            {activeTab === 'market-status' && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-gray-900">📊 Markt Positie Analyse</h2>
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden p-6">
+                  <MarketStatusWidget 
+                    position="between_aths" 
+                    compact={false}
+                    currentPrice={currentPrice}
+                    previousATH={previousATH}
+                    latestATH={latestATH}
+                  />
+                </div>
+              </div>
+            )}
             {activeTab === 'appointments' && <AppointmentsTab 
               appointments={appointments} 
               setAppointments={setAppointments}
