@@ -1114,25 +1114,13 @@ export default function BitcoinHistory() {
           {/* Market Status Widget - Above DCA Simulator with ATH prices */}
           {showDCALayer && (
             <div className="mb-6 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-              <div className="bg-gradient-to-r from-orange-50 to-orange-50 px-6 py-3 border-b border-orange-200">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-gray-900">📊 Markt Positie Analyse</h3>
-                  <div className="text-xs text-gray-600 space-x-2">
-                    <span className="font-mono bg-white px-2 py-1 rounded border border-gray-200">Vorige ATH: $19,700</span>
-                    <span className="mx-2">•</span>
-                    <span className="font-mono bg-white px-2 py-1 rounded border border-gray-200">Huidge ATH: $69,000</span>
-                  </div>
-                </div>
-              </div>
-              <div className="p-6">
-                <MarketStatusWidget 
-                  position="between_aths" 
-                  compact={false}
-                  currentPrice={currentPrice}
-                  previousATH={previousATH}
-                  latestATH={latestATH}
-                />
-              </div>
+              <MarketStatusWidget 
+                position="between_aths" 
+                compact={false}
+                currentPrice={currentPrice}
+                previousATH={previousATH}
+                latestATH={latestATH}
+              />
             </div>
           )}
 

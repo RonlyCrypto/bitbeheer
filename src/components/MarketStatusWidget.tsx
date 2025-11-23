@@ -180,22 +180,28 @@ export default function MarketStatusWidget({
   const [isExpanded, setIsExpanded] = useState(false);
   
   return (
-    <div className={`${status.bgColor} border-2 ${status.borderColor} rounded-xl overflow-hidden`}>
+    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
       {/* Header - Always visible */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-4 text-left hover:bg-opacity-75 transition-colors"
+        className="w-full p-4 text-left hover:bg-gray-50 transition-colors border-b border-gray-200"
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h3 className={`text-sm font-semibold ${status.textColorBold}`}>
+          <div className="flex items-center gap-3">
+            <h3 className="text-sm font-semibold text-gray-900">📊 Markt Positie Analyse</h3>
+            <span className={`px-3 py-1 text-xs font-bold rounded-full ${
+              position === 'above_latest_ath' ? 'bg-red-100 text-red-700' :
+              position === 'between_aths' ? 'bg-orange-100 text-orange-700' :
+              position === 'below_previous_ath' ? 'bg-green-100 text-green-700' :
+              'bg-gray-100 text-gray-700'
+            }`}>
               {status.title}
-            </h3>
-            <span className={`transform transition-transform text-sm ${isExpanded ? 'rotate-180' : ''}`}>
+            </span>
+            <span className={`transform transition-transform text-gray-400 ${isExpanded ? 'rotate-180' : ''}`}>
               ▼
             </span>
           </div>
-          <p className={`text-xs ${status.textColor}`}>{status.subtitle}</p>
+          <p className="text-xs text-gray-600">{status.subtitle}</p>
         </div>
       </button>
 
