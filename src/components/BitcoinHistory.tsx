@@ -265,18 +265,39 @@ export default function BitcoinHistory() {
         // Get all price data to calculate ATHs
         const priceData = allPriceData;
         if (priceData && priceData.length > 0) {
-          // Find highest price (current ATH)
-          const maxPrice = Math.max(...priceData.map(p => p.price));
-          setLatestATH(Math.round(maxPrice));
+          const currentYear = new Date().getFullYear();
+          const previousYear = currentYear - 1;
 
-          // Find previous ATH (highest price before last month)
-          const oneMonthAgo = new Date();
-          oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-          const olderData = priceData.filter(p => new Date(p.date) < oneMonthAgo);
-          
-          if (olderData.length > 0) {
-            const prevMax = Math.max(...olderData.map(p => p.price));
-            setPreviousATH(Math.round(prevMax));
+          // Split data by year
+          const previousYearData = priceData.filter(p => {
+            const year = new Date(p.date).getFullYear();
+            return year === previousYear;
+          });
+
+          const currentYearData = priceData.filter(p => {
+            const year = new Date(p.date).getFullYear();
+            return year === currentYear;
+          });
+
+          // Previous ATH = Highest price in previous year
+          if (previousYearData.length > 0) {
+            const prevYearMax = Math.max(...previousYearData.map(p => p.price));
+            setPreviousATH(Math.round(prevYearMax));
+            console.log(`Previous year (${previousYear}) ATH: $${prevYearMax}`);
+          } else {
+            // Fallback: Use highest price from all historical data
+            const allTimeMax = Math.max(...priceData.map(p => p.price));
+            setPreviousATH(Math.round(allTimeMax * 0.9)); // Use 90% of all-time high as estimate
+          }
+
+          // Latest ATH = Highest price in current year (or all time)
+          if (currentYearData.length > 0) {
+            const currentYearMax = Math.max(...currentYearData.map(p => p.price));
+            setLatestATH(Math.round(currentYearMax));
+            console.log(`Current year (${currentYear}) ATH: $${currentYearMax}`);
+          } else {
+            const allTimeMax = Math.max(...priceData.map(p => p.price));
+            setLatestATH(Math.round(allTimeMax));
           }
         }
 
