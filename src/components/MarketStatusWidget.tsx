@@ -366,11 +366,11 @@ export default function MarketStatusWidget({
               <div className="space-y-3 pt-4 border-t border-gray-200">
                 <h4 className="text-sm font-semibold text-gray-900">💰 Investering Calculator</h4>
                 
-                {/* Input and Button */}
-                <div className="flex items-center gap-2">
-                  <div className="flex-1">
-                    <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 bg-white focus-within:ring-2 focus-within:ring-blue-400">
-                      <span className="text-gray-500 font-semibold">$</span>
+                <div className="flex gap-4">
+                  {/* Left: Input and Button */}
+                  <div className="w-32 space-y-2">
+                    <div className="flex items-center border border-gray-300 rounded-lg px-2 py-1 bg-white focus-within:ring-2 focus-within:ring-blue-400">
+                      <span className="text-gray-500 font-semibold text-sm">$</span>
                       <input
                         type="number"
                         value={investmentAmount}
@@ -378,44 +378,39 @@ export default function MarketStatusWidget({
                           setInvestmentAmount(e.target.value);
                           setCalculatedResult(null);
                         }}
-                        placeholder="Bedrag invullen"
-                        className="flex-1 ml-2 outline-none text-sm font-mono"
+                        placeholder="Bedrag"
+                        className="flex-1 ml-1 outline-none text-xs font-mono"
                       />
                     </div>
+                    <button
+                      onClick={handleCalculate}
+                      disabled={!investmentAmount}
+                      className="w-full px-3 py-1 bg-blue-500 text-white rounded-lg font-semibold text-xs hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Bereken
+                    </button>
                   </div>
-                  <button
-                    onClick={handleCalculate}
-                    disabled={!investmentAmount}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold text-sm hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
-                  >
-                    Bereken
-                  </button>
-                </div>
 
-                {/* Calculation Results - Horizontal Layout */}
-                {calculatedResult && (
-                  <div className="space-y-2">
-                    {/* BTC Amount */}
-                    <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                      <div className="text-xs text-gray-600">Met ${investmentAmount} inleg:</div>
-                      <div className="text-sm font-bold text-gray-900">
-                        ₿ {calculatedResult.btcAmount.toFixed(6)} Bitcoin
+                  {/* Right: Results - All inline */}
+                  {calculatedResult && (
+                    <div className="flex-1 flex gap-3 items-start">
+                      {/* BTC Amount */}
+                      <div className="bg-blue-50 rounded-lg p-2 border border-blue-200">
+                        <div className="text-xs text-gray-600">Met ${investmentAmount}:</div>
+                        <div className="text-xs font-bold text-gray-900">₿ {calculatedResult.btcAmount.toFixed(6)}</div>
                       </div>
-                    </div>
 
-                    {/* ATH Results - Side by side */}
-                    <div className="grid grid-cols-2 gap-2">
                       {/* At Previous ATH */}
-                      <div className="bg-green-50 rounded-lg p-3 border border-green-200">
-                        <div className="text-xs font-semibold text-green-700 mb-2">📈 Bij vorige ATH</div>
-                        <div className="space-y-1">
-                          <div className="flex justify-between">
-                            <span className="text-xs text-gray-600">Waarde:</span>
-                            <span className="text-xs font-bold text-gray-900">${calculatedResult.valueAtPreviousATH.toLocaleString('en-US', {maximumFractionDigits: 0})}</span>
+                      <div className="bg-green-50 rounded-lg p-2 border border-green-200">
+                        <div className="text-xs font-semibold text-green-700 mb-1">📈 Vorige ATH</div>
+                        <div className="space-y-0.5">
+                          <div className="flex gap-2 text-xs">
+                            <span className="text-gray-600">Waarde:</span>
+                            <span className="font-bold text-gray-900">${calculatedResult.valueAtPreviousATH.toLocaleString('en-US', {maximumFractionDigits: 0})}</span>
                           </div>
-                          <div className="flex justify-between">
-                            <span className="text-xs text-gray-600">Winst:</span>
-                            <span className={`text-xs font-bold ${calculatedResult.profitAtPreviousATH >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          <div className="flex gap-2 text-xs">
+                            <span className="text-gray-600">Winst:</span>
+                            <span className={`font-bold ${calculatedResult.profitAtPreviousATH >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                               ${calculatedResult.profitAtPreviousATH.toLocaleString('en-US', {maximumFractionDigits: 0})} ({calculatedResult.profitPercentAtPreviousATH.toFixed(1)}%)
                             </span>
                           </div>
@@ -423,24 +418,24 @@ export default function MarketStatusWidget({
                       </div>
 
                       {/* At Latest ATH */}
-                      <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                        <div className="text-xs font-semibold text-blue-700 mb-2">🚀 Bij huidge ATH</div>
-                        <div className="space-y-1">
-                          <div className="flex justify-between">
-                            <span className="text-xs text-gray-600">Waarde:</span>
-                            <span className="text-xs font-bold text-gray-900">${calculatedResult.valueAtLatestATH.toLocaleString('en-US', {maximumFractionDigits: 0})}</span>
+                      <div className="bg-blue-50 rounded-lg p-2 border border-blue-200">
+                        <div className="text-xs font-semibold text-blue-700 mb-1">🚀 Huidge ATH</div>
+                        <div className="space-y-0.5">
+                          <div className="flex gap-2 text-xs">
+                            <span className="text-gray-600">Waarde:</span>
+                            <span className="font-bold text-gray-900">${calculatedResult.valueAtLatestATH.toLocaleString('en-US', {maximumFractionDigits: 0})}</span>
                           </div>
-                          <div className="flex justify-between">
-                            <span className="text-xs text-gray-600">Winst:</span>
-                            <span className={`text-xs font-bold ${calculatedResult.profitAtLatestATH >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          <div className="flex gap-2 text-xs">
+                            <span className="text-gray-600">Winst:</span>
+                            <span className={`font-bold ${calculatedResult.profitAtLatestATH >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                               ${calculatedResult.profitAtLatestATH.toLocaleString('en-US', {maximumFractionDigits: 0})} ({calculatedResult.profitPercentAtLatestATH.toFixed(1)}%)
                             </span>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </div>
