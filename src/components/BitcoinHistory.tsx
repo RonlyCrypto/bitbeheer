@@ -1119,6 +1119,8 @@ export default function BitcoinHistory() {
               currentPrice={currentPrice}
               previousATH={previousATH}
               latestATH={latestATH}
+              collapsible={true}
+              defaultExpanded={false}
             />
           </div>
 

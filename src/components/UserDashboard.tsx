@@ -127,6 +127,58 @@ export default function UserDashboard() {
   const [previousATH, setPreviousATH] = useState<number>(69000);
   const [latestATH, setLatestATH] = useState<number>(124753);
   const [showMarketStatusPanel, setShowMarketStatusPanel] = useState(false);
+
+  // Load current price data
+  useEffect(() => {
+    const loadPriceData = async () => {
+      try {
+        let price = 0;
+
+        // 1️⃣ Try to get from LiveBitcoinPrice localStorage cache
+        const bitcoinCache = localStorage.getItem('bitcoin_last_price');
+        if (bitcoinCache) {
+          try {
+            const cacheData = JSON.parse(bitcoinCache);
+            if (cacheData.price && cacheData.price > 1000) {
+              price = cacheData.price;
+            }
+          } catch (e) {
+            console.warn('⚠️ Cache parse error:', e);
+          }
+        }
+
+        // 2️⃣ Fallback: Try bitcoinApiService
+        if (price === 0) {
+          try {
+            price = await bitcoinApiService.getCurrentPrice();
+          } catch (apiError) {
+            console.warn('⚠️ API price fetch failed:', apiError);
+          }
+        }
+
+        // 3️⃣ Fallback: Use old cached price from localStorage
+        if (price === 0) {
+          const cached = localStorage.getItem('btc_last_price');
+          if (cached) {
+            price = parseFloat(cached);
+          }
+        }
+
+        // Save price to localStorage
+        if (price > 0) {
+          localStorage.setItem('btc_last_price', price.toString());
+          setCurrentPrice(Math.round(price));
+        }
+      } catch (error) {
+        console.error('❌ Error loading price data:', error);
+      }
+    };
+
+    loadPriceData();
+    // Refresh every 30 seconds
+    const interval = setInterval(loadPriceData, 30000);
+    return () => clearInterval(interval);
+  }, []);
   const [showWalletForm, setShowWalletForm] = useState(false);
   const [walletForm, setWalletForm] = useState({
     address: '',
@@ -722,7 +774,13 @@ export default function UserDashboard() {
 
             {/* Market Status Widget - Sidebar */}
             <div className="mt-6">
-              <MarketStatusWidget position="between_aths" compact={true} />
+              <MarketStatusWidget 
+                position="between_aths" 
+                compact={true}
+                currentPrice={currentPrice}
+                previousATH={previousATH}
+                latestATH={latestATH}
+              />
             </div>
           </div>
 

@@ -7,6 +7,8 @@ interface MarketStatusWidgetProps {
   currentPrice?: number;
   previousATH?: number;
   latestATH?: number;
+  collapsible?: boolean;
+  defaultExpanded?: boolean;
 }
 
 export default function MarketStatusWidget({ 
@@ -14,9 +16,12 @@ export default function MarketStatusWidget({
   compact = false,
   currentPrice = 42250,
   previousATH = 19700,
-  latestATH = 69000
+  latestATH = 69000,
+  collapsible = false,
+  defaultExpanded = true
 }: MarketStatusWidgetProps) {
   const [investmentAmount, setInvestmentAmount] = useState<string>('');
+  const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded);
   const [calculatedResult, setCalculatedResult] = useState<{
     btcAmount: number;
     valueAtPreviousATH: number;
@@ -175,7 +180,10 @@ export default function MarketStatusWidget({
   // Full version
   return (
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-      <div className="w-full p-4 text-left border-b border-gray-200 bg-gray-50">
+      <div 
+        className={`w-full p-4 text-left border-b border-gray-200 bg-gray-50 ${collapsible ? 'cursor-pointer hover:bg-gray-100 transition-colors' : ''}`}
+        onClick={collapsible ? () => setIsExpanded(!isExpanded) : undefined}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h3 className="text-sm font-semibold text-gray-900">📊 Markt Positie Analyse</h3>
@@ -187,12 +195,18 @@ export default function MarketStatusWidget({
             }`}>
               {status.title}
             </span>
+            {collapsible && (
+              <span className={`transform transition-transform text-gray-400 ${isExpanded ? 'rotate-180' : ''}`}>
+                ▼
+              </span>
+            )}
           </div>
           <p className="text-xs text-gray-600">{status.subtitle}</p>
         </div>
       </div>
 
-      <div className="p-6 space-y-4">
+      {(!collapsible || isExpanded) && (
+        <div className="p-6 space-y-4">
         <div className="flex gap-6">
           <div className="flex-shrink-0">
             <div className="w-14 bg-gradient-to-b from-gray-300 to-gray-400 rounded-3xl p-1 shadow-lg">
@@ -335,7 +349,8 @@ export default function MarketStatusWidget({
             </div>
           </div>
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
