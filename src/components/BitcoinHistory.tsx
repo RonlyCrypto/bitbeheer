@@ -223,34 +223,34 @@ export default function BitcoinHistory() {
       try {
         let price = 0;
 
-        // 1️⃣ Try to get current price from TradingView chart
-        // TradingView shows price in top ticker area
-        const tradingViewPrice = document.querySelector('[class*="price"], [class*="ticker"]');
-        if (tradingViewPrice) {
-          const priceText = tradingViewPrice.textContent || '';
-          // Look for patterns like "84,686" or similar price numbers
-          const priceMatch = priceText.match(/\b(\d{2,3},\d{3}|\d{5,})\b/);
-          if (priceMatch) {
-            const extractedPrice = parseFloat(priceMatch[1].replace(/,/g, ''));
-            if (!isNaN(extractedPrice) && extractedPrice > 1000 && extractedPrice < 500000) {
-              price = extractedPrice;
-              console.log('💰 TradingView price found:', price);
+        // 1️⃣ Try to get from LiveBitcoinPrice localStorage cache (most reliable)
+        const bitcoinCache = localStorage.getItem('bitcoin_last_price');
+        if (bitcoinCache) {
+          try {
+            const cacheData = JSON.parse(bitcoinCache);
+            if (cacheData.price && cacheData.price > 1000) {
+              price = cacheData.price;
+              console.log('💰 Price from LiveBitcoinPrice cache:', price);
             }
+          } catch (e) {
+            console.warn('⚠️ Cache parse error:', e);
           }
         }
 
-        // 2️⃣ Fallback: Try to get current price from BTC Live price element
+        // 2️⃣ Fallback: Try TradingView price in header
         if (price === 0) {
-          const btcLiveElement = document.querySelector('[class*="btc"], [class*="BTC"], [data-price]');
-          if (btcLiveElement) {
-            const priceText = btcLiveElement.textContent || '';
-            const priceMatch = priceText.match(/[\$₿]?\s*([0-9,]+\.?[0-9]*)/);
-            if (priceMatch) {
-              const extractedPrice = parseFloat(priceMatch[1].replace(/,/g, ''));
-              if (!isNaN(extractedPrice) && extractedPrice > 0) {
-                price = extractedPrice;
-                console.log('💰 BTC Live price found:', price);
-              }
+          // Look for price text in page (1h, 30m, 1h buttons and price display)
+          const headerText = document.body.innerText || '';
+          // Match 5-digit prices like "85004" or "124753"
+          const priceMatches = headerText.match(/\b([0-9]{4,6})\b/g);
+          if (priceMatches && priceMatches.length > 0) {
+            // Find the largest number in the reasonable range (likely the current price)
+            const validPrices = priceMatches
+              .map(p => parseInt(p))
+              .filter(p => p > 1000 && p < 500000);
+            if (validPrices.length > 0) {
+              price = Math.max(...validPrices);
+              console.log('💰 TradingView price extracted:', price);
             }
           }
         }
@@ -265,12 +265,12 @@ export default function BitcoinHistory() {
           }
         }
 
-        // 4️⃣ Fallback: Use cached price from localStorage
+        // 4️⃣ Fallback: Use old cached price from localStorage
         if (price === 0) {
           const cached = localStorage.getItem('btc_last_price');
           if (cached) {
             price = parseFloat(cached);
-            console.log('💾 Using cached price:', price);
+            console.log('💾 Using old cached price:', price);
           }
         }
 
