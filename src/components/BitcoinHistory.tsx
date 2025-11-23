@@ -1111,18 +1111,16 @@ export default function BitcoinHistory() {
           </div>
           )}
 
-          {/* Market Status Widget - Above DCA Simulator with ATH prices */}
-          {showDCALayer && (
-            <div className="mb-6 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-              <MarketStatusWidget 
-                position="between_aths" 
-                compact={false}
-                currentPrice={currentPrice}
-                previousATH={previousATH}
-                latestATH={latestATH}
-              />
-            </div>
-          )}
+          {/* Market Status Widget - Own Row */}
+          <div className="mb-6 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <MarketStatusWidget 
+              position="between_aths" 
+              compact={false}
+              currentPrice={currentPrice}
+              previousATH={previousATH}
+              latestATH={latestATH}
+            />
+          </div>
 
           {/* DCA Simulator - Compact below chart */}
           {showDCALayer && (
