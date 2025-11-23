@@ -189,7 +189,6 @@ export default function MarketStatusWidget({
   }
 
   // Full version for main content area (with ATH visualization)
-  const [isExpanded, setIsExpanded] = useState(false);
   const [investmentAmount, setInvestmentAmount] = useState<string>('');
   const [calculatedResult, setCalculatedResult] = useState<{
     btcAmount: number;
@@ -232,10 +231,7 @@ export default function MarketStatusWidget({
   return (
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
       {/* Header - Always visible */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-4 text-left hover:bg-gray-50 transition-colors border-b border-gray-200"
-      >
+      <div className="w-full p-4 text-left border-b border-gray-200 bg-gray-50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h3 className="text-sm font-semibold text-gray-900">📊 Markt Positie Analyse</h3>
@@ -247,17 +243,13 @@ export default function MarketStatusWidget({
             }`}>
               {status.title}
             </span>
-            <span className={`transform transition-transform text-gray-400 ${isExpanded ? 'rotate-180' : ''}`}>
-              ▼
-            </span>
           </div>
           <p className="text-xs text-gray-600">{status.subtitle}</p>
         </div>
-      </button>
+      </div>
 
-      {/* Expanded Content */}
-      {isExpanded && (
-        <div className="border-t border-current border-opacity-20 p-6">
+      {/* Content - Always visible */}
+      <div className="border-t border-current border-opacity-20 p-6">
           <div className="flex gap-6">
             {/* Smaller Traffic Light - Like Sidebar */}
             <div className="flex-shrink-0">
@@ -456,7 +448,7 @@ export default function MarketStatusWidget({
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
