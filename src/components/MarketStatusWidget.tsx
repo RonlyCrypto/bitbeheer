@@ -249,7 +249,7 @@ export default function MarketStatusWidget({
             </div>
 
             {/* ATH Range Visualization - Beside Traffic Light */}
-            <div className="flex-1 space-y-2">
+            <div className="flex-1 space-y-4">
               {/* Calculate position percentage */}
               {(() => {
                 const range = latestATH - previousATH;
@@ -270,7 +270,7 @@ export default function MarketStatusWidget({
                 }
 
                 return (
-                  <>
+                  <div className="space-y-2">
                     <div className="bg-gray-200 rounded-full h-3 relative overflow-hidden shadow-inner">
                       <div className="absolute inset-0 flex items-center">
                         {/* Previous ATH position (0%) */}
@@ -289,35 +289,34 @@ export default function MarketStatusWidget({
                       </div>
                     </div>
 
+                    {/* ATH Prices and Current Price */}
+                    <div className="flex justify-between text-xs font-semibold text-gray-700">
+                      <div className="text-left">
+                        <div className="text-gray-600">💙 Vorige ATH</div>
+                        <div className="font-mono">${previousATH.toLocaleString('en-US')}</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-gray-600">Huige Prijs</div>
+                        <div className={`font-mono ${currentPrice > latestATH ? 'text-red-600' : currentPrice < previousATH ? 'text-green-600' : 'text-orange-600'}`}>
+                          ${currentPrice.toLocaleString('en-US')}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-gray-600">❤️ Huidge ATH</div>
+                        <div className="font-mono">${latestATH.toLocaleString('en-US')}</div>
+                      </div>
+                    </div>
+
                     {/* Display percentage text */}
                     <div className={`text-xs font-semibold px-3 py-2 rounded text-center ${status.bgColor} border border-current border-opacity-30`}>
                       📊 {percentageText}
                     </div>
-                  </>
+                  </div>
                 );
               })()}
-            </div>
-            
-            {/* ATH Prices and Current Price */}
-            <div className="flex justify-between text-xs font-semibold text-gray-700">
-              <div className="text-left">
-                <div className="text-gray-600">💙 Vorige ATH</div>
-                <div className="font-mono">${previousATH.toLocaleString('en-US')}</div>
-              </div>
-              <div className="text-center">
-                <div className="text-gray-600">Huige Prijs</div>
-                <div className={`font-mono ${position === 'above_latest_ath' ? 'text-red-600' : position === 'between_aths' ? 'text-orange-600' : 'text-green-600'}`}>
-                  ${currentPrice.toLocaleString('en-US')}
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-gray-600">❤️ Huidge ATH</div>
-                <div className="font-mono">${latestATH.toLocaleString('en-US')}</div>
-              </div>
-            </div>
-            
+
               {/* Advice */}
-              <p className={`text-sm font-semibold text-center mt-2 ${status.textColor}`}>{status.advice}</p>
+              <p className={`text-sm font-semibold text-center ${status.textColor}`}>{status.advice}</p>
             </div>
           </div>
         </div>
