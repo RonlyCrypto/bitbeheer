@@ -262,46 +262,46 @@ export default function BitcoinHistory() {
           setCurrentPrice(Math.round(price));
         }
 
-        // Get all price data to calculate ATHs
-        const priceData = allPriceData;
-        if (priceData && priceData.length > 0) {
-          const currentYear = new Date().getFullYear();
-          const previousYear = currentYear - 1;
+        // Extract ATH from cycles
+        // Helper function to parse price from range string
+        const parseMaxPrice = (priceRange: string): number => {
+          const numbers = priceRange.match(/[\d,]+\.?\d*/g);
+          if (!numbers) return 0;
+          const prices = numbers.map(n => parseFloat(n.replace(/,/g, '')));
+          return Math.max(...prices);
+        };
 
-          // Split data by year
-          const previousYearData = priceData.filter(p => {
-            const year = new Date(p.date).getFullYear();
-            return year === previousYear;
-          });
+        // Previous ATH from Cycle 3 bullRun
+        const cycle3 = bitcoinCycles.find(c => c.id === 'cycle3');
+        if (cycle3?.phases?.bullRun) {
+          const cycle3ATH = parseMaxPrice(cycle3.phases.bullRun.priceRange);
+          setPreviousATH(Math.round(cycle3ATH));
+          console.log(`📊 Cycle 3 (Previous) ATH: $${cycle3ATH}`);
+        }
 
-          const currentYearData = priceData.filter(p => {
-            const year = new Date(p.date).getFullYear();
-            return year === currentYear;
-          });
-
-          // Previous ATH = Highest price in previous year
-          if (previousYearData.length > 0) {
-            const prevYearMax = Math.max(...previousYearData.map(p => p.price));
-            setPreviousATH(Math.round(prevYearMax));
-            console.log(`Previous year (${previousYear}) ATH: $${prevYearMax}`);
+        // Latest ATH from Cycle 4 bullRun
+        const cycle4 = bitcoinCycles.find(c => c.id === 'cycle4');
+        if (cycle4?.phases?.bullRun) {
+          const cycle4ATH = parseMaxPrice(cycle4.phases.bullRun.priceRange);
+          // If it's "Bull Run richting top" (current), use latest price data
+          if (cycle4.phases.bullRun.priceRange.includes('richting top')) {
+            // Find highest price in current cycle data
+            if (allPriceData && allPriceData.length > 0) {
+              const cycle4StartDate = new Date('2024-04-20');
+              const recentData = allPriceData.filter((p: PriceData) => new Date(p.date) >= cycle4StartDate);
+              if (recentData.length > 0) {
+                const recentMax = Math.max(...recentData.map((p: PriceData) => p.price));
+                setLatestATH(Math.round(recentMax));
+                console.log(`📊 Cycle 4 (Current) ATH: $${recentMax}`);
+              }
+            }
           } else {
-            // Fallback: Use highest price from all historical data
-            const allTimeMax = Math.max(...priceData.map(p => p.price));
-            setPreviousATH(Math.round(allTimeMax * 0.9)); // Use 90% of all-time high as estimate
-          }
-
-          // Latest ATH = Highest price in current year (or all time)
-          if (currentYearData.length > 0) {
-            const currentYearMax = Math.max(...currentYearData.map(p => p.price));
-            setLatestATH(Math.round(currentYearMax));
-            console.log(`Current year (${currentYear}) ATH: $${currentYearMax}`);
-          } else {
-            const allTimeMax = Math.max(...priceData.map(p => p.price));
-            setLatestATH(Math.round(allTimeMax));
+            setLatestATH(Math.round(cycle4ATH));
+            console.log(`📊 Cycle 4 (Latest) ATH: $${cycle4ATH}`);
           }
         }
 
-        console.log('✅ Market Status prices loaded:', { price, latestATH: Math.round(Math.max(...priceData.map(p => p.price))), previousATH });
+        console.log('✅ Market Status prices loaded:', { currentPrice: price, previousATH, latestATH: Math.round(Math.max(...(allPriceData.map((p: PriceData) => p.price) || [0]))) });
       } catch (error) {
         console.error('❌ Error loading price data:', error);
         
