@@ -17,6 +17,12 @@ export default function MarketStatusWidget({
   latestATH = 69000
 }: MarketStatusWidgetProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Callback for opening full page view
+  const onOpenFullView = () => {
+    // Dispatch custom event for parent to handle
+    window.dispatchEvent(new CustomEvent('openMarketStatusPage', { detail: { position, currentPrice, previousATH, latestATH } }));
+  };
   const getStatusInfo = () => {
     switch (position) {
       case 'below_previous_ath':
@@ -81,7 +87,7 @@ export default function MarketStatusWidget({
     return (
       <>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={onOpenFullView}
           className={`w-full text-left ${status.bgColor} border-2 ${status.borderColor} rounded-xl p-4 overflow-visible hover:shadow-lg hover:border-opacity-100 transition-all cursor-pointer`}
         >
         {/* Compact Stoplicht */}
@@ -178,35 +184,6 @@ export default function MarketStatusWidget({
           </div>
         </div>
         </button>
-
-        {/* Modal for Full View */}
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-96 overflow-y-auto">
-              {/* Modal Header */}
-              <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">📊 Markt Positie Analyse</h2>
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-
-              {/* Modal Content - Full Version */}
-              <div className="p-6">
-                <MarketStatusWidget 
-                  position={position}
-                  compact={false}
-                  currentPrice={currentPrice}
-                  previousATH={previousATH}
-                  latestATH={latestATH}
-                />
-              </div>
-            </div>
-          </div>
-        )}
       </>
     );
   }

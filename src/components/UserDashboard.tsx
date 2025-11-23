@@ -126,6 +126,7 @@ export default function UserDashboard() {
   const [currentPrice, setCurrentPrice] = useState<number>(0);
   const [previousATH, setPreviousATH] = useState<number>(69000);
   const [latestATH, setLatestATH] = useState<number>(124753);
+  const [showMarketStatusPanel, setShowMarketStatusPanel] = useState(false);
   const [showWalletForm, setShowWalletForm] = useState(false);
   const [walletForm, setWalletForm] = useState({
     address: '',
@@ -491,6 +492,13 @@ export default function UserDashboard() {
     };
     window.addEventListener('refreshAccountStatus', handleStatusRefresh);
     
+    // Listen for market status page open event
+    const handleOpenMarketStatus = () => {
+      setShowMarketStatusPanel(true);
+      setActiveTab('market-status');
+    };
+    window.addEventListener('openMarketStatusPage', handleOpenMarketStatus);
+    
     // Function to check and update unread chat count
     const checkUnreadMessages = async () => {
       const effectiveEmail = (isImpersonating && impersonatedUser) 
@@ -547,6 +555,7 @@ export default function UserDashboard() {
       window.removeEventListener('refreshAccounts', handleAccountRefresh);
       window.removeEventListener('refreshAccountStatus', handleStatusRefresh);
       window.removeEventListener('newAdminMessage', handleNewMessage);
+      window.removeEventListener('openMarketStatusPage', handleOpenMarketStatus);
     };
   }, [user, isImpersonating, impersonatedUser]);
 
@@ -739,7 +748,15 @@ export default function UserDashboard() {
 
             {activeTab === 'market-status' && (
               <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-900">📊 Markt Positie Analyse</h2>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-gray-900">📊 Markt Positie Analyse</h2>
+                  <button
+                    onClick={() => setActiveTab('overview')}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden p-6">
                   <MarketStatusWidget 
                     position="between_aths" 
