@@ -718,7 +718,7 @@ export default function UserDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar Navigation */}
-          <div className="lg:w-64">
+          <div className="lg:w-64 flex flex-col">
             <nav className="space-y-2">
               {[
                 { id: 'overview', label: 'Overzicht', icon: BarChart3, alwaysEnabled: true },
@@ -772,8 +772,8 @@ export default function UserDashboard() {
               })}
             </nav>
 
-            {/* Market Status Widget - Sidebar */}
-            <div className="mt-6">
+            {/* Market Status Widget - Sidebar - Always Visible */}
+            <div className="mt-6 flex-shrink-0">
               <MarketStatusWidget 
                 position="between_aths" 
                 compact={true}
