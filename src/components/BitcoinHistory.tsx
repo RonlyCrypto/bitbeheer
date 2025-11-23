@@ -223,21 +223,39 @@ export default function BitcoinHistory() {
       try {
         let price = 0;
 
-        // Try to get current price from BTC Live price element
-        const btcLiveElement = document.querySelector('[class*="btc"], [class*="BTC"], [data-price]');
-        if (btcLiveElement) {
-          const priceText = btcLiveElement.textContent || '';
-          const priceMatch = priceText.match(/[\$₿]?\s*([0-9,]+\.?[0-9]*)/);
+        // 1️⃣ Try to get current price from TradingView chart
+        // TradingView shows price in top ticker area
+        const tradingViewPrice = document.querySelector('[class*="price"], [class*="ticker"]');
+        if (tradingViewPrice) {
+          const priceText = tradingViewPrice.textContent || '';
+          // Look for patterns like "84,686" or similar price numbers
+          const priceMatch = priceText.match(/\b(\d{2,3},\d{3}|\d{5,})\b/);
           if (priceMatch) {
             const extractedPrice = parseFloat(priceMatch[1].replace(/,/g, ''));
-            if (!isNaN(extractedPrice) && extractedPrice > 0) {
+            if (!isNaN(extractedPrice) && extractedPrice > 1000 && extractedPrice < 500000) {
               price = extractedPrice;
-              console.log('💰 BTC Live price found:', price);
+              console.log('💰 TradingView price found:', price);
             }
           }
         }
 
-        // Fallback: Try bitcoinApiService
+        // 2️⃣ Fallback: Try to get current price from BTC Live price element
+        if (price === 0) {
+          const btcLiveElement = document.querySelector('[class*="btc"], [class*="BTC"], [data-price]');
+          if (btcLiveElement) {
+            const priceText = btcLiveElement.textContent || '';
+            const priceMatch = priceText.match(/[\$₿]?\s*([0-9,]+\.?[0-9]*)/);
+            if (priceMatch) {
+              const extractedPrice = parseFloat(priceMatch[1].replace(/,/g, ''));
+              if (!isNaN(extractedPrice) && extractedPrice > 0) {
+                price = extractedPrice;
+                console.log('💰 BTC Live price found:', price);
+              }
+            }
+          }
+        }
+
+        // 3️⃣ Fallback: Try bitcoinApiService
         if (price === 0) {
           try {
             price = await bitcoinApiService.getCurrentPrice();
@@ -247,7 +265,7 @@ export default function BitcoinHistory() {
           }
         }
 
-        // Fallback: Use cached price from localStorage
+        // 4️⃣ Fallback: Use cached price from localStorage
         if (price === 0) {
           const cached = localStorage.getItem('btc_last_price');
           if (cached) {
