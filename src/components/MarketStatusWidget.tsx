@@ -393,22 +393,22 @@ export default function MarketStatusWidget({
 
                   {/* Right: Results - All inline */}
                   {calculatedResult && (
-                    <div className="flex-1 flex gap-3 items-start">
+                    <div className="flex-1 grid grid-cols-3 gap-3 items-start">
                       {/* BTC Amount */}
-                      <div className="bg-blue-50 rounded-lg p-2 border border-blue-200">
+                      <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
                         <div className="text-xs text-gray-600">Met ${investmentAmount}:</div>
-                        <div className="text-xs font-bold text-gray-900">₿ {calculatedResult.btcAmount.toFixed(6)}</div>
+                        <div className="text-sm font-bold text-gray-900">₿ {calculatedResult.btcAmount.toFixed(6)}</div>
                       </div>
 
                       {/* At Previous ATH */}
-                      <div className="bg-green-50 rounded-lg p-2 border border-green-200">
-                        <div className="text-xs font-semibold text-green-700 mb-1">📈 Vorige ATH</div>
-                        <div className="space-y-0.5">
-                          <div className="flex gap-2 text-xs">
+                      <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+                        <div className="text-xs font-semibold text-green-700 mb-1.5">📈 Vorige ATH</div>
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs">
                             <span className="text-gray-600">Waarde:</span>
                             <span className="font-bold text-gray-900">${calculatedResult.valueAtPreviousATH.toLocaleString('en-US', {maximumFractionDigits: 0})}</span>
                           </div>
-                          <div className="flex gap-2 text-xs">
+                          <div className="flex justify-between text-xs">
                             <span className="text-gray-600">Winst:</span>
                             <span className={`font-bold ${calculatedResult.profitAtPreviousATH >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                               ${calculatedResult.profitAtPreviousATH.toLocaleString('en-US', {maximumFractionDigits: 0})} ({calculatedResult.profitPercentAtPreviousATH.toFixed(1)}%)
@@ -418,14 +418,14 @@ export default function MarketStatusWidget({
                       </div>
 
                       {/* At Latest ATH */}
-                      <div className="bg-blue-50 rounded-lg p-2 border border-blue-200">
-                        <div className="text-xs font-semibold text-blue-700 mb-1">🚀 Huidge ATH</div>
-                        <div className="space-y-0.5">
-                          <div className="flex gap-2 text-xs">
+                      <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                        <div className="text-xs font-semibold text-blue-700 mb-1.5">🚀 Huidge ATH</div>
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs">
                             <span className="text-gray-600">Waarde:</span>
                             <span className="font-bold text-gray-900">${calculatedResult.valueAtLatestATH.toLocaleString('en-US', {maximumFractionDigits: 0})}</span>
                           </div>
-                          <div className="flex gap-2 text-xs">
+                          <div className="flex justify-between text-xs">
                             <span className="text-gray-600">Winst:</span>
                             <span className={`font-bold ${calculatedResult.profitAtLatestATH >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                               ${calculatedResult.profitAtLatestATH.toLocaleString('en-US', {maximumFractionDigits: 0})} ({calculatedResult.profitPercentAtLatestATH.toFixed(1)}%)
