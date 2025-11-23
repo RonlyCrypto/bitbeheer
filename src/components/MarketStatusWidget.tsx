@@ -178,6 +178,44 @@ export default function MarketStatusWidget({
 
   // Full version for main content area (with ATH visualization)
   const [isExpanded, setIsExpanded] = useState(false);
+  const [investmentAmount, setInvestmentAmount] = useState<string>('');
+  const [calculatedResult, setCalculatedResult] = useState<{
+    btcAmount: number;
+    valueAtPreviousATH: number;
+    valueAtLatestATH: number;
+    profitAtPreviousATH: number;
+    profitPercentAtPreviousATH: number;
+    profitAtLatestATH: number;
+    profitPercentAtLatestATH: number;
+  } | null>(null);
+
+  const handleCalculate = () => {
+    const amount = parseFloat(investmentAmount);
+    if (isNaN(amount) || amount <= 0) return;
+
+    // Calculate how many BTC you could buy at current price
+    const btcBought = amount / currentPrice;
+    
+    // Calculate value if price goes to previous ATH
+    const valueAtPrevATH = btcBought * previousATH;
+    const profitAtPrevATH = valueAtPrevATH - amount;
+    const profitPercentPrevATH = (profitAtPrevATH / amount) * 100;
+
+    // Calculate value if price goes to latest ATH
+    const valueAtLatATH = btcBought * latestATH;
+    const profitAtLatATH = valueAtLatATH - amount;
+    const profitPercentLatATH = (profitAtLatATH / amount) * 100;
+
+    setCalculatedResult({
+      btcAmount: btcBought,
+      valueAtPreviousATH: valueAtPrevATH,
+      valueAtLatestATH: valueAtLatATH,
+      profitAtPreviousATH: profitAtPrevATH,
+      profitPercentAtPreviousATH: profitPercentPrevATH,
+      profitAtLatestATH: profitAtLatATH,
+      profitPercentAtLatestATH: profitPercentLatATH
+    });
+  };
   
   return (
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
@@ -323,6 +361,78 @@ export default function MarketStatusWidget({
 
               {/* Advice */}
               <p className={`text-sm font-semibold text-center ${status.textColor}`}>{status.advice}</p>
+
+              {/* Investment Calculator */}
+              <div className="space-y-3 pt-4 border-t border-gray-200">
+                <h4 className="text-sm font-semibold text-gray-900">💰 Investering Calculator</h4>
+                
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 bg-white focus-within:ring-2 focus-within:ring-blue-400">
+                      <span className="text-gray-500 font-semibold">$</span>
+                      <input
+                        type="number"
+                        value={investmentAmount}
+                        onChange={(e) => {
+                          setInvestmentAmount(e.target.value);
+                          setCalculatedResult(null);
+                        }}
+                        placeholder="Bedrag invullen"
+                        className="flex-1 ml-2 outline-none text-sm font-mono"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleCalculate}
+                    disabled={!investmentAmount}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold text-sm hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Bereken
+                  </button>
+                </div>
+
+                {/* Calculation Results */}
+                {calculatedResult && (
+                  <div className="space-y-3 pt-3 border-t border-gray-200">
+                    <div className="bg-blue-50 rounded-lg p-3 space-y-1">
+                      <div className="text-xs text-gray-600">Met ${investmentAmount} inleg:</div>
+                      <div className="text-sm font-bold text-gray-900">
+                        ₿ {calculatedResult.btcAmount.toFixed(6)} Bitcoin
+                      </div>
+                    </div>
+
+                    {/* At Previous ATH */}
+                    <div className="bg-green-50 rounded-lg p-3 space-y-1 border border-green-200">
+                      <div className="text-xs font-semibold text-green-700">📈 Bij vorige ATH (${previousATH.toLocaleString()}):</div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Waarde:</span>
+                        <span className="font-bold text-gray-900">${calculatedResult.valueAtPreviousATH.toLocaleString('en-US', {maximumFractionDigits: 2})}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Winst:</span>
+                        <span className={`font-bold ${calculatedResult.profitAtPreviousATH >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          ${calculatedResult.profitAtPreviousATH.toLocaleString('en-US', {maximumFractionDigits: 2})} ({calculatedResult.profitPercentAtPreviousATH.toFixed(1)}%)
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* At Latest ATH */}
+                    <div className="bg-blue-50 rounded-lg p-3 space-y-1 border border-blue-200">
+                      <div className="text-xs font-semibold text-blue-700">🚀 Bij huidge ATH (${latestATH.toLocaleString()}):</div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Waarde:</span>
+                        <span className="font-bold text-gray-900">${calculatedResult.valueAtLatestATH.toLocaleString('en-US', {maximumFractionDigits: 2})}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Winst:</span>
+                        <span className={`font-bold ${calculatedResult.profitAtLatestATH >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          ${calculatedResult.profitAtLatestATH.toLocaleString('en-US', {maximumFractionDigits: 2})} ({calculatedResult.profitPercentAtLatestATH.toFixed(1)}%)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
