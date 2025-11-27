@@ -363,15 +363,6 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
         <div className="p-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Admin Dashboard
-            </h2>
-            <p className="text-xl text-gray-600">
-              Beheer je Bitcoin begeleiding platform
-            </p>
-          </div>
 
           {/* Overview Tab */}
           {activeTab === 'overview' && (

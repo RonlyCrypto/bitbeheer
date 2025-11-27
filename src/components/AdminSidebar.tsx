@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BarChart3, 
   MessageSquare, 
@@ -11,7 +11,7 @@ import {
   Zap, 
   Settings,
   Menu,
-  ChevronDown
+  ChevronRight
 } from 'lucide-react';
 
 interface MenuItem {
@@ -24,8 +24,6 @@ interface MenuItem {
 interface AdminSidebarProps {
   activeTab: string;
   onTabChange: (tabId: string) => void;
-  isCollapsed?: boolean;
-  onToggleCollapse?: () => void;
 }
 
 const menuItems: MenuItem[] = [
@@ -44,45 +42,71 @@ const menuItems: MenuItem[] = [
 
 export default function AdminSidebar({ 
   activeTab, 
-  onTabChange, 
-  isCollapsed = false,
-  onToggleCollapse 
+  onTabChange
 }: AdminSidebarProps) {
-  return (
-    <div className="w-64 bg-white border-r border-gray-200 flex flex-col h-full">
-      {/* Sidebar Header */}
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="text-sm font-bold text-gray-900">MENU</h3>
-      </div>
+  const [isExpanded, setIsExpanded] = useState(false);
 
+  // Persist collapsed state per user
+  useEffect(() => {
+    const savedState = localStorage.getItem('admin_sidebar_expanded');
+    if (savedState !== null) {
+      setIsExpanded(JSON.parse(savedState));
+    }
+  }, []);
+
+  const toggleExpanded = () => {
+    const newState = !isExpanded;
+    setIsExpanded(newState);
+    localStorage.setItem('admin_sidebar_expanded', JSON.stringify(newState));
+  };
+
+  return (
+    <div className={`bg-white border-r border-gray-200 flex flex-col h-full transition-all duration-300 ${
+      isExpanded ? 'w-64' : 'w-20'
+    }`}>
       {/* Menu Items */}
-      <nav className="flex-1 overflow-y-auto">
-        <div className="space-y-1 p-2">
+      <nav className="flex-1 overflow-y-auto flex flex-col">
+        <div className={`flex flex-col gap-1 ${isExpanded ? 'p-3' : 'p-2'}`}>
           {menuItems.map((item) => {
             const Icon = item.icon;
             return (
               <button
                 key={item.id}
                 onClick={() => onTabChange(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors relative group ${
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative group ${
                   activeTab === item.id
-                    ? 'bg-orange-100 text-orange-700 font-medium'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-orange-100 text-orange-700'
+                    : 'text-gray-600 hover:bg-gray-100'
                 }`}
-                title={item.label}
+                title={!isExpanded ? item.label : undefined}
               >
                 <Icon className="w-5 h-5 flex-shrink-0" />
-                <span className="flex-1 text-left text-sm">{item.label}</span>
-                {item.badge && (
-                  <span className="bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0">
-                    {item.badge}
-                  </span>
+                {isExpanded && (
+                  <>
+                    <span className="flex-1 text-left text-sm font-medium truncate">{item.label}</span>
+                    {item.badge && (
+                      <span className="bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center flex-shrink-0">
+                        {item.badge > 9 ? '9+' : item.badge}
+                      </span>
+                    )}
+                  </>
                 )}
               </button>
             );
           })}
         </div>
       </nav>
+
+      {/* Chevron Toggle Button */}
+      <div className={`border-t border-gray-200 ${isExpanded ? 'p-3' : 'p-2'}`}>
+        <button
+          onClick={toggleExpanded}
+          className="w-full flex items-center justify-center p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+          title={isExpanded ? 'Collapse' : 'Expand'}
+        >
+          <ChevronRight className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
     </div>
   );
 }
