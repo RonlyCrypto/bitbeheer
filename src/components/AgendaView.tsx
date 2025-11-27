@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
+import { Calendar, Clock, ChevronLeft, ChevronRight, MapPin, Plus } from 'lucide-react';
 
 interface Appointment {
   id: string;
@@ -15,9 +15,13 @@ interface Appointment {
 interface AgendaViewProps {
   appointments: Appointment[];
   onAppointmentClick: (appointment: Appointment) => void;
+  viewMode?: string;
+  setViewMode?: (mode: string) => void;
+  onBookAppointment?: () => void;
+  setSelectedAppointment?: (apt: Appointment | null) => void;
 }
 
-export default function AgendaView({ appointments, onAppointmentClick }: AgendaViewProps) {
+export default function AgendaView({ appointments, onAppointmentClick, viewMode = 'agenda', setViewMode, onBookAppointment, setSelectedAppointment }: AgendaViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [hoveredAppointment, setHoveredAppointment] = useState<Appointment | null>(null);
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
@@ -135,6 +139,47 @@ export default function AgendaView({ appointments, onAppointmentClick }: AgendaV
               Week {Math.ceil((currentDate.getDate() - currentDate.getDay() + 1) / 7)}
             </p>
           </div>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          {/* Agenda/Lijst tabs */}
+          <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => {
+                if (setViewMode) setViewMode('agenda');
+                if (setSelectedAppointment) setSelectedAppointment(null);
+              }}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                viewMode === 'agenda'
+                  ? 'bg-white text-orange-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Agenda
+            </button>
+            <button
+              onClick={() => {
+                if (setViewMode) setViewMode('list');
+                if (setSelectedAppointment) setSelectedAppointment(null);
+              }}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                viewMode === 'list'
+                  ? 'bg-white text-orange-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Lijst
+            </button>
+          </div>
+          
+          {/* Afspraak Boeken button */}
+          <button
+            onClick={onBookAppointment}
+            className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Afspraak Boeken
+          </button>
         </div>
       </div>
 

@@ -2711,16 +2711,6 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-end gap-3">
-        <button
-          onClick={onBookAppointment}
-          className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Afspraak Boeken
-        </button>
-      </div>
-
       {loading ? (
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
@@ -2728,37 +2718,13 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
         </div>
       ) : viewMode === 'agenda' ? (
         <div className="space-y-4">
-          <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-fit">
-            <button
-              onClick={() => {
-                setViewMode('agenda');
-                setSelectedAppointment(null);
-              }}
-              className={`px-4 py-2 rounded-md transition-colors ${
-                viewMode === 'agenda'
-                  ? 'bg-white dark:bg-gray-700 text-orange-600 dark:text-orange-400 shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400'
-              }`}
-            >
-              Agenda
-            </button>
-            <button
-              onClick={() => {
-                setViewMode('list');
-                setSelectedAppointment(null);
-              }}
-              className={`px-4 py-2 rounded-md transition-colors ${
-                viewMode === 'list'
-                  ? 'bg-white dark:bg-gray-700 text-orange-600 dark:text-orange-400 shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400'
-              }`}
-            >
-              Lijst
-            </button>
-          </div>
           <AgendaView
             appointments={userAppointments}
             onAppointmentClick={handleAppointmentClick}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            onBookAppointment={onBookAppointment}
+            setSelectedAppointment={setSelectedAppointment}
           />
         </div>
       ) : userAppointments.length === 0 ? (
