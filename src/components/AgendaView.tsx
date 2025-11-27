@@ -26,6 +26,7 @@ export default function AgendaView({ appointments, onAppointmentClick, viewMode 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [hoveredAppointment, setHoveredAppointment] = useState<Appointment | null>(null);
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
+  const [calendarView, setCalendarView] = useState<'week' | 'month' | 'year'>('week');
 
   // Get start and end of current week
   const getWeekDates = () => {
@@ -74,6 +75,55 @@ export default function AgendaView({ appointments, onAppointmentClick, viewMode 
     setCurrentDate(new Date());
   };
 
+  // Navigate months
+  const goToPreviousMonth = () => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(newDate.getMonth() - 1);
+    setCurrentDate(newDate);
+  };
+
+  const goToNextMonth = () => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(newDate.getMonth() + 1);
+    setCurrentDate(newDate);
+  };
+
+  // Navigate years
+  const goToPreviousYear = () => {
+    const newDate = new Date(currentDate);
+    newDate.setFullYear(newDate.getFullYear() - 1);
+    setCurrentDate(newDate);
+  };
+
+  const goToNextYear = () => {
+    const newDate = new Date(currentDate);
+    newDate.setFullYear(newDate.getFullYear() + 1);
+    setCurrentDate(newDate);
+  };
+
+  // Get month dates (all days in month)
+  const getMonthDates = () => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const dates = [];
+    
+    for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+      dates.push(new Date(d));
+    }
+    return dates;
+  };
+
+  // Get year dates (all months in year)
+  const getYearMonths = () => {
+    const months = [];
+    for (let i = 0; i < 12; i++) {
+      months.push(new Date(currentDate.getFullYear(), i, 1));
+    }
+    return months;
+  };
+
   // Get color based on status
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -115,7 +165,11 @@ export default function AgendaView({ appointments, onAppointmentClick, viewMode 
       <div className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4 border border-gray-200">
         <div className="flex items-center gap-4">
           <button
-            onClick={goToPreviousWeek}
+            onClick={
+              calendarView === 'week' ? goToPreviousWeek :
+              calendarView === 'month' ? goToPreviousMonth :
+              goToPreviousYear
+            }
             disabled={isListMode}
             className={`p-2 rounded-lg transition-colors ${
               isListMode ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'
@@ -135,7 +189,11 @@ export default function AgendaView({ appointments, onAppointmentClick, viewMode 
             Vandaag
           </button>
           <button
-            onClick={goToNextWeek}
+            onClick={
+              calendarView === 'week' ? goToNextWeek :
+              calendarView === 'month' ? goToNextMonth :
+              goToNextYear
+            }
             disabled={isListMode}
             className={`p-2 rounded-lg transition-colors ${
               isListMode ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'
@@ -145,15 +203,60 @@ export default function AgendaView({ appointments, onAppointmentClick, viewMode 
           </button>
           <div className="ml-4">
             <h2 className="text-xl font-bold text-gray-900">
-              {weekDates[0].toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' })}
+              {calendarView === 'week' 
+                ? weekDates[0].toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' })
+                : calendarView === 'month'
+                ? currentDate.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' })
+                : currentDate.getFullYear()}
             </h2>
             <p className="text-sm text-gray-600">
-              Week {Math.ceil((currentDate.getDate() - currentDate.getDay() + 1) / 7)}
+              {calendarView === 'week'
+                ? `Week ${Math.ceil((currentDate.getDate() - currentDate.getDay() + 1) / 7)}`
+                : calendarView === 'month'
+                ? `Maand`
+                : `Jaar`}
             </p>
           </div>
         </div>
         
         <div className="flex items-center gap-3">
+          {/* Calendar view tabs - Week/Maand/Jaar */}
+          <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setCalendarView('week')}
+              disabled={isListMode}
+              className={`px-3 py-2 rounded-md transition-colors text-sm ${
+                calendarView === 'week' && !isListMode
+                  ? 'bg-white text-orange-600 shadow-sm'
+                  : isListMode ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Week
+            </button>
+            <button
+              onClick={() => setCalendarView('month')}
+              disabled={isListMode}
+              className={`px-3 py-2 rounded-md transition-colors text-sm ${
+                calendarView === 'month' && !isListMode
+                  ? 'bg-white text-orange-600 shadow-sm'
+                  : isListMode ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Maand
+            </button>
+            <button
+              onClick={() => setCalendarView('year')}
+              disabled={isListMode}
+              className={`px-3 py-2 rounded-md transition-colors text-sm ${
+                calendarView === 'year' && !isListMode
+                  ? 'bg-white text-orange-600 shadow-sm'
+                  : isListMode ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Jaar
+            </button>
+          </div>
+
           {/* Agenda/Lijst tabs - Always enabled for switching */}
           <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
             <button
@@ -200,8 +303,8 @@ export default function AgendaView({ appointments, onAppointmentClick, viewMode 
         </div>
       </div>
 
-      {/* Week View Grid - Only show in agenda mode */}
-      {!isListMode && <div className="grid grid-cols-7 gap-2">
+      {/* Calendar View - Only show in agenda mode */}
+      {!isListMode && calendarView === 'week' && <div className="grid grid-cols-7 gap-2">
         {/* Day Headers */}
         {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map((day, index) => (
           <div
@@ -266,6 +369,93 @@ export default function AgendaView({ appointments, onAppointmentClick, viewMode 
           );
         })}
       </div>}
+
+      {/* Month View Grid */}
+      {!isListMode && calendarView === 'month' && (
+        <div className="grid grid-cols-7 gap-2">
+          {/* Month day headers */}
+          {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map((day) => (
+            <div key={day} className="text-center p-2 font-semibold text-gray-700 bg-gray-50 rounded">
+              {day}
+            </div>
+          ))}
+          
+          {/* Month days */}
+          {getMonthDates().map((date, idx) => {
+            const dayAppointments = getAppointmentsForDate(date);
+            const isCurrentDay = isToday(date);
+            return (
+              <div
+                key={idx}
+                className={`min-h-[100px] border-2 rounded-lg p-2 transition-all ${
+                  isCurrentDay ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-white'
+                }`}
+              >
+                <div className={`text-sm font-semibold mb-1 ${isCurrentDay ? 'text-orange-700' : 'text-gray-700'}`}>
+                  {date.getDate()}
+                </div>
+                <div className="space-y-1 text-xs">
+                  {dayAppointments.slice(0, 2).map((apt) => (
+                    <div
+                      key={apt.id}
+                      onClick={() => onAppointmentClick(apt)}
+                      className={`${getStatusColor(apt.status)} text-white p-1 rounded truncate cursor-pointer hover:opacity-90`}
+                    >
+                      {formatTime(apt.start_time)}
+                    </div>
+                  ))}
+                  {dayAppointments.length > 2 && (
+                    <div className="text-gray-500 text-xs">+{dayAppointments.length - 2} meer</div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Year View Grid */}
+      {!isListMode && calendarView === 'year' && (
+        <div className="grid grid-cols-3 gap-4">
+          {getYearMonths().map((monthDate) => {
+            const monthAppointments = appointments.filter(apt => {
+              const aptDate = new Date(apt.date);
+              return aptDate.getMonth() === monthDate.getMonth() &&
+                     aptDate.getFullYear() === monthDate.getFullYear() &&
+                     (apt.status === 'confirmed' || apt.status === 'pending');
+            });
+            
+            return (
+              <div key={monthDate.getMonth()} className="border-2 border-gray-200 rounded-lg p-4 bg-white">
+                <h3 className="font-semibold text-gray-900 mb-3">
+                  {monthDate.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' })}
+                </h3>
+                <div className="space-y-2 text-sm">
+                  {monthAppointments.length === 0 ? (
+                    <p className="text-gray-400 text-xs">Geen afspraken</p>
+                  ) : (
+                    <div className="space-y-1">
+                      <p className="text-gray-600 font-medium">{monthAppointments.length} afspraken</p>
+                      {monthAppointments.slice(0, 3).map((apt) => (
+                        <div
+                          key={apt.id}
+                          onClick={() => onAppointmentClick(apt)}
+                          className="text-xs p-2 bg-gray-50 rounded cursor-pointer hover:bg-gray-100"
+                        >
+                          {new Date(apt.date).getDate()} {formatTime(apt.start_time)}
+                        </div>
+                      ))}
+                      {monthAppointments.length > 3 && (
+                        <p className="text-gray-500 text-xs">+{monthAppointments.length - 3} meer</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Hover Tooltip */}
       {hoveredAppointment && (
