@@ -27,6 +27,21 @@ export default function AgendaView({ appointments, onAppointmentClick, viewMode 
   const [hoveredAppointment, setHoveredAppointment] = useState<Appointment | null>(null);
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
   const [calendarView, setCalendarView] = useState<'week' | 'month' | 'year'>('week');
+  const [scrollY, setScrollY] = useState(0);
+
+  // Handle scroll for header background effect
+  useEffect(() => {
+    const handleScroll = (e: Event) => {
+      const target = e.target as HTMLElement;
+      setScrollY(target.scrollTop || 0);
+    };
+
+    const scrollContainer = document.querySelector('[data-agenda-scroll]');
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll);
+      return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    }
+  }, []);
 
   // Get start and end of current week
   const getWeekDates = () => {
@@ -160,9 +175,13 @@ export default function AgendaView({ appointments, onAppointmentClick, viewMode 
   const weekDates = getWeekDates();
 
   return (
-    <div className="space-y-4">
-      {/* Header with navigation */}
-      <div className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+    <div className="space-y-4" data-agenda-scroll style={{ maxHeight: '100vh', overflowY: 'auto' }}>
+      {/* Header with navigation - Sticky with scroll effect */}
+      <div className={`flex items-center justify-between rounded-lg shadow-sm p-4 border border-gray-200 sticky top-0 z-10 transition-all duration-300 ${
+        scrollY > 20 
+          ? 'bg-white border-gray-200 shadow-md' 
+          : 'bg-white/80 backdrop-blur-sm border-gray-100'
+      }`}>
         <div className="flex items-center gap-4">
           <button
             onClick={
