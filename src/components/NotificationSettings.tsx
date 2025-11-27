@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Settings, X, Mail, Phone, TrendingDown, TrendingUp, Target } from 'lucide-react';
+import { Settings, X, Mail, Phone, TrendingDown, TrendingUp, Target, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 
@@ -24,6 +24,10 @@ export default function NotificationSettings() {
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [phonePopupOpen, setPhonePopupOpen] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [userPhone, setUserPhone] = useState('');
+  const [savingPhone, setSavingPhone] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const loadPreferences = async () => {
@@ -31,6 +35,7 @@ export default function NotificationSettings() {
 
     setLoading(true);
     try {
+      // Load preferences
       const { data, error } = await supabase
         .from('notification_preferences')
         .select('*')
@@ -58,6 +63,17 @@ export default function NotificationSettings() {
         };
         setPreferences(defaultPrefs);
       }
+
+      // Load user phone number
+      const { data: accountData } = await supabase
+        .from('accounts')
+        .select('phone')
+        .eq('email', user.email)
+        .maybeSingle();
+
+      if (accountData?.phone) {
+        setUserPhone(accountData.phone);
+      }
     } catch (error) {
       console.error('Error loading notification preferences:', error);
     } finally {
@@ -67,6 +83,13 @@ export default function NotificationSettings() {
 
   const updatePreference = async (field: keyof NotificationPreferences, value: any) => {
     if (!user?.id || !preferences) return;
+
+    // Check if trying to set phone contact method but no phone number
+    if (field === 'bear_market_buys_contact_method' && value === 'phone' && !userPhone) {
+      setPhoneNumber('');
+      setPhonePopupOpen(true);
+      return;
+    }
 
     setSaving(true);
     try {
@@ -90,6 +113,48 @@ export default function NotificationSettings() {
       alert('Fout bij opslaan van voorkeur');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const savePhoneNumber = async () => {
+    if (!user?.id || !phoneNumber.trim()) {
+      alert('Voer alstublieft een geldig telefoonnummer in');
+      return;
+    }
+
+    setSavingPhone(true);
+    try {
+      // Save phone number to accounts table
+      const { error } = await supabase
+        .from('accounts')
+        .update({ phone: phoneNumber.trim() })
+        .eq('email', user.email);
+
+      if (error) throw error;
+
+      setUserPhone(phoneNumber.trim());
+      setPhonePopupOpen(false);
+
+      // Now update the preference
+      const updated = { ...preferences, bear_market_buys_contact_method: 'phone' as const };
+      const { error: prefError } = await supabase
+        .from('notification_preferences')
+        .upsert({
+          user_id: user.id,
+          email: user.email || '',
+          ...updated
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (prefError) throw prefError;
+
+      setPreferences(updated);
+    } catch (error) {
+      console.error('Error saving phone number:', error);
+      alert('Fout bij opslaan van telefoonnummer');
+    } finally {
+      setSavingPhone(false);
     }
   };
 
@@ -316,6 +381,60 @@ export default function NotificationSettings() {
                 </div>
               </>
             ) : null}
+          </div>
+        </div>
+      )}
+
+      {/* Phone Number Popup */}
+      {phonePopupOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Telefoonnummer toevoegen
+              </h3>
+              <button
+                onClick={() => setPhonePopupOpen(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Voor Bear Market Buys notificaties per telefoon, voeg je telefoonnummer in:
+            </p>
+
+            <input
+              type="tel"
+              placeholder="+31 6 12345678"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white mb-4 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setPhonePopupOpen(false)}
+                className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={savePhoneNumber}
+                disabled={savingPhone}
+                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+              >
+                {savingPhone ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Opslaan...
+                  </>
+                ) : (
+                  'Opslaan'
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
