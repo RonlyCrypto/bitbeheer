@@ -12,8 +12,7 @@ import {
   AlertCircle,
   Shield,
   Loader2,
-  X,
-  RefreshCw
+  X
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PortfolioChart from '../components/PortfolioChart';
@@ -432,31 +431,11 @@ export default function PortfolioPage() {
   const totalProfit = allTransactions.reduce((sum, tx) => sum + tx.profit, 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pb-20 md:pb-0">
-      {/* Currency Toggle - Only on Portfolio page */}
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex justify-end">
-          <CurrencyToggle />
-        </div>
-      </div>
+    <div className="min-h-screen pb-20 md:pb-0">
       {/* H1 Tag for SEO */}
       <h1 className="sr-only">Bitcoin Portfolio Beheer - Bewaar en Monitor Je Bitcoin Wallets</h1>
-      <div className="container mx-auto px-4 py-6 md:py-12 pb-20 md:pb-12">
+      <div className="container mx-auto px-4 py-0 md:py-0 pb-20 md:pb-12">
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="mb-8 flex items-center justify-end">
-            <button
-              onClick={() => {
-                console.log('🔄 Manual wallet refresh triggered');
-                window.location.reload();
-              }}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              title="Herlaad pagina"
-            >
-              <RefreshCw className="w-6 h-6" />
-            </button>
-          </div>
-
           {/* Stats Cards */}
           <div className="grid md:grid-cols-4 gap-6 mb-8">
             <div className="bg-white rounded-xl p-6 shadow-lg">
