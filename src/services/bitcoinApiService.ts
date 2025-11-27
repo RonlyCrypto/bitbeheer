@@ -1,4 +1,6 @@
 // Bitcoin API service voor echte wallet data
+import { supabase } from '../lib/supabase';
+
 export interface BitcoinTransaction {
   hash: string;
   time: number;
@@ -520,6 +522,39 @@ class BitcoinApiService {
     // Basis Bitcoin adres validatie
     const bitcoinRegex = /^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$|^bc1[a-z0-9]{39,59}$/;
     return bitcoinRegex.test(address);
+  }
+
+  // Get ATH (All Time High) prices for different cycles
+  async getATHData(): Promise<{ previousATH: number; latestATH: number }> {
+    try {
+      // Get all time high prices from database
+      const { data, error } = await supabase
+        .from('bitcoin_price_data')
+        .select('price_usd')
+        .order('price_usd', { ascending: false })
+        .limit(100);
+
+      if (error || !data) {
+        console.warn('⚠️ Error fetching ATH data, using defaults');
+        return { previousATH: 69000, latestATH: 124753 };
+      }
+
+      // Get all time high (highest price ever)
+      const allTimeHigh = Math.max(...data.map(d => d.price_usd || 0));
+
+      // Get previous ATH - second highest price or Cycle 3 ATH
+      // Cycle 3 ATH was $69,000
+      const cycle3ATH = 69000;
+      const previousATH = cycle3ATH;
+      const latestATH = allTimeHigh;
+
+      console.log(`📊 ATH Data - Previous: $${previousATH}, Latest: $${latestATH}`);
+
+      return { previousATH, latestATH };
+    } catch (error) {
+      console.error('❌ Error in getATHData:', error);
+      return { previousATH: 69000, latestATH: 124753 };
+    }
   }
 }
 

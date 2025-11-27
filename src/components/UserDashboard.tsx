@@ -169,6 +169,16 @@ export default function UserDashboard() {
           localStorage.setItem('btc_last_price', price.toString());
           setCurrentPrice(Math.round(price));
         }
+
+        // Load ATH data dynamically
+        try {
+          const athData = await bitcoinApiService.getATHData();
+          setPreviousATH(athData.previousATH);
+          setLatestATH(athData.latestATH);
+          console.log(`📊 ATH prices loaded: Previous: $${athData.previousATH}, Latest: $${athData.latestATH}`);
+        } catch (athError) {
+          console.warn('⚠️ Error loading ATH data:', athError);
+        }
       } catch (error) {
         console.error('❌ Error loading price data:', error);
       }
