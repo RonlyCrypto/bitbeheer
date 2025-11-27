@@ -154,18 +154,17 @@ export default function AgendaView({ appointments, onAppointmentClick, viewMode 
         </div>
         
         <div className="flex items-center gap-3">
-          {/* Agenda/Lijst tabs */}
+          {/* Agenda/Lijst tabs - Always enabled for switching */}
           <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
             <button
               onClick={() => {
                 if (setViewMode) setViewMode('agenda');
                 if (setSelectedAppointment) setSelectedAppointment(null);
               }}
-              disabled={isListMode}
               className={`px-4 py-2 rounded-md transition-colors ${
                 viewMode === 'agenda'
                   ? 'bg-white text-orange-600 shadow-sm'
-                  : isListMode ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900'
+                  : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               Agenda
@@ -175,18 +174,17 @@ export default function AgendaView({ appointments, onAppointmentClick, viewMode 
                 if (setViewMode) setViewMode('list');
                 if (setSelectedAppointment) setSelectedAppointment(null);
               }}
-              disabled={isListMode}
               className={`px-4 py-2 rounded-md transition-colors ${
                 viewMode === 'list'
                   ? 'bg-white text-orange-600 shadow-sm'
-                  : isListMode ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900'
+                  : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               Lijst
             </button>
           </div>
           
-          {/* Afspraak Boeken button */}
+          {/* Afspraak Boeken button - Disabled only in list mode */}
           <button
             onClick={onBookAppointment}
             disabled={isListMode}
@@ -202,8 +200,8 @@ export default function AgendaView({ appointments, onAppointmentClick, viewMode 
         </div>
       </div>
 
-      {/* Week View Grid */}
-      <div className="grid grid-cols-7 gap-2">
+      {/* Week View Grid - Only show in agenda mode */}
+      {!isListMode && <div className="grid grid-cols-7 gap-2">
         {/* Day Headers */}
         {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map((day, index) => (
           <div
@@ -267,7 +265,7 @@ export default function AgendaView({ appointments, onAppointmentClick, viewMode 
             </div>
           );
         })}
-      </div>
+      </div>}
 
       {/* Hover Tooltip */}
       {hoveredAppointment && (
