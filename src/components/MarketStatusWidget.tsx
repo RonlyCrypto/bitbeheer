@@ -186,7 +186,6 @@ export default function MarketStatusWidget({
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h3 className="text-sm font-semibold text-gray-900">📊 Markt Positie Analyse</h3>
             <span className={`px-3 py-1 text-xs font-bold rounded-full ${
               position === 'above_latest_ath' ? 'bg-red-100 text-red-700' :
               position === 'between_aths' ? 'bg-orange-100 text-orange-700' :

@@ -68,6 +68,13 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
     }
   };
 
+  // Mark chat as read when component mounts
+  useEffect(() => {
+    if (onMessageRead) {
+      onMessageRead();
+    }
+  }, [onMessageRead]);
+
   // Load user profile for initials/name display
   useEffect(() => {
     const loadUserProfile = async () => {
@@ -198,13 +205,6 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <MessageSquare className="w-5 h-5 text-orange-600" />
-        <h3 className="text-xl font-semibold">Helpdesk</h3>
-        <button onClick={loadMessages} className="ml-auto text-gray-500 hover:text-gray-700">
-          <RefreshCw className="w-4 h-4" />
-        </button>
-      </div>
       <div className="border rounded-xl p-4 bg-white max-h-96 overflow-y-auto">
         {messages.length === 0 ? (
           <p className="text-gray-500">Nog geen berichten. Stel je vraag hieronder.</p>
