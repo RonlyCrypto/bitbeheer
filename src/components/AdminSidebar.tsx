@@ -80,15 +80,17 @@ export default function AdminSidebar({
                 }`}
                 title={!isExpanded ? item.label : undefined}
               >
-                <Icon className="w-5 h-5 flex-shrink-0" />
+                <div className="relative flex-shrink-0">
+                  <Icon className="w-5 h-5" />
+                  {item.badge && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      {item.badge > 9 ? '9+' : item.badge}
+                    </span>
+                  )}
+                </div>
                 {isExpanded && (
                   <>
                     <span className="flex-1 text-left text-sm font-medium truncate">{item.label}</span>
-                    {item.badge && (
-                      <span className="bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center flex-shrink-0">
-                        {item.badge > 9 ? '9+' : item.badge}
-                      </span>
-                    )}
                   </>
                 )}
               </button>
