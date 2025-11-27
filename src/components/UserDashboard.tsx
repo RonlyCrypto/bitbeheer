@@ -713,7 +713,15 @@ export default function UserDashboard() {
             </div>
             <div className="flex items-center gap-4">
               <NotificationDropdown unreadCount={unreadChatCount} />
-              <NotificationSettings />
+              <NotificationSettings 
+                onPhoneNumberSaved={(phone) => {
+                  // Update userProfile with new phone number
+                  setUserProfile({
+                    ...userProfile,
+                    phone: phone
+                  });
+                }}
+              />
             </div>
           </div>
         </div>

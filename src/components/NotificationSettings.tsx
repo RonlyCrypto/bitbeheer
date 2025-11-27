@@ -18,7 +18,11 @@ interface NotificationPreferences {
   goal_achievements_global_enabled: boolean;
 }
 
-export default function NotificationSettings() {
+interface NotificationSettingsProps {
+  onPhoneNumberSaved?: (phone: string) => void;
+}
+
+export default function NotificationSettings({ onPhoneNumberSaved }: NotificationSettingsProps) {
   const { user } = useSupabaseAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
@@ -150,6 +154,11 @@ export default function NotificationSettings() {
       if (prefError) throw prefError;
 
       setPreferences(updated);
+      
+      // Call callback to notify parent component
+      if (onPhoneNumberSaved) {
+        onPhoneNumberSaved(phoneNumber.trim());
+      }
     } catch (error) {
       console.error('Error saving phone number:', error);
       alert('Fout bij opslaan van telefoonnummer');
