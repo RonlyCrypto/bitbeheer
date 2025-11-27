@@ -133,9 +133,8 @@ export default function AdminDashboard() {
 
       // Load read status for all chats
       const { data: readStatuses } = await supabase
-        .from('chat_read_status')
-        .select('user_email, last_read_at')
-        .eq('admin_email', 'admin@bitbeheer.nl');
+        .from('user_chat_read_status')
+        .select('user_email, last_read_at');
 
       // Find unread chats (chats with messages newer than last_read_at or no read status)
       const unreadChats = uniqueChatEmails.filter(userEmail => {

@@ -220,15 +220,13 @@ export default function AdminChat() {
     try {
       // Check if read status exists
       const { data: existing } = await supabase
-        .from('chat_read_status')
+        .from('user_chat_read_status')
         .select('id')
         .eq('user_email', userEmail)
-        .eq('admin_email', 'admin@bitbeheer.nl')
         .maybeSingle();
 
       const readStatus = {
         user_email: userEmail,
-        admin_email: 'admin@bitbeheer.nl',
         last_read_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
@@ -236,13 +234,13 @@ export default function AdminChat() {
       if (existing) {
         // Update existing
         await supabase
-          .from('chat_read_status')
+          .from('user_chat_read_status')
           .update(readStatus)
           .eq('id', existing.id);
       } else {
         // Insert new
         await supabase
-          .from('chat_read_status')
+          .from('user_chat_read_status')
           .insert([readStatus]);
       }
       
