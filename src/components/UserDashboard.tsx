@@ -2741,34 +2741,16 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-fit">
-            <button
-              onClick={() => {
-                setViewMode('agenda');
-                setSelectedAppointment(null);
-              }}
-              className={`px-4 py-2 rounded-md transition-colors ${
-                viewMode === 'agenda'
-                  ? 'bg-white dark:bg-gray-700 text-orange-600 dark:text-orange-400 shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400'
-              }`}
-            >
-              Agenda
-            </button>
-            <button
-              onClick={() => {
-                setViewMode('list');
-                setSelectedAppointment(null);
-              }}
-              className={`px-4 py-2 rounded-md transition-colors ${
-                viewMode === 'list'
-                  ? 'bg-white dark:bg-gray-700 text-orange-600 dark:text-orange-400 shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400'
-              }`}
-            >
-              Lijst
-            </button>
-          </div>
+          <AgendaView
+            appointments={userAppointments}
+            onAppointmentClick={handleAppointmentClick}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            onBookAppointment={onBookAppointment}
+            setSelectedAppointment={setSelectedAppointment}
+            isListMode={true}
+          />
+          <div className="space-y-4">
           {userAppointments.map((apt: any) => {
             const dateObj = new Date(apt.date);
             const isPast = new Date(`${apt.date}T${apt.end_time}`) < new Date();
@@ -2884,6 +2866,7 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
               </div>
             );
           })}
+          </div>
         </div>
       )}
     </div>

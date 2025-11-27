@@ -19,9 +19,10 @@ interface AgendaViewProps {
   setViewMode?: (mode: string) => void;
   onBookAppointment?: () => void;
   setSelectedAppointment?: (apt: Appointment | null) => void;
+  isListMode?: boolean;
 }
 
-export default function AgendaView({ appointments, onAppointmentClick, viewMode = 'agenda', setViewMode, onBookAppointment, setSelectedAppointment }: AgendaViewProps) {
+export default function AgendaView({ appointments, onAppointmentClick, viewMode = 'agenda', setViewMode, onBookAppointment, setSelectedAppointment, isListMode = false }: AgendaViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [hoveredAppointment, setHoveredAppointment] = useState<Appointment | null>(null);
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
@@ -115,21 +116,32 @@ export default function AgendaView({ appointments, onAppointmentClick, viewMode 
         <div className="flex items-center gap-4">
           <button
             onClick={goToPreviousWeek}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            disabled={isListMode}
+            className={`p-2 rounded-lg transition-colors ${
+              isListMode ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'
+            }`}
           >
-            <ChevronLeft className="w-5 h-5 text-gray-600" />
+            <ChevronLeft className="w-5 h-5" />
           </button>
           <button
             onClick={goToToday}
-            className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
+            disabled={isListMode}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              isListMode
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-orange-600 text-white hover:bg-orange-700'
+            }`}
           >
             Vandaag
           </button>
           <button
             onClick={goToNextWeek}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            disabled={isListMode}
+            className={`p-2 rounded-lg transition-colors ${
+              isListMode ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'
+            }`}
           >
-            <ChevronRight className="w-5 h-5 text-gray-600" />
+            <ChevronRight className="w-5 h-5" />
           </button>
           <div className="ml-4">
             <h2 className="text-xl font-bold text-gray-900">
@@ -149,10 +161,11 @@ export default function AgendaView({ appointments, onAppointmentClick, viewMode 
                 if (setViewMode) setViewMode('agenda');
                 if (setSelectedAppointment) setSelectedAppointment(null);
               }}
+              disabled={isListMode}
               className={`px-4 py-2 rounded-md transition-colors ${
                 viewMode === 'agenda'
                   ? 'bg-white text-orange-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  : isListMode ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               Agenda
@@ -162,10 +175,11 @@ export default function AgendaView({ appointments, onAppointmentClick, viewMode 
                 if (setViewMode) setViewMode('list');
                 if (setSelectedAppointment) setSelectedAppointment(null);
               }}
+              disabled={isListMode}
               className={`px-4 py-2 rounded-md transition-colors ${
                 viewMode === 'list'
                   ? 'bg-white text-orange-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  : isListMode ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               Lijst
@@ -175,7 +189,12 @@ export default function AgendaView({ appointments, onAppointmentClick, viewMode 
           {/* Afspraak Boeken button */}
           <button
             onClick={onBookAppointment}
-            className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+            disabled={isListMode}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+              isListMode
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-orange-600 text-white hover:bg-orange-700'
+            }`}
           >
             <Plus className="w-4 h-4" />
             Afspraak Boeken
