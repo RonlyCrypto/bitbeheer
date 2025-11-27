@@ -42,6 +42,7 @@ import PortfolioChart from './PortfolioChart';
 import SignupProcessFlow from './SignupProcessFlow';
 import ReferralBlocks from './ReferralBlocks';
 import NotificationDropdown from './NotificationDropdown';
+import NotificationSettings from './NotificationSettings';
 import MarketStatusWidget from './MarketStatusWidget';
 import UserSidebar from './UserSidebar';
 
@@ -712,15 +713,7 @@ export default function UserDashboard() {
             </div>
             <div className="flex items-center gap-4">
               <NotificationDropdown unreadCount={unreadChatCount} />
-              <button 
-                onClick={() => {
-                  openProfilePopup();
-                }}
-                className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                title="Open profiel instellingen"
-              >
-                <Settings className="w-6 h-6" />
-              </button>
+              <NotificationSettings />
             </div>
           </div>
         </div>

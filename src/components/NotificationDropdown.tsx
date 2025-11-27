@@ -34,13 +34,80 @@ export default function NotificationDropdown({ unreadCount }: { unreadCount: num
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
+  const [saving, setSaving] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Pass unreadCount as prop to include in notifications
   const unreadMessages = unreadCount;
 
+  const loadPreferences = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('notification_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (data) {
+        setPreferences(data);
+      } else {
+        const defaultPrefs: NotificationPreferences = {
+          email: user.email || '',
+          bear_market_buys_enabled: false,
+          bear_market_buys_contact_method: 'email',
+          bear_market_alerts_enabled: false,
+          bull_market_alerts_enabled: false,
+          goal_achievements_enabled: false,
+          bear_market_buys_global_enabled: true,
+          bear_market_alerts_global_enabled: true,
+          bull_market_alerts_global_enabled: true,
+          goal_achievements_global_enabled: true
+        };
+        setPreferences(defaultPrefs);
+      }
+    } catch (error) {
+      console.error('Error loading notification preferences:', error);
+    }
+  };
+
+  const updatePreference = async (field: keyof NotificationPreferences, value: any) => {
+    if (!user?.id || !preferences) return;
+
+    setSaving(true);
+    try {
+      const updated = { ...preferences, [field]: value };
+
+      const { error } = await supabase
+        .from('notification_preferences')
+        .upsert({
+          user_id: user.id,
+          email: user.email || '',
+          ...updated
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (error) throw error;
+
+      setPreferences(updated);
+    } catch (error) {
+      console.error('Error updating preference:', error);
+      alert('Fout bij opslaan van voorkeur');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   useEffect(() => {
     const loadAll = async () => {
+      await loadPreferences();
       await loadNotifications();
       setLoading(false);
     };
