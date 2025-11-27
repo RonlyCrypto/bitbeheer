@@ -22,10 +22,16 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
   const [messages, setMessages] = useState<SupportMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [lastReadTime, setLastReadTime] = useState<string | null>(null);
   
   // Get effective user email (impersonated user if impersonating, otherwise real user)
   const effectiveUserEmail = isImpersonating && impersonatedUser ? impersonatedUser : user?.email;
   const [userProfile, setUserProfile] = useState<{ first_name?: string; last_name?: string; name?: string } | null>(null);
+  
+  // Calculate new message count (messages after last read)
+  const newMessageCount = lastReadTime 
+    ? messages.filter(m => new Date(m.created_at) > new Date(lastReadTime)).length 
+    : 0;
 
   const getInitials = (email: string, firstName?: string, lastName?: string, isAdmin: boolean = false) => {
     if (isAdmin) return 'A';
@@ -68,11 +74,20 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
     }
   };
 
-  // Mark chat as read when component mounts
+  // Mark chat as read when component mounts and load last read time
   useEffect(() => {
-    if (onMessageRead) {
-      onMessageRead();
-    }
+    const markAsRead = async () => {
+      // Set lastReadTime to now
+      const now = new Date().toISOString();
+      setLastReadTime(now);
+      
+      // Call onMessageRead callback
+      if (onMessageRead) {
+        await onMessageRead();
+      }
+    };
+    
+    markAsRead();
   }, [onMessageRead]);
 
   // Load user profile for initials/name display
@@ -120,14 +135,39 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
   }, [effectiveUserEmail]);
 
   useEffect(() => {
+    if (!effectiveUserEmail) return;
+
     loadMessages();
     // Mark messages as read when component mounts
     if (onMessageRead) {
       onMessageRead();
     }
-    // Optional: poll every 10s for fresh messages
+
+    // Subscribe to real-time messages for this user
+    const channel = supabase
+      .channel(`support_messages_${effectiveUserEmail}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'support_messages',
+          filter: `email=eq.${effectiveUserEmail}`
+        },
+        () => {
+          // Reload messages when any change occurs
+          loadMessages();
+        }
+      )
+      .subscribe();
+
+    // Fallback polling every 10s for fresh messages
     const t = setInterval(loadMessages, 10000);
-    return () => clearInterval(t);
+
+    return () => {
+      clearInterval(t);
+      supabase.removeChannel(channel);
+    };
   }, [effectiveUserEmail, onMessageRead]);
 
   const sendMessage = async () => {
@@ -210,28 +250,49 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
           <p className="text-gray-500">Nog geen berichten. Stel je vraag hieronder.</p>
         ) : (
           <div className="space-y-3">
-            {messages.map((m) => (
-              <div key={m.id} className={`flex items-start gap-2 ${m.from_admin ? 'justify-end' : 'justify-start'}`}>
-                {!m.from_admin && (
-                  <div className="w-8 h-8 rounded-full bg-orange-600 text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">
-                    {getInitials(effectiveUserEmail || '', userProfile?.first_name || undefined, userProfile?.last_name || undefined, false)}
-                  </div>
-                )}
-                <div className="max-w-[75%]">
-                  <div className={`text-[11px] mb-1 ${m.from_admin ? 'text-right text-gray-500' : 'text-left text-gray-500'}`}>
-                    {m.from_admin ? 'Admin' : 'Jij'} • {formatStamp(m.created_at)}
-                  </div>
-                  <div className={`px-3 py-2 rounded-lg text-sm ${m.from_admin ? 'bg-gray-100 text-gray-800' : 'bg-orange-600 text-white'} shadow-sm` }>
-                    <div>{m.body}</div>
+            {messages.map((m, idx) => {
+              const isNew = lastReadTime && new Date(m.created_at) > new Date(lastReadTime);
+              const isLastOldMessage = lastReadTime && 
+                idx === messages.findIndex(msg => new Date(msg.created_at) > new Date(lastReadTime)) - 1 &&
+                idx >= 0 &&
+                new Date(m.created_at) <= new Date(lastReadTime);
+              
+              return (
+                <div key={m.id}>
+                  {/* Show "Nieuw" divider before new messages */}
+                  {isNew && idx === messages.findIndex(msg => new Date(msg.created_at) > new Date(lastReadTime!)) && (
+                    <div className="flex items-center gap-3 my-4">
+                      <div className="flex-1 h-px bg-gray-300"></div>
+                      <span className="text-xs font-semibold text-orange-600 px-2">
+                        Nieuw ({newMessageCount})
+                      </span>
+                      <div className="flex-1 h-px bg-gray-300"></div>
+                    </div>
+                  )}
+                  
+                  <div className={`flex items-start gap-2 ${m.from_admin ? 'justify-end' : 'justify-start'}`}>
+                    {!m.from_admin && (
+                      <div className="w-8 h-8 rounded-full bg-orange-600 text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                        {getInitials(effectiveUserEmail || '', userProfile?.first_name || undefined, userProfile?.last_name || undefined, false)}
+                      </div>
+                    )}
+                    <div className="max-w-[75%]">
+                      <div className={`text-[11px] mb-1 ${m.from_admin ? 'text-right text-gray-500' : 'text-left text-gray-500'}`}>
+                        {m.from_admin ? 'Admin' : 'Jij'} • {formatStamp(m.created_at)}
+                      </div>
+                      <div className={`px-3 py-2 rounded-lg text-sm ${m.from_admin ? 'bg-gray-100 text-gray-800' : 'bg-orange-600 text-white'} shadow-sm` }>
+                        <div>{m.body}</div>
+                      </div>
+                    </div>
+                    {m.from_admin && (
+                      <div className="w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                        A
+                      </div>
+                    )}
                   </div>
                 </div>
-                {m.from_admin && (
-                  <div className="w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">
-                    A
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
