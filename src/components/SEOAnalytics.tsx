@@ -891,15 +891,6 @@ export default function SEOAnalytics() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex items-center justify-between p-3 bg-gray-50 rounded-lg flex-wrap">
-        <div>
-          <h2 className="text-3xl font-bold text-gray-900">SEO & Analytics</h2>
-          <p className="text-gray-600 mt-2">
-            Analyseer en optimaliseer je website voor betere zoekresultaten en bekijk bezoekersstatistieken
-          </p>
-        </div>
-      </div>
-
       {/* Sub-tabs */}
       <div className="border-b border-gray-200">
         <div className="flex gap-4">

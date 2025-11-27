@@ -125,13 +125,6 @@ export default function NotificationManagement() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">Notificatie Beheer</h2>
-        <p className="text-gray-600 mt-1">
-          Beheer globale notificatie instellingen en bekijk gebruikers met bear market buys ingeschakeld
-        </p>
-      </div>
-
       {/* Sub Tabs */}
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">

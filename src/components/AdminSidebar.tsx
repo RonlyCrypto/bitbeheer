@@ -66,14 +66,14 @@ export default function AdminSidebar({
     }`}>
       {/* Menu Items */}
       <nav className="flex-1 overflow-y-auto flex flex-col">
-        <div className={`flex flex-col gap-1 ${isExpanded ? 'p-3' : 'p-2'}`}>
+        <div className={`flex flex-col gap-2 ${isExpanded ? 'p-3' : 'p-2'}`}>
           {menuItems.map((item) => {
             const Icon = item.icon;
             return (
               <button
                 key={item.id}
                 onClick={() => onTabChange(item.id)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative group ${
+                className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-colors relative group ${
                   activeTab === item.id
                     ? 'bg-orange-100 text-orange-700'
                     : 'text-gray-600 hover:bg-gray-100'
