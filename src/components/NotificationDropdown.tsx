@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bell, X, Mail, Phone, TrendingDown, TrendingUp, Target, Settings, Calendar, CheckCircle, Clock } from 'lucide-react';
+import { Bell, X, Mail, Phone, TrendingDown, TrendingUp, Target, Settings, Calendar, CheckCircle, Clock, MessageSquare } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 
@@ -20,7 +20,7 @@ interface NotificationPreferences {
 
 interface Notification {
   id: string;
-  type: 'appointment_approved' | 'goal_achieved' | 'market_alert' | 'other';
+  type: 'appointment_approved' | 'goal_achieved' | 'market_alert' | 'unread_message' | 'other';
   title: string;
   message: string;
   icon: React.ElementType;
@@ -38,6 +38,9 @@ export default function NotificationDropdown({ unreadCount }: { unreadCount: num
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Pass unreadCount as prop to include in notifications
+  const unreadMessages = unreadCount;
 
   useEffect(() => {
     const loadAll = async () => {
@@ -159,7 +162,21 @@ export default function NotificationDropdown({ unreadCount }: { unreadCount: num
         });
       }
 
-      // Add mock notifications for demo/testing
+      // Add unread messages notification
+      if (unreadMessages > 0) {
+        notificationList.unshift({
+          id: 'unread_messages',
+          type: 'unread_message',
+          title: '💬 Nieuwe Berichten',
+          message: `Je hebt ${unreadMessages} ongelezen bericht${unreadMessages !== 1 ? 'en' : ''} in Helpdesk`,
+          icon: MessageSquare,
+          color: 'orange',
+          timestamp: new Date().toISOString(),
+          read: false
+        });
+      }
+
+      // Add mock notifications for demo/testing (can be removed later)
       notificationList.push({
         id: 'demo_1',
         type: 'appointment_approved',
@@ -167,7 +184,7 @@ export default function NotificationDropdown({ unreadCount }: { unreadCount: num
         message: 'Jouw afspraak op 15 dec. is goedgekeurd door de admin',
         icon: CheckCircle,
         color: 'green',
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
         read: false
       });
 
