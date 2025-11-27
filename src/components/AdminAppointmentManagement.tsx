@@ -648,10 +648,6 @@ export default function AdminAppointmentManagement() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Afspraken Beheer</h2>
-          <p className="text-gray-600 dark:text-gray-400">Beheer beschikbare tijden en bekijk geboekte afspraken</p>
-        </div>
         <div className="flex gap-2">
           <button
             onClick={() => setShowRecurringForm(true)}

@@ -61,7 +61,7 @@ export default function AdminSidebar({
   };
 
   return (
-    <div className={`bg-white border-r border-gray-200 flex flex-col h-full transition-all duration-300 ${
+    <div className={`bg-white border-r border-gray-200 flex flex-col h-full transition-all duration-300 ml-2 ${
       isExpanded ? 'w-64' : 'w-20'
     }`}>
       {/* Menu Items */}
