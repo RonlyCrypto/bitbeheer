@@ -38,6 +38,7 @@ import ProfilePopup from './ProfilePopup';
 import { useProfilePopup } from '../contexts/ProfilePopupContext';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
+import ExpandableMenuSection from './ExpandableMenuSection';
 // import PageManagement from './PageManagement';
 
 export default function AdminDashboard() {
@@ -362,6 +363,30 @@ export default function AdminDashboard() {
             <p className="text-xl text-gray-600">
               Beheer je Bitcoin begeleiding platform
             </p>
+          </div>
+
+          {/* Admin Menu - Expandable */}
+          <div className="mb-8 max-w-sm">
+            <ExpandableMenuSection
+              title="Admin Menu"
+              icon={BarChart3}
+              items={[
+                { id: 'admin-dashboard', label: 'Dashboard', icon: BarChart3 },
+                { id: 'admin-bitcoin', label: 'Bitcoin History', icon: TrendingUp },
+                { id: 'admin-market-cap', label: 'Market Cap Comparer', icon: Settings },
+              ]}
+              activeTab={activeTab}
+              onSelectItem={(itemId) => {
+                if (itemId === 'admin-dashboard') {
+                  setActiveTab('overview');
+                } else if (itemId === 'admin-bitcoin') {
+                  window.location.href = '/admin/bitcoin-history';
+                } else if (itemId === 'admin-market-cap') {
+                  window.location.href = '/admin/market-cap-comparer';
+                }
+              }}
+              isEnabled={true}
+            />
           </div>
 
           {/* Tabs */}

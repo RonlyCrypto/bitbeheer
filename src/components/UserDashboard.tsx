@@ -43,7 +43,6 @@ import SignupProcessFlow from './SignupProcessFlow';
 import ReferralBlocks from './ReferralBlocks';
 import NotificationDropdown from './NotificationDropdown';
 import MarketStatusWidget from './MarketStatusWidget';
-import ExpandableMenuSection from './ExpandableMenuSection';
 
 interface UserProfile {
   id: string;
@@ -112,7 +111,7 @@ interface Portfolio {
 export default function UserDashboard() {
   const { user } = useSupabaseAuth();
   const { theme } = useTheme();
-  const { isImpersonating, impersonatedUser, canAccessAdmin } = usePermissions();
+  const { isImpersonating, impersonatedUser } = usePermissions();
   const { isOpen: isProfilePopupOpen, openProfilePopup, closeProfilePopup } = useProfilePopup();
   const [activeTab, setActiveTab] = useState('overview');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -781,29 +780,6 @@ export default function UserDashboard() {
                   </div>
                 );
               })}
-
-              {/* Admin Menu - Expandable */}
-              <ExpandableMenuSection
-                title="Admin"
-                icon={Shield}
-                items={[
-                  { id: 'admin-dashboard', label: 'Admin Dashboard', icon: BarChart3 },
-                  { id: 'admin-bitcoin', label: 'Bitcoin History', icon: TrendingUp },
-                  { id: 'admin-market-cap', label: 'Market Cap Comparer', icon: PieChart },
-                ]}
-                activeTab={activeTab}
-                onSelectItem={(itemId) => {
-                  if (itemId === 'admin-dashboard') {
-                    window.location.href = '/admin';
-                  } else if (itemId === 'admin-bitcoin') {
-                    window.location.href = '/admin/bitcoin-history';
-                  } else if (itemId === 'admin-market-cap') {
-                    window.location.href = '/admin/market-cap-comparer';
-                  }
-                }}
-                isEnabled={isImpersonating || canAccessAdmin || false}
-                disabledMessage="Je hebt admin rechten nodig om deze functies te gebruiken"
-              />
             </nav>
 
             {/* Market Status Widget - Sidebar - Always Visible */}
