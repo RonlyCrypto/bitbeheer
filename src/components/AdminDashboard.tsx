@@ -38,7 +38,7 @@ import ProfilePopup from './ProfilePopup';
 import { useProfilePopup } from '../contexts/ProfilePopupContext';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
-import ExpandableMenuSection from './ExpandableMenuSection';
+import AdminSidebar from './AdminSidebar';
 // import PageManagement from './PageManagement';
 
 export default function AdminDashboard() {
@@ -350,11 +350,19 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pb-20 md:pb-0">
+    <div className="min-h-screen bg-gray-100 flex pb-20 md:pb-0">
       {/* SEO H1 Tag */}
       <h1 className="sr-only">BitBeheer Admin Dashboard - Beheer Bitcoin Begeleiding Platform</h1>
-      <div className="container mx-auto px-4 py-6 md:py-12 pb-20 md:pb-12">
-        <div className="max-w-7xl mx-auto">
+      
+      {/* Sidebar */}
+      <AdminSidebar 
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        <div className="p-8">
           {/* Header */}
           <div className="mb-8">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
@@ -363,168 +371,6 @@ export default function AdminDashboard() {
             <p className="text-xl text-gray-600">
               Beheer je Bitcoin begeleiding platform
             </p>
-          </div>
-
-          {/* Admin Menu - Expandable */}
-          <div className="mb-8 max-w-sm">
-            <ExpandableMenuSection
-              title="Admin Menu"
-              icon={BarChart3}
-              items={[
-                { id: 'admin-dashboard', label: 'Dashboard', icon: BarChart3 },
-                { id: 'admin-bitcoin', label: 'Bitcoin History', icon: TrendingUp },
-                { id: 'admin-market-cap', label: 'Market Cap Comparer', icon: Settings },
-              ]}
-              activeTab={activeTab}
-              onSelectItem={(itemId) => {
-                if (itemId === 'admin-dashboard') {
-                  setActiveTab('overview');
-                } else if (itemId === 'admin-bitcoin') {
-                  window.location.href = '/admin/bitcoin-history';
-                } else if (itemId === 'admin-market-cap') {
-                  window.location.href = '/admin/market-cap-comparer';
-                }
-              }}
-              isEnabled={true}
-            />
-          </div>
-
-          {/* Tabs */}
-          <div className="mb-8">
-            <div className="border-b border-gray-200">
-              <nav className="-mb-px flex space-x-8 overflow-x-auto md:overflow-visible scrollbar-hide md:scrollbar-default">
-                <button
-                  onClick={() => setActiveTab('overview')}
-                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
-                    activeTab === 'overview'
-                      ? 'border-orange-500 text-orange-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  Dashboard
-                </button>
-                <button
-                  onClick={() => setActiveTab('chat')}
-                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm relative whitespace-nowrap flex-shrink-0 ${
-                    activeTab === 'chat'
-                      ? 'border-orange-500 text-orange-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  Chat
-                  {metrics.newChats > 0 ? (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 md:h-5 md:w-5 flex items-center justify-center animate-pulse text-[10px] md:text-xs">
-                      {metrics.newChats > 9 ? '9+' : metrics.newChats}
-                    </span>
-                  ) : null}
-                </button>
-                <button
-                  onClick={() => setActiveTab('appointments')}
-                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm relative whitespace-nowrap flex-shrink-0 ${
-                    activeTab === 'appointments'
-                      ? 'border-orange-500 text-orange-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  Afspraken
-                  {metrics.pendingAppointments > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs font-bold rounded-full h-4 w-4 md:h-5 md:w-5 flex items-center justify-center text-[10px] md:text-xs">
-                      {metrics.pendingAppointments > 9 ? '9+' : metrics.pendingAppointments}
-                    </span>
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveTab('accounts')}
-                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm relative whitespace-nowrap flex-shrink-0 ${
-                    activeTab === 'accounts'
-                      ? 'border-orange-500 text-orange-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  Accounts
-                  {metrics.newAccounts > 0 ? (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 md:h-5 md:w-5 flex items-center justify-center animate-pulse text-[10px] md:text-xs">
-                      {metrics.newAccounts > 9 ? '9+' : metrics.newAccounts}
-                    </span>
-                  ) : null}
-                </button>
-                <button
-                  onClick={() => setActiveTab('email-management')}
-                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
-                    activeTab === 'email-management'
-                      ? 'border-orange-500 text-orange-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  E-mail Beheer
-                </button>
-                <button
-                  onClick={() => setActiveTab('referral-links')}
-                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
-                    activeTab === 'referral-links'
-                      ? 'border-orange-500 text-orange-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  Referral Links
-                </button>
-                <button
-                  onClick={() => setActiveTab('notification-management')}
-                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 relative ${
-                    activeTab === 'notification-management'
-                      ? 'border-orange-500 text-orange-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  Notificaties
-                  {metrics.newNotifications > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 md:h-5 md:w-5 flex items-center justify-center animate-pulse text-[10px] md:text-xs">
-                      {metrics.newNotifications > 9 ? '9+' : metrics.newNotifications}
-                    </span>
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveTab('seo-analytics')}
-                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
-                    activeTab === 'seo-analytics'
-                      ? 'border-orange-500 text-orange-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  SEO & Analytics
-                </button>
-                <button
-                  onClick={() => setActiveTab('cycle-advisor')}
-                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
-                    activeTab === 'cycle-advisor'
-                      ? 'border-orange-500 text-orange-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  🚀 Cycle Advisor
-                </button>
-                <button
-                  onClick={() => setActiveTab('settings')}
-                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
-                    activeTab === 'settings'
-                      ? 'border-orange-500 text-orange-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  Instellingen
-                </button>
-                <button
-                  onClick={() => setActiveTab('controls')}
-                  className={`py-2 px-1 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
-                    activeTab === 'controls'
-                      ? 'border-orange-500 text-orange-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  Beheer
-                </button>
-              </nav>
-            </div>
           </div>
 
           {/* Overview Tab */}
