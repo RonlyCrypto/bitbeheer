@@ -1320,8 +1320,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Overzicht</h2>
-
       {/* Appointment Status Block */}
       {/* Hide appointment block if account is approved/activated OR one-on-one is approved */}
       {!(accountApproved || hasApprovedOneOnOne) && (
@@ -2047,8 +2045,7 @@ function GoalsTab({ goals, setGoals }: any) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Mijn Doelen</h2>
-        <div className="flex gap-3">
+        <div className="flex gap-3" style={{ marginLeft: 'auto' }}>
           <button
             onClick={() => {
               setGoalTemplate(null);
@@ -2714,10 +2711,24 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Mijn Afspraken</h2>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+      <div className="flex items-center justify-end gap-3">
+        <button
+          onClick={onBookAppointment}
+          className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Afspraak Boeken
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Afspraken laden...</p>
+        </div>
+      ) : viewMode === 'agenda' ? (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-fit">
             <button
               onClick={() => {
                 setViewMode('agenda');
@@ -2745,26 +2756,11 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
               Lijst
             </button>
           </div>
-          <button
-            onClick={onBookAppointment}
-            className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Afspraak Boeken
-          </button>
+          <AgendaView
+            appointments={userAppointments}
+            onAppointmentClick={handleAppointmentClick}
+          />
         </div>
-      </div>
-
-      {loading ? (
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Afspraken laden...</p>
-        </div>
-      ) : viewMode === 'agenda' ? (
-        <AgendaView
-          appointments={userAppointments}
-          onAppointmentClick={handleAppointmentClick}
-        />
       ) : userAppointments.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 border border-gray-200 dark:border-gray-700 text-center">
           <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -2779,6 +2775,34 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
         </div>
       ) : (
         <div className="space-y-4">
+          <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-fit">
+            <button
+              onClick={() => {
+                setViewMode('agenda');
+                setSelectedAppointment(null);
+              }}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                viewMode === 'agenda'
+                  ? 'bg-white dark:bg-gray-700 text-orange-600 dark:text-orange-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400'
+              }`}
+            >
+              Agenda
+            </button>
+            <button
+              onClick={() => {
+                setViewMode('list');
+                setSelectedAppointment(null);
+              }}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                viewMode === 'list'
+                  ? 'bg-white dark:bg-gray-700 text-orange-600 dark:text-orange-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400'
+              }`}
+            >
+              Lijst
+            </button>
+          </div>
           {userAppointments.map((apt: any) => {
             const dateObj = new Date(apt.date);
             const isPast = new Date(`${apt.date}T${apt.end_time}`) < new Date();

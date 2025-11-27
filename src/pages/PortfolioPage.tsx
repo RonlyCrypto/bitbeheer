@@ -444,15 +444,7 @@ export default function PortfolioPage() {
       <div className="container mx-auto px-4 py-6 md:py-12 pb-20 md:pb-12">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="mb-8 flex items-center justify-between">
-            <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Bitcoin Portfolio Beheer
-            </h1>
-            <p className="text-xl text-gray-600">
-              Koppel je Bitcoin wallets en bekijk je inkoop geschiedenis op de chart
-            </p>
-            </div>
+          <div className="mb-8 flex items-center justify-end">
             <button
               onClick={() => {
                 console.log('🔄 Manual wallet refresh triggered');
