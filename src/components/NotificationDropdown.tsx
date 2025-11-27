@@ -40,9 +40,15 @@ export default function NotificationDropdown({ unreadCount }: { unreadCount: num
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    loadPreferences();
-    loadNotifications();
-  }, [user]);
+    const loadAll = async () => {
+      await loadPreferences();
+      await loadNotifications();
+      setLoading(false);
+    };
+    if (user?.id) {
+      loadAll();
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -94,8 +100,6 @@ export default function NotificationDropdown({ unreadCount }: { unreadCount: num
       }
     } catch (error) {
       console.error('Error loading notification preferences:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -155,9 +159,22 @@ export default function NotificationDropdown({ unreadCount }: { unreadCount: num
         });
       }
 
+      // Add mock notifications for demo/testing
+      notificationList.push({
+        id: 'demo_1',
+        type: 'appointment_approved',
+        title: '✅ Afspraak Goedgekeurd',
+        message: 'Jouw afspraak op 15 dec. is goedgekeurd door de admin',
+        icon: CheckCircle,
+        color: 'green',
+        timestamp: new Date().toISOString(),
+        read: false
+      });
+
       // Sort by timestamp
       notificationList.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       setNotifications(notificationList);
+      console.log('✅ Notifications loaded:', notificationList);
     } catch (error) {
       console.error('Error loading notifications:', error);
     }
