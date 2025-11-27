@@ -43,6 +43,7 @@ import SignupProcessFlow from './SignupProcessFlow';
 import ReferralBlocks from './ReferralBlocks';
 import NotificationDropdown from './NotificationDropdown';
 import MarketStatusWidget from './MarketStatusWidget';
+import UserSidebar from './UserSidebar';
 
 interface UserProfile {
   id: string;
@@ -725,77 +726,20 @@ export default function UserDashboard() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar Navigation */}
-          <div className="lg:w-64 flex flex-col">
-            <nav className="space-y-2">
-              {/* Regular menu items */}
-              {[
-                { id: 'overview', label: 'Overzicht', icon: BarChart3, alwaysEnabled: true },
-                { id: 'goals', label: 'Doelen', icon: Target, alwaysEnabled: false },
-                { id: 'portfolio', label: 'Portfolio', icon: PieChart, alwaysEnabled: false },
-                { id: 'appointments', label: 'Afspraken', icon: Calendar, alwaysEnabled: true },
-                { id: 'helpdesk', label: 'Helpdesk', icon: Mail, alwaysEnabled: false, badge: unreadChatCount > 0 ? unreadChatCount : undefined },
-                { id: 'market-status', label: 'Markt Status', icon: TrendingUp, alwaysEnabled: true },
-              ].map((tab) => {
-                const isEnabled = tab.alwaysEnabled || accountApproved || hasApprovedOneOnOne;
-                const tooltipText = !isEnabled 
-                  ? "Je moet eerst een 20-minuten afspraak maken. Na deze afspraak bepalen we of we verder met elkaar gaan en dan kan de admin je account volledig open stellen."
-                  : null;
-                
-                return (
-                  <div key={tab.id} className="relative group">
-                    <button
-                      onClick={() => {
-                        if (isEnabled) {
-                          setActiveTab(tab.id);
-                        }
-                      }}
-                      disabled={!isEnabled}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors relative ${
-                        !isEnabled
-                          ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
-                          : activeTab === tab.id
-                          ? 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 font-medium'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                      }`}
-                    >
-                      <tab.icon className="w-5 h-5" />
-                      <span className="flex-1 relative">
-                        {tab.label}
-                        {tab.badge && tab.badge > 0 && (
-                          <span className="absolute -top-1 -right-6 bg-orange-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                            {tab.badge > 9 ? '9+' : tab.badge}
-                          </span>
-                        )}
-                      </span>
-                    </button>
-                    {!isEnabled && tooltipText && (
-                      <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 w-64 z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                        {tooltipText}
-                        <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </nav>
+      <div className="min-h-screen bg-gray-100 flex">
+        {/* User Sidebar */}
+        <UserSidebar 
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          accountApproved={accountApproved}
+          hasApprovedOneOnOne={hasApprovedOneOnOne}
+          unreadChatCount={unreadChatCount}
+        />
 
-            {/* Market Status Widget - Sidebar - Always Visible */}
-            <div className="mt-6 flex-shrink-0">
-              <MarketStatusWidget 
-                position="between_aths" 
-                compact={true}
-                currentPrice={currentPrice}
-                previousATH={previousATH}
-                latestATH={latestATH}
-              />
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <div className="flex-1">
+        {/* Main Content */}
+        <div className="flex-1 overflow-auto">
+          <div className="p-8">
+            <div className="max-w-7xl">
             {activeTab === 'overview' && <OverviewTab 
               userProfile={userProfile} 
               goals={goals} 
@@ -881,6 +825,7 @@ export default function UserDashboard() {
                 }}
               />
             )}
+            </div>
           </div>
         </div>
       </div>
