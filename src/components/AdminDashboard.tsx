@@ -357,6 +357,7 @@ export default function AdminDashboard() {
       <AdminSidebar 
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        unreadChatCount={metrics.newChats}
       />
 
       {/* Main Content */}

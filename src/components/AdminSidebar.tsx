@@ -24,11 +24,12 @@ interface MenuItem {
 interface AdminSidebarProps {
   activeTab: string;
   onTabChange: (tabId: string) => void;
+  unreadChatCount?: number;
 }
 
-const menuItems: MenuItem[] = [
+const getMenuItems = (unreadChatCount: number = 0): MenuItem[] => [
   { id: 'overview', label: 'Dashboard', icon: BarChart3 },
-  { id: 'chat', label: 'Chat', icon: MessageSquare, badge: 1 },
+  { id: 'chat', label: 'Chat', icon: MessageSquare, badge: unreadChatCount > 0 ? unreadChatCount : undefined },
   { id: 'appointments', label: 'Afspraken', icon: Calendar },
   { id: 'accounts', label: 'Accounts', icon: Users },
   { id: 'email-management', label: 'E-mail Beheer', icon: Mail },
@@ -42,9 +43,11 @@ const menuItems: MenuItem[] = [
 
 export default function AdminSidebar({ 
   activeTab, 
-  onTabChange
+  onTabChange,
+  unreadChatCount = 0
 }: AdminSidebarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const menuItems = getMenuItems(unreadChatCount);
 
   // Persist collapsed state per user
   useEffect(() => {
