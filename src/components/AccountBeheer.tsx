@@ -1324,6 +1324,7 @@ export default function AccountBeheer() {
               </button>
             </div>
           </div>
+        </div>
       )}
     </div>
   );
