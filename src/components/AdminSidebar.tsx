@@ -31,13 +31,13 @@ const menuItems: MenuItem[] = [
   { id: 'chat', label: 'Chat', icon: MessageSquare, badge: 1 },
   { id: 'appointments', label: 'Afspraken', icon: Calendar },
   { id: 'accounts', label: 'Accounts', icon: Users },
-  { id: 'email', label: 'E-mail Beheer', icon: Mail },
+  { id: 'email-management', label: 'E-mail Beheer', icon: Mail },
   { id: 'referral-links', label: 'Referral Links', icon: LinkIcon },
-  { id: 'notifications', label: 'Notificaties', icon: Bell, badge: 4 },
-  { id: 'seo', label: 'SEO & Analytics', icon: TrendingUp },
+  { id: 'notification-management', label: 'Notificaties', icon: Bell, badge: 4 },
+  { id: 'seo-analytics', label: 'SEO & Analytics', icon: TrendingUp },
   { id: 'cycle-advisor', label: '🚀 Cycle Advisor', icon: Zap },
   { id: 'settings', label: 'Instellingen', icon: Settings },
-  { id: 'beheer', label: 'Beheer', icon: Menu },
+  { id: 'controls', label: 'Beheer', icon: Menu },
 ];
 
 export default function AdminSidebar({ 
@@ -61,7 +61,7 @@ export default function AdminSidebar({
   };
 
   return (
-    <div className={`bg-white border-r border-gray-200 flex flex-col h-full transition-all duration-300 ml-4 mt-8 ${
+    <div className={`bg-white border-r border-gray-200 flex flex-col h-full transition-all duration-300 ml-12 mt-8 ${
       isExpanded ? 'w-64' : 'w-20'
     }`}>
       {/* Menu Items */}

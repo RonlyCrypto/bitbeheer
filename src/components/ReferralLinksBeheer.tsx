@@ -242,12 +242,6 @@ export default function ReferralLinksBeheer() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Referral Links Beheer</h2>
-          <p className="text-gray-600 mt-1">
-            Beheer de belangrijke links die in de footer worden weergegeven
-          </p>
-        </div>
         <button
           onClick={() => {
             setEditingLink({

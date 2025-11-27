@@ -250,15 +250,6 @@ export default function AdminCycleAdvisor() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-            <Zap className="w-8 h-8 text-yellow-500" />
-            Cycle Advisor Beheer
-          </h2>
-          <p className="text-gray-600 mt-1">
-            Beheer de Cycle Advisor module per gebruiker
-          </p>
-        </div>
         <button
           onClick={loadData}
           disabled={loading}
