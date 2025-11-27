@@ -528,8 +528,7 @@ export default function PortfolioPage() {
                 disabled={loadingWallets}
                 className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <RefreshCw className={`w-5 h-5 ${loadingWallets ? 'animate-spin' : ''}`} />
-                {loadingWallets ? 'Verversen...' : 'Prijzen Verversen'}
+                {loadingWallets ? '⟳ Verversen...' : '⟳ Prijzen Verversen'}
               </button>
             )}
           </div>
