@@ -20,9 +20,10 @@ interface AgendaViewProps {
   onBookAppointment?: () => void;
   setSelectedAppointment?: (apt: Appointment | null) => void;
   isListMode?: boolean;
+  listItems?: React.ReactNode;
 }
 
-export default function AgendaView({ appointments, onAppointmentClick, viewMode = 'agenda', setViewMode, onBookAppointment, setSelectedAppointment, isListMode = false }: AgendaViewProps) {
+export default function AgendaView({ appointments, onAppointmentClick, viewMode = 'agenda', setViewMode, onBookAppointment, setSelectedAppointment, isListMode = false, listItems }: AgendaViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [hoveredAppointment, setHoveredAppointment] = useState<Appointment | null>(null);
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
@@ -526,24 +527,29 @@ export default function AgendaView({ appointments, onAppointmentClick, viewMode 
         </div>
       )}
 
-      {/* Legend */}
-      <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">Legenda</h3>
-        <div className="flex gap-4 flex-wrap">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-green-500 border border-green-600"></div>
-            <span className="text-sm text-gray-600">Bevestigd</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-orange-500 border border-orange-600"></div>
-            <span className="text-sm text-gray-600">In Afwachting</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-red-500 border border-red-600"></div>
-            <span className="text-sm text-gray-600">Geannuleerd</span>
+      {/* Legend - Only show in agenda mode */}
+      {!isListMode && (
+        <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Legenda</h3>
+          <div className="flex gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-green-500 border border-green-600"></div>
+              <span className="text-sm text-gray-600">Bevestigd</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-orange-500 border border-orange-600"></div>
+              <span className="text-sm text-gray-600">In Afwachting</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-red-500 border border-red-600"></div>
+              <span className="text-sm text-gray-600">Geannuleerd</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* List items - Rendered inside scrollable container */}
+      {isListMode && listItems}
     </div>
   );
 }

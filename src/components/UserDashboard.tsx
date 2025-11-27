@@ -2749,9 +2749,9 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
             onBookAppointment={onBookAppointment}
             setSelectedAppointment={setSelectedAppointment}
             isListMode={true}
-          />
-          <div className="space-y-4">
-          {userAppointments.map((apt: any) => {
+            listItems={
+              <div className="space-y-4 pb-20">
+              {userAppointments.map((apt: any) => {
             const dateObj = new Date(apt.date);
             const isPast = new Date(`${apt.date}T${apt.end_time}`) < new Date();
             
@@ -2866,7 +2866,9 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
               </div>
             );
           })}
-          </div>
+              </div>
+            }
+          />
         </div>
       )}
     </div>
