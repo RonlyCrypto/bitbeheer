@@ -333,17 +333,27 @@ export default function PortfolioPage() {
       try {
         // 1. SNELLE OPSLAG: Save wallet immediately to DB without fetching data
         const { error: insertError } = await supabase
-          .from('bitcoin_wallets')
+          .from('wallets')
           .insert([{
-            user_email: effectiveUserEmail,
-            wallet_name: newWalletName,
-            wallet_address: newWalletAddress,
-            total_btc_holdings: 0, // Placeholder, will be updated in background
+            email: effectiveUserEmail,
+            address: newWalletAddress,
+            name: newWalletName,
+            type: 'bitcoin',
+            balance: 0, // Placeholder, will be updated in background
+            transaction_count: 0,
+            total_received: 0,
+            total_sent: 0,
+            first_seen: null,
+            last_seen: new Date().toISOString(),
+            wallet_data: null,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }]);
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('Insert error:', insertError);
+          throw insertError;
+        }
 
         // 2. OPTIMISTIC UI: Add wallet to UI with placeholder data
         const newWallet: WalletData = {
@@ -368,15 +378,19 @@ export default function PortfolioPage() {
             
             // Update wallet in DB with actual data
             await supabase
-              .from('bitcoin_wallets')
+              .from('wallets')
               .update({
-                total_btc_holdings: realData.balance,
+                balance: realData.balance,
                 transaction_count: realData.transactionCount,
-                first_seen_date: new Date(realData.firstSeen).toISOString().split('T')[0],
-                last_updated: new Date().toISOString()
+                total_received: realData.totalReceived,
+                total_sent: realData.totalSent,
+                first_seen: new Date(realData.firstSeen).toISOString(),
+                last_seen: new Date().toISOString(),
+                wallet_data: { transactions: realData.transactions },
+                updated_at: new Date().toISOString()
               })
-              .eq('wallet_address', newWalletAddress)
-              .eq('user_email', effectiveUserEmail);
+              .eq('address', newWalletAddress)
+              .eq('email', effectiveUserEmail);
 
             // Update UI with real data
             setWallets(prevWallets =>
