@@ -1144,22 +1144,27 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           setWalletData({ ...walletRecord, lastTransaction });
           setWalletTransactions(transactions);
 
-          // 🔄 REAL-TIME LISTENER: Subscribe to wallet updates from background sync
-          const channel = supabase
-            .channel(`wallet-${email}`)
-            .on('postgres_changes', {
-              event: 'UPDATE',
-              schema: 'public',
-              table: 'wallets',
-              filter: `email=eq.${email}`
-            }, (payload) => {
-              console.log('🔄 Wallet updated in real-time:', payload.new);
-              const updatedWallet = payload.new;
-              
-              // Update wallet data if balance changed (background sync finished)
-              if (updatedWallet.balance > 0 || updatedWallet.transaction_count > 0) {
-                let updatedTransactions: BitcoinTransaction[] = [];
+          // 🔄 POLLING FALLBACK: Check for updates every 3 seconds (in case real-time fails)
+          let pollCount = 0;
+          const pollInterval = setInterval(async () => {
+            if (pollCount > 20) {
+              // Stop after 60 seconds
+              clearInterval(pollInterval);
+              return;
+            }
+            
+            try {
+              const { data: updatedWallet } = await supabase
+                .from('wallets')
+                .select('*')
+                .eq('email', email)
+                .eq('address', walletRecord.address)
+                .single();
+
+              if (updatedWallet && (updatedWallet.balance > 0 || updatedWallet.transaction_count > 0)) {
+                console.log('✅ Wallet data updated via polling:', updatedWallet);
                 
+                let updatedTransactions: BitcoinTransaction[] = [];
                 if (updatedWallet.wallet_data?.transactions && Array.isArray(updatedWallet.wallet_data.transactions)) {
                   updatedTransactions = updatedWallet.wallet_data.transactions.map((tx: any) => {
                     const txPrice = tx.price || bitcoinPrice;
@@ -1182,13 +1187,17 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 
                 setWalletData(updatedWallet);
                 setWalletTransactions(updatedTransactions);
-                console.log('✅ Wallet data updated with real-time sync!');
+                clearInterval(pollInterval);
               }
-            })
-            .subscribe();
+            } catch (error) {
+              console.error('Poll error:', error);
+            }
+            
+            pollCount++;
+          }, 3000);
 
           return () => {
-            supabase.removeChannel(channel);
+            clearInterval(pollInterval);
           };
         } else {
           setHasWallet(false);
@@ -1322,57 +1331,90 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         setWalletForm({ address: '', name: '', type: 'bitcoin' });
       }, 2000);
 
-      // 2️⃣ BACKGROUND: Fetch data asynchronously
+      // 2️⃣ BACKGROUND: Fetch data asynchronously with retries
       setTimeout(async () => {
-        try {
-          const walletApiData = await bitcoinApiService.getWalletData(walletForm.address.trim(), 25);
-          
-          // Get last transaction
-          const lastTx = walletApiData.transactions && walletApiData.transactions.length > 0
-            ? walletApiData.transactions[0]
-            : null;
-
-          // Update wallet in DB with actual data
-          await supabase
-            .from('wallets')
-            .update({
+        let retries = 0;
+        const maxRetries = 3;
+        
+        const fetchWalletData = async () => {
+          try {
+            console.log(`🔄 Fetching wallet data (attempt ${retries + 1}/${maxRetries})...`);
+            const walletApiData = await bitcoinApiService.getWalletData(walletForm.address.trim(), 50);
+            
+            console.log('📊 Wallet data received:', {
               balance: walletApiData.balance,
-              transaction_count: walletApiData.transactionCount,
-              total_received: walletApiData.totalReceived,
-              total_sent: walletApiData.totalSent,
-              first_seen: walletApiData.firstSeen ? new Date(walletApiData.firstSeen).toISOString() : null,
-              last_seen: new Date().toISOString(),
-              last_transaction_hash: lastTx?.hash || null,
-              last_transaction_time: lastTx?.time ? new Date(lastTx.time * 1000).toISOString() : null,
-              wallet_data: walletApiData.transactions ? { transactions: walletApiData.transactions } : null,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', newWallet.id);
+              transactionCount: walletApiData.transactionCount,
+              txListLength: walletApiData.transactions?.length || 0
+            });
+            
+            // Get last transaction
+            const lastTx = walletApiData.transactions && walletApiData.transactions.length > 0
+              ? walletApiData.transactions[0]
+              : null;
 
-          // Save wallet history for admin
-          await supabase
-            .from('wallet_history')
-            .insert([{
-              user_email: email,
-              wallet_id: newWallet.id,
-              wallet_address: walletForm.address.trim(),
-              wallet_name: walletForm.name?.trim() || null,
-              action: 'added',
-              wallet_balance: walletApiData.balance,
-              transaction_count: walletApiData.transactionCount,
-              wallet_data_snapshot: {
+            // Update wallet in DB with actual data
+            const { error: updateError } = await supabase
+              .from('wallets')
+              .update({
                 balance: walletApiData.balance,
-                transactions: walletApiData.transactions || [],
-                transactionCount: walletApiData.transactionCount
-              }
-            }]);
+                transaction_count: walletApiData.transactionCount,
+                total_received: walletApiData.totalReceived,
+                total_sent: walletApiData.totalSent,
+                first_seen: walletApiData.firstSeen ? new Date(walletApiData.firstSeen).toISOString() : null,
+                last_seen: new Date().toISOString(),
+                last_transaction_hash: lastTx?.hash || null,
+                last_transaction_time: lastTx?.time ? new Date(lastTx.time * 1000).toISOString() : null,
+                wallet_data: walletApiData.transactions ? { transactions: walletApiData.transactions } : null,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', newWallet.id);
 
-          console.log('✅ Wallet data synced in background:', walletForm.address.trim());
-        } catch (error) {
-          console.error('⚠️ Background wallet data fetch failed:', error);
-          // Wallet is already added, just without data
-        }
-      }, 1000); // Delay to avoid blocking UI
+            if (updateError) {
+              console.error('❌ Database update error:', updateError);
+              throw updateError;
+            }
+
+            // Save wallet history for admin
+            const { error: historyError } = await supabase
+              .from('wallet_history')
+              .insert([{
+                user_email: email,
+                wallet_id: newWallet.id,
+                wallet_address: walletForm.address.trim(),
+                wallet_name: walletForm.name?.trim() || null,
+                action: 'added',
+                wallet_balance: walletApiData.balance,
+                transaction_count: walletApiData.transactionCount,
+                wallet_data_snapshot: {
+                  balance: walletApiData.balance,
+                  transactions: walletApiData.transactions || [],
+                  transactionCount: walletApiData.transactionCount
+                }
+              }]);
+
+            if (historyError) {
+              console.warn('⚠️ Wallet history save failed (non-critical):', historyError);
+            }
+
+            console.log('✅ Wallet data synced successfully:', walletForm.address.trim());
+            return true;
+          } catch (error) {
+            console.error(`❌ Attempt ${retries + 1} failed:`, error);
+            retries++;
+            
+            if (retries < maxRetries) {
+              console.log(`⏳ Retrying in 5 seconds...`);
+              await new Promise(resolve => setTimeout(resolve, 5000));
+              return fetchWalletData();
+            } else {
+              console.error('❌ All retry attempts failed. Wallet added but data sync failed.');
+              return false;
+            }
+          }
+        };
+
+        await fetchWalletData();
+      }, 2000); // Delay to avoid blocking UI
       
     } catch (error: any) {
       console.error('Error adding wallet:', error);
