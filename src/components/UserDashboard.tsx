@@ -43,6 +43,7 @@ import SignupProcessFlow from './SignupProcessFlow';
 import ReferralBlocks from './ReferralBlocks';
 import NotificationDropdown from './NotificationDropdown';
 import NotificationSettings from './NotificationSettings';
+import GoalsTab from './GoalsTab';
 import MarketStatusWidget from './MarketStatusWidget';
 import UserSidebar from './UserSidebar';
 
@@ -768,7 +769,7 @@ export default function UserDashboard() {
               emailVerified={emailVerified}
               firstAppointmentCompleted={firstAppointmentCompleted}
             />}
-            {activeTab === 'goals' && (accountApproved || hasApprovedOneOnOne) && <GoalsTab goals={goals} setGoals={setGoals} />}
+            {activeTab === 'goals' && (accountApproved || hasApprovedOneOnOne) && <GoalsTab goals={goals} setGoals={setGoals} user={user} />}
             {activeTab === 'portfolio' && (accountApproved || hasApprovedOneOnOne) && <PortfolioPage />}
 
             {activeTab === 'market-status' && (
