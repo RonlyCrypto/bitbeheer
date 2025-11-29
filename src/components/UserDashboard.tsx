@@ -24,7 +24,7 @@ import {
   Copy,
   CheckCircle2
 } from 'lucide-react';
-import { bitcoinPriceService, BitcoinPrice } from '../services/bitcoinPriceService';
+import { bitcoinApiService } from '../services/bitcoinApiService';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePermissions } from '../contexts/PermissionsContext';
@@ -243,7 +243,7 @@ export default function UserDashboard() {
       try {
         // Load Bitcoin price
         try {
-          const price = await bitcoinPriceService.getCurrentPrice();
+          const price = await bitcoinApiService.getCurrentPrice();
           setBitcoinPrice(price);
         } catch (priceError) {
           console.warn('⚠️ Could not fetch Bitcoin price:', priceError);
