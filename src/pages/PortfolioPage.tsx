@@ -535,7 +535,10 @@ export default function PortfolioPage() {
           </div>
 
           {/* Bitcoin Milestones */}
-          <BitcoinMilestones />
+          <BitcoinMilestones 
+            wallets={wallets} 
+            onRefresh={refreshTransactionPrices}
+          />
 
           {/* Add Wallet Form */}
           {showAddWallet && (

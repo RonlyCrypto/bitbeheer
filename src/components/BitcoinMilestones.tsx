@@ -18,7 +18,12 @@ interface UserMilestoneStatus {
   milestone1: boolean;
 }
 
-export default function BitcoinMilestones() {
+interface BitcoinMilestonesProps {
+  wallets?: any[];
+  onRefresh?: () => void;
+}
+
+export default function BitcoinMilestones({ wallets = [], onRefresh }: BitcoinMilestonesProps) {
   const { user } = useSupabaseAuth();
   const [currentBTC, setCurrentBTC] = useState<number>(0);
   const [bitcoinPrice, setBitcoinPrice] = useState<number>(95000);
@@ -56,41 +61,38 @@ export default function BitcoinMilestones() {
         const priceData = await bitcoinApiService.getCurrentPrice();
         setBitcoinPrice(priceData.price);
 
-        // Load user's total portfolio value (in BTC equivalent)
-        if (user?.email) {
-          // Get wallets from database
-          const { data: wallets } = await supabase
-            .from('bitcoin_wallets')
-            .select('total_btc_holdings')
-            .eq('user_email', user.email)
-            .maybeSingle();
+        // Calculate total BTC from wallets
+        let totalBTC = 0;
+        if (wallets && wallets.length > 0) {
+          totalBTC = wallets.reduce((sum: number, wallet: any) => {
+            const walletBalance = wallet.balance || 0;
+            return sum + walletBalance;
+          }, 0);
+        }
 
-          if (wallets?.total_btc_holdings) {
-            setCurrentBTC(wallets.total_btc_holdings);
+        setCurrentBTC(totalBTC);
 
-            // Update milestone status
-            const reached01 = wallets.total_btc_holdings >= 0.1;
-            const reached1 = wallets.total_btc_holdings >= 1;
+        // Update milestone status
+        const reached01 = totalBTC >= 0.1;
+        const reached1 = totalBTC >= 1;
 
-            setUserMilestones({
-              milestone01: reached01,
-              milestone1: reached1
+        setUserMilestones({
+          milestone01: reached01,
+          milestone1: reached1
+        });
+
+        // Save milestone achievement to database
+        if (user?.email && (reached01 || reached1)) {
+          await supabase
+            .from('user_milestones')
+            .upsert({
+              user_email: user.email,
+              milestone_01_btc: reached01,
+              milestone_1_btc: reached1,
+              updated_at: new Date().toISOString()
+            }, {
+              onConflict: 'user_email'
             });
-
-            // Save milestone achievement to database
-            if (reached01 || reached1) {
-              await supabase
-                .from('user_milestones')
-                .upsert({
-                  user_email: user.email,
-                  milestone_01_btc: reached01,
-                  milestone_1_btc: reached1,
-                  updated_at: new Date().toISOString()
-                }, {
-                  onConflict: 'user_email'
-                });
-            }
-          }
         }
       } catch (error) {
         console.error('Error loading milestone data:', error);
@@ -100,7 +102,7 @@ export default function BitcoinMilestones() {
     };
 
     loadData();
-  }, [user?.email]);
+  }, [wallets, user?.email]);
 
   const calculateProgress = (milestone: number) => {
     return Math.min((currentBTC / milestone) * 100, 100);
@@ -167,8 +169,9 @@ export default function BitcoinMilestones() {
 
               {/* Achievement Badge */}
               {isMilestoneReached && (
-                <div className="mb-3 inline-block px-2 py-1 bg-green-200 text-green-700 text-xs font-bold rounded">
-                  ✅ Bereikt!
+                <div className="mb-3 inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 text-sm font-bold rounded-lg border-2 border-green-400 shadow-md">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  Bereikt! 🎉
                 </div>
               )}
 
