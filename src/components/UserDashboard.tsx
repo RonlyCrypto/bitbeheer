@@ -712,7 +712,19 @@ export default function UserDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <NotificationDropdown unreadCount={unreadChatCount} />
+              <NotificationDropdown 
+                unreadCount={unreadChatCount}
+                onNotificationClick={(notification) => {
+                  // Navigate based on notification type
+                  if (notification.type === 'unread_message') {
+                    setActiveTab('helpdesk');
+                  } else if (notification.type === 'appointment_approved') {
+                    setActiveTab('appointments');
+                  } else if (notification.type === 'goal_achieved') {
+                    setActiveTab('goals');
+                  }
+                }}
+              />
               <NotificationSettings 
                 onPhoneNumberSaved={(phone) => {
                   // Update userProfile with new phone number

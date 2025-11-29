@@ -29,7 +29,12 @@ interface Notification {
   read: boolean;
 }
 
-export default function NotificationDropdown({ unreadCount }: { unreadCount: number }) {
+interface NotificationDropdownProps {
+  unreadCount: number;
+  onNotificationClick?: (notification: Notification) => void;
+}
+
+export default function NotificationDropdown({ unreadCount, onNotificationClick }: NotificationDropdownProps) {
   const { user } = useSupabaseAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -284,7 +289,16 @@ export default function NotificationDropdown({ unreadCount }: { unreadCount: num
               notifications.map((notification) => {
                 const Icon = notification.icon;
                 return (
-                  <div key={notification.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
+                  <button
+                    key={notification.id}
+                    onClick={() => {
+                      if (onNotificationClick) {
+                        onNotificationClick(notification);
+                      }
+                      setIsOpen(false);
+                    }}
+                    className="w-full text-left p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-orange-50 hover:border-orange-300 transition-colors cursor-pointer"
+                  >
                     <div className="flex items-start gap-3">
                       <div className={`p-2 rounded-lg ${
                         notification.color === 'green' ? 'bg-green-100' :
@@ -305,7 +319,7 @@ export default function NotificationDropdown({ unreadCount }: { unreadCount: num
                         </p>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 );
               })
             )}
