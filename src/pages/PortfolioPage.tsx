@@ -331,26 +331,77 @@ export default function PortfolioPage() {
 
       setLoading(true);
       try {
-        // Initially load only first 25 transactions for faster UX
-        const realData = await bitcoinApiService.getWalletData(newWalletAddress, 25);
-        
+        // 1. SNELLE OPSLAG: Save wallet immediately to DB without fetching data
+        const { error: insertError } = await supabase
+          .from('bitcoin_wallets')
+          .insert([{
+            user_email: effectiveUserEmail,
+            wallet_name: newWalletName,
+            wallet_address: newWalletAddress,
+            total_btc_holdings: 0, // Placeholder, will be updated in background
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }]);
+
+        if (insertError) throw insertError;
+
+        // 2. OPTIMISTIC UI: Add wallet to UI with placeholder data
         const newWallet: WalletData = {
           id: Date.now().toString(),
           name: newWalletName,
           address: newWalletAddress,
-          balance: realData.balance,
-          transactions: realData.transactionCount,
-          firstSeen: new Date(realData.firstSeen).toISOString().split('T')[0],
-          realData: realData
+          balance: 0,
+          transactions: 0,
+          firstSeen: new Date().toISOString().split('T')[0],
+          realData: undefined // Will be loaded in background
         };
-        
+
         setWallets([...wallets, newWallet]);
         setNewWalletAddress('');
         setNewWalletName('');
         setShowAddWallet(false);
+
+        // 3. BACKGROUND PROCESSING: Fetch wallet data asynchronously
+        setTimeout(async () => {
+          try {
+            const realData = await bitcoinApiService.getWalletData(newWalletAddress, 25);
+            
+            // Update wallet in DB with actual data
+            await supabase
+              .from('bitcoin_wallets')
+              .update({
+                total_btc_holdings: realData.balance,
+                transaction_count: realData.transactionCount,
+                first_seen_date: new Date(realData.firstSeen).toISOString().split('T')[0],
+                last_updated: new Date().toISOString()
+              })
+              .eq('wallet_address', newWalletAddress)
+              .eq('user_email', effectiveUserEmail);
+
+            // Update UI with real data
+            setWallets(prevWallets =>
+              prevWallets.map(w =>
+                w.address === newWalletAddress
+                  ? {
+                      ...w,
+                      balance: realData.balance,
+                      transactions: realData.transactionCount,
+                      firstSeen: new Date(realData.firstSeen).toISOString().split('T')[0],
+                      realData: realData
+                    }
+                  : w
+              )
+            );
+            
+            console.log('✅ Wallet data synced in background:', newWalletAddress);
+          } catch (error) {
+            console.error('⚠️ Background wallet data fetch failed:', error);
+            // Wallet is still added, just without data - user can refresh later
+          }
+        }, 500); // Small delay to not block UI
       } catch (error) {
-        console.error('Error fetching wallet data:', error);
-        alert('Kon wallet data niet ophalen. Controleer het adres en probeer opnieuw.');
+        console.error('Error adding wallet:', error);
+        alert('Kon wallet niet toevoegen. Probeer opnieuw.');
       } finally {
         setLoading(false);
       }
