@@ -899,6 +899,19 @@ export default function UserDashboard() {
 
 // Overview Tab Component
 function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppointment, accountApproved, isImpersonating, impersonatedUser, hasApprovedOneOnOne, onNavigateToPortfolio, user, emailVerified, firstAppointmentCompleted }: any) {
+  // 🐛 DEBUG MODE - Toggle via console: localStorage.setItem('wallet_debug', 'true') or localStorage.setItem('wallet_debug', 'false')
+  const DEBUG = typeof localStorage !== 'undefined' && localStorage.getItem('wallet_debug') === 'true';
+  const log = (title: string, data?: any) => {
+    if (DEBUG) {
+      console.log(`%c[WALLET] ${title}`, 'color: #0066cc; font-weight: bold;', data || '');
+    }
+  };
+  const err = (title: string, data?: any) => {
+    if (DEBUG) {
+      console.error(`%c[WALLET ERROR] ${title}`, 'color: #cc0000; font-weight: bold;', data || '');
+    }
+  };
+
   // Determine goals to display based on account status
   const displayGoals = accountApproved 
     ? [
@@ -1162,7 +1175,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 .single();
 
               if (updatedWallet && (updatedWallet.balance > 0 || updatedWallet.transaction_count > 0)) {
-                console.log('✅ Wallet data updated via polling:', updatedWallet);
+                log('Wallet data updated via polling', updatedWallet);
                 
                 let updatedTransactions: BitcoinTransaction[] = [];
                 if (updatedWallet.wallet_data?.transactions && Array.isArray(updatedWallet.wallet_data.transactions)) {
@@ -1190,7 +1203,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 clearInterval(pollInterval);
               }
             } catch (error) {
-              console.error('Poll error:', error);
+              err('Poll error', error);
             }
             
             pollCount++;
@@ -1338,10 +1351,10 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         
         const fetchWalletData = async () => {
           try {
-            console.log(`🔄 Fetching wallet data (attempt ${retries + 1}/${maxRetries})...`);
+            log(`Fetching wallet data (attempt ${retries + 1}/${maxRetries})`);
             const walletApiData = await bitcoinApiService.getWalletData(walletForm.address.trim(), 50);
             
-            console.log('📊 Wallet data received:', {
+            log('Wallet data received', {
               balance: walletApiData.balance,
               transactionCount: walletApiData.transactionCount,
               txListLength: walletApiData.transactions?.length || 0
@@ -1370,7 +1383,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               .eq('id', newWallet.id);
 
             if (updateError) {
-              console.error('❌ Database update error:', updateError);
+              err('Database update error', updateError);
               throw updateError;
             }
 
@@ -1393,21 +1406,21 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               }]);
 
             if (historyError) {
-              console.warn('⚠️ Wallet history save failed (non-critical):', historyError);
+              log('Wallet history save (non-critical):', historyError);
             }
 
-            console.log('✅ Wallet data synced successfully:', walletForm.address.trim());
+            log('Wallet data synced successfully:', walletForm.address.trim());
             return true;
           } catch (error) {
-            console.error(`❌ Attempt ${retries + 1} failed:`, error);
+            err(`Attempt ${retries + 1} failed`, error);
             retries++;
             
             if (retries < maxRetries) {
-              console.log(`⏳ Retrying in 5 seconds...`);
+              log(`Retrying in 5 seconds...`);
               await new Promise(resolve => setTimeout(resolve, 5000));
               return fetchWalletData();
             } else {
-              console.error('❌ All retry attempts failed. Wallet added but data sync failed.');
+              err('All retry attempts failed. Wallet added but data sync failed.');
               return false;
             }
           }
