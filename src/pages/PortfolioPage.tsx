@@ -20,6 +20,7 @@ import TransactionBlock from '../components/TransactionBlock';
 import TransactionDetailsPopup from '../components/TransactionDetailsPopup';
 import CurrencyToggle from '../components/CurrencyToggle';
 import CycleAdvisorWidget from '../components/CycleAdvisorWidget';
+import BitcoinMilestones from '../components/BitcoinMilestones';
 import { bitcoinApiService, BitcoinWallet, BitcoinTransaction } from '../services/bitcoinApiService';
 import { supabase } from '../lib/supabase';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
@@ -532,6 +533,9 @@ export default function PortfolioPage() {
               </button>
             )}
           </div>
+
+          {/* Bitcoin Milestones */}
+          <BitcoinMilestones />
 
           {/* Add Wallet Form */}
           {showAddWallet && (
