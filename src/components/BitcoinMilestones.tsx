@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { TrendingUp, Target, CheckCircle, Lock } from 'lucide-react';
+import { TrendingUp, Target, CheckCircle, Lock, ChevronDown, ChevronUp } from 'lucide-react';
 import { bitcoinApiService } from '../services/bitcoinApiService';
 import { supabase } from '../lib/supabase';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
@@ -32,6 +32,7 @@ export default function BitcoinMilestones({ wallets = [], onRefresh }: BitcoinMi
     milestone1: false
   });
   const [loading, setLoading] = useState(true);
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
   const MILESTONES: Milestone[] = [
     {
@@ -126,19 +127,79 @@ export default function BitcoinMilestones({ wallets = [], onRefresh }: BitcoinMi
     );
   }
 
-  return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      {/* Header */}
-      <div className="mb-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-2">🎯 Bitcoin Milestones</h3>
-        <p className="text-sm text-gray-600">
-          Jouw huurdige holdings: <span className="font-bold text-orange-600">{currentBTC.toFixed(4)} BTC</span>
-          {' '}(≈ €{(currentBTC * bitcoinPrice).toLocaleString('nl-NL')})
-        </p>
-      </div>
+  // Calculate milestone status for summary
+  const milestonesReached = (userMilestones.milestone01 ? 1 : 0) + (userMilestones.milestone1 ? 1 : 0);
+  const nextMilestone = !userMilestones.milestone01 ? 0.1 : !userMilestones.milestone1 ? 1 : null;
+  const btcToNextMilestone = nextMilestone ? (nextMilestone - currentBTC).toFixed(4) : null;
 
-      {/* Milestones Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 animate-pulse">
+        <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+        <div className="space-y-4">
+          {[1, 2].map(i => (
+            <div key={i} className="h-24 bg-gray-100 rounded"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      {/* Collapsible Header */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+      >
+        <div className="flex items-center gap-4 flex-1">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900 text-left">🎯 Bitcoin Milestones</h3>
+            {!isExpanded && (
+              <div className="text-sm text-gray-600 mt-1 text-left">
+                <p>
+                  <span className="font-bold text-orange-600">{currentBTC.toFixed(4)} BTC</span>
+                  {' '}
+                  <span className="text-gray-500">•</span>
+                  {' '}
+                  <span className="font-semibold">
+                    {milestonesReached === 0 && (nextMilestone ? `${btcToNextMilestone} tot 0.1 BTC` : 'Geen milestones bereikt')}
+                    {milestonesReached === 1 && (nextMilestone ? `${btcToNextMilestone} tot 1 BTC` : '✅ 0.1 BTC bereikt!')}
+                    {milestonesReached === 2 && '🎉 Alle milestones bereikt!'}
+                  </span>
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 ml-auto">
+          {milestonesReached > 0 && (
+            <div className="text-right">
+              <div className="text-sm font-bold text-green-600">{milestonesReached}/2</div>
+              <div className="text-xs text-gray-500">bereikt</div>
+            </div>
+          )}
+          {isExpanded ? (
+            <ChevronUp className="w-5 h-5 text-gray-400" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-gray-400" />
+          )}
+        </div>
+      </button>
+
+      {/* Expanded Content */}
+      {isExpanded && (
+        <div className="border-t border-gray-200 p-6">
+          {/* Current Holdings */}
+          <div className="mb-6 pb-6 border-b border-gray-200">
+            <p className="text-sm text-gray-600">
+              Jouw huurdige holdings: <span className="font-bold text-orange-600">{currentBTC.toFixed(4)} BTC</span>
+              {' '}(≈ €{(currentBTC * bitcoinPrice).toLocaleString('nl-NL')})
+            </p>
+          </div>
+
+          {/* Milestones Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {MILESTONES.map((milestone, idx) => {
           const progress = calculateProgress(milestone.btcAmount);
           const remaining = calculateRemaining(milestone.btcAmount);
@@ -214,10 +275,10 @@ export default function BitcoinMilestones({ wallets = [], onRefresh }: BitcoinMi
             </div>
           );
         })}
-      </div>
+          </div>
 
-      {/* Total Progress */}
-      <div className="mt-6 p-4 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg border border-orange-200">
+          {/* Total Progress */}
+          <div className="p-4 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg border border-orange-200">
         <p className="text-sm font-semibold text-gray-900 mb-2">Total Journey</p>
         <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden mb-2">
           <div
@@ -225,14 +286,16 @@ export default function BitcoinMilestones({ wallets = [], onRefresh }: BitcoinMi
             style={{ width: `${Math.min((currentBTC / 1) * 100, 100)}%` }}
           ></div>
         </div>
-        <p className="text-xs text-gray-600">
-          {currentBTC >= 1
-            ? '🚀 Je bent een echte Bitcoin holder!'
-            : currentBTC >= 0.1
-            ? '💪 Goed bezig! Volgende stop: 1 BTC'
-            : '📈 Start je Bitcoin reis - streef naar 0.1 BTC'}
-        </p>
-      </div>
+            <p className="text-xs text-gray-600">
+              {currentBTC >= 1
+                ? '🚀 Je bent een echte Bitcoin holder!'
+                : currentBTC >= 0.1
+                ? '💪 Goed bezig! Volgende stop: 1 BTC'
+                : '📈 Start je Bitcoin reis - streef naar 0.1 BTC'}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
