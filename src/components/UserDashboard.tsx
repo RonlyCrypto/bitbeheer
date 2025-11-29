@@ -1143,6 +1143,53 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           
           setWalletData({ ...walletRecord, lastTransaction });
           setWalletTransactions(transactions);
+
+          // 🔄 REAL-TIME LISTENER: Subscribe to wallet updates from background sync
+          const channel = supabase
+            .channel(`wallet-${email}`)
+            .on('postgres_changes', {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'wallets',
+              filter: `email=eq.${email}`
+            }, (payload) => {
+              console.log('🔄 Wallet updated in real-time:', payload.new);
+              const updatedWallet = payload.new;
+              
+              // Update wallet data if balance changed (background sync finished)
+              if (updatedWallet.balance > 0 || updatedWallet.transaction_count > 0) {
+                let updatedTransactions: BitcoinTransaction[] = [];
+                
+                if (updatedWallet.wallet_data?.transactions && Array.isArray(updatedWallet.wallet_data.transactions)) {
+                  updatedTransactions = updatedWallet.wallet_data.transactions.map((tx: any) => {
+                    const txPrice = tx.price || bitcoinPrice;
+                    const txValue = tx.value || 0;
+                    const txCurrentValue = tx.currentValue || (txValue ? (txValue / 100000000) * bitcoinPrice : 0);
+                    const txProfit = tx.profit !== undefined ? tx.profit : (txCurrentValue - (txValue / 100000000) * txPrice);
+                    const txProfitPercent = tx.profitPercent !== undefined ? tx.profitPercent : (txPrice > 0 ? ((bitcoinPrice - txPrice) / txPrice) * 100 : 0);
+                    
+                    return {
+                      hash: tx.hash || '',
+                      time: tx.time || Math.floor(new Date(tx.date || Date.now()).getTime() / 1000),
+                      value: txValue,
+                      price: txPrice,
+                      currentValue: txCurrentValue,
+                      profit: txProfit,
+                      profitPercent: txProfitPercent
+                    };
+                  });
+                }
+                
+                setWalletData(updatedWallet);
+                setWalletTransactions(updatedTransactions);
+                console.log('✅ Wallet data updated with real-time sync!');
+              }
+            })
+            .subscribe();
+
+          return () => {
+            supabase.removeChannel(channel);
+          };
         } else {
           setHasWallet(false);
           setWalletData(null);
@@ -1798,6 +1845,57 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Transactions List */}
+      {hasWallet && walletData && walletTransactions.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Transacties ({walletTransactions.length})</h3>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {walletTransactions.slice(0, 10).map((tx, index) => {
+              const txDate = new Date(tx.time * 1000);
+              const formattedDate = txDate.toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+              const formattedTime = txDate.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+              const btcAmount = tx.value / 100000000;
+              const profitColor = tx.profit >= 0 ? 'text-green-600' : 'text-red-600';
+              
+              return (
+                <div key={tx.hash || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-semibold text-gray-900">{btcAmount.toFixed(4)} BTC</span>
+                      <span className={`text-xs font-medium ${profitColor}`}>
+                        {tx.profit >= 0 ? '+' : ''}{tx.profit.toFixed(2)} USD ({tx.profitPercent.toFixed(1)}%)
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-500 font-mono">
+                      {tx.hash ? `${tx.hash.slice(0, 16)}...` : 'Unknown'}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      {formattedDate} • {formattedTime}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-semibold text-gray-900">
+                      ${(btcAmount * bitcoinPrice).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      @ ${(tx.price || bitcoinPrice).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {walletTransactions.length > 10 && (
+            <button
+              onClick={() => onNavigateToPortfolio?.()}
+              className="w-full mt-4 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium"
+            >
+              Alle {walletTransactions.length} transacties bekijken →
+            </button>
+          )}
         </div>
       )}
 
