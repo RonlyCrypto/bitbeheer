@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Target, TrendingUp, Calendar, DollarSign, Zap, Trash2, Check, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
-import { bitcoinPriceService } from '../services/bitcoinApiService';
+import { bitcoinApiService } from '../services/bitcoinApiService';
 
 interface Goal {
   id: string;
@@ -43,8 +43,8 @@ export default function GoalsTab({ goals, setGoals }: any) {
   useEffect(() => {
     const loadBitcoinPrice = async () => {
       try {
-        const price = await bitcoinPriceService.getCurrentPrice();
-        setBitcoinPrice(price.price);
+        const priceData = await bitcoinApiService.getCurrentPrice();
+        setBitcoinPrice(priceData.price);
       } catch (error) {
         console.error('Error loading Bitcoin price:', error);
         setBitcoinPrice(95000);

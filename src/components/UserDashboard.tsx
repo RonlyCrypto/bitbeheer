@@ -44,7 +44,6 @@ import ReferralBlocks from './ReferralBlocks';
 import NotificationDropdown from './NotificationDropdown';
 import NotificationSettings from './NotificationSettings';
 import GoalsTab from './GoalsTab';
-import GoalsTab from './GoalsTab';
 import MarketStatusWidget from './MarketStatusWidget';
 import UserSidebar from './UserSidebar';
 
@@ -1960,6 +1959,497 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
   );
 }
 
+
+// Goals Tab Component
+function GoalsTab({ goals, setGoals }: any) {
+  const [showNewGoal, setShowNewGoal] = useState(false);
+  const [showBitcoinCalculator, setShowBitcoinCalculator] = useState(false);
+  const [goalTemplate, setGoalTemplate] = useState<string | null>(null);
+  const [bitcoinPrice, setBitcoinPrice] = useState<number>(0);
+  const [newGoal, setNewGoal] = useState({
+    title: '',
+    description: '',
+    targetAmount: 0,
+    targetDate: '',
+    category: 'other',
+    targetBitcoinAmount: 0,
+    currentBitcoinAmount: 0,
+    monthlyInvestment: 0
+  });
+  const [bitcoinGoal, setBitcoinGoal] = useState({
+    targetAmount: 0,
+    currentAmount: 0,
+    monthlyInvestment: 0,
+    targetDate: ''
+  });
+
+  // Load Bitcoin price
+  useEffect(() => {
+    const loadBitcoinPrice = async () => {
+      try {
+        const price = await bitcoinPriceService.getCurrentPrice();
+        setBitcoinPrice(price.price);
+      } catch (error) {
+        console.error('Error loading Bitcoin price:', error);
+        setBitcoinPrice(95000); // Fallback price
+      }
+    };
+    loadBitcoinPrice();
+  }, []);
+
+  const handleCreateGoal = async () => {
+    try {
+      let goal: any;
+      
+      if (goalTemplate === 'bitcoin') {
+        // Bitcoin goal with calculation
+        const remainingBTC = newGoal.targetBitcoinAmount - newGoal.currentBitcoinAmount;
+        const monthsNeeded = Math.ceil((remainingBTC * bitcoinPrice) / newGoal.monthlyInvestment);
+        
+        goal = {
+          id: Date.now().toString(),
+          title: `${newGoal.targetBitcoinAmount} Bitcoin Doel`,
+          description: `Maandelijks $${newGoal.monthlyInvestment.toLocaleString('en-US')} investeren om ${newGoal.targetBitcoinAmount} BTC te bereiken (${monthsNeeded} maanden)`,
+          targetAmount: newGoal.targetBitcoinAmount * bitcoinPrice,
+          currentAmount: newGoal.currentBitcoinAmount * bitcoinPrice,
+          targetDate: newGoal.targetDate,
+          category: 'bitcoin',
+          status: 'active',
+          createdAt: new Date().toISOString(),
+          isBitcoinGoal: true,
+          targetBitcoinAmount: newGoal.targetBitcoinAmount,
+          currentBitcoinAmount: newGoal.currentBitcoinAmount,
+          monthlyInvestment: newGoal.monthlyInvestment,
+          bitcoinPriceAtCreation: bitcoinPrice
+        };
+      } else {
+        // Regular goal
+        goal = {
+          id: Date.now().toString(),
+          title: newGoal.title,
+          description: newGoal.description,
+          targetAmount: newGoal.targetAmount,
+          currentAmount: 0,
+          targetDate: newGoal.targetDate,
+          category: newGoal.category,
+          status: 'active',
+          createdAt: new Date().toISOString()
+        };
+      }
+      
+      setGoals([...goals, goal]);
+      setShowNewGoal(false);
+      setGoalTemplate(null);
+      setNewGoal({ 
+        title: '', 
+        description: '', 
+        targetAmount: 0, 
+        targetDate: '', 
+        category: 'other',
+        targetBitcoinAmount: 0,
+        currentBitcoinAmount: 0,
+        monthlyInvestment: 0
+      });
+    } catch (error) {
+      console.error('Error creating goal:', error);
+    }
+  };
+
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex gap-3" style={{ marginLeft: 'auto' }}>
+          <button
+            onClick={() => {
+              setGoalTemplate(null);
+              setShowNewGoal(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Nieuw Doel
+          </button>
+        </div>
+      </div>
+
+      {/* Goal Templates */}
+      {!showNewGoal && !showBitcoinCalculator && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <button
+            onClick={() => {
+              setGoalTemplate('bitcoin');
+              setShowBitcoinCalculator(true);
+            }}
+            className="bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-300 p-6 rounded-xl hover:border-orange-500 transition-all text-left"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="bg-orange-600 p-2 rounded-lg">
+                <Target className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="font-bold text-orange-900">Bitcoin Doel</h3>
+            </div>
+            <p className="text-sm text-orange-800">
+              Stel een doel in voor een bepaald aantal Bitcoin met automatische berekening van maandelijkse inleg
+            </p>
+          </button>
+          <button
+            onClick={() => {
+              setGoalTemplate('amount');
+              setShowNewGoal(true);
+            }}
+            className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-300 p-6 rounded-xl hover:border-blue-500 transition-all text-left"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="bg-blue-600 p-2 rounded-lg">
+                <Target className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="font-bold text-blue-900">Bedrag Doel</h3>
+            </div>
+            <p className="text-sm text-blue-800">
+              Stel een doel in voor een bepaald bedrag in euro's met doeldatum
+            </p>
+          </button>
+          <button
+            onClick={() => {
+              setGoalTemplate('custom');
+              setShowNewGoal(true);
+            }}
+            className="bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-300 p-6 rounded-xl hover:border-purple-500 transition-all text-left"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="bg-purple-600 p-2 rounded-lg">
+                <Target className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="font-bold text-purple-900">Aangepast Doel</h3>
+            </div>
+            <p className="text-sm text-purple-800">
+              Maak een volledig aangepast doel met eigen titel en beschrijving
+            </p>
+          </button>
+        </div>
+      )}
+
+      {showNewGoal && (
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Nieuw Doel Toevoegen</h3>
+          {goalTemplate === 'bitcoin' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Doel: Aantal Bitcoin</label>
+                  <input
+                    type="number"
+                    step="0.00000001"
+                    value={newGoal.targetBitcoinAmount}
+                    onChange={(e) => {
+                      const btcAmount = parseFloat(e.target.value) || 0;
+                      setNewGoal({ 
+                        ...newGoal, 
+                        targetBitcoinAmount: btcAmount,
+                        targetAmount: btcAmount * bitcoinPrice
+                      });
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    placeholder="Bijv. 0.5"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Huidige Bitcoin</label>
+                  <input
+                    type="number"
+                    step="0.00000001"
+                    value={newGoal.currentBitcoinAmount}
+                    onChange={(e) => setNewGoal({ ...newGoal, currentBitcoinAmount: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    placeholder="Bijv. 0.1"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Maandelijkse Investering ($)</label>
+                  <input
+                    type="number"
+                    value={newGoal.monthlyInvestment}
+                    onChange={(e) => setNewGoal({ ...newGoal, monthlyInvestment: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    placeholder="Bijv. 500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Doel Datum</label>
+                  <input
+                    type="date"
+                    value={newGoal.targetDate}
+                    onChange={(e) => setNewGoal({ ...newGoal, targetDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  />
+                </div>
+              </div>
+              {newGoal.targetBitcoinAmount > 0 && newGoal.currentBitcoinAmount >= 0 && newGoal.monthlyInvestment > 0 && (
+                <div className="mt-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
+                  <h4 className="font-semibold text-orange-900 mb-3">Berekening:</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span className="text-orange-700 font-medium">Nog nodig:</span>
+                      <p className="text-orange-900 font-bold">
+                        {(newGoal.targetBitcoinAmount - newGoal.currentBitcoinAmount).toFixed(8)} BTC
+                        <span className="text-xs text-gray-600 ml-2">
+                          (${((newGoal.targetBitcoinAmount - newGoal.currentBitcoinAmount) * bitcoinPrice).toLocaleString('en-US')})
+                        </span>
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-orange-700 font-medium">Maanden nodig:</span>
+                      <p className="text-orange-900 font-bold">
+                        {Math.ceil(((newGoal.targetBitcoinAmount - newGoal.currentBitcoinAmount) * bitcoinPrice) / newGoal.monthlyInvestment)} maanden
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-orange-700 font-medium">Maandelijks inleggen:</span>
+                      <p className="text-orange-900 font-bold">${newGoal.monthlyInvestment.toLocaleString('en-US')}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {goalTemplate !== 'bitcoin' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Titel</label>
+                <input
+                  type="text"
+                  value={newGoal.title}
+                  onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Categorie</label>
+                <select
+                  value={newGoal.category}
+                  onChange={(e) => setNewGoal({ ...newGoal, category: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                >
+                  <option value="retirement">Pensioen</option>
+                  <option value="house">Huis</option>
+                  <option value="education">Onderwijs</option>
+                  <option value="emergency">Noodfonds</option>
+                  <option value="bitcoin">Bitcoin</option>
+                  <option value="other">Anders</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Doelbedrag ($)</label>
+                <input
+                  type="number"
+                  value={newGoal.targetAmount}
+                  onChange={(e) => setNewGoal({ ...newGoal, targetAmount: Number(e.target.value) })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Doeldatum</label>
+                <input
+                  type="date"
+                  value={newGoal.targetDate}
+                  onChange={(e) => setNewGoal({ ...newGoal, targetDate: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Beschrijving</label>
+                <textarea
+                  value={newGoal.description}
+                  onChange={(e) => setNewGoal({ ...newGoal, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+              </div>
+            </div>
+          )}
+          <div className="mt-4 flex gap-3">
+            <button
+              onClick={handleCreateGoal}
+              className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+            >
+              Doel Toevoegen
+            </button>
+            <button
+              onClick={() => {
+                setShowNewGoal(false);
+                setGoalTemplate(null);
+                setNewGoal({
+                  title: '',
+                  description: '',
+                  targetAmount: 0,
+                  targetDate: '',
+                  category: 'other',
+                  targetBitcoinAmount: 0,
+                  currentBitcoinAmount: 0,
+                  monthlyInvestment: 0
+                });
+              }}
+              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Annuleren
+            </button>
+          </div>
+        </div>
+      )}
+
+
+      {/* Behaalde Doelen Section */}
+      {goals.filter((g: Goal) => g.status === 'completed').length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <CheckCircle className="w-5 h-5 text-green-600" />
+            Behaalde Doelen
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+            {goals
+              .filter((g: Goal) => g.status === 'completed')
+              .map((goal: Goal) => (
+                <div key={goal.id} className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm p-6 border-2 border-green-300 relative">
+                  <div className="absolute top-4 right-4">
+                    <CheckCircle className="w-8 h-8 text-green-600" />
+                  </div>
+                  <div className="mb-4">
+                    <h3 className="font-bold text-green-900 text-lg">{goal.title}</h3>
+                    <p className="text-sm text-green-700 capitalize mt-1">{goal.category}</p>
+                  </div>
+                  <div className="bg-white rounded-lg p-3 mb-3">
+                    <p className="text-sm text-green-800 font-medium">🎉 Doel behaald!</p>
+                    <p className="text-xs text-green-600 mt-1">
+                      {(goal as any).isBitcoinGoal 
+                        ? `${((goal as any).currentBitcoinAmount || 0).toFixed(8)} BTC bereikt`
+                        : `$${goal.currentAmount.toLocaleString('en-US')} bereikt`
+                      }
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const updatedGoals = goals.map((g: Goal) => 
+                        g.id === goal.id ? { ...g, status: 'completed' as const } : g
+                      );
+                      setGoals(updatedGoals);
+                    }}
+                    className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                  >
+                    Markeer als Voltooid
+                  </button>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {goals
+          .filter((g: Goal) => g.currentAmount < g.targetAmount || g.status !== 'active')
+          .map((goal: Goal) => {
+            const progress = Math.min((goal.currentAmount / goal.targetAmount) * 100, 100);
+            const isBitcoinGoal = goal.isBitcoinGoal || goal.category === 'bitcoin';
+            
+            return (
+              <div key={goal.id} className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">{goal.title}</h3>
+                    <p className="text-sm text-gray-600 capitalize">{goal.category}</p>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${
+                    goal.status === 'active' ? 'bg-green-100 text-green-800' :
+                    goal.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {goal.status === 'active' ? 'Actief' : goal.status === 'completed' ? 'Voltooid' : 'Gepauzeerd'}
+                  </span>
+                </div>
+                
+                {goal.description && (
+                  <p className="text-sm text-gray-600 mb-4">{goal.description}</p>
+                )}
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Voortgang</span>
+                    <span className="font-medium">
+                      {isBitcoinGoal && (goal as any).currentBitcoinAmount !== undefined ? (
+                        <>
+                          {((goal as any).currentBitcoinAmount || 0).toFixed(8)} / {((goal as any).targetBitcoinAmount || 0).toFixed(8)} BTC
+                          <span className="text-xs text-gray-500 ml-2">
+                            (${goal.currentAmount.toLocaleString('en-US')} / ${goal.targetAmount.toLocaleString('en-US')})
+                          </span>
+                        </>
+                      ) : (
+                        <>${goal.currentAmount.toLocaleString('en-US')} / ${goal.targetAmount.toLocaleString('en-US')}</>
+                      )}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div 
+                      className={`h-3 rounded-full transition-all ${
+                        progress >= 100 ? 'bg-green-500' : 'bg-orange-500'
+                      }`}
+                      style={{ width: `${progress}%` }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>{Math.round(progress)}%</span>
+                    {goal.targetDate && (
+                      <span>{new Date(goal.targetDate).toLocaleDateString('nl-NL')}</span>
+                    )}
+                  </div>
+                  {isBitcoinGoal && (goal as any).monthlyInvestment && (
+                    <div className="mt-2 pt-2 border-t border-gray-200">
+                      <p className="text-xs text-gray-600">
+                        Maandelijks: ${((goal as any).monthlyInvestment || 0).toLocaleString('en-US')}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+      </div>
+
+      {/* Behaalde Doelen Section */}
+      {goals.filter((g: Goal) => g.status === 'completed').length > 0 && (
+        <div className="mt-12 pt-8 border-t border-gray-200">
+          <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+            <CheckCircle className="w-8 h-8 text-green-600" />
+            Behaalde Doelen
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {goals
+              .filter((g: Goal) => g.status === 'completed')
+              .map((goal: Goal) => (
+                <div key={goal.id} className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm p-6 border-2 border-green-300 relative">
+                  <div className="absolute top-4 right-4">
+                    <CheckCircle className="w-8 h-8 text-green-600" />
+                  </div>
+                  <div className="mb-4">
+                    <h3 className="font-bold text-green-900 text-lg">{goal.title}</h3>
+                    <p className="text-sm text-green-700 capitalize mt-1">{goal.category}</p>
+                  </div>
+                  <div className="bg-white rounded-lg p-3 mb-3">
+                    <p className="text-sm text-green-800 font-medium">🎉 Doel behaald!</p>
+                    <p className="text-xs text-green-600 mt-1">
+                      {goal.description}
+                    </p>
+                  </div>
+                  <div className="text-xs text-green-700 pt-2 border-t border-green-300">
+                    Bereikt op: {goal.createdAt ? new Date(goal.createdAt).toLocaleDateString('nl-NL') : 'Onbekend'}
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // Portfolio Tab Component
 function PortfolioTab({ portfolio, setPortfolio }: any) {
