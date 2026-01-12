@@ -803,7 +803,7 @@ export default function UserDashboard() {
               impersonatedUser={impersonatedUser}
               accountApproved={accountApproved}
               firstAppointmentCompleted={firstAppointmentCompleted}
-            />}
+            />} */} */}
             {activeTab === 'helpdesk' && (
               <Helpdesk 
                 onMessageRead={async () => {
