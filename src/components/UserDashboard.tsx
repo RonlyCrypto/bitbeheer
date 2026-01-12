@@ -1695,81 +1695,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         </>
       )}
 
-      {/* Wallet Status - Only show if account is approved AND no wallet exists */}
-      {(accountApproved || hasApprovedOneOnOne) && !hasWallet && (
-        <div className={`bg-yellow-50 border border-yellow-200 rounded-xl transition-all duration-500 overflow-hidden ${
-          showWalletForm ? 'p-6' : 'p-6'
-        }`}>
-          <div className="flex items-start gap-4">
-            <div className="bg-yellow-100 p-3 rounded-xl">
-              <Wallet className="w-8 h-8 text-yellow-600" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-yellow-800 mb-2">Voeg je BTC wallet toe</h3>
-              <p className="text-yellow-700 mb-4">
-                Om je portfolio te kunnen volgen en je doelen te bereiken, voeg je Bitcoin wallet toe aan je account.
-              </p>
-              
-              {!showWalletForm ? (
-                <button 
-                  onClick={() => setShowWalletForm(true)}
-                  className="bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-yellow-700 transition-colors shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-                >
-                  <span className="flex items-center gap-2">
-                    <Plus className="w-5 h-5" />
-                    Wallet toevoegen
-                  </span>
-                </button>
-              ) : (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-yellow-800 mb-2">Wallet Naam</label>
-                    <input
-                      type="text"
-                      value={walletForm.name}
-                      onChange={(e) => setWalletForm({ ...walletForm, name: e.target.value })}
-                      placeholder="Bijv. Mijn Bitcoin Wallet"
-                      className="w-full px-3 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-yellow-800 mb-2">Bitcoin Adres</label>
-                    <input
-                      type="text"
-                      value={walletForm.address}
-                      onChange={(e) => setWalletForm({ ...walletForm, address: e.target.value })}
-                      placeholder="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
-                      className="w-full px-3 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                    />
-                  </div>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={handleAddWallet}
-                      disabled={isAddingWallet}
-                      className="bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-yellow-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                      {isAddingWallet ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          Toevoegen...
-                        </>
-                      ) : (
-                        'Toevoegen'
-                      )}
-                    </button>
-                    <button
-                      onClick={() => setShowWalletForm(false)}
-                      className="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
-                    >
-                      Annuleren
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Wallet Success Message - Animated entry */}
       {showSuccessMessage && (
@@ -1905,44 +1830,81 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         </div>
       )}
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          <div className="flex items-center gap-4">
-            <div className="bg-blue-100 p-3 rounded-lg">
-              <Target className="w-6 h-6 text-blue-600" />
+      {/* Actiebalk - Wallet toevoegen (altijd bovenaan, volle breedte) */}
+      {(accountApproved || hasApprovedOneOnOne) && !hasWallet && (
+        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-xl p-6 mb-6 shadow-lg">
+          <div className="flex items-start gap-4">
+            <div className="bg-yellow-100 p-3 rounded-xl">
+              <Wallet className="w-8 h-8 text-yellow-600" />
             </div>
-            <div>
-              <p className="text-sm text-gray-600">Actieve Doelen</p>
-              <p className="text-2xl font-bold text-gray-900">{activeGoals}</p>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">🔐 Voeg je BTC wallet toe</h3>
+              <p className="text-gray-700 mb-4">
+                Beheer je Bitcoin veilig in eigen handen
+              </p>
+              {!showWalletForm ? (
+                <button 
+                  onClick={() => setShowWalletForm(true)}
+                  className="bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors shadow-md hover:shadow-lg flex items-center gap-2"
+                >
+                  <Plus className="w-5 h-5" />
+                  Wallet toevoegen
+                </button>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-800 mb-2">Wallet Naam</label>
+                    <input
+                      type="text"
+                      value={walletForm.name}
+                      onChange={(e) => setWalletForm({ ...walletForm, name: e.target.value })}
+                      placeholder="Bijv. Mijn Bitcoin Wallet"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-800 mb-2">Bitcoin Adres</label>
+                    <input
+                      type="text"
+                      value={walletForm.address}
+                      onChange={(e) => setWalletForm({ ...walletForm, address: e.target.value })}
+                      placeholder="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleAddWallet}
+                      disabled={isAddingWallet}
+                      className="bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {isAddingWallet ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Toevoegen...
+                        </>
+                      ) : (
+                        'Toevoegen'
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setShowWalletForm(false)}
+                      className="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
+                    >
+                      Annuleren
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
+      )}
 
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          <div className="flex items-center gap-4">
-            <div className="bg-green-100 p-3 rounded-lg">
-              <CheckCircle2 className="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Behaalde Doelen</p>
-              <p className="text-2xl font-bold text-gray-900">{goals.filter((g: Goal) => (g.status as string) === 'completed').length}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          <div className="flex items-center gap-4">
-            <div className="bg-orange-100 p-3 rounded-lg">
-              <Calendar className="w-6 h-6 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Aankomende Afspraken</p>
-              <p className="text-2xl font-bold text-gray-900">{upcomingAppointments}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Grid Layout: Linkerkolom | Middenkolom | Rechterkolom */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* LINKERKOLOM - Bitcoin Veiligheidscheck + Mijn Bitcoin (8 kolommen) */}
+        <div className="lg:col-span-8 space-y-6">
 
       {/* Bitcoin Veiligheidscheck - Vervangt aanmeldproces na goedkeuring */}
       {accountApproved && (firstAppointmentCompleted || hasApprovedOneOnOne) ? (
@@ -2079,142 +2041,185 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 </div>
               )}
 
-      {/* Beginnersdoelen */}
-      {(accountApproved || hasApprovedOneOnOne) && (
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Beginnersdoelen</h3>
-            <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Je klas over &gt;</a>
-            </div>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                <span className="text-sm font-semibold text-orange-600">1</span>
-              </div>
-              <div className="flex-1">
-                <p className="font-medium text-gray-900">Koop je eerste €100 Bitcoin</p>
-              </div>
-              <span className="text-sm text-gray-500">0/4</span>
-              </div>
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                <span className="text-sm font-semibold text-orange-600">2</span>
-              </div>
-              <div className="flex-1">
-                <p className="font-medium text-gray-900">Seed phrase correct noteren</p>
-              </div>
-              <span className="text-sm text-gray-500">0/4</span>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                <span className="text-sm font-semibold text-orange-600">3</span>
-          </div>
-              <div className="flex-1">
-                <p className="font-medium text-gray-900">Bitcoin veilig verplaatsen</p>
-        </div>
-              <span className="text-sm text-gray-500">0/4</span>
-                  </div>
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                <span className="text-sm font-semibold text-orange-600">4</span>
-                  </div>
-              <div className="flex-1">
-                <p className="font-medium text-gray-900">Bekijk veiligheidsvideo</p>
-                  </div>
-              <span className="text-sm text-gray-500">0/4</span>
+          {/* MIDDENKOLOM - Beginnersdoelen + Leer & Waarschuwingen (binnen linkerkolom) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Beginnersdoelen */}
+            {(accountApproved || hasApprovedOneOnOne) && (
+              <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">🎯 Beginnersdoelen</h3>
+                  <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Je klas over &gt;</a>
                 </div>
-          </div>
-        </div>
-      )}
-
-      {/* Leer & Waarschuwingen */}
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Leer & Waarschuwingen</h3>
-          <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Vragen Beantwoord &gt;</a>
-                </div>
-                
-        <div className="mb-6">
-          <h4 className="font-semibold text-gray-900 mb-3">⚠️ Veelgemaakte Fouten</h4>
-                <div className="space-y-2">
-            <div className="flex items-start gap-2">
-              <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-gray-700">Koop nooit Bitcoin via DM's</p>
-                  </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-gray-700">Deel nooit je seed phrase</p>
-                  </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-gray-700">Laat Bitcoin niet langdurig op exchanges</p>
-                  </div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-semibold text-orange-600">1</span>
                     </div>
-          <button className="mt-4 w-full bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-            Koop een Ledger
-          </button>
-      </div>
-
-        <div className="pt-6 border-t border-gray-200">
-          <h4 className="font-semibold text-gray-900 mb-2">📘 Tip van vandaag</h4>
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-3">
-            <p className="font-semibold text-orange-900 mb-2">Niet je keys = niet je Bitcoin</p>
-            <p className="text-sm text-orange-800">
-              Gebruik altijd alleen je eigen wallet om zeker te weten dat jij je Bitcoin bezit.
-            </p>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">Koop €100 BTC</p>
+                    </div>
+                    <span className="text-sm text-gray-500">0/1</span>
                   </div>
-          <button className="w-full bg-orange-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-700 transition-colors">
-            Start met Coinbase
-          </button>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-semibold text-orange-600">2</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">Seed phrase noteren</p>
+                    </div>
+                    <span className="text-sm text-gray-500">0/1</span>
                   </div>
-      </div>
-
-      {/* Hulp altijd zichtbaar */}
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Hulp nodig?</h3>
-        <p className="text-gray-700 mb-4">
-          We staan voor je klaar bij vragen of twijfels. Neem contact op en we helpen je verder.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <button 
-            onClick={() => onBookAppointment && onBookAppointment()}
-            className="bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
-          >
-            <Calendar className="w-5 h-5" />
-            Plan een gesprek
-          </button>
-          <button 
-            onClick={() => {
-              if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'helpdesk' }));
-              }
-            }}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-          >
-            <MessageSquare className="w-5 h-5" />
-            Stel je vraag
-          </button>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-semibold text-orange-600">3</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">BTC verplaatsen</p>
+                    </div>
+                    <span className="text-sm text-gray-500">0/1</span>
                   </div>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-semibold text-orange-600">4</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">Veiligheidsvideo</p>
+                    </div>
+                    <span className="text-sm text-gray-500">0/1</span>
                   </div>
-
-      {/* BTC Balance - Vereenvoudigd (alleen BTC) */}
-      {hasWallet && walletData && (
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Jouw Bitcoin</h3>
-            <button className="text-sm text-gray-600 hover:text-gray-800">Bijeen ▾</button>
                 </div>
-          <div className="text-4xl font-bold text-gray-900 mb-2">
-            {walletData.balance?.toFixed(4) || '0.0000'} BTC
-          </div>
-          <p className="text-sm text-gray-500">
-            {walletData.transaction_count || 0} transacties
-          </p>
-        </div>
-      )}
+              </div>
+            )}
 
-      {/* Coinbase and Ledger Blocks */}
-      <ReferralBlocks />
+            {/* Leer & Waarschuwingen */}
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">📚 Leer & Waarschuwingen</h3>
+                <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Vragen Beantwoord &gt;</a>
+              </div>
+              
+              <div className="mb-4">
+                <h4 className="font-semibold text-gray-900 mb-3">⚠️ Veelgemaakte fouten</h4>
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-700">Koop nooit via DM's</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-700">Deel nooit je seed</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-700">Laat BTC niet lang op exchanges</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-gray-200">
+                <h4 className="font-semibold text-gray-900 mb-2">💡 Tip van vandaag</h4>
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-3">
+                  <p className="font-semibold text-orange-900 mb-1 text-sm">Niet je keys = niet je Bitcoin</p>
+                  <p className="text-xs text-orange-800">
+                    Gebruik altijd alleen je eigen wallet om zeker te weten dat jij je Bitcoin bezit.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mijn Bitcoin - Vereenvoudigd */}
+          {hasWallet && walletData ? (
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Mijn Bitcoin</h3>
+              <div className="text-4xl font-bold text-gray-900 mb-2">
+                {walletData.balance?.toFixed(4) || '0.0000'} BTC
+              </div>
+              <p className="text-sm text-gray-500 mb-4">
+                {walletData.transaction_count || 0} transacties
+              </p>
+              {/* Custody indicator inline */}
+              {walletData.balance > 0 ? (
+                <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <span className="text-sm font-medium text-green-900">🟢 Eigen wallet</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                  <X className="w-5 h-5 text-orange-600" />
+                  <span className="text-sm font-medium text-orange-900">🟠 Exchange</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Mijn Bitcoin</h3>
+              <div className="text-4xl font-bold text-gray-300 mb-2">0.0000 BTC</div>
+              <p className="text-sm text-gray-400">Voeg een wallet toe om te beginnen</p>
+            </div>
+          )}
+        </div>
+
+        {/* RECHTERKOLOM - Custody-status + Stappenblokken + Hulp (4 kolommen) */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* Custody-status */}
+          {(accountApproved || hasApprovedOneOnOne) && (
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">🔐 Custody-status</h3>
+              <div className="space-y-3">
+                {hasWallet && walletData && walletData.balance > 0 ? (
+                  <div className="p-4 bg-green-50 rounded-lg border-2 border-green-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle className="w-6 h-6 text-green-600" />
+                      <p className="font-semibold text-green-900">🟢 Eigen wallet</p>
+                    </div>
+                    <p className="text-sm text-green-700">Veilig: jij bezit</p>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-red-50 rounded-lg border-2 border-red-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <X className="w-6 h-6 text-red-600" />
+                      <p className="font-semibold text-red-900">🟠 BTC op exchange</p>
+                    </div>
+                    <p className="text-sm text-red-700">Risico: derde partij</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Stappenblokken (Ledger & Coinbase) */}
+          <ReferralBlocks />
+
+          {/* Hulp altijd zichtbaar */}
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">Hulp nodig?</h3>
+            <p className="text-sm text-gray-700 mb-4">
+              Twijfel of vragen? Wij helpen je persoonlijk.
+            </p>
+            <div className="space-y-3">
+              <button 
+                onClick={() => onBookAppointment && onBookAppointment()}
+                className="w-full bg-orange-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <Calendar className="w-5 h-5" />
+                Plan gesprek
+              </button>
+              <button 
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'helpdesk' }));
+                  }
+                }}
+                className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <MessageSquare className="w-5 h-5" />
+                Stel je vraag
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
