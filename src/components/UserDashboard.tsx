@@ -2019,8 +2019,17 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          {/* Aanmeldproces Stappen */}
-          {!accountApproved && (
+          {/* Aanmeldproces Stappen of Welkomsttekst */}
+          {accountApproved && (firstAppointmentCompleted || hasApprovedOneOnOne) ? (
+            // Welkomsttekst wanneer account is goedgekeurd en gesprek is voltooid
+            <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl shadow-lg p-6 mb-6 border border-orange-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Welkom! 🎉</h3>
+              <p className="text-gray-700 leading-relaxed">
+                We vinden het geweldig om dit avontuur met jou aan te gaan! Ons doel is om jou de basis mee te geven van het aanschaffen van Bitcoin en het veilig te beheren. We staan klaar om je te begeleiden op deze reis.
+              </p>
+            </div>
+          ) : (
+            // Toon aanmeldproces stappen wanneer nog niet goedgekeurd
             <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Jouw Aanmeldproces</h3>
               <SignupProcessFlow 
