@@ -795,15 +795,19 @@ export default function UserDashboard() {
               </div>
             )} */}
             {/* Appointments tab - tijdelijk verborgen */}
-            {/* {activeTab === 'appointments' && <AppointmentsTab 
-              appointments={appointments} 
-              setAppointments={setAppointments}
-              onBookAppointment={() => setShowAppointmentPopup(true)}
-              isImpersonating={isImpersonating}
-              impersonatedUser={impersonatedUser}
-              accountApproved={accountApproved}
-              firstAppointmentCompleted={firstAppointmentCompleted}
-            />} */} */}
+            {/* 
+            {activeTab === 'appointments' && (
+              <AppointmentsTab 
+                appointments={appointments} 
+                setAppointments={setAppointments}
+                onBookAppointment={() => setShowAppointmentPopup(true)}
+                isImpersonating={isImpersonating}
+                impersonatedUser={impersonatedUser}
+                accountApproved={accountApproved}
+                firstAppointmentCompleted={firstAppointmentCompleted}
+              />
+            )}
+            */}
             {activeTab === 'helpdesk' && (
               <Helpdesk 
                 onMessageRead={async () => {
