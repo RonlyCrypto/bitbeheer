@@ -438,9 +438,6 @@ export default function SoonOnlinePage() {
                       Annuleren
                     </button>
                   </div>
-                  <div class="text-xs text-gray-500 text-center">
-                    <p>Admin: admin123 | Test: test123</p>
-                  </div>
                 </form>
               </div>
             `;
