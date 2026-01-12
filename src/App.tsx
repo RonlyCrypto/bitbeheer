@@ -28,11 +28,6 @@ import SystemStatusDebug from './components/SystemStatusDebug';
 import MobileBottomNav from './components/MobileBottomNav';
 import { initVisitorTracking } from './utils/visitorTracking';
 import { initBitcoinPriceTracking } from './lib/initPriceTracking';
-import { APP_VERSION } from './config/appVersion';
-
-// Import simple versions if needed
-import AdminDashboardSimple from './components/AdminDashboardSimple';
-import UserDashboardSimple from './components/UserDashboardSimple';
 
 function AppContent() {
   const { showWelcomePopup, setShowWelcomePopup, user } = useSupabaseAuth();
@@ -49,17 +44,17 @@ function AppContent() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100" style={{ backgroundColor: '#f9fafb' }}>
       <Header />
 
-          {/* Global Impersonation Banner - Show on all routes when impersonating (only in complex version) */}
-          {APP_VERSION === 'complex' && <ImpersonationBanner />}
+          {/* Global Impersonation Banner - Show on all routes when impersonating */}
+          <ImpersonationBanner />
           
-          {/* System Status Debug - Only in complex version */}
-          {APP_VERSION === 'complex' && <SystemStatusDebug />}
+          {/* System Status Debug */}
+          <SystemStatusDebug />
 
           <Routes>
                 {/* Root route: show dashboard if logged in, otherwise show front page */}
                 <Route 
                   path="/" 
-                  element={user ? (APP_VERSION === 'simple' ? <UserDashboardSimple /> : <UserDashboard />) : <FrontPage />}
+                  element={user ? <UserDashboard /> : <FrontPage />}
                 />
                 {/* Dedicated front page route - accessible even when logged in */}
                 <Route path="/home" element={<FrontPage />} />
@@ -68,7 +63,7 @@ function AppContent() {
                   path="/admin" 
                   element={
                     <ProtectedRoute>
-                      {APP_VERSION === 'simple' ? <AdminDashboardSimple /> : <AdminDashboard />}
+                      <AdminDashboard />
                     </ProtectedRoute>
                   } 
                 />
@@ -108,13 +103,10 @@ function AppContent() {
                           path="/user-dashboard" 
                           element={<UserDashboard />}
                         />
-                        {/* Database Test - alleen in complexe versie */}
-                        {APP_VERSION === 'complex' && (
-                          <Route 
-                            path="/database-test" 
-                            element={<DatabaseTest />}
-                          />
-                        )}
+                        <Route 
+                          path="/database-test" 
+                          element={<DatabaseTest />}
+                        />
                         <Route 
                           path="/verify-email" 
                           element={<VerifyEmailPage />}
@@ -158,21 +150,6 @@ function AppContent() {
 }
 
 function App() {
-  // Simple version: fewer providers
-  if (APP_VERSION === 'simple') {
-    return (
-      <ThemeProvider>
-        <SupabaseAuthProvider>
-          <CurrencyProvider>
-            <Router>
-              <AppContent />
-            </Router>
-          </CurrencyProvider>
-        </SupabaseAuthProvider>
-      </ThemeProvider>
-    );
-  }
-
   // Complex version: all providers
   return (
     <ThemeProvider>
