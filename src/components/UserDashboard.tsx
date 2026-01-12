@@ -22,7 +22,11 @@ import {
   Video,
   BookOpen,
   Copy,
-  CheckCircle2
+  CheckCircle2,
+  AlertTriangle,
+  ArrowRight,
+  MessageSquare,
+  HelpCircle
 } from 'lucide-react';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -798,13 +802,13 @@ export default function UserDashboard() {
             {/* 
             {activeTab === 'appointments' && (
               <AppointmentsTab 
-                appointments={appointments} 
-                setAppointments={setAppointments}
-                onBookAppointment={() => setShowAppointmentPopup(true)}
-                isImpersonating={isImpersonating}
-                impersonatedUser={impersonatedUser}
-                accountApproved={accountApproved}
-                firstAppointmentCompleted={firstAppointmentCompleted}
+              appointments={appointments} 
+              setAppointments={setAppointments}
+              onBookAppointment={() => setShowAppointmentPopup(true)}
+              isImpersonating={isImpersonating}
+              impersonatedUser={impersonatedUser}
+              accountApproved={accountApproved}
+              firstAppointmentCompleted={firstAppointmentCompleted}
               />
             )}
             */}
@@ -1817,93 +1821,17 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 </button>
               </div>
               
-              {/* Portfolio Summary */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white rounded-lg p-4 border border-blue-100">
-                  <div className="text-sm text-gray-600 mb-1">Wallet Waarde</div>
-                  <div className="text-2xl font-bold text-gray-900">
-                    ${((walletData.balance || 0) * bitcoinPrice).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {walletData.balance?.toFixed(8) || '0.00000000'} BTC
-                  </div>
-                </div>
-                
+              {/* Portfolio Summary - Vereenvoudigd: alleen BTC */}
                 <div className="bg-white rounded-lg p-4 border border-blue-100">
                   <div className="text-sm text-gray-600 mb-1">Totaal BTC</div>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {walletData.balance?.toFixed(4) || '0.0000'}
+                <div className="text-3xl font-bold text-gray-900 mb-2">
+                  {walletData.balance?.toFixed(4) || '0.0000'} BTC
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">
+                <div className="text-xs text-gray-500">
                     {walletData.transaction_count || 0} transacties
                   </div>
                 </div>
-                
-                <div className="bg-white rounded-lg p-4 border border-blue-100">
-                  <div className="text-sm text-gray-600 mb-2">Laatste Transactie</div>
-                  {(() => {
-                    // Use the first (most recent) transaction from walletTransactions array
-                    const lastTx = walletTransactions && walletTransactions.length > 0 ? walletTransactions[0] : null;
-                    
-                    if (!lastTx) {
-                      return <div className="text-xs text-gray-500 break-words">Geen transacties</div>;
-                    }
-
-                    let txDate: Date | null = null;
-                    let txTime: string | null = null;
-                    let txHash: string | null = null;
-
-                    try {
-                      // lastTx.time is a Unix timestamp in seconds
-                      if (lastTx.time) {
-                        txDate = new Date(lastTx.time * 1000);
-                        if (!isNaN(txDate.getTime())) {
-                          txTime = txDate.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
-                        }
-                        txHash = lastTx.hash || null;
-                      }
-                    } catch (e) {
-                      console.error('Error parsing transaction time:', e);
-                    }
-
-                    if (!txDate || isNaN(txDate.getTime())) {
-                      return <div className="text-xs text-gray-500 break-words">Geen transacties</div>;
-                    }
-
-                    return (
-                      <>
-                        <div className="text-sm font-semibold text-gray-900 mb-1">
-                          {txDate.toLocaleDateString('nl-NL', { 
-                            day: '2-digit', 
-                            month: '2-digit', 
-                            year: 'numeric' 
-                          })}
                         </div>
-                        {txTime && (
-                          <div className="text-xs text-gray-500 mb-2">
-                            {txTime}
-                          </div>
-                        )}
-                        {txHash && (
-                          <div className="text-xs text-gray-500 mb-2 font-mono">
-                            {txHash.length > 16 ? `${txHash.slice(0, 8)}...${txHash.slice(-8)}` : txHash}
-                          </div>
-                        )}
-                        {onNavigateToPortfolio && (
-                          <button
-                            onClick={() => onNavigateToPortfolio()}
-                            className="w-full mt-2 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                            Naar Portfolio
-                          </button>
-                        )}
-                      </>
-                    );
-                  })()}
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       )}
@@ -2016,113 +1944,274 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         </div>
       </div>
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          {/* Aanmeldproces Stappen of Welkomsttekst */}
-          {accountApproved && (firstAppointmentCompleted || hasApprovedOneOnOne) ? (
-            // Welkomsttekst wanneer account is goedgekeurd en gesprek is voltooid
-            <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl shadow-lg p-6 mb-6 border border-orange-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Welkom! 🎉</h3>
-              <p className="text-gray-700 leading-relaxed">
-                We vinden het geweldig om dit avontuur met jou aan te gaan! Ons doel is om jou de basis mee te geven van het aanschaffen van Bitcoin en het veilig te beheren. We staan klaar om je te begeleiden op deze reis.
-              </p>
-            </div>
-          ) : (
-            // Toon aanmeldproces stappen wanneer nog niet goedgekeurd
-            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Jouw Aanmeldproces</h3>
-              <SignupProcessFlow 
-                user={{
-                  email_verified: emailVerified,
-                  first_appointment_completed: firstAppointmentCompleted,
-                  account_approved: accountApproved,
-                  created_at: user?.created_at,
-                  email: user?.email
-                }}
-                showLegend={false}
-                accordionMode={true}
-                simpleMode={true}
-                hasApprovedOneOnOne={hasApprovedOneOnOne}
-              />
-            </div>
-          )}
-
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recente Doelen</h3>
+      {/* Bitcoin Veiligheidscheck - Vervangt aanmeldproces na goedkeuring */}
+      {accountApproved && (firstAppointmentCompleted || hasApprovedOneOnOne) ? (
+        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">🔐 Jouw Bitcoin Veiligheidscheck</h3>
           <div className="space-y-3">
-            {goals && goals.length > 0 ? (
-              goals.slice(0, 3).map((goal: Goal) => (
-                <div key={goal.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-gray-900">{goal.title}</p>
-                    <p className="text-sm text-gray-600">{goal.category}</p>
+            {/* Stap 1: Account aangemaakt */}
+            <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="font-medium text-gray-900">Account aangemaakt</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900">
-                      ${goal.currentAmount.toLocaleString('en-US')} / ${goal.targetAmount.toLocaleString('en-US')}
-                    </p>
-                    <div className="w-20 bg-gray-200 rounded-full h-2 mt-1">
-                      <div 
-                        className="bg-orange-500 h-2 rounded-full" 
-                        style={{ width: `${(goal.currentAmount / goal.targetAmount) * 100}%` }}
-                      ></div>
+              <button className="text-sm text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1">
+                Toevoegen <ArrowRight className="w-4 h-4" />
+              </button>
                     </div>
+            
+            {/* Stap 2: Wallet toevoegen */}
+            {hasWallet ? (
+              <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">Wallet toegevoegd</p>
                   </div>
                 </div>
-              ))
             ) : (
-              <p className="text-sm text-gray-500">Geen doelen ingesteld</p>
-            )}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Aankomende Afspraken</h3>
-          <div className="space-y-3">
-            {userAppointments.filter((apt: any) => {
-              if (apt.status !== 'pending' && apt.status !== 'confirmed') return false;
-              // Combine date and time to check if appointment is in the future
-              const appointmentDateTime = new Date(`${apt.date}T${apt.end_time || apt.start_time || '23:59:59'}`);
-              const now = new Date();
-              return appointmentDateTime >= now;
-            }).slice(0, 3).map((appointment: any) => (
-              <div key={appointment.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className={`p-2 rounded-lg ${
-                  appointment.status === 'confirmed' ? 'bg-green-100' : 'bg-orange-100'
-                }`}>
-                  <Calendar className={`w-4 h-4 ${
-                    appointment.status === 'confirmed' ? 'text-green-600' : 'text-orange-600'
-                  }`} />
-                </div>
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="w-5 h-5 border-2 border-gray-400 rounded-full flex-shrink-0"></div>
                 <div className="flex-1">
-                  <p className="font-medium text-gray-900">Eerste Afspraak</p>
-                  <p className="text-sm text-gray-600">
-                    {new Date(appointment.date).toLocaleDateString('nl-NL', { 
-                      weekday: 'short', 
-                      day: 'numeric', 
-                      month: 'short' 
-                    })} om {appointment.start_time}
-                  </p>
-                </div>
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  appointment.status === 'confirmed' 
-                    ? 'bg-green-100 text-green-800' 
-                    : appointment.status === 'pending'
-                    ? 'bg-orange-100 text-orange-800'
-                    : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {appointment.status === 'confirmed' ? 'Bevestigd' : appointment.status === 'pending' ? 'In Afwachting' : appointment.status}
-                </span>
-              </div>
-            ))}
-            {userAppointments.filter((apt: any) => 
-              (apt.status === 'pending' || apt.status === 'confirmed') && new Date(apt.date) >= new Date()
-            ).length === 0 && (
-              <p className="text-gray-500 text-center py-4">Geen aankomende afspraken</p>
-            )}
+                  <p className="font-medium text-gray-900">Wallet toevoegen</p>
           </div>
+                <button 
+                  onClick={() => setShowWalletForm(true)}
+                  className="text-sm text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1"
+                >
+                  Toevoegen <ArrowRight className="w-4 h-4" />
+                </button>
+        </div>
+            )}
+            
+            {/* Stap 3: Seed phrase veilig opgeslagen */}
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="w-5 h-5 border-2 border-gray-400 rounded-full flex-shrink-0"></div>
+                <div className="flex-1">
+                <p className="font-medium text-gray-900">Seed phrase veilig opgeslagen</p>
+                </div>
+              <button className="text-sm text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1">
+                Uitleg <ArrowRight className="w-4 h-4" />
+              </button>
+              </div>
+            
+            {/* Stap 4: Eerste aankoop gedaan */}
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="w-5 h-5 border-2 border-gray-400 rounded-full flex-shrink-0"></div>
+              <div className="flex-1">
+                <p className="font-medium text-gray-900">Eerste aankoop gedaan</p>
+          </div>
+              <button className="text-sm text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1">
+                Start <ArrowRight className="w-4 h-4" />
+              </button>
+      </div>
+
+            {/* Stap 5: Bitcoin verplaatst naar eigen wallet */}
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="w-5 h-5 border-2 border-gray-400 rounded-full flex-shrink-0"></div>
+              <div className="flex-1">
+                <p className="font-medium text-gray-900">Bitcoin verplaatst naar eigen wallet</p>
+    </div>
+              <button className="text-sm text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1">
+                Uitleg <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
+
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Uitleg nodig?</a>
+          <button
+            onClick={() => {
+                // Navigate to helpdesk
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'helpdesk' }));
+                }
+              }}
+              className="w-full mt-3 bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <HelpCircle className="w-5 h-5" />
+              Hulp nodig? Stel je vraag
+          </button>
+              </div>
+            </div>
+      ) : (
+        // Toon aanmeldproces stappen wanneer nog niet goedgekeurd
+        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Jouw Aanmeldproces</h3>
+          <SignupProcessFlow 
+            user={{
+              email_verified: emailVerified,
+              first_appointment_completed: firstAppointmentCompleted,
+              account_approved: accountApproved,
+              created_at: user?.created_at,
+              email: user?.email
+            }}
+            showLegend={false}
+            accordionMode={true}
+            simpleMode={true}
+            hasApprovedOneOnOne={hasApprovedOneOnOne}
+          />
+        </div>
+      )}
+
+      {/* Custody Status - Toon alleen als account goedgekeurd is */}
+      {(accountApproved || hasApprovedOneOnOne) && (
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">🔐 Custody-status</h3>
+          <div className="space-y-3">
+            {hasWallet && walletData && walletData.balance > 0 ? (
+              <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg border-2 border-green-200">
+                <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="font-semibold text-green-900">Bitcoin staat in eigen wallet</p>
+                  <p className="text-sm text-green-700">Veilig: Zelf in eigen handen</p>
+                </div>
+                </div>
+            ) : (
+              <div className="flex items-center gap-3 p-4 bg-red-50 rounded-lg border-2 border-red-200">
+                <X className="w-6 h-6 text-red-600 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="font-semibold text-red-900">Bitcoin staat nog op exchange</p>
+                  <p className="text-sm text-red-700">Risico: Gecontroleerd door bedrijf</p>
+                </div>
+                </div>
+            )}
+                  </div>
+                </div>
+              )}
+
+      {/* Beginnersdoelen */}
+      {(accountApproved || hasApprovedOneOnOne) && (
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Beginnersdoelen</h3>
+            <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Je klas over &gt;</a>
+            </div>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                <span className="text-sm font-semibold text-orange-600">1</span>
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-gray-900">Koop je eerste €100 Bitcoin</p>
+              </div>
+              <span className="text-sm text-gray-500">0/4</span>
+              </div>
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                <span className="text-sm font-semibold text-orange-600">2</span>
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-gray-900">Seed phrase correct noteren</p>
+              </div>
+              <span className="text-sm text-gray-500">0/4</span>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                <span className="text-sm font-semibold text-orange-600">3</span>
+          </div>
+              <div className="flex-1">
+                <p className="font-medium text-gray-900">Bitcoin veilig verplaatsen</p>
+        </div>
+              <span className="text-sm text-gray-500">0/4</span>
+                  </div>
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                <span className="text-sm font-semibold text-orange-600">4</span>
+                  </div>
+              <div className="flex-1">
+                <p className="font-medium text-gray-900">Bekijk veiligheidsvideo</p>
+                  </div>
+              <span className="text-sm text-gray-500">0/4</span>
+                </div>
+          </div>
+        </div>
+      )}
+
+      {/* Leer & Waarschuwingen */}
+      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Leer & Waarschuwingen</h3>
+          <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Vragen Beantwoord &gt;</a>
+                </div>
+                
+        <div className="mb-6">
+          <h4 className="font-semibold text-gray-900 mb-3">⚠️ Veelgemaakte Fouten</h4>
+                <div className="space-y-2">
+            <div className="flex items-start gap-2">
+              <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-gray-700">Koop nooit Bitcoin via DM's</p>
+                  </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-gray-700">Deel nooit je seed phrase</p>
+                  </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-gray-700">Laat Bitcoin niet langdurig op exchanges</p>
+                  </div>
+                    </div>
+          <button className="mt-4 w-full bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+            Koop een Ledger
+          </button>
+      </div>
+
+        <div className="pt-6 border-t border-gray-200">
+          <h4 className="font-semibold text-gray-900 mb-2">📘 Tip van vandaag</h4>
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-3">
+            <p className="font-semibold text-orange-900 mb-2">Niet je keys = niet je Bitcoin</p>
+            <p className="text-sm text-orange-800">
+              Gebruik altijd alleen je eigen wallet om zeker te weten dat jij je Bitcoin bezit.
+            </p>
+                  </div>
+          <button className="w-full bg-orange-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-700 transition-colors">
+            Start met Coinbase
+          </button>
+                  </div>
+      </div>
+
+      {/* Hulp altijd zichtbaar */}
+      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Hulp nodig?</h3>
+        <p className="text-gray-700 mb-4">
+          We staan voor je klaar bij vragen of twijfels. Neem contact op en we helpen je verder.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <button 
+            onClick={() => onBookAppointment && onBookAppointment()}
+            className="bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
+          >
+            <Calendar className="w-5 h-5" />
+            Plan een gesprek
+          </button>
+          <button 
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'helpdesk' }));
+              }
+            }}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+          >
+            <MessageSquare className="w-5 h-5" />
+            Stel je vraag
+          </button>
+                  </div>
+                  </div>
+
+      {/* BTC Balance - Vereenvoudigd (alleen BTC) */}
+      {hasWallet && walletData && (
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Jouw Bitcoin</h3>
+            <button className="text-sm text-gray-600 hover:text-gray-800">Bijeen ▾</button>
+                </div>
+          <div className="text-4xl font-bold text-gray-900 mb-2">
+            {walletData.balance?.toFixed(4) || '0.0000'} BTC
+          </div>
+          <p className="text-sm text-gray-500">
+            {walletData.transaction_count || 0} transacties
+          </p>
+        </div>
+      )}
 
       {/* Coinbase and Ledger Blocks */}
       <ReferralBlocks />
