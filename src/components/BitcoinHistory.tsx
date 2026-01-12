@@ -131,7 +131,7 @@ const bitcoinCycles = [
     phases: {
       accumulation: { start: '2009-01-03', end: '2012-11-28', priceRange: '$0.0008 → $2', type: 'accumulation' },
       bullRun: { start: '2012-11-28', end: '2013-12-17', priceRange: '$2 → $1,150', type: 'bullRun' },
-      bearMarket: { start: '2013-12-18', end: '2015-01-14', priceRange: '$1,150 → $150', type: 'bearMarket' }
+      bearMarket: { start: '2013-12-17', end: '2015-01-14', priceRange: '$1,150 → $150', type: 'bearMarket' }
     }
   },
   {

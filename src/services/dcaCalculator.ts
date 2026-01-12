@@ -25,8 +25,8 @@ export function calculateDCA(
   const cyclePhases = [
     // Cycle 1: 2009-2015 (Corrected dates based on actual price movements)
     { start: '2009-01-03', end: '2011-06-01', type: 'accumulation' as const }, // $0.0008 → $2
-    { start: '2011-06-01', end: '2013-11-30', type: 'bullRun' as const },     // $2 → $1,150
-    { start: '2013-12-01', end: '2015-01-01', type: 'bearMarket' as const }, // $1,150 → $150
+    { start: '2011-06-01', end: '2013-12-17', type: 'bullRun' as const },     // $2 → $1,150 (top op 17 dec 2013)
+    { start: '2013-12-17', end: '2015-01-01', type: 'bearMarket' as const }, // $1,150 → $150 (bear market start vanaf top)
     
     // Cycle 2: 2015-2018 (Corrected dates)
     { start: '2015-01-01', end: '2016-07-01', type: 'accumulation' as const }, // $150 → $400

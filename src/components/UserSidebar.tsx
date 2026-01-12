@@ -51,9 +51,9 @@ export default function UserSidebar({
   const menuItems: MenuItem[] = [
     { id: 'overview', label: 'Overzicht', icon: BarChart3, alwaysEnabled: true },
     { id: 'portfolio', label: 'Portfolio', icon: PieChart, alwaysEnabled: false },
-    { id: 'appointments', label: 'Afspraken', icon: Calendar, alwaysEnabled: true },
+    // { id: 'appointments', label: 'Afspraken', icon: Calendar, alwaysEnabled: true }, // Verborgen - tijdelijk niet gebruikt
     { id: 'helpdesk', label: 'Helpdesk', icon: Mail, badge: unreadChatCount > 0 ? unreadChatCount : undefined, alwaysEnabled: false },
-    { id: 'market-status', label: 'Markt Status', icon: TrendingUp, alwaysEnabled: true },
+    // { id: 'market-status', label: 'Markt Status', icon: TrendingUp, alwaysEnabled: true }, // Verborgen - tijdelijk niet gebruikt
   ];
 
   return (
