@@ -1261,6 +1261,7 @@ export default function PriceChart({
             </div>
           );
         })()}
+      </div>
       
 
       {/* Market Phase Navigator - Always visible under chart */}
