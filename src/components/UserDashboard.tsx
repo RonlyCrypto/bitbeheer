@@ -1920,8 +1920,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               </div>
 
               {/* Wallet header met link naar portfolio */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-start gap-3 flex-1">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3 flex-1">
                   <div className="bg-blue-100 p-2 rounded-lg">
                     <Wallet className="w-5 h-5 text-blue-600" />
             </div>
@@ -1946,6 +1946,12 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 </button>
               </div>
                   </div>
+                  {/* BTC Balance in het midden */}
+                  <div className="text-center mx-4">
+                    <span className="text-sm font-semibold text-gray-700">
+                      {walletData.balance?.toFixed(4) || '0.0000'} BTC
+                    </span>
+                  </div>
                   </div>
                 <button
                   onClick={() => onNavigateToPortfolio?.()}
@@ -1954,18 +1960,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   Portfolio <ArrowRight className="w-4 h-4" />
                 </button>
                 </div>
-                
-              {/* Bitcoin balance */}
-              <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                <h4 className="text-xs font-medium text-gray-600 mb-1">Mijn Bitcoin</h4>
-                <div className="text-2xl font-bold text-gray-900 mb-1">
-                  {walletData.balance?.toFixed(4) || '0.0000'} BTC
-                  </div>
-                <p className="text-xs text-gray-500">
-                    {walletData.transaction_count || 0} transacties
-                </p>
-                </div>
-                
+              
               {/* Laatste transacties */}
               {walletTransactions.length > 0 && (
                 <div>
@@ -1984,7 +1979,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                             <div className={`w-2 h-2 rounded-full ${isIncoming ? 'bg-green-500' : 'bg-red-500'}`}></div>
                             <span className="text-xs font-medium text-gray-900">{btcAmount.toFixed(4)} BTC</span>
                             <span className="text-xs text-gray-500">({txType})</span>
-                        </div>
+                  </div>
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-gray-500">{formattedDate}</span>
                             {tx.hash && (
@@ -2015,16 +2010,16 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           )}
         </div>
       )}
-            </div>
-            </div>
-
+                  </div>
+                </div>
+                
       {/* Leer & Waarschuwingen en Beginnersdoelen - 1 rij (2/3 1/3) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Beginnersdoelen - 2/3 breedte */}
         {(accountApproved || hasApprovedOneOnOne) && (
           <div className="lg:col-span-2">
             <BeginnersGoals walletData={walletData} walletTransactions={walletTransactions} onBookAppointment={onBookAppointment} />
-          </div>
+                  </div>
         )}
         
         {/* Leer & Waarschuwingen - 1/3 breedte */}
@@ -2049,9 +2044,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-gray-700">Laat BTC niet lang op exchanges</p>
           </div>
-        </div>
-      </div>
-
+                  </div>
+                </div>
+                
           <div className="pt-4 border-t border-gray-200">
             <h4 className="font-semibold text-gray-900 mb-2">💡 Tip van vandaag</h4>
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-3">
@@ -2609,7 +2604,7 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
 
   const overallProgress = calculateOverallProgress();
 
-  return (
+                    return (
     <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-gray-900">🎯 Jouw Bitcoin Mijlpalen</h3>
@@ -2646,9 +2641,9 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                   </span>
                 </div>
               );
-            })}
-          </div>
-        </div>
+                          })}
+                        </div>
+                          </div>
 
         {/* Milestone Status List */}
         <div className="space-y-2 mb-4">
@@ -2674,7 +2669,7 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                   ) : (
                     <span className="text-gray-400">🔒</span>
                   )}
-                </div>
+                          </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-semibold text-gray-900">{milestone.label}</span>
@@ -2697,7 +2692,7 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
               </div>
             );
           })}
-        </div>
+                </div>
 
         {/* Next Milestone Info */}
         {milestoneProgress.next && (
@@ -2705,7 +2700,7 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
             <p className="text-sm text-gray-700">
               Nog <span className="font-semibold text-orange-600">{Math.max(0, milestoneProgress.next - currentBalance).toFixed(4)} BTC</span> tot je <span className="font-semibold">{milestoneProgress.next} BTC</span> mijlpaal
             </p>
-          </div>
+              </div>
         )}
         {!milestoneProgress.next && (
           <div className="text-center pt-3 border-t border-green-200 bg-green-50 rounded-lg p-3">
@@ -2715,7 +2710,7 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
             <p className="text-xs text-green-600 mt-1">
               Je behoort tot een extreem kleine groep wereldwijd
             </p>
-          </div>
+            </div>
         )}
       </div>
 
@@ -2805,8 +2800,8 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
               }
             }
           }
-          
-          return (
+              
+              return (
             <div key={goal.id}>
               <div 
                 onClick={() => goal.type === 'monthly' && handleMonthlyGoalClick(goal)}
@@ -2831,7 +2826,7 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                     </span>
                   )}
                 </div>
-                <div className="flex-1">
+                  <div className="flex-1">
                   <p className={`font-medium ${
                     isCompleted || monthlyCompleted ? 'text-green-900' : 'text-gray-900'
                   }`}>
@@ -2855,20 +2850,20 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                         <span className="flex items-center gap-1">
                           <CheckCircle className="w-3 h-3" />
                           Goed gedaan! Je hebt deze maand gestort 🎉
-                        </span>
+                      </span>
                       ) : (
                         'Je hebt deze maand nog niet gestort'
                       )}
                     </p>
                   )}
-                </div>
+                    </div>
                 {(isCompleted || monthlyCompleted) && (
                   <div className="flex items-center gap-1">
                     <PartyPopper className="w-4 h-4 text-green-600" />
                     <Sparkles className="w-4 h-4 text-green-600" />
-                  </div>
+                    </div>
                 )}
-              </div>
+                    </div>
               {/* Progress bar for each goal */}
               {!isCompleted && !monthlyCompleted && (
                 <div className="mt-1 ml-11">
@@ -2878,28 +2873,28 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                       style={{ width: `${Math.max(0, Math.min(100, goalProgress))}%` }}
                     ></div>
                   </div>
-                </div>
+                    </div>
               )}
-            </div>
-          );
-        })}
+                </div>
+              );
+            })}
           </div>
         </>
       )}
       
       {/* Subtle CTA */}
       <div className="mt-6 pt-4 border-t border-gray-200">
-        <button
+            <button
           onClick={() => setShowAddGoalPopup(true)}
           className="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-400 transition-colors flex items-center justify-center gap-2"
-        >
+            >
           <Plus className="w-4 h-4" />
           Voeg een doel toe
-        </button>
+            </button>
         <p className="text-xs text-gray-500 text-center mt-3">
           Of <button onClick={() => onBookAppointment && onBookAppointment()} className="text-orange-600 hover:text-orange-700 underline">plan een begeleid moment</button> om je volgende stap te bespreken
         </p>
-      </div>
+        </div>
 
       {/* Monthly Goal Detail Popup */}
       {showMonthlyGoalPopup && selectedMonthlyGoal && (() => {
@@ -2917,7 +2912,7 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                 >
                   <X className="w-6 h-6" />
                 </button>
-              </div>
+            </div>
 
               {/* Calendar Overview */}
               <div className="mb-6">
@@ -2967,40 +2962,40 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                         {month.totalAmount > 0 && (
                           <div className="text-xs mt-1 font-medium">
                             {month.totalAmount.toFixed(4)} {selectedMonthlyGoal.monthlyCurrency === 'btc' ? 'BTC' : '€'}
-                          </div>
+            </div>
                         )}
-                      </div>
+          </div>
                     );
                   })}
-                </div>
+        </div>
 
                 {/* Legend */}
                 <div className="mt-4 flex flex-wrap gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-green-100 border-2 border-green-500 rounded"></div>
                     <span>Voltooid</span>
-                  </div>
+            </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-red-100 border-2 border-red-500 rounded"></div>
                     <span>Gemist</span>
-                  </div>
+            </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-orange-100 border-2 border-orange-500 rounded"></div>
                     <span>Goedgemaakt</span>
-                  </div>
+          </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-blue-100 border-2 border-blue-500 rounded"></div>
                     <span>Extra storting</span>
-                  </div>
+        </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-gray-100 border-2 border-gray-300 rounded"></div>
                     <span>Nog te doen</span>
-                  </div>
-                </div>
-              </div>
+            </div>
+          </div>
+        </div>
 
               {/* Transaction Details */}
-              <div>
+            <div>
                 <h4 className="text-lg font-semibold text-gray-900 mb-4">Transactie overzicht</h4>
                 <div className="space-y-3">
                   {analysis.months
@@ -3021,13 +3016,13 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                             {month.status === 'made_up' && '↩ Goedgemaakt'}
                             {month.status === 'extra' && '⭐ Extra storting'}
                           </span>
-                        </div>
-                        
+      </div>
+
                         {month.status === 'extra' && (
                           <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
                             🎉 Goed van je dat je extra hebt gestort!
-                          </div>
-                        )}
+            </div>
+          )}
 
                         <div className="space-y-2">
                           {month.transactions.map((tx, idx) => (
@@ -3039,15 +3034,15 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                                   month.status === 'extra' ? 'bg-blue-500' :
                                   'bg-gray-400'
                                 }`}></div>
-                                <div>
+                  <div>
                                   <div className="font-medium text-gray-900">
                                     {tx.amount.toFixed(4)} {selectedMonthlyGoal.monthlyCurrency === 'btc' ? 'BTC' : '€'}
-                                  </div>
+                  </div>
                                   <div className="text-xs text-gray-500">
                                     {tx.date.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                  </div>
-                                </div>
-                              </div>
+                    </div>
+                  </div>
+                </div>
                               <a
                                 href={`https://blockstream.info/tx/${tx.txid || tx.hash || ''}`}
                                 target="_blank"
@@ -3056,25 +3051,25 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                               >
                                 <ExternalLink className="w-4 h-4" />
                               </a>
-                            </div>
+          </div>
                           ))}
-                        </div>
-                        
+        </div>
+
                         <div className="mt-3 pt-3 border-t border-gray-200">
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-600">Totaal deze maand:</span>
                             <span className="font-semibold text-gray-900">
                               {month.totalAmount.toFixed(4)} {selectedMonthlyGoal.monthlyCurrency === 'btc' ? 'BTC' : '€'}
                             </span>
-                          </div>
+                </div>
                           {month.totalAmount > month.targetAmount && (
                             <div className="mt-1 text-xs text-blue-600">
                               +{(month.totalAmount - month.targetAmount).toFixed(4)} {selectedMonthlyGoal.monthlyCurrency === 'btc' ? 'BTC' : '€'} extra
-                            </div>
+                </div>
                           )}
                         </div>
-                      </div>
-                    ))}
+              </div>
+            ))}
                   
                   {analysis.months.filter(month => month.transactions.length === 0 && month.status === 'missed').length > 0 && (
                     <div className="border border-red-200 rounded-lg p-4 bg-red-50">
@@ -3085,13 +3080,13 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                           .map((month) => (
                             <div key={month.monthKey} className="text-sm text-red-700">
                               {month.month} - Je kunt deze maand goedmaken met een extra storting
-                            </div>
+          </div>
                           ))}
                       </div>
                     </div>
                   )}
-                </div>
-              </div>
+        </div>
+      </div>
 
               <div className="mt-6 pt-4 border-t border-gray-200">
                 <button
@@ -3102,8 +3097,8 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                 </button>
               </div>
             </div>
-          </div>
-        );
+    </div>
+  );
       })()}
 
       {/* Monthly Goal Detail Popup */}
@@ -3154,14 +3149,14 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                       borderColor = 'border-blue-500';
                       textColor = 'text-blue-900';
                       statusText = '⭐';
-                    } else {
+      } else {
                       bgColor = 'bg-gray-100';
                       borderColor = 'border-gray-300';
                       textColor = 'text-gray-600';
                       statusText = month.isCurrentMonth ? '...' : '';
                     }
 
-                    return (
+  return (
                       <div
                         key={month.monthKey}
                         className={`p-3 rounded-lg border-2 ${bgColor} ${borderColor} ${textColor} text-center`}
@@ -3172,40 +3167,40 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                         {month.totalAmount > 0 && (
                           <div className="text-xs mt-1 font-medium">
                             {month.totalAmount.toFixed(4)} {selectedMonthlyGoal.monthlyCurrency === 'btc' ? 'BTC' : '€'}
-                          </div>
+        </div>
                         )}
                       </div>
                     );
                   })}
-                </div>
+      </div>
 
                 {/* Legend */}
                 <div className="mt-4 flex flex-wrap gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-green-100 border-2 border-green-500 rounded"></div>
                     <span>Voltooid</span>
-                  </div>
+              </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-red-100 border-2 border-red-500 rounded"></div>
                     <span>Gemist</span>
-                  </div>
+            </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-orange-100 border-2 border-orange-500 rounded"></div>
                     <span>Goedgemaakt</span>
-                  </div>
+              </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-blue-100 border-2 border-blue-500 rounded"></div>
                     <span>Extra storting</span>
-                  </div>
+            </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-gray-100 border-2 border-gray-300 rounded"></div>
                     <span>Nog te doen</span>
-                  </div>
-                </div>
               </div>
+            </div>
+        </div>
 
               {/* Transaction Details */}
-              <div>
+                <div>
                 <h4 className="text-lg font-semibold text-gray-900 mb-4">Transactie overzicht</h4>
                 <div className="space-y-3">
                   {analysis.months
@@ -3226,12 +3221,12 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                             {month.status === 'made_up' && '↩ Goedgemaakt'}
                             {month.status === 'extra' && '⭐ Extra storting'}
                           </span>
-                        </div>
+                </div>
                         
                         {month.status === 'extra' && (
                           <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
                             🎉 Goed van je dat je extra hebt gestort!
-                          </div>
+                </div>
                         )}
 
                         <div className="space-y-2">
@@ -3244,15 +3239,15 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                                   month.status === 'extra' ? 'bg-blue-500' :
                                   'bg-gray-400'
                                 }`}></div>
-                                <div>
+                <div>
                                   <div className="font-medium text-gray-900">
                                     {tx.amount.toFixed(4)} {selectedMonthlyGoal.monthlyCurrency === 'btc' ? 'BTC' : '€'}
-                                  </div>
+                </div>
                                   <div className="text-xs text-gray-500">
                                     {tx.date.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                  </div>
-                                </div>
-                              </div>
+                </div>
+              </div>
+                    </div>
                               {tx.txid && (
                                 <a
                                   href={`https://blockstream.info/tx/${tx.txid}`}
@@ -3263,9 +3258,9 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                                   <ExternalLink className="w-4 h-4" />
                                 </a>
                               )}
-                            </div>
+                    </div>
                           ))}
-                        </div>
+                    </div>
                         
                         <div className="mt-3 pt-3 border-t border-gray-200">
                           <div className="flex justify-between text-sm">
@@ -3273,12 +3268,12 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                             <span className="font-semibold text-gray-900">
                               {month.totalAmount.toFixed(4)} {selectedMonthlyGoal.monthlyCurrency === 'btc' ? 'BTC' : '€'}
                             </span>
-                          </div>
+                  </div>
                           {month.totalAmount > month.targetAmount && (
                             <div className="mt-1 text-xs text-blue-600">
                               +{(month.totalAmount - month.targetAmount).toFixed(4)} {selectedMonthlyGoal.monthlyCurrency === 'btc' ? 'BTC' : '€'} extra
-                            </div>
-                          )}
+                </div>
+              )}
                         </div>
                       </div>
                     ))}
@@ -3295,9 +3290,9 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                             </div>
                           ))}
                       </div>
-                    </div>
-                  )}
-                </div>
+            </div>
+          )}
+              </div>
               </div>
 
               <div className="mt-6 pt-4 border-t border-gray-200">
@@ -3353,31 +3348,31 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
               
               {newGoalType === 'save' ? (
                 <>
-                  <div>
+              <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Hoeveel BTC wil je sparen?
                     </label>
-                    <input
-                      type="number"
+                <input
+                  type="number"
                       step="0.0001"
                       value={newGoalAmount}
                       onChange={(e) => setNewGoalAmount(e.target.value)}
                       placeholder="0.01"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                  </div>
-                  <div>
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+              </div>
+              <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Binnen hoeveel tijd? (bijv. "3 maanden")
                     </label>
-                    <input
+                <input
                       type="text"
                       value={newGoalTimeframe}
                       onChange={(e) => setNewGoalTimeframe(e.target.value)}
                       placeholder="3 maanden"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                  </div>
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+              </div>
                 </>
               ) : (
                 <>
@@ -3386,7 +3381,7 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                       Kies valuta
                     </label>
                     <div className="flex gap-2">
-                      <button
+            <button
                         onClick={() => setNewGoalMonthlyCurrency('btc')}
                         className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           newGoalMonthlyCurrency === 'btc'
@@ -3395,8 +3390,8 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                         }`}
                       >
                         BTC
-                      </button>
-                      <button
+            </button>
+            <button
                         onClick={() => setNewGoalMonthlyCurrency('eur')}
                         className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           newGoalMonthlyCurrency === 'eur'
@@ -3405,9 +3400,9 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                         }`}
                       >
                         Euro
-                      </button>
-                    </div>
-                  </div>
+            </button>
+          </div>
+        </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       {newGoalMonthlyCurrency === 'btc' ? 'Hoeveel BTC per maand?' : 'Hoeveel Euro per maand?'}
@@ -3437,8 +3432,8 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                 >
                   Toevoegen
                 </button>
-                <button
-                  onClick={() => {
+                  <button
+                    onClick={() => {
                     setShowAddGoalPopup(false);
                     setNewGoalAmount('');
                     setNewGoalTimeframe('');
@@ -3449,8 +3444,8 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                   className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
                 >
                   Annuleren
-                </button>
-              </div>
+                  </button>
+                </div>
             </div>
           </div>
         </div>
@@ -3519,18 +3514,18 @@ function ReferralBlocksWithHelp({ onBookAppointment }: { onBookAppointment?: () 
   if (loading) {
     return null;
   }
-
-  return (
+            
+            return (
     <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Ledger - 1/2 */}
       <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-6 rounded-xl relative">
         <div className="absolute top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
           Stap 1
-        </div>
+                  </div>
         <div className="flex items-start gap-4">
           <div className="bg-blue-600 p-3 rounded-xl">
             <Shield className="w-8 h-8 text-white" />
-      </div>
+                </div>
           <div className="flex-1">
             <h3 className="text-xl font-bold text-blue-900 mb-3">Ledger Hardware Wallet</h3>
             <p className="text-blue-800 mb-4 leading-relaxed">
@@ -3542,16 +3537,16 @@ function ReferralBlocksWithHelp({ onBookAppointment }: { onBookAppointment?: () 
               <div className="flex items-center gap-2 text-blue-700">
                 <CheckCircle className="w-4 h-4" />
                 <span className="text-sm">Offline opslag van je privésleutels</span>
-              </div>
+                  </div>
               <div className="flex items-center gap-2 text-blue-700">
                 <CheckCircle className="w-4 h-4" />
                 <span className="text-sm">Bescherming tegen hackers en malware</span>
-            </div>
+                  </div>
               <div className="flex items-center gap-2 text-blue-700">
                 <CheckCircle className="w-4 h-4" />
                 <span className="text-sm">Ondersteuning voor 1000+ cryptocurrencies</span>
-              </div>
-            </div>
+                  </div>
+                    </div>
           <button
               onClick={handleLedgerClick}
               disabled={!ledgerLink}
@@ -3560,19 +3555,19 @@ function ReferralBlocksWithHelp({ onBookAppointment }: { onBookAppointment?: () 
               <ExternalLink className="w-4 h-4" />
               Koop een Ledger
             </button>
+                </div>
               </div>
-            </div>
-        </div>
+      </div>
 
       {/* Coinbase - 1/2 */}
       <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 p-6 rounded-xl relative">
         <div className="absolute top-4 right-4 bg-orange-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
           Stap 2
-                </div>
+                  </div>
         <div className="flex items-start gap-4">
           <div className="bg-orange-600 p-3 rounded-xl">
             <TrendingUp className="w-8 h-8 text-white" />
-                </div>
+                  </div>
           <div className="flex-1">
             <h3 className="text-xl font-bold text-orange-900 mb-3">Coinbase Exchange</h3>
             <p className="text-orange-800 mb-4 leading-relaxed">
@@ -3583,16 +3578,16 @@ function ReferralBlocksWithHelp({ onBookAppointment }: { onBookAppointment?: () 
               <div className="flex items-center gap-2 text-orange-700">
                 <CheckCircle className="w-4 h-4" />
                 <span className="text-sm">Gereguleerd en verzekerd</span>
-                    </div>
+                  </div>
               <div className="flex items-center gap-2 text-orange-700">
                 <CheckCircle className="w-4 h-4" />
                 <span className="text-sm">Eenvoudige DCA instellingen</span>
-                    </div>
+                  </div>
               <div className="flex items-center gap-2 text-orange-700">
                 <CheckCircle className="w-4 h-4" />
                 <span className="text-sm">Lage transactiekosten</span>
-                    </div>
-                  </div>
+                </div>
+          </div>
             <button 
               onClick={handleCoinbaseClick}
               disabled={!coinbaseLink}
@@ -3601,7 +3596,7 @@ function ReferralBlocksWithHelp({ onBookAppointment }: { onBookAppointment?: () 
               <ExternalLink className="w-4 h-4" />
               Start met Coinbase
             </button>
-              </div>
+        </div>
               </div>
               </div>
     </div>
