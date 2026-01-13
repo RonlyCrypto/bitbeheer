@@ -1814,7 +1814,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         <div className="lg:col-span-8 space-y-6">
           {/* Bitcoin Veiligheidscheck - Vervangt aanmeldproces na goedkeuring */}
           {accountApproved && (firstAppointmentCompleted || hasApprovedOneOnOne) ? (
-        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 mb-6">
+            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">🔐 Jouw Bitcoin Veiligheidscheck</h3>
           <div className="space-y-3">
             {/* Stap 1: Account aangemaakt */}
