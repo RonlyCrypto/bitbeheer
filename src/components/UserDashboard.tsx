@@ -1999,7 +1999,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 </div>
               );
             })}
-          </div>
+                  </div>
+                </div>
+              )}
                   {walletTransactions.length > 3 && (
             <button
               onClick={() => onNavigateToPortfolio?.()}
@@ -2008,105 +2010,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                       Alle transacties bekijken
             </button>
           )}
-        </div>
-      )}
-        </div>
-      </div>
-
-      {/* RECHTERKOLOM - Custody-status (4 kolommen) - TIJDELIJK UITGESCHAKELD VOOR DEBUGGING */}
-      {/* 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-4 space-y-6">
-          {/* Custody-status */}
-          {(accountApproved || hasApprovedOneOnOne) && (
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">🔐 Custody-status</h3>
-          <div className="space-y-3">
-                {/* Exchange status */}
-                <div className={`p-4 rounded-lg border-2 ${
-                  !hasWallet || !walletData || walletData.balance === 0
-                    ? 'bg-red-50 border-red-200' 
-                    : 'bg-gray-50 border-gray-200'
-                }`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                        !hasWallet || !walletData || walletData.balance === 0
-                          ? 'bg-red-100' 
-                          : 'bg-gray-200'
-                      }`}>
-                        {(!hasWallet || !walletData || walletData.balance === 0) && (
-                          <X className="w-4 h-4 text-red-600" />
-            )}
             </div>
-            <div>
-                        <p className={`font-semibold text-sm ${
-                          !hasWallet || !walletData || walletData.balance === 0
-                            ? 'text-red-900' 
-                            : 'text-gray-600'
-                        }`}>
-                          Bitcoin staat nog op exchange
-                        </p>
-                        <p className={`text-xs ${
-                          !hasWallet || !walletData || walletData.balance === 0
-                            ? 'text-red-700' 
-                            : 'text-gray-500'
-                        }`}>
-                          Risico: Gecontroleerd door bedrijf
-                        </p>
-            </div>
-                    </div>
-                    <div className={`w-5 h-5 rounded-full border-2 ${
-                      !hasWallet || !walletData || walletData.balance === 0
-                        ? 'border-red-400' 
-                        : 'border-gray-300'
-                    }`}></div>
-          </div>
-        </div>
-
-                {/* Eigen wallet status */}
-                <div className={`p-4 rounded-lg border-2 ${
-                  hasWallet && walletData && walletData.balance > 0
-                    ? 'bg-green-50 border-green-200' 
-                    : 'bg-gray-50 border-gray-200'
-                }`}>
-      <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                        hasWallet && walletData && walletData.balance > 0
-                          ? 'bg-green-100' 
-                          : 'bg-gray-200'
-                      }`}>
-                        {hasWallet && walletData && walletData.balance > 0 && (
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                        )}
-            </div>
-            <div>
-                        <p className={`font-semibold text-sm ${
-                          hasWallet && walletData && walletData.balance > 0
-                            ? 'text-green-900' 
-                            : 'text-gray-600'
-                        }`}>
-                          Bitcoin staat in eigen wallet
-                        </p>
-                        <p className={`text-xs ${
-                          hasWallet && walletData && walletData.balance > 0
-                            ? 'text-green-700' 
-                            : 'text-gray-500'
-                        }`}>
-                          Veilig: Zelf in eigen handen
-                      </p>
-            </div>
-          </div>
-                    {hasWallet && walletData && walletData.balance > 0 && (
-                      <CheckCircle className="w-5 h-5 text-green-600" />
           )}
         </div>
-            </div>
-            </div>
-          </div>
-      )}
-        </div> */}
       </div>
 
       {/* Leer & Waarschuwingen, Beginnersdoelen en Custody-status - 1 rij (1/3 1/3 1/3) */}
