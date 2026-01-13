@@ -108,6 +108,26 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
     };
   }).filter(Boolean) as Array<{ date: string; price: number }> : [];
 
+  // Create purchase details with buy/sell information
+  const purchaseDetails = showTransactions ? transactions.map(tx => {
+    if (!tx.time || !tx.price || isNaN(tx.time) || isNaN(tx.price)) {
+      return null;
+    }
+    const isBuy = tx.value > 0;
+    const btcAmount = Math.abs(tx.value) / 100000000;
+    return {
+      date: new Date(tx.time * 1000).toISOString().split('T')[0],
+      amount: isBuy ? btcAmount : -btcAmount, // Negative for sells
+      price: tx.price,
+      btcAcquired: isBuy ? btcAmount : -btcAmount,
+      monthNumber: 0,
+      currentValue: tx.currentValue || 0,
+      isBuy: isBuy,
+      profit: tx.profit || 0,
+      profitPercent: tx.profitPercent || 0
+    };
+  }).filter(Boolean) as any[] : [];
+
   if (showTransactions && transactions.length > 0) {
     console.log(`📊 Purchase Points Summary:`, {
       totalTransactions: transactions.length,

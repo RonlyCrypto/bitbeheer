@@ -530,22 +530,36 @@ export default function PriceChart({
             isVisible: isVisible
           });
 
-          // Draw purchase point with arrow pointing up
+          // Determine if this is a buy or sell based on purchaseDetails
+          const purchaseDetail = purchaseDetails.find(p => p.date === purchase.date);
+          const isBuy = purchaseDetail ? (purchaseDetail.isBuy !== undefined ? purchaseDetail.isBuy : purchaseDetail.amount > 0) : true;
+          const isProfitable = purchaseDetail ? (purchaseDetail.profit > 0) : true;
+          
+          // Color: green for buys/profitable, red for sells/losses
+          const pointColor = isBuy ? (isProfitable ? '#10b981' : '#ef4444') : '#ef4444';
+          
+          // Draw purchase point with arrow
           ctx.beginPath();
           ctx.arc(x, y, 10, 0, 2 * Math.PI);
-          ctx.fillStyle = '#10b981';
+          ctx.fillStyle = pointColor;
           ctx.fill();
           ctx.strokeStyle = '#ffffff';
           ctx.lineWidth = 3;
           ctx.stroke();
           
-          // Draw arrow pointing up from the point
+          // Draw arrow pointing up for buys, down for sells
           ctx.beginPath();
-          ctx.moveTo(x, y - 10);
-          ctx.lineTo(x - 6, y - 20);
-          ctx.lineTo(x + 6, y - 20);
+          if (isBuy) {
+            ctx.moveTo(x, y - 10);
+            ctx.lineTo(x - 6, y - 20);
+            ctx.lineTo(x + 6, y - 20);
+          } else {
+            ctx.moveTo(x, y + 10);
+            ctx.lineTo(x - 6, y + 20);
+            ctx.lineTo(x + 6, y + 20);
+          }
           ctx.closePath();
-          ctx.fillStyle = '#10b981';
+          ctx.fillStyle = pointColor;
           ctx.fill();
           ctx.strokeStyle = '#ffffff';
           ctx.lineWidth = 2;
