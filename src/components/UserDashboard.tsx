@@ -2023,7 +2023,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         {/* Beginnersdoelen - 2/3 breedte */}
         {(accountApproved || hasApprovedOneOnOne) && (
           <div className="lg:col-span-2">
-            <BeginnersGoals walletData={walletData} walletTransactions={walletTransactions} />
+            <BeginnersGoals walletData={walletData} walletTransactions={walletTransactions} onBookAppointment={onBookAppointment} />
           </div>
         )}
         
@@ -2157,37 +2157,94 @@ function BeginnersGoals({ walletData, walletTransactions }: { walletData: any; w
     loadCustomGoals();
   }, [user?.id, currentBalance]);
 
-  // Default goals (only EUR goal, BTC milestones are shown in progress bar)
-  const defaultGoals = [
-    {
-      id: 'buy-100-eur',
-      title: 'Koop €100 BTC',
-      target: 100, // in EUR
-      type: 'eur' as const,
-      completed: false
+  // Default goals - focused on steps toward next milestone
+  const getDefaultGoals = () => {
+    const goals = [];
+    
+    // Add milestone-based goals
+    if (milestoneProgress.next) {
+      if (milestoneProgress.next === 0.01) {
+        goals.push({
+          id: 'step-toward-0.01',
+          title: 'Volgende stap naar 0.01 BTC',
+          description: 'Koop Bitcoin en verplaats naar eigen wallet',
+          type: 'milestone_step' as const,
+          target: milestoneProgress.next,
+          completed: currentBalance >= milestoneProgress.next
+        });
+      } else if (milestoneProgress.next === 0.1) {
+        goals.push({
+          id: 'step-toward-0.1',
+          title: 'Volgende stap naar 0.1 BTC',
+          description: 'Bouw je positie verder uit met regelmatige aankopen',
+          type: 'milestone_step' as const,
+          target: milestoneProgress.next,
+          completed: currentBalance >= milestoneProgress.next
+        });
+      } else if (milestoneProgress.next === 1) {
+        goals.push({
+          id: 'step-toward-1',
+          title: 'Volgende stap naar 1 BTC',
+          description: 'Een volledige Bitcoin - de ultieme mijlpaal',
+          type: 'milestone_step' as const,
+          target: milestoneProgress.next,
+          completed: currentBalance >= milestoneProgress.next
+        });
+      }
     }
-  ];
+    
+    return goals;
+  };
 
-  // Bitcoin milestones for progress bar
+  const defaultGoals = getDefaultGoals();
+
+  // Bitcoin milestones with meaningful descriptions
   const btcMilestones = [
-    { label: '0.01 BTC', value: 0.01 },
-    { label: '0.1 BTC', value: 0.1 },
-    { label: '1 BTC', value: 1 }
+    { 
+      label: '0.01 BTC', 
+      value: 0.01,
+      title: 'Eerste serieuze stap',
+      description: 'Slechts een klein percentage van de wereldbevolking zal ooit 0.01 Bitcoin bezitten. Je hoort nu al bij een kleine groep.',
+      icon: '🟢'
+    },
+    { 
+      label: '0.1 BTC', 
+      value: 0.1,
+      title: 'Elite niveau',
+      description: 'Naar schatting kunnen minder dan 1% van de mensen wereldwijd ooit 0.1 Bitcoin bezitten. Dit wordt gezien als een sterke lange-termijn positie.',
+      icon: '🟠'
+    },
+    { 
+      label: '1 BTC', 
+      value: 1,
+      title: 'Bitcoin volledige eenheid',
+      description: 'Er zijn maar 21 miljoen Bitcoin. Als je 1 BTC bezit, hoor je bij een extreem kleine groep wereldwijd. Dit is voor de meeste mensen onbereikbaar.',
+      icon: '🔒'
+    }
   ];
 
   // Calculate which milestone the user has reached
   const getCurrentMilestone = () => {
-    if (currentBalance >= 1) return { current: 1, next: null, progress: 100 };
-    if (currentBalance >= 0.1) return { current: 0.1, next: 1, progress: (currentBalance / 1) * 100 };
-    if (currentBalance >= 0.01) return { current: 0.01, next: 0.1, progress: (currentBalance / 0.1) * 100 };
-    return { current: 0, next: 0.01, progress: (currentBalance / 0.01) * 100 };
+    if (currentBalance >= 1) return { current: 1, next: null, progress: 100, reached: [0.01, 0.1, 1] };
+    if (currentBalance >= 0.1) return { current: 0.1, next: 1, progress: (currentBalance / 1) * 100, reached: [0.01, 0.1] };
+    if (currentBalance >= 0.01) return { current: 0.01, next: 0.1, progress: (currentBalance / 0.1) * 100, reached: [0.01] };
+    return { current: 0, next: 0.01, progress: (currentBalance / 0.01) * 100, reached: [] };
   };
 
   const milestoneProgress = getCurrentMilestone();
+  
+  // Get milestone info
+  const getMilestoneInfo = (value: number) => {
+    return btcMilestones.find(m => m.value === value);
+  };
 
-  // Calculate progress for BTC goals
-  const getGoalProgress = (goal: typeof defaultGoals[0]) => {
+  // Calculate progress for goals
+  const getGoalProgress = (goal: any) => {
     if (goal.type === 'btc') {
+      if (goal.completed) return { completed: true, remaining: 0 };
+      const remaining = Math.max(0, goal.target - currentBalance);
+      return { completed: false, remaining };
+    } else if (goal.type === 'milestone_step') {
       if (goal.completed) return { completed: true, remaining: 0 };
       const remaining = Math.max(0, goal.target - currentBalance);
       return { completed: false, remaining };
@@ -2387,34 +2444,29 @@ function BeginnersGoals({ walletData, walletTransactions }: { walletData: any; w
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">🎯 Beginnersdoelen</h3>
-        <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Je klas over &gt;</a>
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-semibold text-gray-900">🎯 Jouw Bitcoin Mijlpalen</h3>
+        <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Wat betekent dit? &gt;</a>
       </div>
       
-      {/* Bitcoin Balance Progress Bar */}
-      <div className="mb-4 p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg border border-orange-200">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <span className="text-sm font-medium text-gray-700">Je beheert</span>
-            <span className="text-lg font-bold text-orange-600 ml-2">{currentBalance.toFixed(4)} BTC</span>
-          </div>
-          {milestoneProgress.next && (
-            <span className="text-xs text-gray-600">
-              Volgende: {milestoneProgress.next} BTC
-            </span>
-          )}
+      {/* Bitcoin Milestones Section */}
+      <div className="mb-6 p-5 bg-gradient-to-br from-orange-50 via-orange-50 to-orange-100 rounded-xl border border-orange-200">
+        <div className="text-center mb-4">
+          <p className="text-sm text-gray-600 mb-1">Je beheert nu</p>
+          <p className="text-3xl font-bold text-orange-600">{currentBalance.toFixed(4)} BTC</p>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-4 mb-3 relative overflow-visible">
+
+        {/* Progress Bar with Milestones */}
+        <div className="w-full bg-gray-200 rounded-full h-5 mb-4 relative overflow-visible">
           <div 
-            className="bg-orange-600 h-4 rounded-full transition-all duration-300"
+            className="bg-gradient-to-r from-orange-500 to-orange-600 h-5 rounded-full transition-all duration-500"
             style={{ width: `${Math.min(100, Math.max(0, milestoneProgress.progress))}%` }}
           ></div>
+          
           {/* Milestone markers */}
-          <div className="absolute inset-0 flex justify-between items-center" style={{ marginTop: '-2px' }}>
+          <div className="absolute inset-0 flex justify-between items-center px-2">
             {btcMilestones.map((milestone) => {
-              const isReached = currentBalance >= milestone.value;
-              // Calculate position: 0.01 = 10%, 0.1 = 50%, 1 = 100% (logarithmic scale for better visualization)
+              const isReached = milestoneProgress.reached.includes(milestone.value);
               let position = 0;
               if (milestone.value === 0.01) position = 10;
               else if (milestone.value === 0.1) position = 50;
@@ -2426,8 +2478,8 @@ function BeginnersGoals({ walletData, walletTransactions }: { walletData: any; w
                   className="absolute flex flex-col items-center"
                   style={{ left: `${position}%`, transform: 'translateX(-50%)', zIndex: 10 }}
                 >
-                  <div className={`w-3 h-3 rounded-full border-2 border-white ${isReached ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-                  <span className={`text-xs mt-1 whitespace-nowrap ${isReached ? 'text-green-700 font-semibold' : 'text-gray-500'}`}>
+                  <div className={`w-4 h-4 rounded-full border-2 border-white shadow-sm ${isReached ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                  <span className={`text-xs mt-1.5 whitespace-nowrap font-medium ${isReached ? 'text-green-700' : 'text-gray-500'}`}>
                     {milestone.label}
                   </span>
                 </div>
@@ -2435,35 +2487,93 @@ function BeginnersGoals({ walletData, walletTransactions }: { walletData: any; w
             })}
           </div>
         </div>
+
+        {/* Milestone Status List */}
+        <div className="space-y-2 mb-4">
+          {btcMilestones.map((milestone) => {
+            const isReached = milestoneProgress.reached.includes(milestone.value);
+            const isNext = milestoneProgress.next === milestone.value;
+            const milestoneInfo = getMilestoneInfo(milestone.value);
+            
+            return (
+              <div 
+                key={milestone.value}
+                className={`flex items-start gap-3 p-3 rounded-lg ${
+                  isReached ? 'bg-green-50 border border-green-200' : 
+                  isNext ? 'bg-orange-50 border border-orange-200' : 
+                  'bg-gray-50 border border-gray-200'
+                }`}
+              >
+                <div className="flex-shrink-0 mt-0.5">
+                  {isReached ? (
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  ) : isNext ? (
+                    <span className="text-orange-600">⏳</span>
+                  ) : (
+                    <span className="text-gray-400">🔒</span>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-gray-900">{milestone.label}</span>
+                    <span className="text-xs text-gray-500">—</span>
+                    <span className={`text-sm font-medium ${isReached ? 'text-green-700' : isNext ? 'text-orange-700' : 'text-gray-600'}`}>
+                      {milestoneInfo?.title}
+                    </span>
+                  </div>
+                  {isReached && (
+                    <p className="text-xs text-green-700 italic">
+                      {milestoneInfo?.description}
+                    </p>
+                  )}
+                  {isNext && (
+                    <p className="text-xs text-gray-600">
+                      Nog {Math.max(0, milestone.value - currentBalance).toFixed(4)} BTC tot deze mijlpaal
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Next Milestone Info */}
         {milestoneProgress.next && (
-          <p className="text-xs text-gray-600 text-center">
-            Nog {Math.max(0, milestoneProgress.next - currentBalance).toFixed(4)} BTC tot {milestoneProgress.next} BTC
-          </p>
+          <div className="text-center pt-3 border-t border-orange-200">
+            <p className="text-sm text-gray-700">
+              Nog <span className="font-semibold text-orange-600">{Math.max(0, milestoneProgress.next - currentBalance).toFixed(4)} BTC</span> tot je <span className="font-semibold">{milestoneProgress.next} BTC</span> mijlpaal
+            </p>
+          </div>
         )}
         {!milestoneProgress.next && (
-          <p className="text-xs text-green-700 text-center font-semibold">
-            🎉 Gefeliciteerd! Je beheert meer dan 1 BTC!
-          </p>
+          <div className="text-center pt-3 border-t border-green-200 bg-green-50 rounded-lg p-3">
+            <p className="text-sm font-semibold text-green-700">
+              🎉 Gefeliciteerd! Je beheert meer dan 1 BTC!
+            </p>
+            <p className="text-xs text-green-600 mt-1">
+              Je behoort tot een extreem kleine groep wereldwijd
+            </p>
+          </div>
         )}
       </div>
 
-      {/* Overall Goals Progress Bar */}
+      {/* Goals Section - Only show if there are custom goals */}
       {allGoals.length > 0 && (
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">Doelen voortgang</span>
-            <span className="text-sm font-semibold text-orange-600">{Math.round(overallProgress)}%</span>
+        <>
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">Jouw doelen</span>
+              <span className="text-sm font-semibold text-orange-600">{Math.round(overallProgress)}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div 
+                className="bg-orange-600 h-2.5 rounded-full transition-all duration-300"
+                style={{ width: `${overallProgress}%` }}
+              ></div>
+            </div>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div 
-              className="bg-orange-600 h-2.5 rounded-full transition-all duration-300"
-              style={{ width: `${overallProgress}%` }}
-            ></div>
-          </div>
-        </div>
-      )}
 
-      <div className="space-y-3">
+          <div className="space-y-3 mb-4">
         {allGoals.map((goal, index) => {
           const progress = getGoalProgress(goal);
           const isCompleted = goal.completed || progress.completed;
@@ -2472,7 +2582,7 @@ function BeginnersGoals({ walletData, walletTransactions }: { walletData: any; w
           
           // Calculate progress percentage for this goal
           let goalProgress = 0;
-          if (goal.type === 'btc') {
+          if (goal.type === 'btc' || goal.type === 'milestone_step') {
             goalProgress = goal.completed ? 100 : Math.min(100, (currentBalance / goal.target) * 100);
           } else if (goal.type === 'eur') {
             // For EUR goals, we can calculate based on transactions or set to 0 for now
@@ -2517,7 +2627,12 @@ function BeginnersGoals({ walletData, walletTransactions }: { walletData: any; w
                   }`}>
                     {goal.title}
                   </p>
-                  {!isCompleted && goal.type === 'btc' && progress.remaining > 0 && (
+                  {goal.description && (
+                    <p className="text-xs text-gray-600 mt-0.5">
+                      {goal.description}
+                    </p>
+                  )}
+                  {!isCompleted && (goal.type === 'btc' || goal.type === 'milestone_step') && progress.remaining > 0 && (
                     <p className="text-xs text-gray-500 mt-0.5">
                       nog {progress.remaining.toFixed(4)} BTC te gaan
                     </p>
@@ -2558,15 +2673,23 @@ function BeginnersGoals({ walletData, walletTransactions }: { walletData: any; w
             </div>
           );
         })}
-      </div>
+          </div>
+        </>
+      )}
       
-      <button
-        onClick={() => setShowAddGoalPopup(true)}
-        className="w-full mt-4 px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
-      >
-        <Plus className="w-4 h-4" />
-        Voeg een doel toe
-      </button>
+      {/* Subtle CTA */}
+      <div className="mt-6 pt-4 border-t border-gray-200">
+        <button
+          onClick={() => setShowAddGoalPopup(true)}
+          className="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-400 transition-colors flex items-center justify-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Voeg een doel toe
+        </button>
+        <p className="text-xs text-gray-500 text-center mt-3">
+          Of <button onClick={() => onBookAppointment && onBookAppointment()} className="text-orange-600 hover:text-orange-700 underline">plan een begeleid moment</button> om je volgende stap te bespreken
+        </p>
+      </div>
 
       {/* Add Goal Popup */}
       {showAddGoalPopup && (
