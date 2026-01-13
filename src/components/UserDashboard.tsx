@@ -2072,8 +2072,10 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 
 // BeginnersGoals Component
 function BeginnersGoals({ walletData, walletTransactions }: { walletData: any; walletTransactions: BitcoinTransaction[] }) {
+  const { user } = useSupabaseAuth();
   const [showAddGoalPopup, setShowAddGoalPopup] = useState(false);
   const [customGoals, setCustomGoals] = useState<any[]>([]);
+  const [loadingGoals, setLoadingGoals] = useState(true);
   const [newGoalAmount, setNewGoalAmount] = useState('');
   const [newGoalTimeframe, setNewGoalTimeframe] = useState('');
   const [newGoalType, setNewGoalType] = useState<'save' | 'monthly'>('save');
@@ -2083,6 +2085,77 @@ function BeginnersGoals({ walletData, walletTransactions }: { walletData: any; w
 
   // Calculate wallet balance in BTC
   const currentBalance = walletData?.balance || 0;
+
+  // Load custom goals from database
+  useEffect(() => {
+    const loadCustomGoals = async () => {
+      if (!user?.id) {
+        setLoadingGoals(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('goals')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('category', 'beginners')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (data) {
+          const formattedGoals = data.map(goal => {
+            // Parse goal data from description or title
+            const isMonthly = goal.title.toLowerCase().includes('stort elke maand') || goal.title.toLowerCase().includes('elke maand');
+            const isBTC = goal.title.toLowerCase().includes('btc') || goal.title.toLowerCase().includes('bitcoin');
+            const isEUR = goal.title.toLowerCase().includes('€') || goal.title.toLowerCase().includes('euro');
+            
+            if (isMonthly) {
+              // Monthly goal
+              const amountMatch = goal.title.match(/(\d+\.?\d*)/);
+              const amount = amountMatch ? parseFloat(amountMatch[1]) : 0;
+              
+              return {
+                id: goal.id,
+                title: goal.title,
+                type: 'monthly' as const,
+                monthlyAmount: amount,
+                monthlyCurrency: isBTC ? 'btc' as const : 'eur' as const,
+                custom: true,
+                completed: goal.status === 'completed',
+                dbId: goal.id
+              };
+            } else {
+              // Save goal
+              const amountMatch = goal.title.match(/(\d+\.?\d*)/);
+              const amount = amountMatch ? parseFloat(amountMatch[1]) : 0;
+              const timeframeMatch = goal.description?.match(/(\d+\s*(maanden?|weken?|dagen?))/i);
+              const timeframe = timeframeMatch ? timeframeMatch[1] : '';
+              
+              return {
+                id: goal.id,
+                title: goal.title,
+                type: 'btc' as const,
+                target: amount,
+                timeframe: timeframe,
+                custom: true,
+                completed: goal.status === 'completed' || currentBalance >= amount,
+                dbId: goal.id
+              };
+            }
+          });
+          setCustomGoals(formattedGoals);
+        }
+      } catch (error) {
+        console.error('Error loading custom goals:', error);
+      } finally {
+        setLoadingGoals(false);
+      }
+    };
+
+    loadCustomGoals();
+  }, [user?.id, currentBalance]);
 
   // Default goals based on wallet balance
   const defaultGoals = [
@@ -2129,52 +2202,140 @@ function BeginnersGoals({ walletData, walletTransactions }: { walletData: any; w
     }
   };
 
-  const handleAddGoal = () => {
-    if (newGoalType === 'save') {
-      if (!newGoalAmount || !newGoalTimeframe) return;
-      const goal = {
-        id: `custom-${Date.now()}`,
-        title: `Spaar ${newGoalAmount} BTC binnen ${newGoalTimeframe}`,
-        target: parseFloat(newGoalAmount),
-        type: 'btc' as const,
-        timeframe: newGoalTimeframe,
-        custom: true,
-        completed: currentBalance >= parseFloat(newGoalAmount)
-      };
-      setCustomGoals([...customGoals, goal]);
-    } else {
-      if (newGoalMonthlyCurrency === 'btc') {
-        if (!newGoalMonthlyAmount) return;
-        const goal = {
-          id: `monthly-${Date.now()}`,
-          title: `Stort elke maand ${newGoalMonthlyAmount} BTC`,
-          monthlyAmount: parseFloat(newGoalMonthlyAmount),
-          monthlyCurrency: 'btc' as const,
-          type: 'monthly' as const,
-          custom: true,
-          completed: false // Monthly goals are ongoing
-        };
-        setCustomGoals([...customGoals, goal]);
-      } else {
-        if (!newGoalMonthlyEurAmount) return;
-        const goal = {
-          id: `monthly-${Date.now()}`,
-          title: `Stort elke maand €${newGoalMonthlyEurAmount}`,
-          monthlyAmount: parseFloat(newGoalMonthlyEurAmount),
-          monthlyCurrency: 'eur' as const,
-          type: 'monthly' as const,
-          custom: true,
-          completed: false // Monthly goals are ongoing
-        };
-        setCustomGoals([...customGoals, goal]);
-      }
+  const handleAddGoal = async () => {
+    if (!user?.id || !user?.email) {
+      alert('Je moet ingelogd zijn om een doel toe te voegen');
+      return;
     }
-    setShowAddGoalPopup(false);
-    setNewGoalAmount('');
-    setNewGoalTimeframe('');
-    setNewGoalMonthlyAmount('');
-    setNewGoalMonthlyEurAmount('');
-    setNewGoalMonthlyCurrency('btc');
+
+    try {
+      if (newGoalType === 'save') {
+        if (!newGoalAmount || !newGoalTimeframe) return;
+        
+        const title = `Spaar ${newGoalAmount} BTC binnen ${newGoalTimeframe}`;
+        const description = `Spaardoel: ${newGoalAmount} BTC binnen ${newGoalTimeframe}`;
+        const targetAmount = parseFloat(newGoalAmount);
+        const isCompleted = currentBalance >= targetAmount;
+
+        const { data, error } = await supabase
+          .from('goals')
+          .insert({
+            user_id: user.id,
+            email: user.email,
+            title: title,
+            description: description,
+            category: 'beginners',
+            status: isCompleted ? 'completed' : 'active',
+            target_amount: targetAmount,
+            current_amount: currentBalance,
+            target_date: null
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          const goal = {
+            id: data.id,
+            title: title,
+            target: targetAmount,
+            type: 'btc' as const,
+            timeframe: newGoalTimeframe,
+            custom: true,
+            completed: isCompleted,
+            dbId: data.id
+          };
+          setCustomGoals([...customGoals, goal]);
+        }
+      } else {
+        if (newGoalMonthlyCurrency === 'btc') {
+          if (!newGoalMonthlyAmount) return;
+          
+          const title = `Stort elke maand ${newGoalMonthlyAmount} BTC`;
+          const description = `Maandelijks doel: ${newGoalMonthlyAmount} BTC per maand`;
+
+          const { data, error } = await supabase
+            .from('goals')
+            .insert({
+              user_id: user.id,
+              email: user.email,
+              title: title,
+              description: description,
+              category: 'beginners',
+              status: 'active',
+              target_amount: parseFloat(newGoalMonthlyAmount),
+              current_amount: 0,
+              target_date: null
+            })
+            .select()
+            .single();
+
+          if (error) throw error;
+
+          if (data) {
+            const goal = {
+              id: data.id,
+              title: title,
+              monthlyAmount: parseFloat(newGoalMonthlyAmount),
+              monthlyCurrency: 'btc' as const,
+              type: 'monthly' as const,
+              custom: true,
+              completed: false,
+              dbId: data.id
+            };
+            setCustomGoals([...customGoals, goal]);
+          }
+        } else {
+          if (!newGoalMonthlyEurAmount) return;
+          
+          const title = `Stort elke maand €${newGoalMonthlyEurAmount}`;
+          const description = `Maandelijks doel: €${newGoalMonthlyEurAmount} per maand`;
+
+          const { data, error } = await supabase
+            .from('goals')
+            .insert({
+              user_id: user.id,
+              email: user.email,
+              title: title,
+              description: description,
+              category: 'beginners',
+              status: 'active',
+              target_amount: parseFloat(newGoalMonthlyEurAmount),
+              current_amount: 0,
+              target_date: null
+            })
+            .select()
+            .single();
+
+          if (error) throw error;
+
+          if (data) {
+            const goal = {
+              id: data.id,
+              title: title,
+              monthlyAmount: parseFloat(newGoalMonthlyEurAmount),
+              monthlyCurrency: 'eur' as const,
+              type: 'monthly' as const,
+              custom: true,
+              completed: false,
+              dbId: data.id
+            };
+            setCustomGoals([...customGoals, goal]);
+          }
+        }
+      }
+      
+      setShowAddGoalPopup(false);
+      setNewGoalAmount('');
+      setNewGoalTimeframe('');
+      setNewGoalMonthlyAmount('');
+      setNewGoalMonthlyEurAmount('');
+      setNewGoalMonthlyCurrency('btc');
+    } catch (error) {
+      console.error('Error adding goal:', error);
+      alert('Er is een fout opgetreden bij het toevoegen van het doel. Probeer het opnieuw.');
+    }
   };
 
   // Check monthly goals - check if user has deposited this month
@@ -2260,8 +2421,17 @@ function BeginnersGoals({ walletData, walletTransactions }: { walletData: any; w
           let goalProgress = 0;
           if (goal.type === 'btc') {
             goalProgress = goal.completed ? 100 : Math.min(100, (currentBalance / goal.target) * 100);
+          } else if (goal.type === 'eur') {
+            // For EUR goals, we can calculate based on transactions or set to 0 for now
+            goalProgress = goal.completed ? 100 : 0;
           } else if (goal.type === 'monthly') {
-            goalProgress = monthlyCompleted ? 100 : 0;
+            if (monthlyCheck) {
+              if (goal.monthlyCurrency === 'btc') {
+                goalProgress = monthlyCheck.deposited ? 100 : Math.min(100, (monthlyCheck.amount / goal.monthlyAmount) * 100);
+              } else {
+                goalProgress = monthlyCheck.deposited ? 100 : 0;
+              }
+            }
           }
           
           return (
@@ -2322,12 +2492,12 @@ function BeginnersGoals({ walletData, walletTransactions }: { walletData: any; w
                 )}
               </div>
               {/* Progress bar for each goal */}
-              {goal.type === 'btc' && !isCompleted && (
+              {!isCompleted && !monthlyCompleted && (
                 <div className="mt-1 ml-11">
                   <div className="w-full bg-gray-100 rounded-full h-1.5">
                     <div 
                       className="bg-orange-500 h-1.5 rounded-full transition-all duration-300"
-                      style={{ width: `${goalProgress}%` }}
+                      style={{ width: `${Math.max(0, Math.min(100, goalProgress))}%` }}
                     ></div>
                   </div>
                 </div>
