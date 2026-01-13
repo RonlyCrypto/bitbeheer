@@ -1965,15 +1965,17 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 </div>
               );
             })}
-          </div>
+                    </div>
                     {walletTransactions.length > 3 && (
-            <button
-              onClick={() => onNavigateToPortfolio?.()}
+                      <button
+                        onClick={() => onNavigateToPortfolio?.()}
                         className="w-full mt-2 px-2 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700"
-            >
+                      >
                         Alle bekijken
-            </button>
-          )}
+                      </button>
+                    )}
+                  </div>
+                )}
             </div>
           )}
 
@@ -2126,41 +2128,41 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
                       <span className="text-sm font-semibold text-orange-600">1</span>
-                </div>
+                    </div>
                     <div className="flex-1">
                       <p className="font-medium text-gray-900">Koop €100 BTC</p>
-                </div>
+                    </div>
                     <span className="text-sm text-gray-500">0/1</span>
-                </div>
+                  </div>
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
                       <span className="text-sm font-semibold text-orange-600">2</span>
-              </div>
+                    </div>
                     <div className="flex-1">
                       <p className="font-medium text-gray-900">Seed phrase noteren</p>
                     </div>
                     <span className="text-sm text-gray-500">0/1</span>
-                    </div>
+                  </div>
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
                       <span className="text-sm font-semibold text-orange-600">3</span>
                     </div>
                     <div className="flex-1">
                       <p className="font-medium text-gray-900">BTC verplaatsen</p>
-                  </div>
+                    </div>
                     <span className="text-sm text-gray-500">0/1</span>
-                </div>
+                  </div>
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
                       <span className="text-sm font-semibold text-orange-600">4</span>
-            </div>
+                    </div>
                     <div className="flex-1">
                       <p className="font-medium text-gray-900">Veiligheidsvideo</p>
-              </div>
+                    </div>
                     <span className="text-sm text-gray-500">0/1</span>
+                  </div>
+                </div>
               </div>
-              </div>
-            </div>
             )}
           </div>
         </div>
@@ -2195,7 +2197,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 </div>
           </div>
         </div>
-                </div>
+      </div>
                 
       {/* Stappenblokken (Ledger & Coinbase) - Onderaan naast elkaar, groter (50% elk) */}
       <div className="mt-6">
