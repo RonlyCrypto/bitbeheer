@@ -2071,7 +2071,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 }
 
 // BeginnersGoals Component
-function BeginnersGoals({ walletData, walletTransactions }: { walletData: any; walletTransactions: BitcoinTransaction[] }) {
+function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: { walletData: any; walletTransactions: BitcoinTransaction[]; onBookAppointment?: () => void }) {
   const { user } = useSupabaseAuth();
   const [showAddGoalPopup, setShowAddGoalPopup] = useState(false);
   const [customGoals, setCustomGoals] = useState<any[]>([]);
