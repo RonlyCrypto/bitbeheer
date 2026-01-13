@@ -29,7 +29,9 @@ import {
   HelpCircle,
   Trophy,
   PartyPopper,
-  Sparkles
+  Sparkles,
+  Edit,
+  Trash2
 } from 'lucide-react';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -2110,6 +2112,15 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
   const [currentMilestoneCelebration, setCurrentMilestoneCelebration] = useState<number | null>(null);
   const [showMonthlyGoalPopup, setShowMonthlyGoalPopup] = useState(false);
   const [selectedMonthlyGoal, setSelectedMonthlyGoal] = useState<any>(null);
+  const [showDeleteConfirmPopup, setShowDeleteConfirmPopup] = useState(false);
+  const [goalToDelete, setGoalToDelete] = useState<any>(null);
+  const [showEditGoalPopup, setShowEditGoalPopup] = useState(false);
+  const [goalToEdit, setGoalToEdit] = useState<any>(null);
+  const [editGoalAmount, setEditGoalAmount] = useState('');
+  const [editGoalTimeframe, setEditGoalTimeframe] = useState('');
+  const [editGoalMonthlyAmount, setEditGoalMonthlyAmount] = useState('');
+  const [editGoalMonthlyCurrency, setEditGoalMonthlyCurrency] = useState<'btc' | 'eur'>('btc');
+  const [editGoalMonthlyEurAmount, setEditGoalMonthlyEurAmount] = useState<string>('');
 
   // Calculate wallet balance in BTC
   const currentBalance = walletData?.balance || 0;
@@ -2585,6 +2596,157 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
     setShowMonthlyGoalPopup(true);
   };
 
+  const handleDeleteGoal = (goal: any) => {
+    setGoalToDelete(goal);
+    setShowDeleteConfirmPopup(true);
+  };
+
+  const confirmDeleteGoal = async () => {
+    if (!goalToDelete || !user?.id) return;
+
+    try {
+      // Delete from database if it has a dbId
+      if (goalToDelete.dbId) {
+        const { error } = await supabase
+          .from('goals')
+          .delete()
+          .eq('id', goalToDelete.dbId)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+      }
+
+      // Remove from local state
+      setCustomGoals(customGoals.filter(g => g.id !== goalToDelete.id));
+      setShowDeleteConfirmPopup(false);
+      setGoalToDelete(null);
+    } catch (error) {
+      console.error('Error deleting goal:', error);
+      alert('Er is een fout opgetreden bij het verwijderen van het doel. Probeer het opnieuw.');
+    }
+  };
+
+  const handleEditGoal = (goal: any) => {
+    setGoalToEdit(goal);
+    
+    if (goal.type === 'monthly') {
+      if (goal.monthlyCurrency === 'btc') {
+        setEditGoalMonthlyAmount(goal.monthlyAmount?.toString() || '');
+        setEditGoalMonthlyCurrency('btc');
+      } else {
+        // Extract EUR amount from title
+        const eurMatch = goal.title.match(/€(\d+\.?\d*)/);
+        setEditGoalMonthlyEurAmount(eurMatch ? eurMatch[1] : '');
+        setEditGoalMonthlyCurrency('eur');
+      }
+    } else {
+      // Save goal
+      setEditGoalAmount(goal.target?.toString() || '');
+      setEditGoalTimeframe(goal.timeframe || '');
+    }
+    
+    setShowEditGoalPopup(true);
+  };
+
+  const handleUpdateGoal = async () => {
+    if (!goalToEdit || !user?.id || !user?.email) return;
+
+    try {
+      if (goalToEdit.type === 'monthly') {
+        if (editGoalMonthlyCurrency === 'btc') {
+          if (!editGoalMonthlyAmount) return;
+          
+          const title = `Stort elke maand ${editGoalMonthlyAmount} BTC`;
+          const description = `Maandelijks doel: ${editGoalMonthlyAmount} BTC per maand`;
+
+          const { error } = await supabase
+            .from('goals')
+            .update({
+              title: title,
+              description: description,
+              target_amount: parseFloat(editGoalMonthlyAmount),
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', goalToEdit.dbId)
+            .eq('user_id', user.id);
+
+          if (error) throw error;
+
+          // Update local state
+          setCustomGoals(customGoals.map(g => 
+            g.id === goalToEdit.id 
+              ? { ...g, title, monthlyAmount: parseFloat(editGoalMonthlyAmount), monthlyCurrency: 'btc' }
+              : g
+          ));
+        } else {
+          if (!editGoalMonthlyEurAmount) return;
+          
+          const title = `Stort elke maand €${editGoalMonthlyEurAmount}`;
+          const description = `Maandelijks doel: €${editGoalMonthlyEurAmount} per maand`;
+
+          const { error } = await supabase
+            .from('goals')
+            .update({
+              title: title,
+              description: description,
+              target_amount: parseFloat(editGoalMonthlyEurAmount),
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', goalToEdit.dbId)
+            .eq('user_id', user.id);
+
+          if (error) throw error;
+
+          // Update local state
+          setCustomGoals(customGoals.map(g => 
+            g.id === goalToEdit.id 
+              ? { ...g, title, monthlyAmount: parseFloat(editGoalMonthlyEurAmount), monthlyCurrency: 'eur' }
+              : g
+          ));
+        }
+      } else {
+        // Save goal
+        if (!editGoalAmount) return;
+        
+        const timeframeMatch = editGoalTimeframe.match(/(\d+\s*(maanden?|weken?|dagen?))/i);
+        const timeframe = timeframeMatch ? timeframeMatch[1] : editGoalTimeframe;
+        const title = `Spaar ${editGoalAmount} BTC${timeframe ? ` binnen ${timeframe}` : ''}`;
+        const description = timeframe ? `Spaardoel: ${editGoalAmount} BTC binnen ${timeframe}` : `Spaardoel: ${editGoalAmount} BTC`;
+
+        const { error } = await supabase
+          .from('goals')
+          .update({
+            title: title,
+            description: description,
+            target_amount: parseFloat(editGoalAmount),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', goalToEdit.dbId)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+
+        // Update local state
+        setCustomGoals(customGoals.map(g => 
+          g.id === goalToEdit.id 
+            ? { ...g, title, target: parseFloat(editGoalAmount), timeframe }
+            : g
+        ));
+      }
+
+      setShowEditGoalPopup(false);
+      setGoalToEdit(null);
+      setEditGoalAmount('');
+      setEditGoalTimeframe('');
+      setEditGoalMonthlyAmount('');
+      setEditGoalMonthlyEurAmount('');
+      setEditGoalMonthlyCurrency('btc');
+    } catch (error) {
+      console.error('Error updating goal:', error);
+      alert('Er is een fout opgetreden bij het bijwerken van het doel. Probeer het opnieuw.');
+    }
+  };
+
   // Calculate overall progress percentage
   const calculateOverallProgress = () => {
     const allGoalsList = [...customGoals, ...defaultGoals];
@@ -2857,12 +3019,39 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                     </p>
                   )}
                     </div>
-                {(isCompleted || monthlyCompleted) && (
-                  <div className="flex items-center gap-1">
-                    <PartyPopper className="w-4 h-4 text-green-600" />
-                    <Sparkles className="w-4 h-4 text-green-600" />
+                <div className="flex items-center gap-2">
+                  {(isCompleted || monthlyCompleted) && (
+                    <div className="flex items-center gap-1">
+                      <PartyPopper className="w-4 h-4 text-green-600" />
+                      <Sparkles className="w-4 h-4 text-green-600" />
                     </div>
-                )}
+                  )}
+                  {/* Edit and Delete buttons for custom goals */}
+                  {goal.custom && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditGoal(goal);
+                        }}
+                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                        title="Bewerk doel"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteGoal(goal);
+                        }}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                        title="Verwijder doel"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
                     </div>
               {/* Progress bar for each goal */}
               {!isCompleted && !monthlyCompleted && (
@@ -3307,6 +3496,192 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
           </div>
         );
       })()}
+
+      {/* Edit Goal Popup */}
+      {showEditGoalPopup && goalToEdit && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => {
+          setShowEditGoalPopup(false);
+          setGoalToEdit(null);
+          setEditGoalAmount('');
+          setEditGoalTimeframe('');
+          setEditGoalMonthlyAmount('');
+          setEditGoalMonthlyEurAmount('');
+          setEditGoalMonthlyCurrency('btc');
+        }}>
+          <div className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-gray-900">Doel bewerken</h3>
+              <button
+                onClick={() => {
+                  setShowEditGoalPopup(false);
+                  setGoalToEdit(null);
+                  setEditGoalAmount('');
+                  setEditGoalTimeframe('');
+                  setEditGoalMonthlyAmount('');
+                  setEditGoalMonthlyEurAmount('');
+                  setEditGoalMonthlyCurrency('btc');
+                }}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {goalToEdit.type === 'monthly' ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Kies valuta
+                    </label>
+                    <div className="flex gap-2 mb-3">
+                      <button
+                        onClick={() => setEditGoalMonthlyCurrency('btc')}
+                        className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                          editGoalMonthlyCurrency === 'btc'
+                            ? 'bg-orange-600 text-white'
+                            : 'bg-gray-100 text-gray-700 border border-gray-300'
+                        }`}
+                      >
+                        <Wallet className="w-4 h-4" /> BTC
+                      </button>
+                      <button
+                        onClick={() => setEditGoalMonthlyCurrency('eur')}
+                        className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                          editGoalMonthlyCurrency === 'eur'
+                            ? 'bg-orange-600 text-white'
+                            : 'bg-gray-100 text-gray-700 border border-gray-300'
+                        }`}
+                      >
+                        <TrendingUp className="w-4 h-4" /> EUR
+                      </button>
+                    </div>
+                    {editGoalMonthlyCurrency === 'btc' ? (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Hoeveel BTC per maand?
+                        </label>
+                        <input
+                          type="number"
+                          step="0.0001"
+                          value={editGoalMonthlyAmount}
+                          onChange={(e) => setEditGoalMonthlyAmount(e.target.value)}
+                          placeholder="0.001"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        />
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Hoeveel Euro per maand?
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={editGoalMonthlyEurAmount}
+                          onChange={(e) => setEditGoalMonthlyEurAmount(e.target.value)}
+                          placeholder="100"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Hoeveel BTC wil je sparen?
+                    </label>
+                    <input
+                      type="number"
+                      step="0.0001"
+                      value={editGoalAmount}
+                      onChange={(e) => setEditGoalAmount(e.target.value)}
+                      placeholder="0.01"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Binnen hoeveel tijd? (bijv. "3 maanden")
+                    </label>
+                    <input
+                      type="text"
+                      value={editGoalTimeframe}
+                      onChange={(e) => setEditGoalTimeframe(e.target.value)}
+                      placeholder="3 maanden"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                  </div>
+                </>
+              )}
+              
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={handleUpdateGoal}
+                  className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors"
+                >
+                  Opslaan
+                </button>
+                <button
+                  onClick={() => {
+                    setShowEditGoalPopup(false);
+                    setGoalToEdit(null);
+                    setEditGoalAmount('');
+                    setEditGoalTimeframe('');
+                    setEditGoalMonthlyAmount('');
+                    setEditGoalMonthlyEurAmount('');
+                    setEditGoalMonthlyCurrency('btc');
+                  }}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                >
+                  Annuleren
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Popup */}
+      {showDeleteConfirmPopup && goalToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowDeleteConfirmPopup(false)}>
+          <div className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-gray-900">Doel verwijderen</h3>
+              <button
+                onClick={() => setShowDeleteConfirmPopup(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <p className="text-gray-700 mb-6">
+              Weet je zeker dat je het doel <strong>"{goalToDelete.title}"</strong> wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.
+            </p>
+
+            <div className="flex gap-2">
+              <button
+                onClick={confirmDeleteGoal}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
+              >
+                Ja, verwijderen
+              </button>
+              <button
+                onClick={() => {
+                  setShowDeleteConfirmPopup(false);
+                  setGoalToDelete(null);
+                }}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+              >
+                Annuleren
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Goal Popup */}
       {showAddGoalPopup && (
