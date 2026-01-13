@@ -2059,12 +2059,40 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               <p className="text-xs text-orange-800">
                 Gebruik altijd alleen je eigen wallet om zeker te weten dat jij je Bitcoin bezit.
               </p>
-                    </div>
+            </div>
+          </div>
+
+          {/* Hulp nodig? */}
+          <div className="pt-4 border-t border-gray-200 mt-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">Hulp nodig?</h3>
+            <p className="text-sm text-gray-700 mb-4">
+              Twijfel of vragen? Wij helpen je persoonlijk.
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => onBookAppointment && onBookAppointment()}
+                className="w-full bg-orange-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <Calendar className="w-5 h-5" />
+                Plan gesprek
+              </button>
+              <button
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'helpdesk' }));
+                  }
+                }}
+                className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <MessageSquare className="w-5 h-5" />
+                Stel je vraag
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Stappenblokken (Ledger, Coinbase & Hulp nodig?) - Onderaan naast elkaar (3/8 3/8 2/8) */}
+      {/* Stappenblokken (Ledger & Coinbase) - Onderaan naast elkaar (1/2 1/2) */}
       <ReferralBlocksWithHelp onBookAppointment={onBookAppointment} />
     </div>
   );
@@ -2467,11 +2495,6 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
       
       {/* Bitcoin Milestones Section */}
       <div className="mb-6 p-5 bg-gradient-to-br from-orange-50 via-orange-50 to-orange-100 rounded-xl border border-orange-200">
-        <div className="text-center mb-4">
-          <p className="text-sm text-gray-600 mb-1">Je beheert nu</p>
-          <p className="text-3xl font-bold text-orange-600">{currentBalance.toFixed(4)} BTC</p>
-        </div>
-
         {/* Progress Bar with Milestones */}
         <div className="w-full bg-gray-200 rounded-full h-5 mb-4 relative overflow-visible">
           <div 
@@ -2559,12 +2582,6 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
             <p className="text-sm text-gray-700">
               Nog <span className="font-semibold text-orange-600">{Math.max(0, milestoneProgress.next - currentBalance).toFixed(4)} BTC</span> tot je <span className="font-semibold">{milestoneProgress.next} BTC</span> mijlpaal
             </p>
-            <button
-              onClick={() => onBookAppointment && onBookAppointment()}
-              className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2 mx-auto"
-            >
-              Volgende stap bekijken →
-            </button>
           </div>
         )}
         {!milestoneProgress.next && (
@@ -2968,9 +2985,9 @@ function ReferralBlocksWithHelp({ onBookAppointment }: { onBookAppointment?: () 
   }
 
   return (
-    <div className="mt-6 grid grid-cols-1 lg:grid-cols-8 gap-6">
-      {/* Ledger - 3/8 */}
-      <div className="lg:col-span-3 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-6 rounded-xl relative">
+    <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Ledger - 1/2 */}
+      <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-6 rounded-xl relative">
         <div className="absolute top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
           Stap 1
         </div>
@@ -3011,8 +3028,8 @@ function ReferralBlocksWithHelp({ onBookAppointment }: { onBookAppointment?: () 
             </div>
         </div>
 
-      {/* Coinbase - 3/8 */}
-      <div className="lg:col-span-3 bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 p-6 rounded-xl relative">
+      {/* Coinbase - 1/2 */}
+      <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 p-6 rounded-xl relative">
         <div className="absolute top-4 right-4 bg-orange-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
           Stap 2
                 </div>
@@ -3051,34 +3068,6 @@ function ReferralBlocksWithHelp({ onBookAppointment }: { onBookAppointment?: () 
               </div>
               </div>
               </div>
-
-      {/* Hulp nodig? - 2/8 */}
-      <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-3">Hulp nodig?</h3>
-        <p className="text-sm text-gray-700 mb-4">
-          Twijfel of vragen? Wij helpen je persoonlijk.
-        </p>
-        <div className="space-y-3">
-            <button
-            onClick={() => onBookAppointment && onBookAppointment()}
-            className="w-full bg-orange-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
-            >
-            <Calendar className="w-5 h-5" />
-            Plan gesprek
-            </button>
-            <button
-              onClick={() => {
-              if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'helpdesk' }));
-              }
-            }}
-            className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-          >
-            <MessageSquare className="w-5 h-5" />
-            Stel je vraag
-                  </button>
-                </div>
-                </div>
     </div>
   );
 }
