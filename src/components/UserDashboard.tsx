@@ -1907,11 +1907,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         null
       )}
 
-          {/* Wallet en Custody-status naast elkaar - Wallet 2/3, Custody 1/3 */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Wallet Block - 2/3 breedte */}
-      {hasWallet && walletData && !showSuccessMessage && (
-              <div className="md:col-span-2 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 shadow-lg">
+          {/* Wallet Block - Volle breedte */}
+          {hasWallet && walletData && !showSuccessMessage && (
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 shadow-lg">
                 <div className="flex items-start gap-3 mb-4">
                   <div className="bg-blue-100 p-2 rounded-xl">
                     <Wallet className="w-6 h-6 text-blue-600" />
@@ -1976,14 +1974,14 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                         Alle bekijken
             </button>
           )}
-        </div>
-      )}
-        </div>
-      )}
+            </div>
+          )}
 
-            {/* Custody-status - 1/3 breedte naast wallet */}
-            {(accountApproved || hasApprovedOneOnOne) && (
-              <div className="md:col-span-1 bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+          {/* Custody-status rij - 1/3 1/3 1/3 layout */}
+          {(accountApproved || hasApprovedOneOnOne) && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Custody-status - 1/3 breedte */}
+              <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">🔐 Custody-status</h3>
           <div className="space-y-3">
                   {/* Exchange status */}
@@ -2002,8 +2000,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                           {(!hasWallet || !walletData || walletData.balance === 0) && (
                             <X className="w-4 h-4 text-red-600" />
                           )}
-            </div>
-            <div>
+                        </div>
+                        <div>
                           <p className={`font-semibold text-sm ${
                             !hasWallet || !walletData || walletData.balance === 0
                               ? 'text-red-900' 
@@ -2018,15 +2016,15 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                           }`}>
                             Risico: Gecontroleerd door bedrijf
                           </p>
-            </div>
-          </div>
+                        </div>
+                      </div>
                       <div className={`w-5 h-5 rounded-full border-2 ${
                         !hasWallet || !walletData || walletData.balance === 0
                           ? 'border-red-400' 
                           : 'border-gray-300'
                       }`}></div>
-          </div>
-        </div>
+                    </div>
+                  </div>
 
                   {/* Eigen wallet status */}
                   <div className={`p-4 rounded-lg border-2 ${
@@ -2034,7 +2032,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                       ? 'bg-green-50 border-green-200' 
                       : 'bg-gray-50 border-gray-200'
                   }`}>
-      <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
                           hasWallet && walletData && walletData.balance > 0
@@ -2044,8 +2042,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                           {hasWallet && walletData && walletData.balance > 0 && (
                             <CheckCircle className="w-4 h-4 text-green-600" />
                           )}
-                  </div>
-            <div>
+                        </div>
+                        <div>
                           <p className={`font-semibold text-sm ${
                             hasWallet && walletData && walletData.balance > 0
                               ? 'text-green-900' 
@@ -2059,18 +2057,25 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                               : 'text-gray-500'
                           }`}>
                             Veilig: Zelf in eigen handen
-                      </p>
-                    </div>
-                  </div>
+                          </p>
+                        </div>
+                      </div>
                       {hasWallet && walletData && walletData.balance > 0 && (
                         <CheckCircle className="w-5 h-5 text-green-600" />
-            )}
-          </div>
-        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                </div>
+              </div>
+              {/* Placeholder voor andere 2 blokken in 1/3 1/3 1/3 layout */}
+              <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                {/* Leeg blok - kan later worden ingevuld */}
+              </div>
+              <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                {/* Leeg blok - kan later worden ingevuld */}
+              </div>
+            </div>
           )}
-      </div>
 
           {/* Leer & Waarschuwingen en Beginnersdoelen onder wallet - Leer 2/3, Beginnersdoelen 1/3 */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
