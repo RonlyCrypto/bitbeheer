@@ -2143,11 +2143,24 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
   ];
 
   // Calculate which milestone the user has reached
+  // Progress bar uses logarithmic scale: 0.01 BTC = 10%, 0.1 BTC = 50%, 1 BTC = 100%
   const getCurrentMilestone = () => {
-    if (currentBalance >= 1) return { current: 1, next: null, progress: 100, reached: [0.01, 0.1, 1] };
-    if (currentBalance >= 0.1) return { current: 0.1, next: 1, progress: (currentBalance / 1) * 100, reached: [0.01, 0.1] };
-    if (currentBalance >= 0.01) return { current: 0.01, next: 0.1, progress: (currentBalance / 0.1) * 100, reached: [0.01] };
-    return { current: 0, next: 0.01, progress: (currentBalance / 0.01) * 100, reached: [] };
+    if (currentBalance >= 1) {
+      return { current: 1, next: null, progress: 100, reached: [0.01, 0.1, 1] };
+    }
+    if (currentBalance >= 0.1) {
+      // Between 0.1 and 1 BTC: progress from 50% to 100%
+      const progress = 50 + ((currentBalance - 0.1) / 0.9) * 50;
+      return { current: 0.1, next: 1, progress: Math.min(100, progress), reached: [0.01, 0.1] };
+    }
+    if (currentBalance >= 0.01) {
+      // Between 0.01 and 0.1 BTC: progress from 10% to 50%
+      const progress = 10 + ((currentBalance - 0.01) / 0.09) * 40;
+      return { current: 0.01, next: 0.1, progress: Math.min(50, progress), reached: [0.01] };
+    }
+    // Below 0.01 BTC: progress from 0% to 10%
+    const progress = (currentBalance / 0.01) * 10;
+    return { current: 0, next: 0.01, progress: Math.min(10, progress), reached: [] };
   };
 
   const milestoneProgress = getCurrentMilestone();
