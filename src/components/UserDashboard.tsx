@@ -2053,6 +2053,66 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   </div>
                 </div>
                 
+      {/* Waarschuwingen Blok - Rechts boven */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="lg:col-span-2"></div> {/* Spacer voor links */}
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">⚠️ Belangrijke Waarschuwingen</h3>
+          
+          <div className="space-y-4">
+            {/* Waarschuwing 1: Laat crypto niet op exchanges */}
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-2 flex-1">
+                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-red-900 mb-1">
+                      Laat je crypto niet op exchanges
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowExchangeWarningPopup(true)}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium whitespace-nowrap"
+                >
+                  Waarom?
+                </button>
+              </div>
+            </div>
+
+            {/* Waarschuwing 2: Bitcoin in eigen wallet */}
+            <div 
+              className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                walletData?.balance > 0 
+                  ? 'bg-green-50 border-green-200 hover:bg-green-100' 
+                  : 'bg-yellow-50 border-yellow-200 hover:bg-yellow-100'
+              }`}
+              onClick={() => setShowSelfCustodyPopup(true)}
+            >
+              <div className="flex items-start gap-2">
+                {walletData?.balance > 0 ? (
+                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                ) : (
+                  <Lock className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                )}
+                <div className="flex-1">
+                  <p className={`text-sm font-semibold mb-1 ${
+                    walletData?.balance > 0 ? 'text-green-900' : 'text-yellow-900'
+                  }`}>
+                    Bitcoin staat in eigen wallet veilig
+                  </p>
+                  {walletData?.balance > 0 && (
+                    <p className="text-xs text-green-700">
+                      ✓ Je hebt Bitcoin in je eigen wallet
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Leer & Waarschuwingen en Beginnersdoelen - 1 rij (2/3 1/3) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Beginnersdoelen - 2/3 breedte */}
