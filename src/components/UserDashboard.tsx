@@ -1902,10 +1902,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           </button>
         </div>
       </div>
-      ) : (
-        // Toon aanmeldproces stappen wanneer nog niet goedgekeurd - wordt later vervangen door grid
-        null
-      )}
+      ) : null}
 
           {/* Wallet Block - Compact en mooi */}
       {hasWallet && walletData && !showSuccessMessage && (
