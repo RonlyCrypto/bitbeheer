@@ -155,10 +155,9 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
 
   return (
     <div 
-      className={`bg-white rounded-xl p-6 shadow-lg border-l-4 transition-all duration-300 hover:shadow-xl cursor-pointer ${
-        isProfit ? 'border-l-green-500 hover:bg-green-50' : 'border-l-red-500 hover:bg-red-50'
+      className={`bg-white rounded-xl p-6 shadow-lg border-l-4 transition-all duration-300 ${
+        isProfit ? 'border-l-green-500' : 'border-l-red-500'
       }`}
-      onClick={() => onTransactionClick?.(transaction)}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
@@ -265,7 +264,10 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
             </p>
             <div className="flex gap-2 flex-shrink-0">
               <button
-                onClick={copyHash}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  copyHash();
+                }}
                 className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                 title="Kopieren"
               >
@@ -276,7 +278,10 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
                 )}
               </button>
               <button
-                onClick={openBlockchain}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openBlockchain();
+                }}
                 className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                 title="Open op blockchain.com"
               >
@@ -291,9 +296,8 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
       {isBuy ? (
         <div className="grid md:grid-cols-2 gap-4 mb-4">
           {/* Inkoopprijs per Bitcoin */}
-          <button 
-            onClick={() => onTransactionClick?.(transaction)}
-            className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer text-left"
+          <div 
+            className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200"
           >
             <div className="flex items-center gap-2 text-sm text-blue-700 mb-2">
               <DollarSign className="w-4 h-4" />
@@ -303,9 +307,9 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
               ${transaction.price.toLocaleString('en-US', { maximumFractionDigits: 0 })}
             </p>
             <p className="text-xs text-blue-600 mt-1">
-              BTC prijs op blockchain op moment van transactie (Klik voor details)
+              BTC prijs op blockchain op moment van transactie
             </p>
-          </button>
+          </div>
 
           {/* Waarde bij Aankoop */}
           <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
@@ -324,9 +328,8 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
       ) : (
         <div className="grid md:grid-cols-2 gap-4 mb-4">
           {/* Verkoopprijs per Bitcoin */}
-          <button 
-            onClick={() => onTransactionClick?.(transaction)}
-            className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4 border border-red-200 hover:border-red-400 hover:shadow-md transition-all cursor-pointer text-left"
+          <div 
+            className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4 border border-red-200"
           >
             <div className="flex items-center gap-2 text-sm text-red-700 mb-2">
               <DollarSign className="w-4 h-4" />
@@ -336,14 +339,14 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
               ${transaction.price.toLocaleString('en-US', { maximumFractionDigits: 0 })}
             </p>
             <p className="text-xs text-red-600 mt-1">
-              BTC prijs op blockchain op moment van transactie (Klik voor details)
+              BTC prijs op blockchain op moment van transactie
             </p>
             {sellProfitInfo.buyPrice && (
               <p className="text-xs text-red-500 mt-2">
                 Ingekocht bij: ${sellProfitInfo.buyPrice.toLocaleString('en-US', { maximumFractionDigits: 0 })} / BTC
               </p>
             )}
-          </button>
+          </div>
 
           {/* Totale Verkoop Waarde */}
           <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
@@ -496,11 +499,14 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
         </div>
       )}
 
-      {/* Click Hint */}
-      <div className="mt-4 text-center">
-        <p className="text-sm text-gray-500">
+      {/* Click Hint - Only this section is clickable */}
+      <div 
+        className="mt-4 text-center cursor-pointer"
+        onClick={() => onTransactionClick?.(transaction)}
+      >
+        <button className="text-sm text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors">
           Klik voor meer details
-        </p>
+        </button>
       </div>
     </div>
   );
