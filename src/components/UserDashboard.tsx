@@ -435,7 +435,7 @@ export default function UserDashboard() {
                 // Trigger a refresh to get latest account status
                 // (accountApproved should already be set by admin button, but check as backup)
                 supabase
-                  .from('users')
+                  .from('accounts')
                   .select('account_approved, first_appointment_completed')
                   .eq('email', effectiveEmail)
                   .single()
@@ -2081,7 +2081,7 @@ function BeginnersGoals({ walletData, walletTransactions }: { walletData: any; w
   const [newGoalType, setNewGoalType] = useState<'save' | 'monthly'>('save');
   const [newGoalMonthlyAmount, setNewGoalMonthlyAmount] = useState('');
   const [newGoalMonthlyCurrency, setNewGoalMonthlyCurrency] = useState<'btc' | 'eur'>('btc');
-  const [newGoalMonthlyEurAmount, setNewGoalMonthlyEurAmount] = useState('');
+  const [newGoalMonthlyEurAmount, setNewGoalMonthlyEurAmount] = useState<string>('');
 
   // Calculate wallet balance in BTC
   const currentBalance = walletData?.balance || 0;

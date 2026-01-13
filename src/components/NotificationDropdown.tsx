@@ -151,13 +151,13 @@ export default function NotificationDropdown({ unreadCount, onNotificationClick 
         .order('approved_at', { ascending: false })
         .limit(5);
 
-      // Fetch recent goals achieved
+      // Fetch recent goals achieved (using goals table instead of user_goals)
       const { data: goals } = await supabase
-        .from('user_goals')
+        .from('goals')
         .select('*')
         .eq('user_id', user.id)
-        .eq('achieved', true)
-        .order('achieved_at', { ascending: false })
+        .eq('status', 'completed')
+        .order('updated_at', { ascending: false })
         .limit(5);
 
       const notificationList: Notification[] = [];
@@ -188,7 +188,7 @@ export default function NotificationDropdown({ unreadCount, onNotificationClick 
             message: `Je hebt jouw doel "${goal.title}" bereikt!`,
             icon: CheckCircle,
             color: 'blue',
-            timestamp: goal.achieved_at || goal.created_at,
+            timestamp: goal.updated_at || goal.created_at,
             read: false
           });
         });
