@@ -980,6 +980,7 @@ export default function PortfolioPage() {
           <TransactionDetailsPopup
             transaction={selectedTransaction}
             onClose={() => setSelectedTransaction(null)}
+            allTransactions={allTransactions}
           />
           )}
         </div>
