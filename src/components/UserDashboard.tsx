@@ -2368,6 +2368,7 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
   const [newGoalMonthlyAmount, setNewGoalMonthlyAmount] = useState('');
   const [newGoalMonthlyCurrency, setNewGoalMonthlyCurrency] = useState<'btc' | 'eur'>('btc');
   const [newGoalMonthlyEurAmount, setNewGoalMonthlyEurAmount] = useState<string>('');
+  const [newGoalStartDate, setNewGoalStartDate] = useState<string>('');
   const [celebratedMilestones, setCelebratedMilestones] = useState<number[]>([]);
   const [showMilestonePopup, setShowMilestonePopup] = useState(false);
   const [currentMilestoneCelebration, setCurrentMilestoneCelebration] = useState<number | null>(null);
@@ -2382,6 +2383,7 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
   const [editGoalMonthlyAmount, setEditGoalMonthlyAmount] = useState('');
   const [editGoalMonthlyCurrency, setEditGoalMonthlyCurrency] = useState<'btc' | 'eur'>('btc');
   const [editGoalMonthlyEurAmount, setEditGoalMonthlyEurAmount] = useState<string>('');
+  const [editGoalStartDate, setEditGoalStartDate] = useState<string>('');
 
   // Calculate wallet balance in BTC
   const currentBalance = walletData?.balance || 0;
@@ -2532,7 +2534,8 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                 custom: true,
                 completed: goal.status === 'completed',
                 dbId: goal.id,
-                created_at: goal.created_at
+                created_at: goal.created_at,
+                target_date: goal.target_date
               };
             } else {
               // Save goal
@@ -2647,7 +2650,7 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
               status: 'active',
               target_amount: parseFloat(newGoalMonthlyAmount),
               current_amount: 0,
-              target_date: null
+              target_date: newGoalStartDate || new Date().toISOString().split('T')[0]
             })
             .select()
             .single();
@@ -2663,7 +2666,9 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
               type: 'monthly' as const,
               custom: true,
               completed: false,
-              dbId: data.id
+              dbId: data.id,
+              created_at: data.created_at,
+              target_date: data.target_date
             };
             setCustomGoals([...customGoals, goal]);
           }
@@ -2684,7 +2689,7 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
               status: 'active',
               target_amount: parseFloat(newGoalMonthlyEurAmount),
               current_amount: 0,
-              target_date: null
+              target_date: newGoalStartDate || new Date().toISOString().split('T')[0]
             })
             .select()
             .single();
@@ -2700,7 +2705,9 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
               type: 'monthly' as const,
               custom: true,
               completed: false,
-              dbId: data.id
+              dbId: data.id,
+              created_at: data.created_at,
+              target_date: data.target_date
             };
             setCustomGoals([...customGoals, goal]);
           }
@@ -2713,6 +2720,7 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
       setNewGoalMonthlyAmount('');
       setNewGoalMonthlyEurAmount('');
       setNewGoalMonthlyCurrency('btc');
+      setNewGoalStartDate('');
     } catch (error) {
       console.error('Error adding goal:', error);
       alert('Er is een fout opgetreden bij het toevoegen van het doel. Probeer het opnieuw.');
@@ -2756,9 +2764,11 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
     if (goal.type !== 'monthly') return null;
 
     const now = new Date();
-    // Try to get created_at from goal
+    // Use target_date (start date) if available, otherwise use created_at, otherwise 6 months ago
     let goalStartDate = new Date();
-    if (goal.created_at) {
+    if (goal.target_date) {
+      goalStartDate = new Date(goal.target_date);
+    } else if (goal.created_at) {
       goalStartDate = new Date(goal.created_at);
     } else {
       // Fallback: start from 6 months ago
@@ -2778,9 +2788,11 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
       }))
       .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-    // Calculate months from goal start to now
-    let currentDate = new Date(goalStartDate.getFullYear(), goalStartDate.getMonth(), 1);
-    const endDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    // Calculate months: show 3 months before start date, then from start date to now + 3 months ahead
+    const startDate = new Date(goalStartDate.getFullYear(), goalStartDate.getMonth(), 1);
+    const monthsBefore = 3; // Show 3 months before start
+    let currentDate = new Date(startDate.getFullYear(), startDate.getMonth() - monthsBefore, 1);
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 3, 1); // Show 3 months ahead
 
     while (currentDate <= endDate) {
       const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
@@ -3366,8 +3378,17 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
 
               {/* Calendar Overview */}
               <div className="mb-6">
-                <h4 className="text-lg font-semibold text-gray-900 mb-4">Maandoverzicht</h4>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-lg font-semibold text-gray-900">Maandoverzicht</h4>
+                  {selectedMonthlyGoal.target_date && (
+                    <div className="text-sm text-gray-600">
+                      <span className="font-semibold">Startdatum:</span>{' '}
+                      {new Date(selectedMonthlyGoal.target_date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </div>
+                  )}
+                </div>
+                <div className="overflow-x-auto pb-2 -mx-2 px-2">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3 min-w-max">
                   {analysis.months.map((month) => {
                     let bgColor = 'bg-gray-100';
                     let borderColor = 'border-gray-300';
@@ -3417,7 +3438,9 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
           </div>
                     );
                   })}
-        </div>
+                  </div>
+                </div>
+              </div>
 
                 {/* Legend */}
                 <div className="mt-4 flex flex-wrap gap-4 text-sm">
@@ -3550,9 +3573,6 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
     </div>
   );
       })()}
-
-      {/* Monthly Goal Detail Popup */}
-      {showMonthlyGoalPopup && selectedMonthlyGoal && (() => {
         const analysis = analyzeMonthlyGoalTransactions(selectedMonthlyGoal);
         if (!analysis) return null;
         
@@ -3571,8 +3591,17 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
 
               {/* Calendar Overview */}
               <div className="mb-6">
-                <h4 className="text-lg font-semibold text-gray-900 mb-4">Maandoverzicht</h4>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-lg font-semibold text-gray-900">Maandoverzicht</h4>
+                  {selectedMonthlyGoal.target_date && (
+                    <div className="text-sm text-gray-600">
+                      <span className="font-semibold">Startdatum:</span>{' '}
+                      {new Date(selectedMonthlyGoal.target_date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </div>
+                  )}
+                </div>
+                <div className="overflow-x-auto pb-2 -mx-2 px-2">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3 min-w-max">
                   {analysis.months.map((month) => {
                     let bgColor = 'bg-gray-100';
                     let borderColor = 'border-gray-300';
@@ -4058,6 +4087,21 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Startdatum (optioneel - standaard vandaag)
+                    </label>
+                    <input
+                      type="date"
+                      value={newGoalStartDate}
+                      onChange={(e) => setNewGoalStartDate(e.target.value)}
+                      max={new Date().toISOString().split('T')[0]}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Vanaf deze datum wordt je maandelijkse storting geteld. Je kunt verder terug op de agenda.
+                    </p>
+                  </div>
                 </>
               )}
               
@@ -4076,6 +4120,7 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                     setNewGoalMonthlyAmount('');
                     setNewGoalMonthlyEurAmount('');
                     setNewGoalMonthlyCurrency('btc');
+                    setNewGoalStartDate('');
                   }}
                   className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
                 >
