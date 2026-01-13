@@ -2082,6 +2082,9 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
   const [newGoalMonthlyAmount, setNewGoalMonthlyAmount] = useState('');
   const [newGoalMonthlyCurrency, setNewGoalMonthlyCurrency] = useState<'btc' | 'eur'>('btc');
   const [newGoalMonthlyEurAmount, setNewGoalMonthlyEurAmount] = useState<string>('');
+  const [celebratedMilestones, setCelebratedMilestones] = useState<number[]>([]);
+  const [showMilestonePopup, setShowMilestonePopup] = useState(false);
+  const [currentMilestoneCelebration, setCurrentMilestoneCelebration] = useState<number | null>(null);
 
   // Calculate wallet balance in BTC
   const currentBalance = walletData?.balance || 0;
@@ -2543,6 +2546,12 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
             <p className="text-sm text-gray-700">
               Nog <span className="font-semibold text-orange-600">{Math.max(0, milestoneProgress.next - currentBalance).toFixed(4)} BTC</span> tot je <span className="font-semibold">{milestoneProgress.next} BTC</span> mijlpaal
             </p>
+            <button
+              onClick={() => onBookAppointment && onBookAppointment()}
+              className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2 mx-auto"
+            >
+              Volgende stap bekijken →
+            </button>
           </div>
         )}
         {!milestoneProgress.next && (
@@ -2556,6 +2565,53 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
           </div>
         )}
       </div>
+
+      {/* Milestone Celebration Popup */}
+      {showMilestonePopup && currentMilestoneCelebration !== null && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowMilestonePopup(false)}>
+          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 relative overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            {/* Confetti effect */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute top-4 left-4 w-3 h-3 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+              <div className="absolute top-6 right-8 w-3 h-3 bg-pink-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <div className="absolute top-8 left-1/2 w-3 h-3 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+              <div className="absolute top-10 right-4 w-3 h-3 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '0.6s' }}></div>
+              <div className="absolute top-12 left-8 w-3 h-3 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0.8s' }}></div>
+            </div>
+            
+            <div className="relative z-10 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="relative">
+                  <CheckCircle className="w-16 h-16 text-green-600" />
+                  <PartyPopper className="w-8 h-8 text-yellow-500 absolute -top-2 -right-2 animate-bounce" />
+                  <Sparkles className="w-6 h-6 text-pink-500 absolute -bottom-1 -left-1 animate-pulse" />
+                </div>
+              </div>
+              
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                🎉 Gefeliciteerd!
+              </h3>
+              
+              <p className="text-lg text-gray-700 mb-4">
+                Je hebt de mijlpaal van <span className="font-bold text-orange-600">{currentMilestoneCelebration} BTC</span> bereikt.
+              </p>
+              
+              <p className="text-sm text-gray-600 mb-6">
+                {currentMilestoneCelebration === 0.01 && "Je hoort nu al bij een kleine groep mensen wereldwijd."}
+                {currentMilestoneCelebration === 0.1 && "Je behoort nu tot een zeer kleine groep mensen wereldwijd."}
+                {currentMilestoneCelebration === 1 && "Je behoort tot een extreem kleine groep mensen wereldwijd. Dit is een bijzondere prestatie!"}
+              </p>
+              
+              <button
+                onClick={() => setShowMilestonePopup(false)}
+                className="px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors"
+              >
+                Geweldig! 🚀
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Goals Section - Only show if there are custom goals */}
       {allGoals.length > 0 && (
