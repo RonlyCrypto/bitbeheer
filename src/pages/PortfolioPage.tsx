@@ -876,6 +876,7 @@ export default function PortfolioPage() {
                       transaction={transaction}
                       index={(currentPage - 1) * itemsPerPage + index + 1}
                       onTransactionClick={setSelectedTransaction}
+                      allTransactions={allTransactions}
                     />
                   ))}
               </div>
