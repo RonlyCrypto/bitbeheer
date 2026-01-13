@@ -2086,6 +2086,82 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
   // Calculate wallet balance in BTC
   const currentBalance = walletData?.balance || 0;
 
+  // Bitcoin milestones with meaningful descriptions
+  const btcMilestones = [
+    { 
+      label: '0.01 BTC', 
+      value: 0.01,
+      title: 'Eerste serieuze stap',
+      description: 'Slechts een klein percentage van de wereldbevolking zal ooit 0.01 Bitcoin bezitten. Je hoort nu al bij een kleine groep.',
+      icon: '🟢'
+    },
+    { 
+      label: '0.1 BTC', 
+      value: 0.1,
+      title: 'Elite niveau',
+      description: 'Naar schatting kunnen minder dan 1% van de mensen wereldwijd ooit 0.1 Bitcoin bezitten. Dit wordt gezien als een sterke lange-termijn positie.',
+      icon: '🟠'
+    },
+    { 
+      label: '1 BTC', 
+      value: 1,
+      title: 'Bitcoin volledige eenheid',
+      description: 'Er zijn maar 21 miljoen Bitcoin. Als je 1 BTC bezit, hoor je bij een extreem kleine groep wereldwijd. Dit is voor de meeste mensen onbereikbaar.',
+      icon: '🔒'
+    }
+  ];
+
+  // Calculate which milestone the user has reached
+  const getCurrentMilestone = () => {
+    if (currentBalance >= 1) return { current: 1, next: null, progress: 100, reached: [0.01, 0.1, 1] };
+    if (currentBalance >= 0.1) return { current: 0.1, next: 1, progress: (currentBalance / 1) * 100, reached: [0.01, 0.1] };
+    if (currentBalance >= 0.01) return { current: 0.01, next: 0.1, progress: (currentBalance / 0.1) * 100, reached: [0.01] };
+    return { current: 0, next: 0.01, progress: (currentBalance / 0.01) * 100, reached: [] };
+  };
+
+  const milestoneProgress = getCurrentMilestone();
+
+  // Default goals - focused on steps toward next milestone (must be after milestoneProgress is defined)
+  const getDefaultGoals = () => {
+    const goals = [];
+    
+    // Add milestone-based goals
+    if (milestoneProgress.next) {
+      if (milestoneProgress.next === 0.01) {
+        goals.push({
+          id: 'step-toward-0.01',
+          title: 'Volgende stap naar 0.01 BTC',
+          description: 'Koop Bitcoin en verplaats naar eigen wallet',
+          type: 'milestone_step' as const,
+          target: milestoneProgress.next,
+          completed: currentBalance >= milestoneProgress.next
+        });
+      } else if (milestoneProgress.next === 0.1) {
+        goals.push({
+          id: 'step-toward-0.1',
+          title: 'Volgende stap naar 0.1 BTC',
+          description: 'Bouw je positie verder uit met regelmatige aankopen',
+          type: 'milestone_step' as const,
+          target: milestoneProgress.next,
+          completed: currentBalance >= milestoneProgress.next
+        });
+      } else if (milestoneProgress.next === 1) {
+        goals.push({
+          id: 'step-toward-1',
+          title: 'Volgende stap naar 1 BTC',
+          description: 'Een volledige Bitcoin - de ultieme mijlpaal',
+          type: 'milestone_step' as const,
+          target: milestoneProgress.next,
+          completed: currentBalance >= milestoneProgress.next
+        });
+      }
+    }
+    
+    return goals;
+  };
+
+  const defaultGoals = getDefaultGoals();
+
   // Load custom goals from database
   useEffect(() => {
     const loadCustomGoals = async () => {
@@ -2156,82 +2232,6 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
 
     loadCustomGoals();
   }, [user?.id, currentBalance]);
-
-  // Default goals - focused on steps toward next milestone
-  const getDefaultGoals = () => {
-    const goals = [];
-    
-    // Add milestone-based goals
-    if (milestoneProgress.next) {
-      if (milestoneProgress.next === 0.01) {
-        goals.push({
-          id: 'step-toward-0.01',
-          title: 'Volgende stap naar 0.01 BTC',
-          description: 'Koop Bitcoin en verplaats naar eigen wallet',
-          type: 'milestone_step' as const,
-          target: milestoneProgress.next,
-          completed: currentBalance >= milestoneProgress.next
-        });
-      } else if (milestoneProgress.next === 0.1) {
-        goals.push({
-          id: 'step-toward-0.1',
-          title: 'Volgende stap naar 0.1 BTC',
-          description: 'Bouw je positie verder uit met regelmatige aankopen',
-          type: 'milestone_step' as const,
-          target: milestoneProgress.next,
-          completed: currentBalance >= milestoneProgress.next
-        });
-      } else if (milestoneProgress.next === 1) {
-        goals.push({
-          id: 'step-toward-1',
-          title: 'Volgende stap naar 1 BTC',
-          description: 'Een volledige Bitcoin - de ultieme mijlpaal',
-          type: 'milestone_step' as const,
-          target: milestoneProgress.next,
-          completed: currentBalance >= milestoneProgress.next
-        });
-      }
-    }
-    
-    return goals;
-  };
-
-  const defaultGoals = getDefaultGoals();
-
-  // Bitcoin milestones with meaningful descriptions
-  const btcMilestones = [
-    { 
-      label: '0.01 BTC', 
-      value: 0.01,
-      title: 'Eerste serieuze stap',
-      description: 'Slechts een klein percentage van de wereldbevolking zal ooit 0.01 Bitcoin bezitten. Je hoort nu al bij een kleine groep.',
-      icon: '🟢'
-    },
-    { 
-      label: '0.1 BTC', 
-      value: 0.1,
-      title: 'Elite niveau',
-      description: 'Naar schatting kunnen minder dan 1% van de mensen wereldwijd ooit 0.1 Bitcoin bezitten. Dit wordt gezien als een sterke lange-termijn positie.',
-      icon: '🟠'
-    },
-    { 
-      label: '1 BTC', 
-      value: 1,
-      title: 'Bitcoin volledige eenheid',
-      description: 'Er zijn maar 21 miljoen Bitcoin. Als je 1 BTC bezit, hoor je bij een extreem kleine groep wereldwijd. Dit is voor de meeste mensen onbereikbaar.',
-      icon: '🔒'
-    }
-  ];
-
-  // Calculate which milestone the user has reached
-  const getCurrentMilestone = () => {
-    if (currentBalance >= 1) return { current: 1, next: null, progress: 100, reached: [0.01, 0.1, 1] };
-    if (currentBalance >= 0.1) return { current: 0.1, next: 1, progress: (currentBalance / 1) * 100, reached: [0.01, 0.1] };
-    if (currentBalance >= 0.01) return { current: 0.01, next: 0.1, progress: (currentBalance / 0.1) * 100, reached: [0.01] };
-    return { current: 0, next: 0.01, progress: (currentBalance / 0.01) * 100, reached: [] };
-  };
-
-  const milestoneProgress = getCurrentMilestone();
   
   // Get milestone info
   const getMilestoneInfo = (value: number) => {
