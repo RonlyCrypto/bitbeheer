@@ -318,7 +318,7 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
               <span className="font-semibold">Totale Aankoop Waarde</span>
             </div>
             <p className="text-2xl font-bold text-orange-900">
-              ${((transaction.value / 100000000) * transaction.price).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+              ${((transaction.value / 100000000) * transaction.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
             <p className="text-xs text-orange-600 mt-1">
               {(transaction.value / 100000000).toFixed(8)} BTC @ ${transaction.price.toLocaleString('en-US', { maximumFractionDigits: 0 })}
@@ -355,7 +355,7 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
               <span className="font-semibold">Totale Verkoop Waarde</span>
             </div>
             <p className="text-2xl font-bold text-orange-900">
-              ${((Math.abs(transaction.value) / 100000000) * transaction.price).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+              ${((Math.abs(transaction.value) / 100000000) * transaction.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
             <p className="text-xs text-orange-600 mt-1">
               {(Math.abs(transaction.value) / 100000000).toFixed(8)} BTC @ ${transaction.price.toLocaleString('en-US', { maximumFractionDigits: 0 })}
