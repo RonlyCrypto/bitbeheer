@@ -1812,9 +1812,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* LINKERKOLOM - Bitcoin Veiligheidscheck + Wallet (8 kolommen) */}
         <div className="lg:col-span-8 space-y-6">
-
-      {/* Bitcoin Veiligheidscheck - Vervangt aanmeldproces na goedkeuring */}
-      {accountApproved && (firstAppointmentCompleted || hasApprovedOneOnOne) ? (
+          {/* Bitcoin Veiligheidscheck - Vervangt aanmeldproces na goedkeuring */}
+          {accountApproved && (firstAppointmentCompleted || hasApprovedOneOnOne) ? (
         <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">🔐 Jouw Bitcoin Veiligheidscheck</h3>
           <div className="space-y-3">
@@ -1902,10 +1901,10 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           </button>
         </div>
       </div>
-      ) : null}
+          ) : null}
 
           {/* Wallet Block - Compact en mooi */}
-      {hasWallet && walletData && !showSuccessMessage && (
+          {hasWallet && walletData && !showSuccessMessage && (
             <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
               {/* Wallet uitleg bovenaan */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
