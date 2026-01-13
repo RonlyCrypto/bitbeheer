@@ -1942,9 +1942,11 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             </div>
           ) : null}
 
-          {/* Wallet Block - Compact en mooi */}
+          {/* Wallet en Waarschuwingen Blok - Naast elkaar */}
       {hasWallet && walletData && !showSuccessMessage && (
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          {/* Wallet Block - 2/3 breedte */}
+          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-6 border border-gray-200">
               {/* Wallet uitleg bovenaan */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
                 <div className="flex items-start gap-2">
@@ -2048,16 +2050,11 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                       Alle transacties bekijken
             </button>
           )}
-        </div>
-      )}
-                  </div>
-                </div>
-                
-      {/* Waarschuwingen Blok - Rechts boven */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div className="lg:col-span-2"></div> {/* Spacer voor links */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">⚠️ Belangrijke Waarschuwingen</h3>
+          </div>
+          
+          {/* Waarschuwingen Blok - 1/3 breedte */}
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">⚠️ Belangrijke Waarschuwingen</h3>
           
           <div className="space-y-4">
             {/* Waarschuwing 1: Laat crypto niet op exchanges */}
@@ -2110,8 +2107,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               </div>
             </div>
           </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Leer & Waarschuwingen en Beginnersdoelen - 1 rij (2/3 1/3) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
