@@ -2123,6 +2123,24 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
   };
 
   const milestoneProgress = getCurrentMilestone();
+  
+  // Get milestone info
+  const getMilestoneInfo = (value: number) => {
+    return btcMilestones.find(m => m.value === value);
+  };
+
+  // Detect new milestone achievements and show celebration popup
+  useEffect(() => {
+    const newlyReached = milestoneProgress.reached.filter(m => !celebratedMilestones.includes(m));
+    
+    if (newlyReached.length > 0) {
+      // Show celebration for the highest newly reached milestone
+      const highestNewMilestone = Math.max(...newlyReached);
+      setCurrentMilestoneCelebration(highestNewMilestone);
+      setShowMilestonePopup(true);
+      setCelebratedMilestones([...celebratedMilestones, ...newlyReached]);
+    }
+  }, [milestoneProgress.reached, currentBalance, celebratedMilestones]);
 
   // Default goals - focused on steps toward next milestone (must be after milestoneProgress is defined)
   const getDefaultGoals = () => {
