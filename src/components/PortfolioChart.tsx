@@ -269,6 +269,7 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
             color="#f97316"
             showGrid={true}
             purchasePoints={purchasePoints}
+            purchaseDetails={purchaseDetails}
             onTransactionClick={onTransactionClick}
           />
         ) : (

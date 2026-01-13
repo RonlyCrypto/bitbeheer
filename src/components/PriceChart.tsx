@@ -571,11 +571,12 @@ export default function PriceChart({
           ctx.fillStyle = '#ffffff';
           ctx.fill();
           
-          // Add purchase number above the arrow
-          ctx.fillStyle = '#10b981';
+          // Add purchase number above/below the arrow
+          ctx.fillStyle = pointColor;
           ctx.font = 'bold 12px sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText(`#${index + 1}`, x, y - 25);
+          const labelY = isBuy ? y - 25 : y + 25;
+          ctx.fillText(`#${index + 1}`, x, labelY);
           
           drawnCount++;
           console.log(`Successfully drew purchase point ${index + 1} at position:`, { x, y });
