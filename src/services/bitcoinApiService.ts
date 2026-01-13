@@ -134,12 +134,32 @@ class BitcoinApiService {
           const relevantOutputs = txData.vout.filter((vout: any) => 
             vout.scriptpubkey_address === address
           );
+          
+          // Controleer of dit adres Bitcoin VERSTUURT in deze transactie (vin)
+          // We moeten de vorige outputs (prevout) van de inputs controleren
+          let relevantInputs = 0;
+          let totalSent = 0;
+          
+          if (txData.vin && Array.isArray(txData.vin)) {
+            for (const vin of txData.vin) {
+              if (vin.prevout && vin.prevout.scriptpubkey_address === address) {
+                relevantInputs++;
+                totalSent += vin.prevout.value || 0;
+              }
+            }
+          }
 
-          // Alleen receive transacties registreren (waar je BTC ontvangt)
-          if (relevantOutputs.length > 0) {
-            // Bereken totaal ontvangen in deze transactie
-            const totalReceived = relevantOutputs.reduce((sum: number, vout: any) => sum + vout.value, 0);
-            const valueInBTC = totalReceived / 100000000;
+          // Bereken netto waarde: ontvangen - verstuurd
+          const totalReceived = relevantOutputs.length > 0 
+            ? relevantOutputs.reduce((sum: number, vout: any) => sum + vout.value, 0)
+            : 0;
+          
+          const netValue = totalReceived - totalSent;
+          
+          // Registreer transactie als er een netto waarde is (ontvangen of verstuurd)
+          if (netValue !== 0) {
+            const valueInBTC = Math.abs(netValue) / 100000000;
+            const isSend = netValue < 0;
             
             // Gebruik block_time (confirmed) of tx.time (unconfirmed) als fallback
             let blockTime = txData.status?.block_time;
@@ -194,17 +214,19 @@ class BitcoinApiService {
               continue;
             }
             
+            // Voor sends: gebruik negatieve waarde
+            const valueInSatoshis = isSend ? -Math.abs(netValue) : Math.abs(netValue);
             const currentValueUSD = valueInBTC * currentPrice;
             const priceAtTimeUSD = valueInBTC * priceAtTime;
-            const profitUSD = currentValueUSD - priceAtTimeUSD;
+            const profitUSD = isSend ? -(currentValueUSD - priceAtTimeUSD) : (currentValueUSD - priceAtTimeUSD);
             const profitPercent = priceAtTime > 0 ? ((currentPrice - priceAtTime) / priceAtTime) * 100 : 0;
             
             processedTransactions.push({
               hash: tx.txid,
               time: blockTime,
-              value: totalReceived,
+              value: valueInSatoshis, // Negatief voor sends, positief voor receives
               price: priceAtTime,
-              currentValue: currentValueUSD,
+              currentValue: isSend ? -currentValueUSD : currentValueUSD,
               profit: profitUSD,
               profitPercent: profitPercent,
               valueInBTC: valueInBTC
@@ -291,17 +313,34 @@ class BitcoinApiService {
           const relevantOutputs = txData.vout.filter((vout: any) => 
             vout.scriptpubkey_address === address
           );
+          
+          // Controleer of dit adres Bitcoin VERSTUURT in deze transactie (vin)
+          let totalSent = 0;
+          if (txData.vin && Array.isArray(txData.vin)) {
+            for (const vin of txData.vin) {
+              if (vin.prevout && vin.prevout.scriptpubkey_address === address) {
+                totalSent += vin.prevout.value || 0;
+              }
+            }
+          }
 
-          if (relevantOutputs.length > 0) {
-            const totalReceived = relevantOutputs.reduce((sum: number, vout: any) => sum + vout.value, 0);
-            const valueInBTC = totalReceived / 100000000;
+          // Bereken netto waarde: ontvangen - verstuurd
+          const totalReceived = relevantOutputs.length > 0 
+            ? relevantOutputs.reduce((sum: number, vout: any) => sum + vout.value, 0)
+            : 0;
+          
+          const netValue = totalReceived - totalSent;
+
+          if (netValue !== 0) {
+            const valueInBTC = Math.abs(netValue) / 100000000;
+            const isSend = netValue < 0;
             const blockTime = txData.status?.block_time;
             
             if (!blockTime) {
               skippedCount++;
               continue;
             }
-            
+
             let priceAtTime: number | null = null;
             
             try {
@@ -343,17 +382,19 @@ class BitcoinApiService {
               continue;
             }
             
+            // Voor sends: gebruik negatieve waarde
+            const valueInSatoshis = isSend ? -Math.abs(netValue) : Math.abs(netValue);
             const currentValueUSD = valueInBTC * currentPrice;
             const priceAtTimeUSD = valueInBTC * priceAtTime;
-            const profitUSD = currentValueUSD - priceAtTimeUSD;
+            const profitUSD = isSend ? -(currentValueUSD - priceAtTimeUSD) : (currentValueUSD - priceAtTimeUSD);
             const profitPercent = priceAtTime > 0 ? ((currentPrice - priceAtTime) / priceAtTime) * 100 : 0;
             
             processedTransactions.push({
               hash: tx.txid,
               time: blockTime,
-              value: totalReceived,
+              value: valueInSatoshis, // Negatief voor sends, positief voor receives
               price: priceAtTime,
-              currentValue: currentValueUSD,
+              currentValue: isSend ? -currentValueUSD : currentValueUSD,
               profit: profitUSD,
               profitPercent: profitPercent,
               valueInBTC: valueInBTC
