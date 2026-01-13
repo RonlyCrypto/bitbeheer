@@ -2015,11 +2015,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         </div>
       )}
             </div>
-      )}
-        </div>
-      )}
-
-        </div>
+            </div>
 
         {/* RECHTERKOLOM - Custody-status (4 kolommen) */}
         <div className="lg:col-span-4 space-y-6">
