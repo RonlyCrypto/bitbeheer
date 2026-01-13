@@ -2282,7 +2282,8 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
                 timeframe: timeframe,
                 custom: true,
                 completed: goal.status === 'completed' || currentBalance >= amount,
-                dbId: goal.id
+                dbId: goal.id,
+                created_at: goal.created_at
               };
             }
           });
