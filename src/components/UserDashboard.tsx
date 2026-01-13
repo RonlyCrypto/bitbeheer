@@ -1163,7 +1163,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 price: txPrice,
                 currentValue: txCurrentValue,
                 profit: txProfit,
-                profitPercent: txProfitPercent
+                profitPercent: txProfitPercent,
+                status: tx.status || 'confirmed',
+                confirmations: tx.confirmations || 0
               };
             });
           }
@@ -1171,60 +1173,85 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           setWalletData({ ...walletRecord, lastTransaction });
           setWalletTransactions(transactions);
 
-          // 🔄 POLLING FALLBACK: Check for updates every 3 seconds (in case real-time fails)
-          let pollCount = 0;
-          const pollInterval = setInterval(async () => {
-            if (pollCount > 20) {
-              // Stop after 60 seconds
-              clearInterval(pollInterval);
-              return;
-            }
-            
+          // 🔄 REALTIME WALLET REFRESH: Check for new transactions every 10 seconds
+          const lastKnownTxHash = lastTransaction?.hash || walletRecord.last_transaction_hash || null;
+          
+          const refreshWalletData = async () => {
             try {
-              const { data: updatedWallet } = await supabase
-                .from('wallets')
-                .select('*')
-                .eq('email', email)
-                .eq('address', walletRecord.address)
-                .single();
-
-              if (updatedWallet && (updatedWallet.balance > 0 || updatedWallet.transaction_count > 0)) {
-                log('Wallet data updated via polling', updatedWallet);
+              // Check for new transactions via Blockstream API
+              const { hasNew, newTxHash } = await bitcoinApiService.checkForNewTransactions(
+                walletRecord.address,
+                lastKnownTxHash
+              );
+              
+              if (hasNew) {
+                log('🔄 Nieuwe transactie gedetecteerd! Wallet wordt ververst...', { newTxHash });
                 
-                let updatedTransactions: BitcoinTransaction[] = [];
-                if (updatedWallet.wallet_data?.transactions && Array.isArray(updatedWallet.wallet_data.transactions)) {
-                  updatedTransactions = updatedWallet.wallet_data.transactions.map((tx: any) => {
-                    const txPrice = tx.price || bitcoinPrice;
-                    const txValue = tx.value || 0;
-                    const txCurrentValue = tx.currentValue || (txValue ? (txValue / 100000000) * bitcoinPrice : 0);
-                    const txProfit = tx.profit !== undefined ? tx.profit : (txCurrentValue - (txValue / 100000000) * txPrice);
-                    const txProfitPercent = tx.profitPercent !== undefined ? tx.profitPercent : (txPrice > 0 ? ((bitcoinPrice - txPrice) / txPrice) * 100 : 0);
-                    
-                    return {
-                      hash: tx.hash || '',
-                      time: tx.time || Math.floor(new Date(tx.date || Date.now()).getTime() / 1000),
-                      value: txValue,
-                      price: txPrice,
-                      currentValue: txCurrentValue,
-                      profit: txProfit,
-                      profitPercent: txProfitPercent
-                    };
+                // Fetch fresh wallet data
+                const freshWalletData = await bitcoinApiService.getWalletData(walletRecord.address, 50);
+                
+                // Update Supabase
+                const { error: updateError } = await supabase
+                  .from('wallets')
+                  .update({
+                    balance: freshWalletData.balance,
+                    transaction_count: freshWalletData.transactionCount,
+                    total_received: freshWalletData.totalReceived,
+                    total_sent: freshWalletData.totalSent,
+                    last_seen: new Date().toISOString(),
+                    last_transaction_hash: freshWalletData.transactions[0]?.hash || null,
+                    last_transaction_time: freshWalletData.transactions[0]?.time 
+                      ? new Date(freshWalletData.transactions[0].time * 1000).toISOString() 
+                      : null,
+                    wallet_data: { transactions: freshWalletData.transactions },
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('id', walletRecord.id);
+                
+                if (!updateError) {
+                  // Update local state
+                  const currentPrice = await bitcoinApiService.getCurrentPrice().catch(() => currentBitcoinPrice);
+                  const updatedTransactions = freshWalletData.transactions.map((tx: any) => ({
+                    hash: tx.hash || '',
+                    time: tx.time || Math.floor(new Date().getTime() / 1000),
+                    value: tx.value || 0,
+                    price: tx.price || currentPrice,
+                    currentValue: tx.currentValue || 0,
+                    profit: tx.profit || 0,
+                    profitPercent: tx.profitPercent || 0,
+                    status: tx.status || 'confirmed',
+                    confirmations: tx.confirmations || 0
+                  }));
+                  
+                  setWalletData({
+                    ...walletRecord,
+                    balance: freshWalletData.balance,
+                    transaction_count: freshWalletData.transactionCount,
+                    lastTransaction: freshWalletData.transactions[0] || null
                   });
+                  setWalletTransactions(updatedTransactions);
+                  
+                  log('✅ Wallet succesvol ververst met nieuwe transacties', {
+                    newBalance: freshWalletData.balance,
+                    newTxCount: freshWalletData.transactionCount
+                  });
+                } else {
+                  err('Error updating wallet in database', updateError);
                 }
-                
-                setWalletData(updatedWallet);
-                setWalletTransactions(updatedTransactions);
-                clearInterval(pollInterval);
               }
             } catch (error) {
-              err('Poll error', error);
+              err('Error refreshing wallet', error);
             }
-            
-            pollCount++;
-          }, 3000);
+          };
+          
+          // Start real-time refresh interval (every 10 seconds)
+          const refreshInterval = setInterval(refreshWalletData, 10000);
+          
+          // Also check immediately
+          refreshWalletData();
 
           return () => {
-            clearInterval(pollInterval);
+            clearInterval(refreshInterval);
           };
         } else {
           setHasWallet(false);
@@ -1974,13 +2001,17 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                       const btcAmount = Math.abs(tx.value) / 100000000;
                       const isIncoming = tx.value > 0;
                       const txType = isIncoming ? 'Koop' : 'Verkoop';
+                      const isPending = tx.status === 'pending';
 
                     return (
-                        <div key={tx.hash || index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div key={tx.hash || index} className={`flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 transition-colors ${isPending ? 'bg-yellow-50 border border-yellow-200' : 'bg-gray-50'}`}>
                           <div className="flex items-center gap-2 flex-1">
-                            <div className={`w-2 h-2 rounded-full ${isIncoming ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                            <div className={`w-2 h-2 rounded-full ${isPending ? 'bg-yellow-500 animate-pulse' : (isIncoming ? 'bg-green-500' : 'bg-red-500')}`}></div>
                             <span className="text-xs font-medium text-gray-900">{btcAmount.toFixed(4)} BTC</span>
                             <span className="text-xs text-gray-500">({txType})</span>
+                            {isPending && (
+                              <span className="text-xs text-yellow-600 font-medium">⏳ Pending</span>
+                            )}
                   </div>
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-gray-500">{formattedDate}</span>
@@ -1990,7 +2021,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-600 hover:text-blue-700"
-                                title="Bekijk transactie"
+                                title={isPending ? "Bekijk pending transactie" : "Bekijk transactie"}
                           >
                             <ExternalLink className="w-3 h-3" />
                               </a>

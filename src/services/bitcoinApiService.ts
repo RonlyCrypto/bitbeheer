@@ -10,6 +10,8 @@ export interface BitcoinTransaction {
   profit: number; // Profit/loss in USD
   profitPercent: number; // Profit/loss percentage
   valueInBTC?: number; // Value in BTC for reference
+  status?: 'pending' | 'confirmed'; // Transaction status
+  confirmations?: number; // Number of confirmations
 }
 
 export interface BitcoinWallet {
@@ -34,6 +36,7 @@ export interface BitcoinPriceData {
 class BitcoinApiService {
   private baseUrl = 'https://blockstream.info/api';
   private priceUrl = 'https://api.coingecko.com/api/v3';
+  private cachedBlockHeight: number | null = null;
 
   // Haal wallet data op van Blockstream API (met lazy loading)
   async getWalletData(address: string, limit: number = 25): Promise<BitcoinWallet> {
@@ -124,6 +127,9 @@ class BitcoinApiService {
       
       console.log(`🔍 Processing ALL ${transactions.length} transactions from blockchain...`);
       
+      // Reset cached block height for this batch
+      this.cachedBlockHeight = null;
+      
       for (let i = 0; i < transactions.length; i++) {
         const tx = transactions[i]; // Verwerk alleen eerste 'limit' transacties
         try {
@@ -163,8 +169,23 @@ class BitcoinApiService {
             
             // Gebruik block_time (confirmed) of tx.time (unconfirmed) als fallback
             let blockTime = txData.status?.block_time;
+            const isPending = !blockTime || !txData.status?.block_height;
             
-            // Fallback naar tx.time als block_time niet beschikbaar (unconfirmed)
+            // Haal current block height op voor confirmations (alleen als confirmed, cache voor performance)
+            let confirmations = 0;
+            if (!isPending && txData.status?.block_height) {
+              try {
+                // Cache block height voor deze batch (alleen eerste keer ophalen)
+                if (!this.cachedBlockHeight) {
+                  this.cachedBlockHeight = await this.getCurrentBlockHeight();
+                }
+                confirmations = this.cachedBlockHeight - txData.status.block_height + 1;
+              } catch (error) {
+                console.warn('Could not fetch current block height for confirmations');
+              }
+            }
+            
+            // Fallback naar tx.time als block_time niet beschikbaar (unconfirmed/pending)
             if (!blockTime) {
               blockTime = tx.time || txData.time;
               if (!blockTime) {
@@ -172,7 +193,7 @@ class BitcoinApiService {
                 skippedCount++;
                 continue;
               }
-              console.log(`ℹ️ Using tx.time for unconfirmed tx ${tx.txid.slice(0, 8)}...`);
+              console.log(`ℹ️ Using tx.time for unconfirmed/pending tx ${tx.txid.slice(0, 8)}...`);
             }
             
             // Haal de BTC prijs op voor de exacte datum van de transactie (ALLEEN uit Supabase)
@@ -229,7 +250,9 @@ class BitcoinApiService {
               currentValue: isSend ? -currentValueUSD : currentValueUSD,
               profit: profitUSD,
               profitPercent: profitPercent,
-              valueInBTC: valueInBTC
+              valueInBTC: valueInBTC,
+              status: isPending ? 'pending' : 'confirmed',
+              confirmations: confirmations
             });
           } else {
             skippedCount++;
@@ -397,7 +420,9 @@ class BitcoinApiService {
               currentValue: isSend ? -currentValueUSD : currentValueUSD,
               profit: profitUSD,
               profitPercent: profitPercent,
-              valueInBTC: valueInBTC
+              valueInBTC: valueInBTC,
+              status: isPending ? 'pending' : 'confirmed',
+              confirmations: confirmations
             });
           } else {
             skippedCount++;
@@ -555,6 +580,47 @@ class BitcoinApiService {
     } catch (error) {
       console.error('❌ Error fetching price data:', error);
       throw error; // Throw error instead of returning mock data
+    }
+  }
+
+  // Haal huidige block height op (voor confirmations)
+  private async getCurrentBlockHeight(): Promise<number> {
+    try {
+      const response = await fetch(`${this.baseUrl}/blocks/tip/height`);
+      if (response.ok) {
+        const height = await response.json();
+        return height;
+      }
+    } catch (error) {
+      console.error('Error fetching current block height:', error);
+    }
+    return 0; // Fallback
+  }
+
+  // Check voor nieuwe transacties (alleen nieuwe tx hashes ophalen)
+  async checkForNewTransactions(address: string, lastKnownTxHash: string | null): Promise<{ hasNew: boolean; newTxHash?: string }> {
+    try {
+      // Haal alleen de eerste pagina op (nieuwste transacties)
+      const response = await fetch(`${this.baseUrl}/address/${address}/txs`);
+      if (!response.ok) {
+        return { hasNew: false };
+      }
+      
+      const transactions = await response.json();
+      if (!Array.isArray(transactions) || transactions.length === 0) {
+        return { hasNew: false };
+      }
+      
+      // Check of de nieuwste transactie anders is dan de laatste bekende
+      const newestTxHash = transactions[0].txid;
+      if (lastKnownTxHash && newestTxHash === lastKnownTxHash) {
+        return { hasNew: false };
+      }
+      
+      return { hasNew: true, newTxHash: newestTxHash };
+    } catch (error) {
+      console.error('Error checking for new transactions:', error);
+      return { hasNew: false };
     }
   }
 
