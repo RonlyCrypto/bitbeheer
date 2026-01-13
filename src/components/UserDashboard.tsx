@@ -2018,8 +2018,15 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             </div>
             </div>
 
-      {/* Leer & Waarschuwingen, Beginnersdoelen en Custody-status - 1 rij (1/3 1/3 1/3) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Leer & Waarschuwingen en Beginnersdoelen - 1 rij (2/3 1/3) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Beginnersdoelen - 2/3 breedte */}
+        {(accountApproved || hasApprovedOneOnOne) && (
+          <div className="lg:col-span-2">
+            <BeginnersGoals walletData={walletData} walletTransactions={walletTransactions} />
+          </div>
+        )}
+        
         {/* Leer & Waarschuwingen - 1/3 breedte */}
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-4">
@@ -2055,13 +2062,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                     </div>
           </div>
         </div>
-
-        {/* Beginnersdoelen - 1/3 breedte */}
-        {(accountApproved || hasApprovedOneOnOne) && (
-        <BeginnersGoals walletData={walletData} walletTransactions={walletTransactions} />
-      )}
-        {/* Lege kolom - 1/3 breedte */}
-        <div></div>
       </div>
 
       {/* Stappenblokken (Ledger, Coinbase & Hulp nodig?) - Onderaan naast elkaar (3/8 3/8 2/8) */}
@@ -2177,7 +2177,56 @@ function BeginnersGoals({ walletData, walletTransactions }: { walletData: any; w
     setNewGoalMonthlyCurrency('btc');
   };
 
-  const allGoals = [...defaultGoals, ...customGoals];
+  // Check monthly goals - check if user has deposited this month
+  const checkMonthlyGoal = (goal: any) => {
+    if (goal.type !== 'monthly') return null;
+    
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
+    // Check if there are transactions this month
+    const thisMonthTransactions = walletTransactions.filter(tx => {
+      const txDate = new Date(tx.time * 1000);
+      return txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear && tx.value > 0;
+    });
+    
+    const hasDepositedThisMonth = thisMonthTransactions.length > 0;
+    
+    if (goal.monthlyCurrency === 'btc') {
+      // Check if deposited amount matches or exceeds monthly goal
+      const totalDeposited = thisMonthTransactions.reduce((sum, tx) => sum + (Math.abs(tx.value) / 100000000), 0);
+      return {
+        deposited: hasDepositedThisMonth && totalDeposited >= goal.monthlyAmount,
+        amount: totalDeposited
+      };
+    } else {
+      // For EUR goals, just check if any deposit was made
+      return {
+        deposited: hasDepositedThisMonth,
+        amount: 0
+      };
+    }
+  };
+
+  // Calculate overall progress percentage
+  const calculateOverallProgress = () => {
+    const allGoalsList = [...customGoals, ...defaultGoals];
+    const completedCount = allGoalsList.filter(goal => {
+      if (goal.type === 'monthly') {
+        const monthlyCheck = checkMonthlyGoal(goal);
+        return monthlyCheck?.deposited || false;
+      }
+      const progress = getGoalProgress(goal);
+      return goal.completed || progress.completed;
+    }).length;
+    return allGoalsList.length > 0 ? (completedCount / allGoalsList.length) * 100 : 0;
+  };
+
+  // Custom goals first, then default goals
+  const allGoals = [...customGoals, ...defaultGoals];
+
+  const overallProgress = calculateOverallProgress();
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
@@ -2185,51 +2234,102 @@ function BeginnersGoals({ walletData, walletTransactions }: { walletData: any; w
         <h3 className="text-lg font-semibold text-gray-900">🎯 Beginnersdoelen</h3>
         <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Je klas over &gt;</a>
       </div>
+      
+      {/* Statusbalk */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium text-gray-700">Voortgang</span>
+          <span className="text-sm font-semibold text-orange-600">{Math.round(overallProgress)}%</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2.5">
+          <div 
+            className="bg-orange-600 h-2.5 rounded-full transition-all duration-300"
+            style={{ width: `${overallProgress}%` }}
+          ></div>
+        </div>
+      </div>
+
       <div className="space-y-3">
         {allGoals.map((goal, index) => {
           const progress = getGoalProgress(goal);
           const isCompleted = goal.completed || progress.completed;
+          const monthlyCheck = goal.type === 'monthly' ? checkMonthlyGoal(goal) : null;
+          const monthlyCompleted = monthlyCheck?.deposited || false;
+          
+          // Calculate progress percentage for this goal
+          let goalProgress = 0;
+          if (goal.type === 'btc') {
+            goalProgress = goal.completed ? 100 : Math.min(100, (currentBalance / goal.target) * 100);
+          } else if (goal.type === 'monthly') {
+            goalProgress = monthlyCompleted ? 100 : 0;
+          }
           
           return (
-            <div 
-              key={goal.id} 
-              className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
-                isCompleted 
-                  ? 'bg-green-50 border-2 border-green-200' 
-                  : 'bg-gray-50 border border-gray-200'
-              }`}
-            >
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                isCompleted 
-                  ? 'bg-green-500' 
-                  : 'bg-orange-100'
-              }`}>
-                {isCompleted ? (
-                  <Trophy className="w-5 h-5 text-white" />
-                ) : (
-                  <span className={`text-sm font-semibold ${
-                    isCompleted ? 'text-white' : 'text-orange-600'
-                  }`}>
-                    {index + 1}
-                  </span>
-                )}
-              </div>
-              <div className="flex-1">
-                <p className={`font-medium ${
-                  isCompleted ? 'text-green-900' : 'text-gray-900'
+            <div key={goal.id}>
+              <div 
+                className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                  isCompleted || monthlyCompleted
+                    ? 'bg-green-50 border-2 border-green-200' 
+                    : 'bg-gray-50 border border-gray-200'
+                }`}
+              >
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  isCompleted || monthlyCompleted
+                    ? 'bg-green-500' 
+                    : 'bg-orange-100'
                 }`}>
-                  {goal.title}
-                </p>
-                {!isCompleted && goal.type === 'btc' && progress.remaining > 0 && (
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    nog {progress.remaining.toFixed(4)} BTC te gaan
+                  {isCompleted || monthlyCompleted ? (
+                    <Trophy className="w-5 h-5 text-white" />
+                  ) : (
+                    <span className={`text-sm font-semibold ${
+                      isCompleted || monthlyCompleted ? 'text-white' : 'text-orange-600'
+                    }`}>
+                      {index + 1}
+                    </span>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className={`font-medium ${
+                    isCompleted || monthlyCompleted ? 'text-green-900' : 'text-gray-900'
+                  }`}>
+                    {goal.title}
                   </p>
+                  {!isCompleted && goal.type === 'btc' && progress.remaining > 0 && (
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      nog {progress.remaining.toFixed(4)} BTC te gaan
+                    </p>
+                  )}
+                  {goal.type === 'monthly' && (
+                    <p className={`text-xs mt-0.5 ${
+                      monthlyCompleted ? 'text-green-700' : 'text-gray-500'
+                    }`}>
+                      {monthlyCompleted ? (
+                        <span className="flex items-center gap-1">
+                          <CheckCircle className="w-3 h-3" />
+                          Goed gedaan! Je hebt deze maand gestort 🎉
+                        </span>
+                      ) : (
+                        'Je hebt deze maand nog niet gestort'
+                      )}
+                    </p>
+                  )}
+                </div>
+                {(isCompleted || monthlyCompleted) && (
+                  <div className="flex items-center gap-1">
+                    <PartyPopper className="w-4 h-4 text-green-600" />
+                    <Sparkles className="w-4 h-4 text-green-600" />
+                  </div>
                 )}
               </div>
-              {isCompleted && (
-                <div className="flex items-center gap-1">
-                  <PartyPopper className="w-4 h-4 text-green-600" />
-                  <Sparkles className="w-4 h-4 text-green-600" />
+              {/* Progress bar for each goal */}
+              {goal.type === 'btc' && !isCompleted && (
+                <div className="mt-1 ml-11">
+                  <div className="w-full bg-gray-100 rounded-full h-1.5">
+                    <div 
+                      className="bg-orange-500 h-1.5 rounded-full transition-all duration-300"
+                      style={{ width: `${goalProgress}%` }}
+                    ></div>
+                  </div>
                 </div>
               )}
             </div>
