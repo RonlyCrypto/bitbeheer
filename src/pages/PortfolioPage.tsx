@@ -53,6 +53,7 @@ export default function PortfolioPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [transactionFilter, setTransactionFilter] = useState<'all' | 'buy' | 'sell'>('all');
 
   // Get effective user email (considering impersonation)
   const effectiveUserEmail = (isImpersonating && impersonatedUser) 
@@ -809,7 +810,15 @@ export default function PortfolioPage() {
                 <h3 className="text-2xl font-bold text-gray-900">Transactie Geschiedenis</h3>
                 <div className="flex items-center gap-4">
                   <span className="text-sm text-gray-600">
-                    {allTransactions.length} transacties
+                    {(() => {
+                      const filteredCount = allTransactions.filter(tx => {
+                        if (transactionFilter === 'all') return true;
+                        if (transactionFilter === 'buy') return tx.value > 0;
+                        if (transactionFilter === 'sell') return tx.value < 0;
+                        return true;
+                      }).length;
+                      return `${filteredCount} transacties`;
+                    })()}
                   </span>
                   <div className={`px-3 py-1 rounded-full text-sm font-medium ${
                     totalProfit >= 0 
@@ -823,31 +832,87 @@ export default function PortfolioPage() {
 
               {/* Pagination Controls */}
               <div className="bg-white rounded-lg p-4 border border-gray-200 mb-6 flex items-center justify-between flex-wrap gap-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-gray-700">Per pagina:</span>
-                  <div className="flex gap-2">
-                    {[25, 50, 100].map(num => (
+                <div className="flex items-center gap-4 flex-wrap">
+                  {/* Filter voor Buy/Sell */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-700">Filter:</span>
+                    <div className="flex gap-2">
                       <button
-                        key={num}
                         onClick={() => {
-                          setItemsPerPage(num);
+                          setTransactionFilter('all');
                           setCurrentPage(1);
                         }}
                         className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                          itemsPerPage === num
+                          transactionFilter === 'all'
                             ? 'bg-orange-600 text-white'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                       >
-                        {num}
+                        Alle
                       </button>
-                    ))}
+                      <button
+                        onClick={() => {
+                          setTransactionFilter('buy');
+                          setCurrentPage(1);
+                        }}
+                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                          transactionFilter === 'buy'
+                            ? 'bg-green-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        Koop
+                      </button>
+                      <button
+                        onClick={() => {
+                          setTransactionFilter('sell');
+                          setCurrentPage(1);
+                        }}
+                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                          transactionFilter === 'sell'
+                            ? 'bg-red-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        Verkoop
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Per pagina selector */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-gray-700">Per pagina:</span>
+                    <div className="flex gap-2">
+                      {[25, 50, 100].map(num => (
+                        <button
+                          key={num}
+                          onClick={() => {
+                            setItemsPerPage(num);
+                            setCurrentPage(1);
+                          }}
+                          className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                            itemsPerPage === num
+                              ? 'bg-orange-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-600">
-                    Pagina {currentPage} van {Math.ceil(allTransactions.length / itemsPerPage)}
+                    Pagina {currentPage} van {Math.ceil(
+                      allTransactions.filter(tx => {
+                        if (transactionFilter === 'all') return true;
+                        if (transactionFilter === 'buy') return tx.value > 0;
+                        if (transactionFilter === 'sell') return tx.value < 0;
+                        return true;
+                      }).length / itemsPerPage
+                    )}
                   </span>
                   <button
                     onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
@@ -868,6 +933,12 @@ export default function PortfolioPage() {
 
               <div className="grid gap-6">
                 {allTransactions
+                  .filter(tx => {
+                    if (transactionFilter === 'all') return true;
+                    if (transactionFilter === 'buy') return tx.value > 0;
+                    if (transactionFilter === 'sell') return tx.value < 0;
+                    return true;
+                  })
                   .sort((a, b) => b.time - a.time) // Nieuwste eerst
                   .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                   .map((transaction, index) => (
@@ -884,11 +955,19 @@ export default function PortfolioPage() {
               {/* Bottom Pagination */}
               <div className="bg-white rounded-lg p-4 border border-gray-200 mt-6 flex items-center justify-between">
                 <span className="text-sm text-gray-600">
-                  {allTransactions.length > 0 ? (
-                    `${(currentPage - 1) * itemsPerPage + 1} tot ${Math.min(currentPage * itemsPerPage, allTransactions.length)} van ${allTransactions.length} transacties`
-                  ) : (
-                    'Geen transacties'
-                  )}
+                  {(() => {
+                    const filteredTransactions = allTransactions.filter(tx => {
+                      if (transactionFilter === 'all') return true;
+                      if (transactionFilter === 'buy') return tx.value > 0;
+                      if (transactionFilter === 'sell') return tx.value < 0;
+                      return true;
+                    });
+                    return filteredTransactions.length > 0 ? (
+                      `${(currentPage - 1) * itemsPerPage + 1} tot ${Math.min(currentPage * itemsPerPage, filteredTransactions.length)} van ${filteredTransactions.length} transacties`
+                    ) : (
+                      'Geen transacties'
+                    );
+                  })()}
                 </span>
                 <div className="flex gap-2">
                   <button

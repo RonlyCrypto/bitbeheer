@@ -155,10 +155,17 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
 
   return (
     <div 
-      className={`bg-white rounded-xl p-6 shadow-lg border-l-4 transition-all duration-300 ${
+      className={`bg-white rounded-xl p-6 shadow-lg border-l-4 transition-all duration-300 relative ${
         isProfit ? 'border-l-green-500' : 'border-l-red-500'
       }`}
     >
+      {/* Rood lintje voor verkoop transacties */}
+      {isSell && (
+        <div className="absolute top-0 right-0 bg-red-600 text-white px-4 py-1 text-xs font-bold rounded-bl-lg rounded-tr-xl shadow-md z-10">
+          VERKOOP
+        </div>
+      )}
+      
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3 flex-1">
