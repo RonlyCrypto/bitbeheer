@@ -66,6 +66,7 @@ export default function ReferralBlocks() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Grid is al 50/50, maar we maken de blokken groter */}
       {/* Ledger Block - Step 1 */}
       <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-6 rounded-xl relative">
         <div className="absolute top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
