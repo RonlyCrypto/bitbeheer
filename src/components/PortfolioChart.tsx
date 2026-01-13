@@ -109,22 +109,54 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
   }).filter(Boolean) as Array<{ date: string; price: number }> : [];
 
   // Create purchase details with buy/sell information
-  const purchaseDetails = showTransactions ? transactions.map(tx => {
+  const purchaseDetails = showTransactions ? transactions.map((tx, index) => {
     if (!tx.time || !tx.price || isNaN(tx.time) || isNaN(tx.price)) {
       return null;
     }
     const isBuy = tx.value > 0;
     const btcAmount = Math.abs(tx.value) / 100000000;
+    
+    // For sells, calculate buy price using FIFO from previous transactions
+    let buyPrice = null;
+    if (!isBuy && transactions.length > 0) {
+      const sortedTxs = [...transactions].sort((a, b) => a.time - b.time);
+      const currentIndex = sortedTxs.findIndex(t => t.hash === tx.hash && t.time === tx.time);
+      
+      if (currentIndex > 0) {
+        const sellAmount = btcAmount;
+        let remainingToMatch = sellAmount;
+        let totalBuyCost = 0;
+        
+        for (let i = 0; i < currentIndex; i++) {
+          if (sortedTxs[i].value > 0) { // Only buys
+            const buyAmount = Math.abs(sortedTxs[i].value) / 100000000;
+            const buyPricePerBtc = sortedTxs[i].price;
+            
+            if (remainingToMatch > 0) {
+              const matchedAmount = Math.min(buyAmount, remainingToMatch);
+              totalBuyCost += matchedAmount * buyPricePerBtc;
+              remainingToMatch -= matchedAmount;
+            }
+          }
+        }
+        
+        if (totalBuyCost > 0 && sellAmount > 0) {
+          buyPrice = totalBuyCost / sellAmount;
+        }
+      }
+    }
+    
     return {
       date: new Date(tx.time * 1000).toISOString().split('T')[0],
-      amount: isBuy ? btcAmount : -btcAmount, // Negative for sells
+      amount: isBuy ? btcAmount * tx.price : -(btcAmount * tx.price), // EUR value
       price: tx.price,
       btcAcquired: isBuy ? btcAmount : -btcAmount,
-      monthNumber: 0,
+      monthNumber: index + 1,
       currentValue: tx.currentValue || 0,
       isBuy: isBuy,
       profit: tx.profit || 0,
-      profitPercent: tx.profitPercent || 0
+      profitPercent: tx.profitPercent || 0,
+      buyPrice: buyPrice
     };
   }).filter(Boolean) as any[] : [];
 

@@ -1128,25 +1128,48 @@ export default function PriceChart({
           }}
           className="cursor-crosshair"
         />
-        {hoveredPoint && (
-          <div
-                className="absolute bg-gradient-to-br from-gray-800 to-gray-900 text-white px-4 py-3 rounded-xl text-sm pointer-events-none shadow-2xl max-w-xs border border-gray-600"
-            style={{
-              left: `${hoveredPoint.x}px`,
-                  top: `${hoveredPoint.y - 100}px`,
-              transform: 'translateX(-50%)'
-            }}
-          >
-                {/* Arrow pointing down */}
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+        {hoveredPoint && (() => {
+          const isBuy = hoveredPoint.isPurchase && hoveredPoint.purchaseDetail
+            ? (hoveredPoint.purchaseDetail.isBuy !== undefined 
+                ? hoveredPoint.purchaseDetail.isBuy 
+                : hoveredPoint.purchaseDetail.amount > 0)
+            : true;
+          
+          return (
+            <div
+              className={`absolute text-white px-4 py-3 rounded-xl text-sm pointer-events-none shadow-2xl max-w-xs border ${
+                isBuy 
+                  ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-gray-600' 
+                  : 'bg-gradient-to-br from-red-900 to-red-800 border-red-600'
+              }`}
+              style={{
+                left: `${hoveredPoint.x}px`,
+                top: `${hoveredPoint.y - 100}px`,
+                transform: 'translateX(-50%)'
+              }}
+            >
+              {/* Arrow pointing down */}
+              <div className={`absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent ${
+                isBuy ? 'border-t-gray-800' : 'border-t-red-900'
+              }`}></div>
                 
                 {/* Price header */}
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                  <div className="font-bold text-lg">
-                    {formatPrice(hoveredPoint.price)}
-                  </div>
-                </div>
+                {(() => {
+                  const isBuy = hoveredPoint.isPurchase && hoveredPoint.purchaseDetail
+                    ? (hoveredPoint.purchaseDetail.isBuy !== undefined 
+                        ? hoveredPoint.purchaseDetail.isBuy 
+                        : hoveredPoint.purchaseDetail.amount > 0)
+                    : true;
+                  
+                  return (
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className={`w-2 h-2 rounded-full ${isBuy ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                      <div className="font-bold text-lg">
+                        {formatPrice(hoveredPoint.price)}
+                      </div>
+                    </div>
+                  );
+                })()}
                 
                 {/* Date */}
                 <div className="text-gray-300 text-xs mb-3">
@@ -1171,36 +1194,73 @@ export default function PriceChart({
                   </div>
                 )}
                 
-                {/* Purchase details */}
-                {hoveredPoint.isPurchase && hoveredPoint.purchaseDetail && (
-                  <div className="bg-gray-700 rounded-lg p-3 border border-gray-600">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-                      <div className="text-green-400 font-semibold text-xs">Inkoop #{hoveredPoint.purchaseDetail.monthNumber}</div>
+                {/* Purchase/Sale details */}
+                {hoveredPoint.isPurchase && hoveredPoint.purchaseDetail && (() => {
+                  const isBuy = hoveredPoint.purchaseDetail.isBuy !== undefined 
+                    ? hoveredPoint.purchaseDetail.isBuy 
+                    : hoveredPoint.purchaseDetail.amount > 0;
+                  const btcAmount = Math.abs(hoveredPoint.purchaseDetail.btcAcquired || hoveredPoint.purchaseDetail.amount || 0);
+                  const transactionValue = btcAmount * hoveredPoint.purchaseDetail.price;
+                  
+                  return (
+                    <div className={`rounded-lg p-3 border ${isBuy ? 'bg-gray-700 border-gray-600' : 'bg-red-900/30 border-red-600'}`}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className={`w-1.5 h-1.5 rounded-full ${isBuy ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                        <div className={`font-semibold text-xs ${isBuy ? 'text-green-400' : 'text-red-400'}`}>
+                          {isBuy ? `Inkoop #${hoveredPoint.purchaseDetail.monthNumber || ''}` : 'Verkoop'}
+                        </div>
+                      </div>
+                      {isBuy ? (
+                        <div className="space-y-1 text-xs">
+                          <div className="flex justify-between">
+                            <span className="text-gray-300">Ingelegd:</span>
+                            <span className="text-white font-medium">€{hoveredPoint.purchaseDetail.amount.toLocaleString('en-US', { maximumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-300">BTC Gekocht:</span>
+                            <span className="text-white font-medium">{btcAmount.toFixed(8)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-300">Prijs:</span>
+                            <span className="text-white font-medium">{formatPrice(hoveredPoint.purchaseDetail.price)}</span>
+                          </div>
+                          <div className="flex justify-between pt-1 border-t border-gray-600">
+                            <span className="text-gray-300">Huidige Waarde:</span>
+                            <span className="text-green-400 font-medium">{formatPrice(hoveredPoint.purchaseDetail.currentValue)}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-1 text-xs">
+                          <div className="flex justify-between">
+                            <span className="text-gray-300">Totale Verkoop Waarde:</span>
+                            <span className="text-white font-medium">€{transactionValue.toLocaleString('en-US', { maximumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-300">BTC Verkocht:</span>
+                            <span className="text-white font-medium">{btcAmount.toFixed(8)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-300">Verkoopprijs:</span>
+                            <span className="text-white font-medium">{formatPrice(hoveredPoint.purchaseDetail.price)}</span>
+                          </div>
+                          {hoveredPoint.purchaseDetail.buyPrice && (
+                            <div className="flex justify-between pt-1 border-t border-red-600">
+                              <span className="text-gray-300">Ingekocht bij:</span>
+                              <span className="text-red-300 font-medium">{formatPrice(hoveredPoint.purchaseDetail.buyPrice)}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between pt-1 border-t border-red-600">
+                            <span className="text-gray-300">Huidige Waarde:</span>
+                            <span className="text-red-300 font-medium">{formatPrice(Math.abs(hoveredPoint.purchaseDetail.currentValue))}</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="space-y-1 text-xs">
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">Ingelegd:</span>
-                        <span className="text-white font-medium">€{hoveredPoint.purchaseDetail.amount}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">BTC Gekocht:</span>
-                        <span className="text-white font-medium">{hoveredPoint.purchaseDetail.btcAcquired.toFixed(8)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">Prijs:</span>
-                        <span className="text-white font-medium">{formatPrice(hoveredPoint.purchaseDetail.price)}</span>
-                      </div>
-                      <div className="flex justify-between pt-1 border-t border-gray-600">
-                        <span className="text-gray-300">Huidige Waarde:</span>
-                        <span className="text-green-400 font-medium">{formatPrice(hoveredPoint.purchaseDetail.currentValue)}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-          </div>
-        )}
-      </div>
+                  );
+                })()}
+            </div>
+          );
+        })()}
       
 
       {/* Market Phase Navigator - Always visible under chart */}
