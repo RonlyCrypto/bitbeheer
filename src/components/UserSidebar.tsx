@@ -6,7 +6,8 @@ import {
   Calendar, 
   Mail, 
   TrendingUp, 
-  ChevronRight
+  ChevronRight,
+  Star
 } from 'lucide-react';
 
 interface MenuItem {
@@ -33,6 +34,8 @@ export default function UserSidebar({
   unreadChatCount
 }: UserSidebarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [milestoneProgress, setMilestoneProgress] = useState<{ reached: number[] } | null>(null);
+  const [celebratedMilestones, setCelebratedMilestones] = useState<number[]>([]);
 
   // Persist collapsed state per user
   useEffect(() => {
@@ -41,6 +44,49 @@ export default function UserSidebar({
       setIsExpanded(JSON.parse(savedState));
     }
   }, []);
+
+  // Listen for milestone updates from OverviewTab
+  useEffect(() => {
+    const handleMilestoneUpdate = (event: CustomEvent) => {
+      const { milestoneProgress, celebratedMilestones } = event.detail;
+      setMilestoneProgress(milestoneProgress);
+      setCelebratedMilestones(celebratedMilestones || []);
+    };
+
+    window.addEventListener('milestoneUpdate', handleMilestoneUpdate as EventListener);
+    return () => {
+      window.removeEventListener('milestoneUpdate', handleMilestoneUpdate as EventListener);
+    };
+  }, []);
+
+  // Load celebrated milestones from localStorage
+  useEffect(() => {
+    const loadCelebratedMilestones = () => {
+      // Try to get from any user ID (we'll use the first one we find)
+      const keys = Object.keys(localStorage);
+      const milestoneKey = keys.find(key => key.startsWith('celebrated_milestones_'));
+      if (milestoneKey) {
+        try {
+          const saved = localStorage.getItem(milestoneKey);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            setCelebratedMilestones(parsed);
+          }
+        } catch (e) {
+          console.error('Error loading celebrated milestones:', e);
+        }
+      }
+    };
+
+    loadCelebratedMilestones();
+    // Also listen for storage changes
+    window.addEventListener('storage', loadCelebratedMilestones);
+    return () => window.removeEventListener('storage', loadCelebratedMilestones);
+  }, []);
+
+  // Calculate which milestones are reached (based on wallet balance if milestoneProgress not available)
+  const milestones = [0.01, 0.1, 1];
+  const reachedMilestones = milestoneProgress?.reached || [];
 
   const toggleExpanded = () => {
     const newState = !isExpanded;
@@ -112,6 +158,44 @@ export default function UserSidebar({
           })}
         </div>
       </nav>
+
+      {/* Milestone Stars - 3 sterren onderin */}
+      <div className={`border-t border-gray-200 ${isExpanded ? 'p-3' : 'p-2'}`}>
+        <div className="flex items-center justify-center gap-2 mb-2">
+          {milestones.map((milestone, index) => {
+            const isReached = reachedMilestones.includes(milestone);
+            const isCelebrated = celebratedMilestones.includes(milestone);
+            
+            return (
+              <div
+                key={milestone}
+                className="relative"
+                title={isExpanded ? undefined : `${milestone} BTC ${isReached ? 'behaald' : ''}`}
+              >
+                <Star
+                  className={`w-5 h-5 transition-all ${
+                    isCelebrated && isReached
+                      ? 'text-yellow-500 fill-yellow-500'
+                      : isReached
+                      ? 'text-yellow-300 fill-yellow-300'
+                      : 'text-gray-300'
+                  }`}
+                />
+                {isExpanded && (
+                  <span className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 whitespace-nowrap">
+                    {milestone}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {isExpanded && (
+          <div className="text-xs text-center text-gray-500 mt-4">
+            {reachedMilestones.length} van {milestones.length} mijlpalen behaald
+          </div>
+        )}
+      </div>
 
       {/* Chevron Toggle Button */}
       <div className={`border-t border-gray-200 ${isExpanded ? 'p-3' : 'p-2'}`}>

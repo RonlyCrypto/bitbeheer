@@ -780,6 +780,12 @@ export default function UserDashboard() {
               user={user}
               emailVerified={emailVerified}
               firstAppointmentCompleted={firstAppointmentCompleted}
+              onMilestoneUpdate={(milestoneProgress, celebratedMilestones) => {
+                // Update UserSidebar with milestone info
+                window.dispatchEvent(new CustomEvent('milestoneUpdate', { 
+                  detail: { milestoneProgress, celebratedMilestones } 
+                }));
+              }}
             />}
             {activeTab === 'goals' && (accountApproved || hasApprovedOneOnOne) && <GoalsTab goals={goals} setGoals={setGoals} user={user} />}
             {activeTab === 'portfolio' && (accountApproved || hasApprovedOneOnOne) && <PortfolioPage />}
@@ -2355,7 +2361,13 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 }
 
 // BeginnersGoals Component
-function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: { walletData: any; walletTransactions: BitcoinTransaction[]; onBookAppointment?: () => void }) {
+interface BeginnersGoalsProps {
+  walletData: any;
+  walletTransactions: BitcoinTransaction[];
+  onBookAppointment?: () => void;
+}
+
+function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: BeginnersGoalsProps) {
   const { user } = useSupabaseAuth();
   const [showAddGoalPopup, setShowAddGoalPopup] = useState(false);
   const [customGoals, setCustomGoals] = useState<any[]>([]);
@@ -2439,6 +2451,30 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
     return btcMilestones.find(m => m.value === value);
   };
 
+  // Load celebrated milestones from localStorage
+  useEffect(() => {
+    if (user?.id) {
+      const saved = localStorage.getItem(`celebrated_milestones_${user.id}`);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setCelebratedMilestones(parsed);
+        } catch (e) {
+          console.error('Error loading celebrated milestones:', e);
+        }
+      }
+    }
+  }, [user?.id, walletData?.balance]);
+
+  // Notify UserSidebar when milestone progress changes
+  useEffect(() => {
+    if (user?.id && milestoneProgress) {
+      window.dispatchEvent(new CustomEvent('milestoneUpdate', {
+        detail: { milestoneProgress, celebratedMilestones }
+      }));
+    }
+  }, [milestoneProgress, celebratedMilestones, user?.id]);
+
   // Detect new milestone achievements and show celebration popup
   useEffect(() => {
     const newlyReached = milestoneProgress.reached.filter(m => !celebratedMilestones.includes(m));
@@ -2448,7 +2484,6 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
       const highestNewMilestone = Math.max(...newlyReached);
       setCurrentMilestoneCelebration(highestNewMilestone);
       setShowMilestonePopup(true);
-      setCelebratedMilestones([...celebratedMilestones, ...newlyReached]);
     }
   }, [milestoneProgress.reached, currentBalance, celebratedMilestones]);
 
@@ -3184,7 +3219,16 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
               </p>
               
               <button
-                onClick={() => setShowMilestonePopup(false)}
+                onClick={() => {
+                  // Mark milestone as celebrated and save to localStorage
+                  if (currentMilestoneCelebration !== null && user?.id) {
+                    const updated = [...celebratedMilestones, currentMilestoneCelebration];
+                    setCelebratedMilestones(updated);
+                    localStorage.setItem(`celebrated_milestones_${user.id}`, JSON.stringify(updated));
+                  }
+                  setShowMilestonePopup(false);
+                  setCurrentMilestoneCelebration(null);
+                }}
                 className="px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors"
               >
                 Geweldig! 🚀
