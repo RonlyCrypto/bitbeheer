@@ -1900,7 +1900,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               Hulp nodig? Stel je vraag
           </button>
         </div>
-      </div>
+            </div>
           ) : null}
 
           {/* Wallet Block - Compact en mooi */}
