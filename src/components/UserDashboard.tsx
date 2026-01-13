@@ -2004,8 +2004,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                         {(!hasWallet || !walletData || walletData.balance === 0) && (
                           <X className="w-4 h-4 text-red-600" />
             )}
-          </div>
-                      <div>
+            </div>
+            <div>
                         <p className={`font-semibold text-sm ${
                           !hasWallet || !walletData || walletData.balance === 0
                             ? 'text-red-900' 
@@ -2020,7 +2020,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                         }`}>
                           Risico: Gecontroleerd door bedrijf
                         </p>
-              </div>
+            </div>
           </div>
                     <div className={`w-5 h-5 rounded-full border-2 ${
                       !hasWallet || !walletData || walletData.balance === 0
@@ -2046,7 +2046,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                         {hasWallet && walletData && walletData.balance > 0 && (
                           <CheckCircle className="w-4 h-4 text-green-600" />
                         )}
-                </div>
+                  </div>
                 <div>
                         <p className={`font-semibold text-sm ${
                           hasWallet && walletData && walletData.balance > 0
@@ -2063,17 +2063,17 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                           Veilig: Zelf in eigen handen
                       </p>
                     </div>
-                    </div>
+                  </div>
                     {hasWallet && walletData && walletData.balance > 0 && (
                       <CheckCircle className="w-5 h-5 text-green-600" />
-              )}
-            </div>
-              </div>
-              </div>
-            </div>
-          )}
+            )}
           </div>
         </div>
+                </div>
+                </div>
+          )}
+        </div>
+      </div>
 
       {/* Leer & Waarschuwingen, Beginnersdoelen en Custody-status - 1 rij (1/3 1/3 1/3) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -2082,7 +2082,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">📚 Leer & Waarschuwingen</h3>
             <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Vragen Beantwoord &gt;</a>
-                  </div>
+    </div>
         
                   <div className="mb-4">
             <h4 className="font-semibold text-gray-900 mb-3">⚠️ Veelgemaakte fouten</h4>
@@ -2090,17 +2090,17 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               <div className="flex items-start gap-2">
                 <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-gray-700">Koop nooit via DM's</p>
-                  </div>
+        </div>
               <div className="flex items-start gap-2">
                 <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-gray-700">Deel nooit je seed</p>
-                  </div>
+      </div>
               <div className="flex items-start gap-2">
                 <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-gray-700">Laat BTC niet lang op exchanges</p>
-                </div>
-          </div>
-        </div>
+              </div>
+            </div>
+              </div>
 
           <div className="pt-4 border-t border-gray-200">
             <h4 className="font-semibold text-gray-900 mb-2">💡 Tip van vandaag</h4>
@@ -2109,17 +2109,17 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               <p className="text-xs text-orange-800">
                 Gebruik altijd alleen je eigen wallet om zeker te weten dat jij je Bitcoin bezit.
               </p>
-                  </div>
-          </div>
-                </div>
-                
+              </div>
+            </div>
+        </div>
+
         {/* Beginnersdoelen - 1/3 breedte */}
         {(accountApproved || hasApprovedOneOnOne) && (
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">🎯 Beginnersdoelen</h3>
               <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Je klas over &gt;</a>
-            </div>
+                </div>
             <div className="space-y-3">
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                 <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
@@ -2129,37 +2129,39 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   <p className="font-medium text-gray-900">Koop €100 BTC</p>
                 </div>
                 <span className="text-sm text-gray-500">0/1</span>
-              </div>
+                </div>
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                 <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
                   <span className="text-sm font-semibold text-orange-600">2</span>
-                </div>
+              </div>
                 <div className="flex-1">
                   <p className="font-medium text-gray-900">Seed phrase noteren</p>
-                </div>
+                    </div>
                 <span className="text-sm text-gray-500">0/1</span>
-              </div>
+                    </div>
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                 <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
                   <span className="text-sm font-semibold text-orange-600">3</span>
-                </div>
+                    </div>
                 <div className="flex-1">
                   <p className="font-medium text-gray-900">BTC verplaatsen</p>
-                </div>
+                  </div>
                 <span className="text-sm text-gray-500">0/1</span>
-              </div>
+                </div>
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                 <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
                   <span className="text-sm font-semibold text-orange-600">4</span>
-                </div>
+            </div>
                 <div className="flex-1">
                   <p className="font-medium text-gray-900">Veiligheidsvideo</p>
-                </div>
+              </div>
                 <span className="text-sm text-gray-500">0/1</span>
               </div>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        {/* Lege kolom - 1/3 breedte */}
+        <div></div>
       </div>
 
       {/* Hulp nodig? - Onder Beginnersdoelen (1/3 breedte, naast Beginnersdoelen) */}
@@ -2188,11 +2190,11 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             >
               <MessageSquare className="w-5 h-5" />
               Stel je vraag
-            </button>
+                  </button>
+                </div>
           </div>
-        </div>
         <div></div>
-      </div>
+        </div>
                 
       {/* Stappenblokken (Ledger & Coinbase) - Onderaan naast elkaar, groter (50% elk) */}
       <div className="mt-6">
