@@ -2157,7 +2157,7 @@ function BeginnersGoals({ walletData, walletTransactions }: { walletData: any; w
     loadCustomGoals();
   }, [user?.id, currentBalance]);
 
-  // Default goals based on wallet balance
+  // Default goals (only EUR goal, BTC milestones are shown in progress bar)
   const defaultGoals = [
     {
       id: 'buy-100-eur',
@@ -2165,29 +2165,25 @@ function BeginnersGoals({ walletData, walletTransactions }: { walletData: any; w
       target: 100, // in EUR
       type: 'eur' as const,
       completed: false
-    },
-    {
-      id: 'hold-0.01',
-      title: 'Beheer 0.01 BTC',
-      target: 0.01, // in BTC
-      type: 'btc' as const,
-      completed: currentBalance >= 0.01
-    },
-    {
-      id: 'hold-0.1',
-      title: 'Beheer 0.1 BTC',
-      target: 0.1, // in BTC
-      type: 'btc' as const,
-      completed: currentBalance >= 0.1
-    },
-    {
-      id: 'hold-1',
-      title: 'Beheer 1 BTC',
-      target: 1, // in BTC
-      type: 'btc' as const,
-      completed: currentBalance >= 1
     }
   ];
+
+  // Bitcoin milestones for progress bar
+  const btcMilestones = [
+    { label: '0.01 BTC', value: 0.01 },
+    { label: '0.1 BTC', value: 0.1 },
+    { label: '1 BTC', value: 1 }
+  ];
+
+  // Calculate which milestone the user has reached
+  const getCurrentMilestone = () => {
+    if (currentBalance >= 1) return { current: 1, next: null, progress: 100 };
+    if (currentBalance >= 0.1) return { current: 0.1, next: 1, progress: (currentBalance / 1) * 100 };
+    if (currentBalance >= 0.01) return { current: 0.01, next: 0.1, progress: (currentBalance / 0.1) * 100 };
+    return { current: 0, next: 0.01, progress: (currentBalance / 0.01) * 100 };
+  };
+
+  const milestoneProgress = getCurrentMilestone();
 
   // Calculate progress for BTC goals
   const getGoalProgress = (goal: typeof defaultGoals[0]) => {
@@ -2396,19 +2392,76 @@ function BeginnersGoals({ walletData, walletTransactions }: { walletData: any; w
         <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Je klas over &gt;</a>
       </div>
       
-      {/* Statusbalk */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-700">Voortgang</span>
-          <span className="text-sm font-semibold text-orange-600">{Math.round(overallProgress)}%</span>
+      {/* Bitcoin Balance Progress Bar */}
+      <div className="mb-4 p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg border border-orange-200">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <span className="text-sm font-medium text-gray-700">Je beheert</span>
+            <span className="text-lg font-bold text-orange-600 ml-2">{currentBalance.toFixed(4)} BTC</span>
+          </div>
+          {milestoneProgress.next && (
+            <span className="text-xs text-gray-600">
+              Volgende: {milestoneProgress.next} BTC
+            </span>
+          )}
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2.5">
+        <div className="w-full bg-gray-200 rounded-full h-4 mb-3 relative overflow-visible">
           <div 
-            className="bg-orange-600 h-2.5 rounded-full transition-all duration-300"
-            style={{ width: `${overallProgress}%` }}
+            className="bg-orange-600 h-4 rounded-full transition-all duration-300"
+            style={{ width: `${Math.min(100, Math.max(0, milestoneProgress.progress))}%` }}
           ></div>
+          {/* Milestone markers */}
+          <div className="absolute inset-0 flex justify-between items-center" style={{ marginTop: '-2px' }}>
+            {btcMilestones.map((milestone) => {
+              const isReached = currentBalance >= milestone.value;
+              // Calculate position: 0.01 = 10%, 0.1 = 50%, 1 = 100% (logarithmic scale for better visualization)
+              let position = 0;
+              if (milestone.value === 0.01) position = 10;
+              else if (milestone.value === 0.1) position = 50;
+              else if (milestone.value === 1) position = 100;
+              
+              return (
+                <div
+                  key={milestone.value}
+                  className="absolute flex flex-col items-center"
+                  style={{ left: `${position}%`, transform: 'translateX(-50%)', zIndex: 10 }}
+                >
+                  <div className={`w-3 h-3 rounded-full border-2 border-white ${isReached ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                  <span className={`text-xs mt-1 whitespace-nowrap ${isReached ? 'text-green-700 font-semibold' : 'text-gray-500'}`}>
+                    {milestone.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
+        {milestoneProgress.next && (
+          <p className="text-xs text-gray-600 text-center">
+            Nog {Math.max(0, milestoneProgress.next - currentBalance).toFixed(4)} BTC tot {milestoneProgress.next} BTC
+          </p>
+        )}
+        {!milestoneProgress.next && (
+          <p className="text-xs text-green-700 text-center font-semibold">
+            🎉 Gefeliciteerd! Je beheert meer dan 1 BTC!
+          </p>
+        )}
       </div>
+
+      {/* Overall Goals Progress Bar */}
+      {allGoals.length > 0 && (
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700">Doelen voortgang</span>
+            <span className="text-sm font-semibold text-orange-600">{Math.round(overallProgress)}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2.5">
+            <div 
+              className="bg-orange-600 h-2.5 rounded-full transition-all duration-300"
+              style={{ width: `${overallProgress}%` }}
+            ></div>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-3">
         {allGoals.map((goal, index) => {
