@@ -26,7 +26,10 @@ import {
   AlertTriangle,
   ArrowRight,
   MessageSquare,
-  HelpCircle
+  HelpCircle,
+  Trophy,
+  PartyPopper,
+  Sparkles
 } from 'lucide-react';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -1848,9 +1851,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             >
                   Toevoegen <ArrowRight className="w-4 h-4" />
             </button>
-          </div>
-            )}
-            
+        </div>
+      )}
+
             {/* Stap 3: Seed phrase veilig opgeslagen */}
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
               <div className="w-5 h-5 border-2 border-gray-400 rounded-full flex-shrink-0"></div>
@@ -1904,7 +1907,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           ) : null}
 
           {/* Wallet Block - Compact en mooi */}
-          {hasWallet && walletData && !showSuccessMessage && (
+      {hasWallet && walletData && !showSuccessMessage && (
             <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
               {/* Wallet uitleg bovenaan */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
@@ -1999,7 +2002,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 </div>
               );
             })}
-                  </div>
+          </div>
                 </div>
               )}
                   {walletTransactions.length > 3 && (
@@ -2010,10 +2013,10 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                       Alle transacties bekijken
             </button>
           )}
-            </div>
-          )}
         </div>
-      </div>
+      )}
+            </div>
+            </div>
 
       {/* Leer & Waarschuwingen, Beginnersdoelen en Custody-status - 1 rij (1/3 1/3 1/3) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -2022,7 +2025,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">📚 Leer & Waarschuwingen</h3>
             <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Vragen Beantwoord &gt;</a>
-            </div>
+        </div>
 
                   <div className="mb-4">
             <h4 className="font-semibold text-gray-900 mb-3">⚠️ Veelgemaakte fouten</h4>
@@ -2030,17 +2033,17 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               <div className="flex items-start gap-2">
                 <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-gray-700">Koop nooit via DM's</p>
-                  </div>
+            </div>
               <div className="flex items-start gap-2">
                 <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-gray-700">Deel nooit je seed</p>
-                    </div>
+            </div>
               <div className="flex items-start gap-2">
                 <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-gray-700">Laat BTC niet lang op exchanges</p>
-                  </div>
-                </div>
+          </div>
         </div>
+      </div>
 
           <div className="pt-4 border-t border-gray-200">
             <h4 className="font-semibold text-gray-900 mb-2">💡 Tip van vandaag</h4>
@@ -2049,56 +2052,13 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               <p className="text-xs text-orange-800">
                 Gebruik altijd alleen je eigen wallet om zeker te weten dat jij je Bitcoin bezit.
               </p>
-          </div>
+                    </div>
           </div>
         </div>
 
         {/* Beginnersdoelen - 1/3 breedte */}
         {(accountApproved || hasApprovedOneOnOne) && (
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">🎯 Beginnersdoelen</h3>
-              <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Je klas over &gt;</a>
-            </div>
-          <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-semibold text-orange-600">1</span>
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">Koop €100 BTC</p>
-                </div>
-                <span className="text-sm text-gray-500">0/1</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-semibold text-orange-600">2</span>
-          </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">Seed phrase noteren</p>
-        </div>
-                <span className="text-sm text-gray-500">0/1</span>
-        </div>
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-semibold text-orange-600">3</span>
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">BTC verplaatsen</p>
-                </div>
-                <span className="text-sm text-gray-500">0/1</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-semibold text-orange-600">4</span>
-          </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">Veiligheidsvideo</p>
-        </div>
-                <span className="text-sm text-gray-500">0/1</span>
-              </div>
-          </div>
-        </div>
+        <BeginnersGoals walletData={walletData} walletTransactions={walletTransactions} />
       )}
         {/* Lege kolom - 1/3 breedte */}
         <div></div>
@@ -2106,6 +2066,258 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 
       {/* Stappenblokken (Ledger, Coinbase & Hulp nodig?) - Onderaan naast elkaar (3/8 3/8 2/8) */}
       <ReferralBlocksWithHelp onBookAppointment={onBookAppointment} />
+    </div>
+  );
+}
+
+// BeginnersGoals Component
+function BeginnersGoals({ walletData, walletTransactions }: { walletData: any; walletTransactions: BitcoinTransaction[] }) {
+  const [showAddGoalForm, setShowAddGoalForm] = useState(false);
+  const [customGoals, setCustomGoals] = useState<any[]>([]);
+  const [newGoalAmount, setNewGoalAmount] = useState('');
+  const [newGoalTimeframe, setNewGoalTimeframe] = useState('');
+  const [newGoalType, setNewGoalType] = useState<'save' | 'monthly'>('save');
+  const [newGoalMonthlyAmount, setNewGoalMonthlyAmount] = useState('');
+
+  // Calculate wallet balance in BTC
+  const currentBalance = walletData?.balance || 0;
+
+  // Default goals based on wallet balance
+  const defaultGoals = [
+    {
+      id: 'buy-100-eur',
+      title: 'Koop €100 BTC',
+      target: 100, // in EUR
+      type: 'eur' as const,
+      completed: false
+    },
+    {
+      id: 'hold-0.01',
+      title: 'Beheer 0.01 BTC',
+      target: 0.01, // in BTC
+      type: 'btc' as const,
+      completed: currentBalance >= 0.01
+    },
+    {
+      id: 'hold-0.1',
+      title: 'Beheer 0.1 BTC',
+      target: 0.1, // in BTC
+      type: 'btc' as const,
+      completed: currentBalance >= 0.1
+    },
+    {
+      id: 'hold-1',
+      title: 'Beheer 1 BTC',
+      target: 1, // in BTC
+      type: 'btc' as const,
+      completed: currentBalance >= 1
+    }
+  ];
+
+  // Calculate progress for BTC goals
+  const getGoalProgress = (goal: typeof defaultGoals[0]) => {
+    if (goal.type === 'btc') {
+      if (goal.completed) return { completed: true, remaining: 0 };
+      const remaining = Math.max(0, goal.target - currentBalance);
+      return { completed: false, remaining };
+    } else {
+      // EUR goal - check transactions
+      // For now, mark as not completed (can be enhanced later)
+      return { completed: false, remaining: goal.target };
+    }
+  };
+
+  const handleAddGoal = () => {
+    if (newGoalType === 'save') {
+      if (!newGoalAmount || !newGoalTimeframe) return;
+      const goal = {
+        id: `custom-${Date.now()}`,
+        title: `Spaar ${newGoalAmount} BTC binnen ${newGoalTimeframe}`,
+        target: parseFloat(newGoalAmount),
+        type: 'btc' as const,
+        timeframe: newGoalTimeframe,
+        custom: true,
+        completed: currentBalance >= parseFloat(newGoalAmount)
+      };
+      setCustomGoals([...customGoals, goal]);
+    } else {
+      if (!newGoalMonthlyAmount) return;
+      const goal = {
+        id: `monthly-${Date.now()}`,
+        title: `Stort elke maand ${newGoalMonthlyAmount} BTC`,
+        monthlyAmount: parseFloat(newGoalMonthlyAmount),
+        type: 'monthly' as const,
+        custom: true,
+        completed: false // Monthly goals are ongoing
+      };
+      setCustomGoals([...customGoals, goal]);
+    }
+    setShowAddGoalForm(false);
+    setNewGoalAmount('');
+    setNewGoalTimeframe('');
+    setNewGoalMonthlyAmount('');
+  };
+
+  const allGoals = [...defaultGoals, ...customGoals];
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">🎯 Beginnersdoelen</h3>
+        <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Je klas over &gt;</a>
+      </div>
+      <div className="space-y-3">
+        {allGoals.map((goal, index) => {
+          const progress = getGoalProgress(goal);
+          const isCompleted = goal.completed || progress.completed;
+          
+          return (
+            <div 
+              key={goal.id} 
+              className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                isCompleted 
+                  ? 'bg-green-50 border-2 border-green-200' 
+                  : 'bg-gray-50 border border-gray-200'
+              }`}
+            >
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                isCompleted 
+                  ? 'bg-green-500' 
+                  : 'bg-orange-100'
+              }`}>
+                {isCompleted ? (
+                  <Trophy className="w-5 h-5 text-white" />
+                ) : (
+                  <span className={`text-sm font-semibold ${
+                    isCompleted ? 'text-white' : 'text-orange-600'
+                  }`}>
+                    {index + 1}
+                  </span>
+                )}
+              </div>
+              <div className="flex-1">
+                <p className={`font-medium ${
+                  isCompleted ? 'text-green-900' : 'text-gray-900'
+                }`}>
+                  {goal.title}
+                </p>
+                {!isCompleted && goal.type === 'btc' && progress.remaining > 0 && (
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    nog {progress.remaining.toFixed(4)} BTC te gaan
+                  </p>
+                )}
+              </div>
+              {isCompleted && (
+                <div className="flex items-center gap-1">
+                  <PartyPopper className="w-4 h-4 text-green-600" />
+                  <Sparkles className="w-4 h-4 text-green-600" />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      
+      {!showAddGoalForm ? (
+        <button
+          onClick={() => setShowAddGoalForm(true)}
+          className="w-full mt-4 px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Voeg een doel toe
+        </button>
+      ) : (
+        <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="space-y-3">
+            <div className="flex gap-2 mb-3">
+              <button
+                onClick={() => setNewGoalType('save')}
+                className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  newGoalType === 'save'
+                    ? 'bg-orange-600 text-white'
+                    : 'bg-white text-gray-700 border border-gray-300'
+                }`}
+              >
+                Spaar doel
+              </button>
+              <button
+                onClick={() => setNewGoalType('monthly')}
+                className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  newGoalType === 'monthly'
+                    ? 'bg-orange-600 text-white'
+                    : 'bg-white text-gray-700 border border-gray-300'
+                }`}
+              >
+                Maandelijks
+              </button>
+            </div>
+            
+            {newGoalType === 'save' ? (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Hoeveel BTC wil je sparen?
+                  </label>
+                  <input
+                    type="number"
+                    step="0.0001"
+                    value={newGoalAmount}
+                    onChange={(e) => setNewGoalAmount(e.target.value)}
+                    placeholder="0.01"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Binnen hoeveel tijd? (bijv. "3 maanden")
+                  </label>
+                  <input
+                    type="text"
+                    value={newGoalTimeframe}
+                    onChange={(e) => setNewGoalTimeframe(e.target.value)}
+                    placeholder="3 maanden"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  />
+                </div>
+              </>
+            ) : (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Hoeveel BTC per maand?
+                </label>
+                <input
+                  type="number"
+                  step="0.0001"
+                  value={newGoalMonthlyAmount}
+                  onChange={(e) => setNewGoalMonthlyAmount(e.target.value)}
+                  placeholder="0.001"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+              </div>
+            )}
+            
+            <div className="flex gap-2">
+              <button
+                onClick={handleAddGoal}
+                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors"
+              >
+                Toevoegen
+              </button>
+              <button
+                onClick={() => {
+                  setShowAddGoalForm(false);
+                  setNewGoalAmount('');
+                  setNewGoalTimeframe('');
+                  setNewGoalMonthlyAmount('');
+                }}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+              >
+                Annuleren
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
