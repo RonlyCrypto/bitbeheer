@@ -1901,7 +1901,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           </button>
         </div>
             </div>
-          ) : null}
+            ) : null}
 
           {/* Wallet Block - Compact en mooi */}
           {hasWallet && walletData && !showSuccessMessage && (
