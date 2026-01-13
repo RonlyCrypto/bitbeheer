@@ -1907,11 +1907,11 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         null
       )}
 
-          {/* Wallet en Custody-status naast elkaar */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Wallet Block - Kleiner */}
+          {/* Wallet en Custody-status naast elkaar - Wallet 2/3, Custody 1/3 */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Wallet Block - 2/3 breedte */}
       {hasWallet && walletData && !showSuccessMessage && (
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 shadow-lg">
+              <div className="md:col-span-2 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 shadow-lg">
                 <div className="flex items-start gap-3 mb-4">
                   <div className="bg-blue-100 p-2 rounded-xl">
                     <Wallet className="w-6 h-6 text-blue-600" />
@@ -1981,9 +1981,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         </div>
       )}
 
-            {/* Custody-status - Naast wallet */}
+            {/* Custody-status - 1/3 breedte naast wallet */}
             {(accountApproved || hasApprovedOneOnOne) && (
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+              <div className="md:col-span-1 bg-white rounded-xl shadow-sm p-6 border border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">🔐 Custody-status</h3>
           <div className="space-y-3">
                   {/* Exchange status */}
@@ -2044,7 +2044,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                           {hasWallet && walletData && walletData.balance > 0 && (
                             <CheckCircle className="w-4 h-4 text-green-600" />
                           )}
-            </div>
+                  </div>
             <div>
                           <p className={`font-semibold text-sm ${
                             hasWallet && walletData && walletData.balance > 0
@@ -2060,125 +2060,105 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                           }`}>
                             Veilig: Zelf in eigen handen
                       </p>
-            </div>
-          </div>
+                    </div>
+                  </div>
                       {hasWallet && walletData && walletData.balance > 0 && (
                         <CheckCircle className="w-5 h-5 text-green-600" />
-                      )}
-        </div>
-            </div>
-            </div>
+            )}
           </div>
+        </div>
+                </div>
+                </div>
           )}
       </div>
 
-          {/* Aanmeldproces en Beginnersdoelen naast elkaar */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Jouw Aanmeldproces - Smaller */}
-            {!(accountApproved && (firstAppointmentCompleted || hasApprovedOneOnOne)) && (
-              <div className="bg-white rounded-xl shadow-lg p-5 border border-gray-200">
-                <h3 className="text-base font-semibold text-gray-900 mb-3">Jouw Aanmeldproces</h3>
-              <SignupProcessFlow 
-                user={{
-                  email_verified: emailVerified,
-                  first_appointment_completed: firstAppointmentCompleted,
-                  account_approved: accountApproved,
-                  created_at: user?.created_at,
-                  email: user?.email
-                }}
-                showLegend={false}
-                accordionMode={true}
-                simpleMode={true}
-                hasApprovedOneOnOne={hasApprovedOneOnOne}
-              />
+          {/* Leer & Waarschuwingen en Beginnersdoelen onder wallet - Leer 2/3, Beginnersdoelen 1/3 */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Leer & Waarschuwingen - 2/3 breedte */}
+            <div className="md:col-span-2 bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">📚 Leer & Waarschuwingen</h3>
+                <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Vragen Beantwoord &gt;</a>
+    </div>
+            
+              <div className="mb-4">
+                <h4 className="font-semibold text-gray-900 mb-3">⚠️ Veelgemaakte fouten</h4>
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-700">Koop nooit via DM's</p>
+        </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-700">Deel nooit je seed</p>
+      </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-700">Laat BTC niet lang op exchanges</p>
+              </div>
             </div>
-          )}
+              </div>
 
-            {/* Beginnersdoelen - Naast aanmeldproces */}
+              <div className="pt-4 border-t border-gray-200">
+                <h4 className="font-semibold text-gray-900 mb-2">💡 Tip van vandaag</h4>
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-3">
+                  <p className="font-semibold text-orange-900 mb-1 text-sm">Niet je keys = niet je Bitcoin</p>
+                  <p className="text-xs text-orange-800">
+                    Gebruik altijd alleen je eigen wallet om zeker te weten dat jij je Bitcoin bezit.
+                  </p>
+              </div>
+            </div>
+        </div>
+
+            {/* Beginnersdoelen - 1/3 breedte naast Leer & Waarschuwingen */}
             {(accountApproved || hasApprovedOneOnOne) && (
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+              <div className="md:col-span-1 bg-white rounded-xl shadow-sm p-6 border border-gray-200">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">🎯 Beginnersdoelen</h3>
                   <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Je klas over &gt;</a>
-              </div>
-          <div className="space-y-3">
+                </div>
+                <div className="space-y-3">
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
                       <span className="text-sm font-semibold text-orange-600">1</span>
                 </div>
-                <div className="flex-1">
+                    <div className="flex-1">
                       <p className="font-medium text-gray-900">Koop €100 BTC</p>
                 </div>
                     <span className="text-sm text-gray-500">0/1</span>
-              </div>
+                </div>
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
                       <span className="text-sm font-semibold text-orange-600">2</span>
-          </div>
+              </div>
                     <div className="flex-1">
                       <p className="font-medium text-gray-900">Seed phrase noteren</p>
-        </div>
+                    </div>
                     <span className="text-sm text-gray-500">0/1</span>
-      </div>
+                    </div>
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
                       <span className="text-sm font-semibold text-orange-600">3</span>
-    </div>
-                <div className="flex-1">
+                    </div>
+                    <div className="flex-1">
                       <p className="font-medium text-gray-900">BTC verplaatsen</p>
-        </div>
+                  </div>
                     <span className="text-sm text-gray-500">0/1</span>
-      </div>
+                </div>
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
                       <span className="text-sm font-semibold text-orange-600">4</span>
-              </div>
+            </div>
                     <div className="flex-1">
                       <p className="font-medium text-gray-900">Veiligheidsvideo</p>
-            </div>
+              </div>
                     <span className="text-sm text-gray-500">0/1</span>
               </div>
-            </div>
-        </div>
-      )}
-          </div>
-
-          {/* Leer & Waarschuwingen - Volle breedte eronder */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">📚 Leer & Waarschuwingen</h3>
-              <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Vragen Beantwoord &gt;</a>
-                </div>
-            
-                  <div className="mb-4">
-              <h4 className="font-semibold text-gray-900 mb-3">⚠️ Veelgemaakte fouten</h4>
-              <div className="space-y-2 mb-4">
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-gray-700">Koop nooit via DM's</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-gray-700">Deel nooit je seed</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-gray-700">Laat BTC niet lang op exchanges</p>
-                </div>
               </div>
-                    </div>
-
-            <div className="pt-4 border-t border-gray-200">
-              <h4 className="font-semibold text-gray-900 mb-2">💡 Tip van vandaag</h4>
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-3">
-                <p className="font-semibold text-orange-900 mb-1 text-sm">Niet je keys = niet je Bitcoin</p>
-                <p className="text-xs text-orange-800">
-                  Gebruik altijd alleen je eigen wallet om zeker te weten dat jij je Bitcoin bezit.
-                      </p>
-                    </div>
-                    </div>
-                  </div>
-                </div>
+            </div>
+            )}
+          </div>
+        </div>
 
         {/* RECHTERKOLOM - Alleen Hulp (4 kolommen) */}
         <div className="lg:col-span-4 space-y-6">
