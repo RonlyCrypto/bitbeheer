@@ -2253,11 +2253,6 @@ function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: {
 
     loadCustomGoals();
   }, [user?.id, currentBalance]);
-  
-  // Get milestone info
-  const getMilestoneInfo = (value: number) => {
-    return btcMilestones.find(m => m.value === value);
-  };
 
   // Calculate progress for goals
   const getGoalProgress = (goal: any) => {
