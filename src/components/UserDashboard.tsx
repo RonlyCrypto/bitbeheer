@@ -1883,7 +1883,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 Uitleg <ArrowRight className="w-4 h-4" />
               </button>
             </div>
-          </div>
 
           <div className="mt-4 pt-4 border-t border-gray-200">
             <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Uitleg nodig?</a>
