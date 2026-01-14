@@ -2537,9 +2537,15 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
         } catch (e) {
           console.error('Error loading celebrated milestones:', e);
         }
+      } else {
+        // Initialize empty array if no saved data
+        setCelebratedMilestones([]);
       }
+    } else {
+      // Reset when user logs out
+      setCelebratedMilestones([]);
     }
-  }, [user?.id, walletData?.balance]);
+  }, [user?.id]);
 
   // Notify UserSidebar when milestone progress changes
   useEffect(() => {
@@ -2551,7 +2557,16 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
   }, [milestoneProgress, celebratedMilestones, user?.id]);
 
   // Detect new milestone achievements and show celebration popup
+  // Only show if user is logged in and milestone hasn't been celebrated yet
   useEffect(() => {
+    // Don't show popup if user is not logged in
+    if (!user?.id) return;
+    
+    // Wait for celebratedMilestones to be loaded (it starts as empty array, so we check if it's been initialized)
+    // Only check if we're not already showing a popup
+    if (showMilestonePopup || currentMilestoneCelebration !== null) return;
+    
+    // Check for newly reached milestones that haven't been celebrated yet
     const newlyReached = milestoneProgress.reached.filter(m => !celebratedMilestones.includes(m));
     
     if (newlyReached.length > 0) {
@@ -2560,7 +2575,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
       setCurrentMilestoneCelebration(highestNewMilestone);
       setShowMilestonePopup(true);
     }
-  }, [milestoneProgress.reached, currentBalance, celebratedMilestones]);
+  }, [milestoneProgress.reached, currentBalance, celebratedMilestones, user?.id, showMilestonePopup, currentMilestoneCelebration]);
 
   // Default goals - focused on steps toward next milestone (must be after milestoneProgress is defined)
   const getDefaultGoals = () => {
@@ -3800,9 +3815,12 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                 onClick={() => {
                   // Mark milestone as celebrated and save to localStorage
                   if (currentMilestoneCelebration !== null && user?.id) {
-                    const updated = [...celebratedMilestones, currentMilestoneCelebration];
-                    setCelebratedMilestones(updated);
-                    localStorage.setItem(`celebrated_milestones_${user.id}`, JSON.stringify(updated));
+                    // Only add if not already in the list
+                    if (!celebratedMilestones.includes(currentMilestoneCelebration)) {
+                      const updated = [...celebratedMilestones, currentMilestoneCelebration];
+                      setCelebratedMilestones(updated);
+                      localStorage.setItem(`celebrated_milestones_${user.id}`, JSON.stringify(updated));
+                    }
                   }
                   setShowMilestonePopup(false);
                   setCurrentMilestoneCelebration(null);
