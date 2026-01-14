@@ -3909,9 +3909,69 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                     </p>
                   )}
                   {!isCompleted && (goal.type === 'btc' || goal.type === 'milestone_step') && progress.remaining > 0 && (
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      nog {progress.remaining.toFixed(4)} BTC te gaan
-                    </p>
+                    <>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        nog {progress.remaining.toFixed(4)} BTC te gaan
+                      </p>
+                      {goal.timeframe && goal.created_at && (() => {
+                        // Parse timeframe (e.g., "5 maanden" -> 5)
+                        const timeframeMatch = goal.timeframe.match(/(\d+)/);
+                        const totalMonths = timeframeMatch ? parseInt(timeframeMatch[1]) : 0;
+                        
+                        if (totalMonths === 0) return null;
+                        
+                        // Calculate months elapsed since goal creation
+                        const createdDate = new Date(goal.created_at);
+                        const now = new Date();
+                        const daysElapsed = Math.max(0, Math.floor((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24)));
+                        const monthsElapsed = daysElapsed / 30; // More accurate: use days / 30
+                        
+                        // Calculate required BTC per month
+                        const requiredPerMonth = goal.target / totalMonths;
+                        
+                        // Calculate expected BTC at this point (based on time elapsed)
+                        const expectedBTC = requiredPerMonth * monthsElapsed;
+                        
+                        // Current BTC progress (how much of the target has been achieved)
+                        // For BTC goals, we use currentBalance as the progress
+                        const currentBTC = Math.min(currentBalance, goal.target);
+                        
+                        // Calculate difference
+                        const difference = currentBTC - expectedBTC;
+                        const isOnTrack = difference >= -0.0001; // Small tolerance for rounding
+                        const monthsRemaining = Math.max(0, totalMonths - monthsElapsed);
+                        const neededPerMonthRemaining = monthsRemaining > 0 ? progress.remaining / monthsRemaining : 0;
+                        
+                        return (
+                          <div className="mt-1.5 space-y-1 text-xs bg-gray-50 p-2 rounded border border-gray-200">
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-600">Per maand nodig:</span>
+                              <span className="font-semibold text-blue-600">{requiredPerMonth.toFixed(6)} BTC</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-600">Maanden verstreken:</span>
+                              <span className="font-medium text-gray-900">{Math.floor(monthsElapsed * 10) / 10} / {totalMonths}</span>
+                            </div>
+                            {monthsElapsed > 0 && (
+                              <>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-gray-600">Status:</span>
+                                  <span className={`font-semibold ${isOnTrack ? 'text-green-600' : 'text-red-600'}`}>
+                                    {isOnTrack ? '✅ Op schema' : '⚠️ Achterstand'}
+                                  </span>
+                                </div>
+                                {!isOnTrack && monthsRemaining > 0 && (
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-gray-600">Nu per maand nodig:</span>
+                                    <span className="font-semibold text-orange-600">{neededPerMonthRemaining.toFixed(6)} BTC</span>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </>
                   )}
                   {goal.type === 'monthly' && (
                     <div className="mt-0.5 space-y-1">
