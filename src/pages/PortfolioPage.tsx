@@ -806,9 +806,9 @@ export default function PortfolioPage() {
           {/* Transactions Section */}
           {allTransactions.length > 0 && (
             <div className="mt-12">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                 <h3 className="text-2xl font-bold text-gray-900">Transactie Geschiedenis</h3>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
                   <span className="text-sm text-gray-600">
                     {(() => {
                       const filteredCount = allTransactions.filter(tx => {
@@ -830,54 +830,57 @@ export default function PortfolioPage() {
                 </div>
               </div>
 
+              {/* Filter voor Buy/Sell - Prominent geplaatst */}
+              <div className="bg-white rounded-lg p-4 border border-gray-200 mb-6">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-sm font-semibold text-gray-700">Filter transacties:</span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setTransactionFilter('all');
+                        setCurrentPage(1);
+                      }}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        transactionFilter === 'all'
+                          ? 'bg-orange-600 text-white shadow-md'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      Alle
+                    </button>
+                    <button
+                      onClick={() => {
+                        setTransactionFilter('buy');
+                        setCurrentPage(1);
+                      }}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        transactionFilter === 'buy'
+                          ? 'bg-green-600 text-white shadow-md'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      Koop
+                    </button>
+                    <button
+                      onClick={() => {
+                        setTransactionFilter('sell');
+                        setCurrentPage(1);
+                      }}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        transactionFilter === 'sell'
+                          ? 'bg-red-600 text-white shadow-md'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      Verkoop
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               {/* Pagination Controls */}
               <div className="bg-white rounded-lg p-4 border border-gray-200 mb-6 flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
-                  {/* Filter voor Buy/Sell */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-700">Filter:</span>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => {
-                          setTransactionFilter('all');
-                          setCurrentPage(1);
-                        }}
-                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                          transactionFilter === 'all'
-                            ? 'bg-orange-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        Alle
-                      </button>
-                      <button
-                        onClick={() => {
-                          setTransactionFilter('buy');
-                          setCurrentPage(1);
-                        }}
-                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                          transactionFilter === 'buy'
-                            ? 'bg-green-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        Koop
-                      </button>
-                      <button
-                        onClick={() => {
-                          setTransactionFilter('sell');
-                          setCurrentPage(1);
-                        }}
-                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                          transactionFilter === 'sell'
-                            ? 'bg-red-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        Verkoop
-                      </button>
-                    </div>
-                  </div>
                   
                   {/* Per pagina selector */}
                   <div className="flex items-center gap-3">

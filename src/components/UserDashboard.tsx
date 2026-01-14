@@ -82,6 +82,13 @@ interface UserProfile {
   marketingConsent?: boolean;
 }
 
+// BeginnersGoals Component Props
+type BeginnersGoalsProps = {
+  walletData: any;
+  walletTransactions: BitcoinTransaction[];
+  onBookAppointment?: () => void;
+};
+
 interface Goal {
   id: string;
   title: string;
@@ -2361,13 +2368,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 }
 
 // BeginnersGoals Component
-interface BeginnersGoalsProps {
-  walletData: any;
-  walletTransactions: BitcoinTransaction[];
-  onBookAppointment?: () => void;
-}
-
-function BeginnersGoals({ walletData, walletTransactions, onBookAppointment }: BeginnersGoalsProps) {
+const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: BeginnersGoalsProps): JSX.Element => {
   const { user } = useSupabaseAuth();
   const [showAddGoalPopup, setShowAddGoalPopup] = useState(false);
   const [customGoals, setCustomGoals] = useState<any[]>([]);
