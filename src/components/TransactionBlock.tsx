@@ -155,7 +155,7 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
 
   return (
     <div 
-      className={`bg-white rounded-xl p-6 shadow-lg border-l-4 transition-all duration-300 relative ${
+      className={`bg-white rounded-xl p-4 shadow-lg border-l-4 transition-all duration-300 relative ${
         isProfit ? 'border-l-green-500' : 'border-l-red-500'
       }`}
     >
@@ -167,23 +167,23 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
       )}
       
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3 flex-1">
-          <div className={`p-2 rounded-lg ${
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2 flex-1">
+          <div className={`p-1.5 rounded-lg ${
             isProfit ? 'bg-green-100' : 'bg-red-100'
           }`}>
             {isProfit ? (
-              <TrendingUp className={`w-5 h-5 ${isProfit ? 'text-green-600' : 'text-red-600'}`} />
+              <TrendingUp className={`w-4 h-4 ${isProfit ? 'text-green-600' : 'text-red-600'}`} />
             ) : (
-              <TrendingDown className={`w-5 h-5 ${isProfit ? 'text-green-600' : 'text-red-600'}`} />
+              <TrendingDown className={`w-4 h-4 ${isProfit ? 'text-green-600' : 'text-red-600'}`} />
             )}
           </div>
           <div>
-            <h4 className="text-lg font-semibold text-gray-900">
+            <h4 className="text-base font-semibold text-gray-900">
               Transactie #{index + 1}
             </h4>
-            <p className="text-sm text-gray-600 flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
+            <p className="text-xs text-gray-600 flex items-center gap-1">
+              <Calendar className="w-3 h-3" />
               {formatDate(transaction.time)}
             </p>
             {(() => {
@@ -227,7 +227,7 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
         </div>
 
         {!isSell && (
-        <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+        <div className={`px-2 py-0.5 rounded-full text-xs font-medium ${
           isProfit 
             ? 'bg-green-100 text-green-700' 
             : 'bg-red-100 text-red-700'
@@ -236,7 +236,7 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
         </div>
         )}
         {isSell && (
-          <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+          <div className={`px-2 py-0.5 rounded-full text-xs font-medium ${
             isProfit 
               ? 'bg-green-100 text-green-700' 
               : 'bg-red-100 text-red-700'
@@ -247,22 +247,22 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
       </div>
 
       {/* Transaction Details */}
-      <div className="grid md:grid-cols-2 gap-6 mb-4">
+      <div className="grid md:grid-cols-2 gap-3 mb-3">
         {/* Bitcoin Amount */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Coins className="w-4 h-4" />
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5 text-xs text-gray-600">
+            <Coins className="w-3 h-3" />
             <span>Bitcoin Bedrag</span>
           </div>
-          <p className="text-xl font-bold text-gray-900">
+          <p className="text-lg font-bold text-gray-900">
             {formatValue(transaction.value)} BTC
           </p>
         </div>
 
         {/* Transaction Hash */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Hash className="w-4 h-4" />
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5 text-xs text-gray-600">
+            <Hash className="w-3 h-3" />
             <span>Transactie Hash</span>
           </div>
           <div className="flex items-center gap-2">
@@ -301,70 +301,70 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
 
       {/* Pricing Details - First Row */}
       {isBuy ? (
-      <div className="grid md:grid-cols-2 gap-4 mb-4">
+      <div className="grid md:grid-cols-2 gap-3 mb-3">
         {/* Inkoopprijs per Bitcoin */}
           <div 
-            className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200"
+            className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 border border-blue-200"
         >
-          <div className="flex items-center gap-2 text-sm text-blue-700 mb-2">
-            <DollarSign className="w-4 h-4" />
+          <div className="flex items-center gap-1.5 text-xs text-blue-700 mb-1">
+            <DollarSign className="w-3 h-3" />
             <span className="font-semibold">Inkoopprijs / BTC</span>
           </div>
-          <p className="text-2xl font-bold text-blue-900">
+          <p className="text-lg font-bold text-blue-900">
             ${transaction.price.toLocaleString('en-US', { maximumFractionDigits: 0 })}
           </p>
-          <p className="text-xs text-blue-600 mt-1">
+          <p className="text-[10px] text-blue-600 mt-0.5">
               BTC prijs op blockchain op moment van transactie
           </p>
           </div>
 
         {/* Waarde bij Aankoop */}
-        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
-          <div className="flex items-center gap-2 text-sm text-orange-700 mb-2">
-            <DollarSign className="w-4 h-4" />
+        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-3 border border-orange-200">
+          <div className="flex items-center gap-1.5 text-xs text-orange-700 mb-1">
+            <DollarSign className="w-3 h-3" />
             <span className="font-semibold">Totale Aankoop Waarde</span>
           </div>
-          <p className="text-2xl font-bold text-orange-900">
+          <p className="text-lg font-bold text-orange-900">
               ${((transaction.value / 100000000) * transaction.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
-          <p className="text-xs text-orange-600 mt-1">
+          <p className="text-[10px] text-orange-600 mt-0.5">
             {(transaction.value / 100000000).toFixed(8)} BTC @ ${transaction.price.toLocaleString('en-US', { maximumFractionDigits: 0 })}
           </p>
         </div>
       </div>
       ) : (
-        <div className="grid md:grid-cols-2 gap-4 mb-4">
+        <div className="grid md:grid-cols-2 gap-3 mb-3">
           {/* Verkoopprijs per Bitcoin */}
           <div 
-            className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4 border border-red-200"
+            className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-3 border border-red-200"
           >
-            <div className="flex items-center gap-2 text-sm text-red-700 mb-2">
-              <DollarSign className="w-4 h-4" />
+            <div className="flex items-center gap-1.5 text-xs text-red-700 mb-1">
+              <DollarSign className="w-3 h-3" />
               <span className="font-semibold">Verkoopprijs / BTC</span>
             </div>
-            <p className="text-2xl font-bold text-red-900">
+            <p className="text-lg font-bold text-red-900">
               ${transaction.price.toLocaleString('en-US', { maximumFractionDigits: 0 })}
             </p>
-            <p className="text-xs text-red-600 mt-1">
+            <p className="text-[10px] text-red-600 mt-0.5">
               BTC prijs op blockchain op moment van transactie
             </p>
             {sellProfitInfo.buyPrice && (
-              <p className="text-xs text-red-500 mt-2">
+              <p className="text-[10px] text-red-500 mt-1">
                 Ingekocht bij: ${sellProfitInfo.buyPrice.toLocaleString('en-US', { maximumFractionDigits: 0 })} / BTC
               </p>
             )}
           </div>
 
           {/* Totale Verkoop Waarde */}
-          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
-            <div className="flex items-center gap-2 text-sm text-orange-700 mb-2">
-              <DollarSign className="w-4 h-4" />
+          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-3 border border-orange-200">
+            <div className="flex items-center gap-1.5 text-xs text-orange-700 mb-1">
+              <DollarSign className="w-3 h-3" />
               <span className="font-semibold">Totale Verkoop Waarde</span>
             </div>
-            <p className="text-2xl font-bold text-orange-900">
+            <p className="text-lg font-bold text-orange-900">
               ${((Math.abs(transaction.value) / 100000000) * transaction.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
-            <p className="text-xs text-orange-600 mt-1">
+            <p className="text-[10px] text-orange-600 mt-0.5">
               {(Math.abs(transaction.value) / 100000000).toFixed(8)} BTC @ ${transaction.price.toLocaleString('en-US', { maximumFractionDigits: 0 })}
             </p>
           </div>
@@ -373,41 +373,41 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
 
       {/* Performance Details - Second Row */}
       {isBuy ? (
-      <div className="grid md:grid-cols-3 gap-4 mb-4">
+      <div className="grid md:grid-cols-3 gap-3 mb-3">
         {/* Huidige Waarde */}
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-            <TrendingUp className="w-4 h-4" />
+        <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+          <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-1">
+            <TrendingUp className="w-3 h-3" />
             <span>Huidige Waarde</span>
           </div>
-          <p className="text-lg font-semibold text-gray-900">
+          <p className="text-base font-semibold text-gray-900">
             ${transaction.currentValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}
           </p>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-[10px] text-gray-500 mt-0.5">
             Vandaag
           </p>
         </div>
 
         {/* Profit/Loss */}
-        <div className={`rounded-lg p-4 border-2 ${
+        <div className={`rounded-lg p-3 border-2 ${
           isProfit ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
         }`}>
-          <div className="flex items-center gap-2 text-sm mb-1">
+          <div className="flex items-center gap-1.5 text-xs mb-1">
             {isProfit ? (
-              <TrendingUp className="w-4 h-4 text-green-600" />
+              <TrendingUp className="w-3 h-3 text-green-600" />
             ) : (
-              <TrendingDown className="w-4 h-4 text-red-600" />
+              <TrendingDown className="w-3 h-3 text-red-600" />
             )}
             <span className={isProfit ? 'text-green-700 font-semibold' : 'text-red-700 font-semibold'}>
               {isProfit ? 'Winst' : 'Verlies'}
             </span>
           </div>
-          <p className={`text-lg font-bold ${
+          <p className={`text-base font-bold ${
             isProfit ? 'text-green-700' : 'text-red-700'
           }`}>
             {isProfit ? '+' : ''}${transaction.profit.toLocaleString('en-US', { maximumFractionDigits: 0 })}
           </p>
-          <p className={`text-sm font-semibold ${
+          <p className={`text-xs font-semibold ${
             isProfit ? 'text-green-600' : 'text-red-600'
           }`}>
             {isProfit ? '+' : ''}{transaction.profitPercent.toFixed(2)}%
@@ -415,55 +415,55 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
         </div>
 
         {/* Buy Status Indicator */}
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-            <CheckCircle className="w-4 h-4 text-green-600" />
+        <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+          <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-1">
+            <CheckCircle className="w-3 h-3 text-green-600" />
             <span className="font-semibold">Status</span>
           </div>
-          <p className="text-lg font-semibold text-gray-900">
+          <p className="text-base font-semibold text-gray-900">
             Gekocht
           </p>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-[10px] text-gray-500 mt-0.5">
             {transaction.valueInBTC?.toFixed(4) || (transaction.value / 100000000).toFixed(4)} BTC
           </p>
         </div>
       </div>
       ) : (
-        <div className="grid md:grid-cols-3 gap-4 mb-4">
+        <div className="grid md:grid-cols-3 gap-3 mb-3">
           {/* Huidige Waarde (wat het nu waard zou zijn) */}
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-              <TrendingUp className="w-4 h-4" />
+          <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+            <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-1">
+              <TrendingUp className="w-3 h-3" />
               <span>Huidige Waarde</span>
             </div>
-            <p className="text-lg font-semibold text-gray-900">
+            <p className="text-base font-semibold text-gray-900">
               ${Math.abs(transaction.currentValue).toLocaleString('en-US', { maximumFractionDigits: 0 })}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-[10px] text-gray-500 mt-0.5">
               Als je het niet verkocht had
             </p>
           </div>
 
           {/* Winst nemen / Verlies nemen */}
-          <div className={`rounded-lg p-4 border-2 ${
+          <div className={`rounded-lg p-3 border-2 ${
             isProfit ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
           }`}>
-            <div className="flex items-center gap-2 text-sm mb-1">
+            <div className="flex items-center gap-1.5 text-xs mb-1">
               {isProfit ? (
-                <TrendingUp className="w-4 h-4 text-green-600" />
+                <TrendingUp className="w-3 h-3 text-green-600" />
               ) : (
-                <TrendingDown className="w-4 h-4 text-red-600" />
+                <TrendingDown className="w-3 h-3 text-red-600" />
               )}
               <span className={isProfit ? 'text-green-700 font-semibold' : 'text-red-700 font-semibold'}>
                 {isProfit ? 'Winst nemen' : 'Verlies nemen'}
               </span>
             </div>
-            <p className={`text-lg font-bold ${
+            <p className={`text-base font-bold ${
               isProfit ? 'text-green-700' : 'text-red-700'
             }`}>
               {isProfit ? '+' : ''}${actualProfit.toLocaleString('en-US', { maximumFractionDigits: 0 })}
             </p>
-            <p className={`text-sm font-semibold ${
+            <p className={`text-xs font-semibold ${
               isProfit ? 'text-green-600' : 'text-red-600'
             }`}>
               {isProfit ? '+' : ''}{actualProfitPercent.toFixed(2)}%
@@ -471,15 +471,15 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
           </div>
 
           {/* Sell Status Indicator */}
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-              <CheckCircle className="w-4 h-4 text-red-600" />
+          <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+            <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-1">
+              <CheckCircle className="w-3 h-3 text-red-600" />
               <span className="font-semibold">Status</span>
             </div>
-            <p className="text-lg font-semibold text-gray-900">
+            <p className="text-base font-semibold text-gray-900">
               Verkocht
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-[10px] text-gray-500 mt-0.5">
               Wallet na verkoop: {balanceAfter.toFixed(4)} BTC
             </p>
           </div>
@@ -487,31 +487,76 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
       )}
 
       {/* Performance Bar - Only for buys */}
-      {isBuy && (
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm text-gray-600">
-          <span>Performance</span>
-          <span>{transaction.profitPercent.toFixed(2)}%</span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div 
-            className={`h-2 rounded-full transition-all duration-500 ${
-              isProfit ? 'bg-green-500' : 'bg-red-500'
-            }`}
-            style={{ 
-              width: `${Math.min(Math.abs(transaction.profitPercent), 100)}%` 
-            }}
-          />
-        </div>
-      </div>
-      )}
+      {isBuy && (() => {
+        const profitPercent = transaction.profitPercent;
+        const isProfit = profitPercent >= 0;
+        const absPercent = Math.abs(profitPercent);
+        const barWidth = Math.min(50, absPercent); // Max 50% per side
+        
+        return (
+          <div className="space-y-2">
+            <div className="text-xs font-semibold text-gray-700 mb-1.5">Performance</div>
+            <div className="relative">
+              {/* Center line */}
+              <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-gray-400 z-10 transform -translate-x-1/2"></div>
+              
+              {/* Progress bar container */}
+              <div className="relative h-3 bg-gray-200 rounded-full overflow-visible">
+                {!isProfit ? (
+                  // Loss: from center to left, orange to red
+                  <>
+                    <div
+                      className="absolute right-1/2 h-full transition-all duration-500"
+                      style={{ 
+                        width: `${barWidth}%`,
+                        background: 'linear-gradient(to left, #ef4444, #f97316)',
+                        borderRadius: '9999px 0 0 9999px'
+                      }}
+                    ></div>
+                    <span 
+                      className="absolute top-1/2 -translate-y-1/2 text-xs font-semibold text-red-700 whitespace-nowrap z-20"
+                      style={{ 
+                        right: `calc(50% - ${barWidth}%)`,
+                        paddingLeft: '4px'
+                      }}
+                    >
+                      {profitPercent.toFixed(2)}%
+                    </span>
+                  </>
+                ) : (
+                  // Profit: from center to right, orange to green
+                  <>
+                    <div
+                      className="absolute left-1/2 h-full transition-all duration-500"
+                      style={{ 
+                        width: `${barWidth}%`,
+                        background: 'linear-gradient(to right, #f97316, #22c55e)',
+                        borderRadius: '0 9999px 9999px 0'
+                      }}
+                    ></div>
+                    <span 
+                      className="absolute top-1/2 -translate-y-1/2 text-xs font-semibold text-green-700 whitespace-nowrap z-20"
+                      style={{ 
+                        left: `calc(50% + ${barWidth}%)`,
+                        paddingLeft: '4px'
+                      }}
+                    >
+                      +{profitPercent.toFixed(2)}%
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Click Hint - Only this section is clickable */}
       <div 
-        className="mt-4 text-center cursor-pointer"
+        className="mt-3 text-center cursor-pointer"
         onClick={() => onTransactionClick?.(transaction)}
       >
-        <button className="text-sm text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors">
+        <button className="text-xs text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors">
           Klik voor meer details
         </button>
       </div>
