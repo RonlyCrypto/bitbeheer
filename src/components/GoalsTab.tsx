@@ -22,10 +22,12 @@ interface Goal {
   isBitcoinGoal?: boolean;
 }
 
-export default function GoalsTab({ goals, setGoals }: any) {
+export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoals }: any) {
   const { user } = useSupabaseAuth();
+  const [goals, setGoals] = useState<Goal[]>(initialGoals || []);
   const [showNewGoal, setShowNewGoal] = useState(false);
   const [bitcoinPrice, setBitcoinPrice] = useState<number>(95000);
+  const [currentBalance, setCurrentBalance] = useState<number>(0);
   const [selectedGoalTemplate, setSelectedGoalTemplate] = useState<string | null>(null);
   const [newGoalData, setNewGoalData] = useState({
     title: '',
@@ -39,9 +41,9 @@ export default function GoalsTab({ goals, setGoals }: any) {
   });
   const [loading, setLoading] = useState(false);
 
-  // Load Bitcoin price
+  // Load Bitcoin price and wallet balance
   useEffect(() => {
-    const loadBitcoinPrice = async () => {
+    const loadData = async () => {
       try {
         const priceData = await bitcoinApiService.getCurrentPrice();
         setBitcoinPrice(priceData.price);
@@ -49,9 +51,92 @@ export default function GoalsTab({ goals, setGoals }: any) {
         console.error('Error loading Bitcoin price:', error);
         setBitcoinPrice(95000);
       }
+
+      // Load wallet balance
+      if (user?.email) {
+        try {
+          const { data: walletData, error } = await supabase
+            .from('wallets')
+            .select('wallet_data')
+            .eq('email', user.email)
+            .single();
+
+          if (!error && walletData?.wallet_data) {
+            const balance = walletData.wallet_data.balance || 0;
+            setCurrentBalance(balance);
+          }
+        } catch (error) {
+          console.error('Error loading wallet balance:', error);
+        }
+      }
     };
-    loadBitcoinPrice();
-  }, []);
+
+    loadData();
+  }, [user?.email]);
+
+  // Load goals from database
+  useEffect(() => {
+    const loadGoals = async () => {
+      if (!user?.email) return;
+
+      try {
+        const { data: goalsData, error } = await supabase
+          .from('goals')
+          .select('*')
+          .eq('email', user.email)
+          .order('created_at', { ascending: false });
+
+        if (!error && goalsData) {
+          // Transform database goals to Goal format
+          const formattedGoals: Goal[] = goalsData.map((goal: any) => {
+            const isBTC = goal.title?.toLowerCase().includes('btc') || 
+                         goal.description?.toLowerCase().includes('btc') ||
+                         goal.title?.toLowerCase().includes('spaar') && goal.description?.toLowerCase().includes('btc');
+            
+            // Parse BTC amount from title or description
+            let targetBitcoinAmount = 0;
+            if (isBTC) {
+              const btcMatch = goal.title?.match(/(\d+\.?\d*)\s*BTC/i) || goal.description?.match(/(\d+\.?\d*)\s*BTC/i);
+              if (btcMatch) {
+                targetBitcoinAmount = parseFloat(btcMatch[1]);
+              }
+            }
+
+            // Parse timeframe
+            const timeframeMatch = goal.description?.match(/(\d+)\s*(maanden?|weken?|dagen?)/i);
+            const timeframeMonths = timeframeMatch ? parseInt(timeframeMatch[1]) : undefined;
+
+            return {
+              id: goal.id,
+              title: goal.title || '',
+              description: goal.description || '',
+              targetAmount: goal.target_amount || 0,
+              currentAmount: isBTC ? (currentBalance * bitcoinPrice) : (goal.current_amount || 0),
+              targetDate: goal.target_date || '',
+              category: goal.category || 'bitcoin',
+              status: goal.status || 'active',
+              createdAt: goal.created_at || new Date().toISOString(),
+              targetBitcoinAmount: isBTC ? targetBitcoinAmount : undefined,
+              currentBitcoinAmount: isBTC ? currentBalance : undefined,
+              monthlyInvestment: goal.monthly_investment,
+              bitcoinPriceAtCreation: goal.bitcoin_price_at_creation,
+              timeframeMonths: timeframeMonths,
+              isBitcoinGoal: isBTC
+            };
+          });
+
+          setGoals(formattedGoals);
+          if (setInitialGoals) {
+            setInitialGoals(formattedGoals);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading goals:', error);
+      }
+    };
+
+    loadGoals();
+  }, [user?.email, currentBalance, bitcoinPrice, setInitialGoals]);
 
   const DEFAULT_GOALS = [
     {
@@ -173,7 +258,43 @@ export default function GoalsTab({ goals, setGoals }: any) {
         };
       }
 
+      // Save to database
+      if (user?.id && user?.email) {
+        const { data, error } = await supabase
+          .from('goals')
+          .insert({
+            user_id: user.id,
+            email: user.email,
+            title: goal.title,
+            description: goal.description,
+            category: goal.category,
+            status: goal.status,
+            target_amount: goal.targetAmount,
+            current_amount: goal.currentAmount,
+            target_date: goal.targetDate,
+            monthly_investment: goal.monthlyInvestment,
+            bitcoin_price_at_creation: goal.bitcoinPriceAtCreation,
+            created_at: goal.createdAt
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error saving goal to database:', error);
+          alert('Er is een fout opgetreden bij het opslaan van het doel.');
+          return;
+        }
+
+        // Update goal with database ID
+        if (data) {
+          goal.id = data.id;
+        }
+      }
+
       setGoals([...goals, goal]);
+      if (setInitialGoals) {
+        setInitialGoals([...goals, goal]);
+      }
       setShowNewGoal(false);
       setSelectedGoalTemplate(null);
       setNewGoalData({
@@ -188,13 +309,36 @@ export default function GoalsTab({ goals, setGoals }: any) {
       });
     } catch (error) {
       console.error('Error creating goal:', error);
+      alert('Er is een fout opgetreden bij het aanmaken van het doel.');
     } finally {
       setLoading(false);
     }
   };
 
-  const deleteGoal = (id: string) => {
+  const deleteGoal = async (id: string) => {
+    try {
+      // Delete from database if it's a database goal
+      if (user?.email) {
+        const { error } = await supabase
+          .from('goals')
+          .delete()
+          .eq('id', id)
+          .eq('email', user.email);
+
+        if (error) {
+          console.error('Error deleting goal:', error);
+          return;
+        }
+      }
+
+      // Update local state
     setGoals(goals.filter((g: Goal) => g.id !== id));
+      if (setInitialGoals) {
+        setInitialGoals(goals.filter((g: Goal) => g.id !== id));
+      }
+    } catch (error) {
+      console.error('Error deleting goal:', error);
+    }
   };
 
   return (
@@ -403,13 +547,36 @@ export default function GoalsTab({ goals, setGoals }: any) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {goals && goals.length > 0 ? (
           goals.map((goal: Goal) => {
-            const progress = (goal.currentAmount / goal.targetAmount) * 100;
             const isBTC = goal.isBitcoinGoal;
-            const remaining = isBTC ? 
-              (goal.targetBitcoinAmount! - goal.currentBitcoinAmount!).toFixed(4) :
-              Math.ceil(goal.targetAmount - goal.currentAmount);
-            const monthlySavings = goal.monthlyInvestment || 
-              (goal.timeframeMonths ? Math.ceil(goal.targetAmount / goal.timeframeMonths) : 0);
+            
+            // Calculate progress
+            let progress = 0;
+            if (isBTC && goal.targetBitcoinAmount && goal.currentBitcoinAmount !== undefined) {
+              progress = (goal.currentBitcoinAmount / goal.targetBitcoinAmount) * 100;
+            } else if (goal.targetAmount > 0 && goal.currentAmount !== undefined) {
+              progress = (goal.currentAmount / goal.targetAmount) * 100;
+            }
+            
+            // Calculate remaining
+            let remaining: string | number = 0;
+            if (isBTC && goal.targetBitcoinAmount !== undefined && goal.currentBitcoinAmount !== undefined) {
+              remaining = (goal.targetBitcoinAmount - goal.currentBitcoinAmount).toFixed(4);
+            } else if (goal.targetAmount !== undefined && goal.currentAmount !== undefined) {
+              remaining = Math.ceil(goal.targetAmount - goal.currentAmount);
+            }
+            
+            // Calculate monthly savings
+            let monthlySavings = 0;
+            if (goal.monthlyInvestment) {
+              monthlySavings = goal.monthlyInvestment;
+            } else if (goal.timeframeMonths) {
+              if (isBTC && goal.targetBitcoinAmount) {
+                const remainingBTC = Math.max(0, goal.targetBitcoinAmount - (goal.currentBitcoinAmount || 0));
+                monthlySavings = Math.ceil((remainingBTC * bitcoinPrice) / goal.timeframeMonths);
+              } else if (goal.targetAmount) {
+                monthlySavings = Math.ceil((goal.targetAmount - (goal.currentAmount || 0)) / goal.timeframeMonths);
+              }
+            }
 
             return (
               <div key={goal.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -430,12 +597,12 @@ export default function GoalsTab({ goals, setGoals }: any) {
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700">Voortgang</span>
-                    <span className="text-sm font-bold text-orange-600">{Math.min(Math.round(progress), 100)}%</span>
+                    <span className="text-sm font-bold text-orange-600">{isNaN(progress) ? '0' : Math.min(Math.round(progress), 100)}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div 
                       className="bg-orange-600 h-2 rounded-full transition-all" 
-                      style={{ width: `${Math.min(progress, 100)}%` }}
+                      style={{ width: `${isNaN(progress) ? 0 : Math.min(progress, 100)}%` }}
                     ></div>
                   </div>
                 </div>
@@ -446,26 +613,34 @@ export default function GoalsTab({ goals, setGoals }: any) {
                     <>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Huidige hoeveelheid:</span>
-                        <span className="font-medium text-gray-900">{goal.currentBitcoinAmount?.toFixed(4)} BTC</span>
+                        <span className="font-medium text-gray-900">{(goal.currentBitcoinAmount || 0).toFixed(4)} BTC</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Target:</span>
-                        <span className="font-medium text-gray-900">{goal.targetBitcoinAmount?.toFixed(4)} BTC</span>
+                        <span className="font-medium text-gray-900">{(goal.targetBitcoinAmount || 0).toFixed(4)} BTC</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Nog nodig:</span>
                         <span className="font-bold text-orange-600">{remaining} BTC</span>
                       </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Huidige waarde:</span>
+                        <span className="font-medium text-gray-900">€{((goal.currentBitcoinAmount || 0) * bitcoinPrice).toLocaleString('nl-NL', { maximumFractionDigits: 0 })}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Target waarde:</span>
+                        <span className="font-medium text-gray-900">€{((goal.targetBitcoinAmount || 0) * bitcoinPrice).toLocaleString('nl-NL', { maximumFractionDigits: 0 })}</span>
+                      </div>
                     </>
                   ) : (
                     <>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Huiding bedrag:</span>
-                        <span className="font-medium text-gray-900">€{Math.round(goal.currentAmount).toLocaleString('nl-NL')}</span>
+                        <span className="text-gray-600">Huidig bedrag:</span>
+                        <span className="font-medium text-gray-900">€{Math.round(goal.currentAmount || 0).toLocaleString('nl-NL')}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Target:</span>
-                        <span className="font-medium text-gray-900">€{Math.round(goal.targetAmount).toLocaleString('nl-NL')}</span>
+                        <span className="font-medium text-gray-900">€{Math.round(goal.targetAmount || 0).toLocaleString('nl-NL')}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Nog nodig:</span>
