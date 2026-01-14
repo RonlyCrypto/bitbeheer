@@ -3647,13 +3647,8 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
       <div className="mb-6 p-5 bg-gradient-to-br from-orange-50 via-orange-50 to-orange-100 rounded-xl border border-orange-200">
         {/* Progress Bar with Milestones */}
         <div className="relative">
-          <div className="w-full bg-gray-200 rounded-full h-2 relative mt-4">
-          <div 
-              className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full transition-all duration-500"
-            style={{ width: `${Math.min(100, Math.max(0, milestoneProgress.progress))}%` }}
-          ></div>
-          
-            {/* Milestone markers - positioned in center of bar */}
+          {/* Milestone markers - positioned above bar */}
+          <div className="relative mb-2">
             {btcMilestones.map((milestone) => {
               const isReached = milestoneProgress.reached.includes(milestone.value);
               let position = 0;
@@ -3704,9 +3699,17 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                   ></div>
                 </div>
               );
-                          })}
-                        </div>
-                          </div>
+            })}
+          </div>
+          
+          {/* Progress bar */}
+          <div className="w-full bg-gray-200 rounded-full h-2 relative">
+            <div 
+              className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full transition-all duration-500"
+              style={{ width: `${Math.min(100, Math.max(0, milestoneProgress.progress))}%` }}
+            ></div>
+          </div>
+        </div>
 
         {/* Milestone Status List */}
         <div className="space-y-2 mb-4">
@@ -3845,6 +3848,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
 
           <div className="space-y-3 mb-4">
         {allGoals.map((goal, index) => {
+          const isFirstGoal = index === 0;
           const progress = getGoalProgress(goal);
           const isCompleted = goal.completed || progress.completed;
           const monthlyCheck = goal.type === 'monthly' ? checkMonthlyGoal(goal) : null;
@@ -3873,7 +3877,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
           }
               
               return (
-            <div key={goal.id}>
+            <div key={goal.id} className={isFirstGoal ? 'pt-4' : ''}>
               <div 
                 onClick={() => goal.type === 'monthly' && handleMonthlyGoalClick(goal)}
                 className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
