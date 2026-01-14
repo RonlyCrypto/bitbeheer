@@ -61,6 +61,7 @@ export default function PortfolioPage() {
   const [walletToEdit, setWalletToEdit] = useState<WalletData | null>(null);
   const [editWalletName, setEditWalletName] = useState('');
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const filterDropdownRef = useRef<HTMLDivElement>(null);
 
   // Get effective user email (considering impersonation)
   const effectiveUserEmail = (isImpersonating && impersonatedUser) 
