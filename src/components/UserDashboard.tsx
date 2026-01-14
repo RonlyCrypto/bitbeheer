@@ -2468,6 +2468,64 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
     return btcMilestones.find(m => m.value === value);
   };
 
+  // Calculate when milestone can be reached with monthly goals
+  const calculateMilestoneReachDate = (milestoneValue: number) => {
+    if (currentBalance >= milestoneValue) {
+      // Already reached - find when it was reached
+      const reachedTransactions = walletTransactions
+        .filter(tx => tx.value > 0)
+        .map(tx => ({
+          date: new Date(tx.time * 1000),
+          amount: Math.abs(tx.value) / 100000000
+        }))
+        .sort((a, b) => a.date.getTime() - b.date.getTime());
+      
+      let runningTotal = 0;
+      for (const tx of reachedTransactions) {
+        runningTotal += tx.amount;
+        if (runningTotal >= milestoneValue) {
+          return { reached: true, date: tx.date };
+        }
+      }
+      return { reached: true, date: new Date() }; // Fallback
+    }
+
+    // Not reached - calculate when it can be reached
+    const remaining = milestoneValue - currentBalance;
+    
+    // Find active monthly goals
+    const monthlyGoals = allGoals.filter(g => g.type === 'monthly' && !g.completed);
+    if (monthlyGoals.length === 0 || currentBitcoinPrice === 0) {
+      return { reached: false, months: null, date: null };
+    }
+
+    // Calculate total monthly BTC from all active monthly goals
+    let totalMonthlyBTC = 0;
+    monthlyGoals.forEach(goal => {
+      if (goal.monthlyCurrency === 'btc') {
+        totalMonthlyBTC += goal.monthlyAmount || 0;
+      } else if (goal.monthlyCurrency === 'eur') {
+        totalMonthlyBTC += (goal.monthlyAmount || 0) / currentBitcoinPrice;
+      }
+    });
+
+    if (totalMonthlyBTC === 0) {
+      return { reached: false, months: null, date: null };
+    }
+
+    const monthsNeeded = Math.ceil(remaining / totalMonthlyBTC);
+    const estimatedDate = new Date();
+    estimatedDate.setMonth(estimatedDate.getMonth() + monthsNeeded);
+
+    return { 
+      reached: false, 
+      months: monthsNeeded, 
+      date: estimatedDate,
+      remainingBTC: remaining,
+      monthlyBTC: totalMonthlyBTC
+    };
+  };
+
   // Load celebrated milestones from localStorage
   useEffect(() => {
     if (user?.id) {
@@ -3572,14 +3630,14 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
       {/* Bitcoin Milestones Section */}
       <div className="mb-6 p-5 bg-gradient-to-br from-orange-50 via-orange-50 to-orange-100 rounded-xl border border-orange-200">
         {/* Progress Bar with Milestones */}
-        <div className="w-full bg-gray-200 rounded-full h-5 mb-4 relative overflow-visible">
+        <div className="relative">
+          <div className="w-full bg-gray-200 rounded-full h-2 relative">
           <div 
-            className="bg-gradient-to-r from-orange-500 to-orange-600 h-5 rounded-full transition-all duration-500"
+              className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full transition-all duration-500"
             style={{ width: `${Math.min(100, Math.max(0, milestoneProgress.progress))}%` }}
           ></div>
           
-          {/* Milestone markers */}
-          <div className="absolute inset-0 flex justify-between items-center px-2">
+            {/* Milestone markers - positioned in center of bar */}
             {btcMilestones.map((milestone) => {
               const isReached = milestoneProgress.reached.includes(milestone.value);
               let position = 0;
@@ -3587,14 +3645,43 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
               else if (milestone.value === 0.1) position = 50;
               else if (milestone.value === 1) position = 100;
               
+              const reachInfo = calculateMilestoneReachDate(milestone.value);
+              const tooltipText = isReached 
+                ? `Behaald op ${reachInfo.reached ? reachInfo.date.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' }) : 'onbekend'}`
+                : reachInfo.months 
+                  ? `Nog ${reachInfo.remainingBTC?.toFixed(4) || '0'} BTC nodig. Met je maandelijkse doelen haal je dit over ongeveer ${reachInfo.months} maand(en) (${reachInfo.date?.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' }) || ''}).`
+                  : `Nog ${(milestone.value - currentBalance).toFixed(4)} BTC nodig.`;
+              
               return (
                 <div
                   key={milestone.value}
-                  className="absolute flex flex-col items-center"
+                  className="absolute flex flex-col items-center group"
                   style={{ left: `${position}%`, transform: 'translateX(-50%)', zIndex: 10 }}
                 >
-                  <div className={`w-4 h-4 rounded-full border-2 border-white shadow-sm ${isReached ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-                  <span className={`text-xs mt-1.5 whitespace-nowrap font-medium ${isReached ? 'text-green-700' : 'text-gray-500'}`}>
+                  {/* Tooltip */}
+                  <div className="absolute bottom-full mb-2 hidden group-hover:block z-20">
+                    <div className="bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-lg max-w-xs">
+                      <div className="font-semibold mb-1">{milestone.label}</div>
+                      <div className="text-gray-300 whitespace-normal">{tooltipText}</div>
+                      {!isReached && reachInfo.monthlyBTC && (
+                        <div className="mt-1 text-gray-400 text-[10px]">
+                          (Gebaseerd op huidige prijs: ${currentBitcoinPrice.toLocaleString('nl-NL', { maximumFractionDigits: 0 })})
+                        </div>
+                      )}
+                      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full">
+                        <div className="border-4 border-transparent border-t-gray-900"></div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Dot marker - centered on bar */}
+                  <div 
+                    className={`w-3 h-3 rounded-full border-2 border-white shadow-md transition-all ${isReached ? 'bg-green-500' : 'bg-gray-400'}`}
+                    style={{ marginTop: '-2px' }}
+                  ></div>
+                  
+                  {/* Label below bar */}
+                  <span className={`text-[10px] mt-1.5 whitespace-nowrap font-medium ${isReached ? 'text-green-700' : 'text-gray-500'}`}>
                     {milestone.label}
                   </span>
                 </div>
@@ -3732,16 +3819,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
       {allGoals.length > 0 && (
         <>
           <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-700">Jouw doelen</span>
-              <span className="text-sm font-semibold text-orange-600">{Math.round(overallProgress)}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div 
-                className="bg-orange-600 h-2.5 rounded-full transition-all duration-300"
-                style={{ width: `${overallProgress}%` }}
-              ></div>
-            </div>
           </div>
 
           <div className="space-y-3 mb-4">
