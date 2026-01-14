@@ -2835,11 +2835,11 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
         const btcAmount = Math.abs(tx.value) / 100000000; // Convert to BTC
         const usdValue = tx.price ? btcAmount * tx.price : 0; // USD value at time of transaction
         return {
-          ...tx,
-          date: new Date(tx.time * 1000),
+        ...tx,
+        date: new Date(tx.time * 1000),
           amount: btcAmount, // Always in BTC
           usdValue: usdValue, // USD value at time of transaction
-          txid: tx.hash || ''
+        txid: tx.hash || ''
         };
       })
       .sort((a, b) => a.date.getTime() - b.date.getTime());
@@ -2910,10 +2910,10 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
           // If there's still excess after making up, it's extra
           const remainingExcess = excess - (canMakeUp * targetAmountBTC);
           if (remainingExcess > targetAmountBTC * 0.1) {
-            status = 'extra';
-          } else {
-            status = 'completed';
-          }
+          status = 'extra';
+        } else {
+          status = 'completed';
+        }
         } else if (excess > targetAmountBTC * 0.1) {
           // More than 10% over target and no missed months to cover = extra deposit
           status = 'extra';
@@ -2935,7 +2935,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
             .reduce((sum, m) => sum + (m.totalAmount - m.targetAmount), 0);
           
           if (totalAmount + previousExcess >= targetAmountBTC) {
-            status = 'made_up';
+        status = 'made_up';
             const firstMissed = previousMonths[0];
             madeUpMonths = [firstMissed.monthKey];
             const monthIndex = months.findIndex(m => m.monthKey === firstMissed.monthKey);
@@ -3250,33 +3250,33 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
     if (!analysis) return null;
     
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => { setShowMonthlyGoalPopup(false); }}>
-        <div className="bg-white rounded-xl shadow-2xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-2xl font-bold text-gray-900">{selectedMonthlyGoal.title}</h3>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => { setShowMonthlyGoalPopup(false); }}>
+        <div className="bg-white rounded-xl shadow-2xl p-4 sm:p-6 max-w-4xl w-full max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 sm:mb-6 gap-4">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 break-words">{selectedMonthlyGoal.title}</h3>
               {/* Streak Display */}
-              <div className="mt-2 flex items-center gap-4">
+              <div className="mt-2 flex flex-wrap items-center gap-2 sm:gap-4">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-gray-700">Streak:</span>
                   <span className="text-lg font-bold text-orange-600">🔥 {analysis.streak}</span>
                   <span className="text-xs text-gray-500">maanden</span>
                 </div>
                 {analysis.isPaused && (
-                  <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 rounded-full">
-                    <span className="text-sm font-semibold text-blue-700">⏸️ Gepauzeerd</span>
+                  <div className="flex items-center gap-2 px-2 sm:px-3 py-1 bg-blue-100 rounded-full">
+                    <span className="text-xs sm:text-sm font-semibold text-blue-700">⏸️ Gepauzeerd</span>
                   </div>
                 )}
                 {analysis.streakBroken && !analysis.isPaused && (
-                  <div className="flex items-center gap-2 px-3 py-1 bg-red-100 rounded-full">
-                    <span className="text-sm font-semibold text-red-700">⚠️ Streak verbroken</span>
+                  <div className="flex items-center gap-2 px-2 sm:px-3 py-1 bg-red-100 rounded-full">
+                    <span className="text-xs sm:text-sm font-semibold text-red-700">⚠️ Streak verbroken</span>
                   </div>
                 )}
               </div>
             </div>
             <button
               onClick={() => setShowMonthlyGoalPopup(false)}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
             >
               <X className="w-6 h-6" />
             </button>
@@ -3284,11 +3284,11 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
 
           {/* Status Summary */}
           {(analysis.missedCount > 0 || analysis.totalMissedAmount > 0) && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="mb-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-red-600 font-semibold">⚠️ Gemiste maanden</span>
+                <span className="text-red-600 font-semibold text-sm sm:text-base">⚠️ Gemiste maanden</span>
               </div>
-              <div className="text-sm text-red-700">
+              <div className="text-xs sm:text-sm text-red-700 break-words">
                 Je hebt <span className="font-bold">{analysis.missedCount}</span> maand(en) gemist.
                 {analysis.totalMissedAmount > 0 && (
                   <span> Nog te storten: <span className="font-bold">{analysis.totalMissedAmount.toFixed(4)} BTC</span></span>
@@ -3298,10 +3298,10 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
           )}
 
           {/* Calendar Overview */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-lg font-semibold text-gray-900">Maandoverzicht</h4>
-              <div className="flex items-center gap-4 text-sm text-gray-600">
+          <div className="mb-4 sm:mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 gap-2">
+              <h4 className="text-base sm:text-lg font-semibold text-gray-900">Maandoverzicht</h4>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
                 {analysis.startMonth && (
                   <div>
                     <span className="font-semibold">Start:</span>{' '}
@@ -3316,8 +3316,8 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                 )}
               </div>
             </div>
-            <div className="overflow-x-auto pb-2 -mx-2 px-2">
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3 min-w-max">
+            <div className="overflow-x-auto pb-2 -mx-1 sm:-mx-2 px-1 sm:px-2">
+              <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2 sm:gap-3 min-w-max">
               {analysis.months.map((month) => {
                 let bgColor = 'bg-gray-100';
                 let borderColor = 'border-gray-300';
@@ -3354,35 +3354,35 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                 return (
                   <div
                     key={month.monthKey}
-                    className={`p-3 rounded-lg border-2 ${bgColor} ${borderColor} ${textColor} text-center relative ${
-                      month.isStartMonth ? 'ring-2 ring-blue-500 ring-offset-2' : ''
-                    } ${month.isCurrentMonth ? 'ring-2 ring-purple-500 ring-offset-2' : ''}`}
+                    className={`p-2 sm:p-3 rounded-lg border-2 ${bgColor} ${borderColor} ${textColor} text-center relative overflow-visible ${
+                      month.isStartMonth ? 'ring-2 ring-blue-500 ring-offset-1 sm:ring-offset-2' : ''
+                    } ${month.isCurrentMonth ? 'ring-2 ring-purple-500 ring-offset-1 sm:ring-offset-2' : ''}`}
                   >
                     {month.isStartMonth && (
-                      <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                      <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-blue-500 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-bold z-10">
                         START
                       </div>
                     )}
                     {month.isCurrentMonth && (
-                      <div className="absolute -top-2 -left-2 bg-purple-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                      <div className="absolute -top-1 -left-1 sm:-top-2 sm:-left-2 bg-purple-500 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-bold z-10">
                         NU
                       </div>
                     )}
-                    <div className="text-xs font-semibold mb-1">{month.date.toLocaleDateString('nl-NL', { month: 'short' })}</div>
-                    <div className="text-lg font-bold mb-1">{statusText}</div>
-                    <div className="text-xs">{month.date.getFullYear()}</div>
+                    <div className="text-[10px] sm:text-xs font-semibold mb-1">{month.date.toLocaleDateString('nl-NL', { month: 'short' })}</div>
+                    <div className="text-base sm:text-lg font-bold mb-1">{statusText}</div>
+                    <div className="text-[10px] sm:text-xs">{month.date.getFullYear()}</div>
                     {month.totalAmount > 0 && (
-                      <div className="text-xs mt-1 font-medium">
-                        {month.totalAmount.toFixed(4)} BTC
+                      <div className="text-[10px] sm:text-xs mt-1 font-medium break-words">
+                        <span className="block">{month.totalAmount.toFixed(4)} BTC</span>
                         {month.avgPrice > 0 && (
-                          <span className="text-gray-600 ml-1">
+                          <span className="text-gray-600 block sm:inline">
                             (${(month.totalAmount * month.avgPrice).toFixed(2)})
                           </span>
                         )}
                       </div>
                     )}
                     {month.remainingToMakeUp > 0 && (
-                      <div className="text-xs mt-1 text-red-600 font-semibold">
+                      <div className="text-[10px] sm:text-xs mt-1 text-red-600 font-semibold break-words">
                         Nog: {month.remainingToMakeUp.toFixed(4)} BTC
                       </div>
                     )}
@@ -3394,40 +3394,40 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
           </div>
 
           {/* Legend */}
-          <div className="mt-4 flex flex-wrap gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-100 border-2 border-green-500 rounded"></div>
+          <div className="mt-3 sm:mt-4 flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-100 border-2 border-green-500 rounded"></div>
               <span>Voltooid</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-red-100 border-2 border-red-500 rounded"></div>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-100 border-2 border-red-500 rounded"></div>
               <span>Gemist</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-orange-100 border-2 border-orange-500 rounded"></div>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-orange-100 border-2 border-orange-500 rounded"></div>
               <span>Goedgemaakt</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-blue-100 border-2 border-blue-500 rounded"></div>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-100 border-2 border-blue-500 rounded"></div>
               <span>Extra storting</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-gray-100 border-2 border-gray-300 rounded"></div>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-gray-100 border-2 border-gray-300 rounded"></div>
               <span>Nog te doen</span>
             </div>
           </div>
 
           {/* Transaction Details */}
-          <div>
-            <h4 className="text-lg font-semibold text-gray-900 mb-4">Transactie overzicht</h4>
+          <div className="mt-4 sm:mt-6">
+            <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Transactie overzicht</h4>
             <div className="space-y-3">
               {analysis.months
                 .filter(month => month.transactions.length > 0)
                 .map((month) => (
-                  <div key={month.monthKey} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h5 className="font-semibold text-gray-900">{month.month}</h5>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  <div key={month.monthKey} className="border border-gray-200 rounded-lg p-3 sm:p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
+                      <h5 className="font-semibold text-gray-900 text-sm sm:text-base">{month.month}</h5>
+                      <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
                         month.status === 'completed' ? 'bg-green-100 text-green-800' :
                         month.status === 'missed' ? 'bg-red-100 text-red-800' :
                         month.status === 'made_up' ? 'bg-orange-100 text-orange-800' :
@@ -3472,19 +3472,19 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
 
                     <div className="space-y-2">
                       {month.transactions.map((tx: any, idx: number) => (
-                        <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-2 h-2 rounded-full ${
+                        <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded gap-2">
+                          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                               month.status === 'completed' ? 'bg-green-500' :
                               month.status === 'made_up' ? 'bg-orange-500' :
                               month.status === 'extra' ? 'bg-blue-500' :
                               'bg-gray-400'
                             }`}></div>
-                            <div>
-                              <div className="font-medium text-gray-900">
+                            <div className="min-w-0 flex-1">
+                              <div className="font-medium text-gray-900 text-sm sm:text-base break-words">
                                 {tx.amount.toFixed(4)} BTC
                                 {tx.price && (
-                                  <span className="text-gray-600 ml-2 font-normal">
+                                  <span className="text-gray-600 ml-1 sm:ml-2 font-normal">
                                     (${tx.usdValue.toFixed(2)})
                                   </span>
                                 )}
@@ -3498,7 +3498,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                             href={`https://blockstream.info/tx/${tx.txid || tx.hash || ''}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-700"
+                            className="text-blue-600 hover:text-blue-700 flex-shrink-0"
                           >
                             <ExternalLink className="w-4 h-4" />
                           </a>
@@ -3507,19 +3507,19 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                     </div>
 
                     <div className="mt-3 pt-3 border-t border-gray-200">
-                      <div className="flex justify-between text-sm">
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0 text-sm">
                         <span className="text-gray-600">Totaal deze maand:</span>
-                        <span className="font-semibold text-gray-900">
+                        <span className="font-semibold text-gray-900 break-words">
                           {month.totalAmount.toFixed(4)} BTC
                           {month.avgPrice > 0 && (
-                            <span className="text-gray-600 ml-2 font-normal">
+                            <span className="text-gray-600 ml-1 sm:ml-2 font-normal">
                               (${(month.totalAmount * month.avgPrice).toFixed(2)})
                             </span>
                           )}
                         </span>
                       </div>
                       {month.totalAmount > month.targetAmount && (
-                        <div className="mt-1 text-xs text-blue-600">
+                        <div className="mt-1 text-xs text-blue-600 break-words">
                           +{(month.totalAmount - month.targetAmount).toFixed(4)} BTC extra
                           {month.avgPrice > 0 && (
                             <span className="ml-1">
@@ -3533,13 +3533,13 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                 ))}
                 
                 {analysis.months.filter(month => month.transactions.length === 0 && month.status === 'missed').length > 0 && (
-                  <div className="border border-red-200 rounded-lg p-4 bg-red-50">
-                    <h5 className="font-semibold text-red-900 mb-2">Gemiste maanden</h5>
+                  <div className="border border-red-200 rounded-lg p-3 sm:p-4 bg-red-50">
+                    <h5 className="font-semibold text-red-900 mb-2 text-sm sm:text-base">Gemiste maanden</h5>
                     <div className="space-y-1">
                       {analysis.months
                         .filter(month => month.transactions.length === 0 && month.status === 'missed')
                         .map((month) => (
-                          <div key={month.monthKey} className="text-sm text-red-700">
+                          <div key={month.monthKey} className="text-xs sm:text-sm text-red-700 break-words">
                             {month.month} - Je kunt deze maand goedmaken met een extra storting
                           </div>
                         ))}
@@ -3549,10 +3549,10 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
             </div>
           </div>
 
-          <div className="mt-6 pt-4 border-t border-gray-200">
+          <div className="mt-4 sm:mt-6 pt-4 border-t border-gray-200">
             <button
               onClick={() => setShowMonthlyGoalPopup(false)}
-              className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors"
+              className="w-full px-4 py-2 sm:py-2.5 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors text-sm sm:text-base"
             >
               Sluiten
             </button>
