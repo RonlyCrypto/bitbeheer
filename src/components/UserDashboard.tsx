@@ -2138,25 +2138,25 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">📚 Leer & Waarschuwingen</h3>
             <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Vragen Beantwoord &gt;</a>
-        </div>
+          </div>
 
-                  <div className="mb-4">
+          <div className="mb-4">
             <h4 className="font-semibold text-gray-900 mb-3">⚠️ Veelgemaakte fouten</h4>
             <div className="space-y-2 mb-4">
               <div className="flex items-start gap-2">
                 <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-gray-700">Koop nooit via DM's</p>
-            </div>
+              </div>
               <div className="flex items-start gap-2">
                 <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-gray-700">Deel nooit je seed</p>
-            </div>
+              </div>
               <div className="flex items-start gap-2">
                 <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-gray-700">Laat BTC niet lang op exchanges</p>
+              </div>
+            </div>
           </div>
-                  </div>
-                </div>
                 
           <div className="pt-4 border-t border-gray-200">
             <h4 className="font-semibold text-gray-900 mb-2">💡 Tip van vandaag</h4>
@@ -2197,6 +2197,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           </div>
         </div>
       </div>
+    </div>
 
       {/* Stappenblokken (Ledger & Coinbase) - Onderaan naast elkaar (1/2 1/2) */}
       <ReferralBlocksWithHelp onBookAppointment={onBookAppointment} />
@@ -2363,7 +2364,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           </div>
         </div>
       )}
-    </div>
   );
 }
 
@@ -3613,221 +3613,9 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                 </button>
               </div>
             </div>
-    </div>
-  );
-      })()}
-        const analysis = analyzeMonthlyGoalTransactions(selectedMonthlyGoal);
-        if (!analysis) return null;
-        
-        return (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowMonthlyGoalPopup(false)}>
-            <div className="bg-white rounded-xl shadow-2xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold text-gray-900">{selectedMonthlyGoal.title}</h3>
-                <button
-                  onClick={() => setShowMonthlyGoalPopup(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-
-              {/* Calendar Overview */}
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-semibold text-gray-900">Maandoverzicht</h4>
-                  {selectedMonthlyGoal.target_date && (
-                    <div className="text-sm text-gray-600">
-                      <span className="font-semibold">Startdatum:</span>{' '}
-                      {new Date(selectedMonthlyGoal.target_date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}
-                    </div>
-                  )}
-                </div>
-                <div className="overflow-x-auto pb-2 -mx-2 px-2">
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3 min-w-max">
-                  {analysis.months.map((month) => {
-                    let bgColor = 'bg-gray-100';
-                    let borderColor = 'border-gray-300';
-                    let textColor = 'text-gray-700';
-                    let statusText = '';
-                    
-                    if (month.status === 'completed') {
-                      bgColor = 'bg-green-100';
-                      borderColor = 'border-green-500';
-                      textColor = 'text-green-900';
-                      statusText = '✓';
-                    } else if (month.status === 'missed') {
-                      bgColor = 'bg-red-100';
-                      borderColor = 'border-red-500';
-                      textColor = 'text-red-900';
-                      statusText = '✗';
-                    } else if (month.status === 'made_up') {
-                      bgColor = 'bg-orange-100';
-                      borderColor = 'border-orange-500';
-                      textColor = 'text-orange-900';
-                      statusText = '↩';
-                    } else if (month.status === 'extra') {
-                      bgColor = 'bg-blue-100';
-                      borderColor = 'border-blue-500';
-                      textColor = 'text-blue-900';
-                      statusText = '⭐';
-      } else {
-                      bgColor = 'bg-gray-100';
-                      borderColor = 'border-gray-300';
-                      textColor = 'text-gray-600';
-                      statusText = month.isCurrentMonth ? '...' : '';
-                    }
-
-  return (
-                      <div
-                        key={month.monthKey}
-                        className={`p-3 rounded-lg border-2 ${bgColor} ${borderColor} ${textColor} text-center`}
-                      >
-                        <div className="text-xs font-semibold mb-1">{month.date.toLocaleDateString('nl-NL', { month: 'short' })}</div>
-                        <div className="text-lg font-bold mb-1">{statusText}</div>
-                        <div className="text-xs">{month.date.getFullYear()}</div>
-                        {month.totalAmount > 0 && (
-                          <div className="text-xs mt-1 font-medium">
-                            {month.totalAmount.toFixed(4)} {selectedMonthlyGoal.monthlyCurrency === 'btc' ? 'BTC' : '€'}
-        </div>
-                        )}
-                      </div>
-                    );
-                  })}
-      </div>
-
-                {/* Legend */}
-                <div className="mt-4 flex flex-wrap gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-green-100 border-2 border-green-500 rounded"></div>
-                    <span>Voltooid</span>
-              </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-red-100 border-2 border-red-500 rounded"></div>
-                    <span>Gemist</span>
-            </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-orange-100 border-2 border-orange-500 rounded"></div>
-                    <span>Goedgemaakt</span>
-              </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-blue-100 border-2 border-blue-500 rounded"></div>
-                    <span>Extra storting</span>
-            </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-gray-100 border-2 border-gray-300 rounded"></div>
-                    <span>Nog te doen</span>
-              </div>
-            </div>
-        </div>
-
-              {/* Transaction Details */}
-                <div>
-                <h4 className="text-lg font-semibold text-gray-900 mb-4">Transactie overzicht</h4>
-                <div className="space-y-3">
-                  {analysis.months
-                    .filter(month => month.transactions.length > 0)
-                    .map((month) => (
-                      <div key={month.monthKey} className="border border-gray-200 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <h5 className="font-semibold text-gray-900">{month.month}</h5>
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                            month.status === 'completed' ? 'bg-green-100 text-green-800' :
-                            month.status === 'missed' ? 'bg-red-100 text-red-800' :
-                            month.status === 'made_up' ? 'bg-orange-100 text-orange-800' :
-                            month.status === 'extra' ? 'bg-blue-100 text-blue-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {month.status === 'completed' && '✓ Voltooid'}
-                            {month.status === 'missed' && '✗ Gemist'}
-                            {month.status === 'made_up' && '↩ Goedgemaakt'}
-                            {month.status === 'extra' && '⭐ Extra storting'}
-                          </span>
-                </div>
-                        
-                        {month.status === 'extra' && (
-                          <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
-                            🎉 Goed van je dat je extra hebt gestort!
-                </div>
-                        )}
-
-                        <div className="space-y-2">
-                          {month.transactions.map((tx, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                              <div className="flex items-center gap-3">
-                                <div className={`w-2 h-2 rounded-full ${
-                                  month.status === 'completed' ? 'bg-green-500' :
-                                  month.status === 'made_up' ? 'bg-orange-500' :
-                                  month.status === 'extra' ? 'bg-blue-500' :
-                                  'bg-gray-400'
-                                }`}></div>
-                <div>
-                                  <div className="font-medium text-gray-900">
-                                    {tx.amount.toFixed(4)} {selectedMonthlyGoal.monthlyCurrency === 'btc' ? 'BTC' : '€'}
-                </div>
-                                  <div className="text-xs text-gray-500">
-                                    {tx.date.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}
-                </div>
-              </div>
-                    </div>
-                              {tx.txid && (
-                                <a
-                                  href={`https://blockstream.info/tx/${tx.txid}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-600 hover:text-blue-700"
-                                >
-                                  <ExternalLink className="w-4 h-4" />
-                                </a>
-                              )}
-                    </div>
-                          ))}
-                    </div>
-                        
-                        <div className="mt-3 pt-3 border-t border-gray-200">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Totaal deze maand:</span>
-                            <span className="font-semibold text-gray-900">
-                              {month.totalAmount.toFixed(4)} {selectedMonthlyGoal.monthlyCurrency === 'btc' ? 'BTC' : '€'}
-                            </span>
-                  </div>
-                          {month.totalAmount > month.targetAmount && (
-                            <div className="mt-1 text-xs text-blue-600">
-                              +{(month.totalAmount - month.targetAmount).toFixed(4)} {selectedMonthlyGoal.monthlyCurrency === 'btc' ? 'BTC' : '€'} extra
-                </div>
-              )}
-                        </div>
-                      </div>
-                    ))}
-                  
-                  {analysis.months.filter(month => month.transactions.length === 0 && month.status === 'missed').length > 0 && (
-                    <div className="border border-red-200 rounded-lg p-4 bg-red-50">
-                      <h5 className="font-semibold text-red-900 mb-2">Gemiste maanden</h5>
-                      <div className="space-y-1">
-                        {analysis.months
-                          .filter(month => month.transactions.length === 0 && month.status === 'missed')
-                          .map((month) => (
-                            <div key={month.monthKey} className="text-sm text-red-700">
-                              {month.month} - Je kunt deze maand goedmaken met een extra storting
-                            </div>
-                          ))}
-                      </div>
-            </div>
-          )}
-              </div>
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-gray-200">
-                <button
-                  onClick={() => setShowMonthlyGoalPopup(false)}
-                  className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors"
-                >
-                  Sluiten
-                </button>
-              </div>
-            </div>
           </div>
-        );
+        </div>
+      );
       })()}
 
       {/* Edit Goal Popup */}
