@@ -3672,7 +3672,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                 <div
                   key={milestone.value}
                   className="absolute flex flex-col items-center group"
-                  style={{ left: `${position}%`, transform: 'translateX(-50%)', zIndex: 10, top: '-20px' }}
+                  style={{ left: `${position}%`, transform: 'translateX(-50%)', zIndex: 10, top: '-18px' }}
                 >
                   {/* Tooltip */}
                   <div className="absolute bottom-full mb-2 hidden group-hover:block z-20">
@@ -3691,14 +3691,14 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                   </div>
                   
                   {/* Label above bar */}
-                  <span className={`text-[10px] mb-1 whitespace-nowrap font-medium ${isReached ? 'text-green-700' : 'text-gray-500'}`}>
+                  <span className={`text-[10px] mb-1.5 whitespace-nowrap font-medium ${isReached ? 'text-green-700' : 'text-gray-500'}`}>
                     {milestone.label}
                   </span>
                   
-                  {/* Dot marker - positioned on bar */}
+                  {/* Dot marker - positioned centered on bar */}
                   <div 
                     className={`w-3 h-3 rounded-full border-2 border-white shadow-md transition-all ${isReached ? 'bg-green-500' : 'bg-gray-400'}`}
-                    style={{ marginTop: '8px' }}
+                    style={{ marginTop: '14px' }}
                   ></div>
                 </div>
               );
@@ -3817,9 +3817,9 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                   if (currentMilestoneCelebration !== null && user?.id) {
                     // Only add if not already in the list
                     if (!celebratedMilestones.includes(currentMilestoneCelebration)) {
-                      const updated = [...celebratedMilestones, currentMilestoneCelebration];
-                      setCelebratedMilestones(updated);
-                      localStorage.setItem(`celebrated_milestones_${user.id}`, JSON.stringify(updated));
+                    const updated = [...celebratedMilestones, currentMilestoneCelebration];
+                    setCelebratedMilestones(updated);
+                    localStorage.setItem(`celebrated_milestones_${user.id}`, JSON.stringify(updated));
                     }
                   }
                   setShowMilestonePopup(false);
@@ -3914,17 +3914,17 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                   {goal.type === 'monthly' && (
                     <div className="mt-0.5 space-y-1">
                       <p className={`text-xs ${
-                        monthlyCompleted ? 'text-green-700' : 'text-gray-500'
-                      }`}>
-                        {monthlyCompleted ? (
-                          <span className="flex items-center gap-1">
-                            <CheckCircle className="w-3 h-3" />
-                            Goed gedaan! Je hebt deze maand gestort 🎉
-                          </span>
-                        ) : (
-                          'Je hebt deze maand nog niet gestort'
-                        )}
-                      </p>
+                      monthlyCompleted ? 'text-green-700' : 'text-gray-500'
+                    }`}>
+                      {monthlyCompleted ? (
+                        <span className="flex items-center gap-1">
+                          <CheckCircle className="w-3 h-3" />
+                          Goed gedaan! Je hebt deze maand gestort 🎉
+                      </span>
+                      ) : (
+                        'Je hebt deze maand nog niet gestort'
+                      )}
+                    </p>
                       {streak > 0 && (
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs font-semibold text-orange-600">🔥 Streak: {streak}</span>
