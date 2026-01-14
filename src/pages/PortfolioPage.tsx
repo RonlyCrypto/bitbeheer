@@ -12,7 +12,9 @@ import {
   AlertCircle,
   Shield,
   Loader2,
-  X
+  X,
+  Settings,
+  Edit
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PortfolioChart from '../components/PortfolioChart';
@@ -54,6 +56,10 @@ export default function PortfolioPage() {
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [transactionFilter, setTransactionFilter] = useState<'all' | 'buy' | 'sell'>('all');
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [showEditWallet, setShowEditWallet] = useState(false);
+  const [walletToEdit, setWalletToEdit] = useState<WalletData | null>(null);
+  const [editWalletName, setEditWalletName] = useState('');
 
   // Get effective user email (considering impersonation)
   const effectiveUserEmail = (isImpersonating && impersonatedUser) 
@@ -429,6 +435,39 @@ export default function PortfolioPage() {
   const handleDeleteClick = (wallet: WalletData) => {
     setWalletToDelete(wallet);
     setShowDeleteConfirm(true);
+    setOpenMenuId(null);
+  };
+
+  const handleEditClick = (wallet: WalletData) => {
+    setWalletToEdit(wallet);
+    setEditWalletName(wallet.name);
+    setShowEditWallet(true);
+    setOpenMenuId(null);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!walletToEdit || !editWalletName.trim() || !effectiveUserEmail) return;
+
+    try {
+      const { error } = await supabase
+        .from('wallets')
+        .update({ name: editWalletName.trim() })
+        .eq('id', walletToEdit.id)
+        .eq('email', effectiveUserEmail);
+
+      if (error) throw error;
+
+      setWallets(wallets.map(w => 
+        w.id === walletToEdit.id ? { ...w, name: editWalletName.trim() } : w
+      ));
+
+      setShowEditWallet(false);
+      setWalletToEdit(null);
+      setEditWalletName('');
+    } catch (error) {
+      console.error('Error updating wallet name:', error);
+      alert('Er is een fout opgetreden bij het bijwerken van de wallet naam.');
+    }
   };
 
   const removeWallet = async () => {
@@ -564,10 +603,9 @@ export default function PortfolioPage() {
             </div>
           )}
 
-          {/* Controls - Only show if no wallets or wallets exist */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            {/* Only show "Wallet Toevoegen" button if no wallets exist */}
-            {wallets.length === 0 && !loadingWallets && (
+          {/* Only show "Wallet Toevoegen" button if no wallets exist */}
+          {wallets.length === 0 && !loadingWallets && (
+            <div className="mb-8">
               <button
                 onClick={() => setShowAddWallet(!showAddWallet)}
                 className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 transition-colors"
@@ -575,30 +613,8 @@ export default function PortfolioPage() {
                 <Plus className="w-5 h-5" />
                 Wallet Toevoegen
               </button>
-            )}
-
-            {/* Only show "Verberg Saldi" button if wallets exist */}
-            {wallets.length > 0 && (
-              <button
-                onClick={() => setShowBalances(!showBalances)}
-                className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-xl font-semibold hover:bg-gray-700 transition-colors"
-              >
-                {showBalances ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                {showBalances ? 'Verberg Saldo' : 'Toon Saldo'}
-              </button>
-            )}
-
-            {/* Refresh transactions button */}
-            {wallets.length > 0 && (
-              <button
-                onClick={refreshTransactionPrices}
-                disabled={loadingWallets}
-                className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loadingWallets ? '⟳ Verversen...' : '⟳ Prijzen Verversen'}
-              </button>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Bitcoin Milestones */}
           <BitcoinMilestones 
@@ -679,116 +695,154 @@ export default function PortfolioPage() {
             </div>
           ) : (
             <div className="grid gap-6">
-              {wallets.map((wallet) => (
-                <div key={wallet.id} className="bg-white rounded-xl p-6 shadow-lg">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-orange-100 p-2 rounded-lg">
-                        <Wallet className="w-6 h-6 text-orange-600" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{wallet.name}</h3>
-                        <p className="text-sm text-gray-600">
-                          Toegevoegd op {(() => {
-                            try {
-                              // firstSeen should be a date string in format YYYY-MM-DD
-                              if (!wallet.firstSeen) {
-                                // Try to use created_at from database if available
-                                const walletWithCreatedAt = wallets.find(w => w.id === wallet.id);
-                                if (walletWithCreatedAt && (walletWithCreatedAt as any).created_at) {
-                                  const date = new Date((walletWithCreatedAt as any).created_at);
-                                  if (!isNaN(date.getTime())) {
-                                    return date.toLocaleDateString('nl-NL', {
-                                      day: '2-digit',
-                                      month: '2-digit',
-                                      year: 'numeric'
-                                    });
-                                  }
-                                }
-                                return 'Onbekend';
-                              }
-                              
-                              // If firstSeen is already a valid date string (YYYY-MM-DD), use it directly
-                              let date: Date;
-                              if (typeof wallet.firstSeen === 'string' && wallet.firstSeen.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                                // Already in YYYY-MM-DD format
-                                date = new Date(wallet.firstSeen + 'T00:00:00');
-                              } else {
-                                date = new Date(wallet.firstSeen);
-                              }
-                              
-                              if (isNaN(date.getTime())) {
-                                return wallet.firstSeen || 'Onbekend';
-                              }
-                              
-                              return date.toLocaleDateString('nl-NL', {
-                                day: '2-digit',
-                                month: '2-digit',
-                                year: 'numeric'
-                              });
-                            } catch (e) {
-                              console.error('Error formatting date:', e, wallet.firstSeen);
-                              return 'Onbekend';
-                            }
-                          })()}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleDeleteClick(wallet)}
-                      className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                      title="Wallet verwijderen"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  </div>
+              {wallets.map((wallet) => {
+                const addedDate = (() => {
+                  try {
+                    if (!wallet.firstSeen) {
+                      const walletWithCreatedAt = wallets.find(w => w.id === wallet.id);
+                      if (walletWithCreatedAt && (walletWithCreatedAt as any).created_at) {
+                        const date = new Date((walletWithCreatedAt as any).created_at);
+                        if (!isNaN(date.getTime())) {
+                          return date.toLocaleDateString('nl-NL', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          });
+                        }
+                      }
+                      return 'Onbekend';
+                    }
+                    
+                    let date: Date;
+                    if (typeof wallet.firstSeen === 'string' && wallet.firstSeen.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                      date = new Date(wallet.firstSeen + 'T00:00:00');
+                    } else {
+                      date = new Date(wallet.firstSeen);
+                    }
+                    
+                    if (isNaN(date.getTime())) {
+                      return wallet.firstSeen || 'Onbekend';
+                    }
+                    
+                    return date.toLocaleDateString('nl-NL', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric'
+                    });
+                  } catch (e) {
+                    return 'Onbekend';
+                  }
+                })();
 
-                  <div className="grid md:grid-cols-3 gap-4 mb-4">
-                    <div className="min-w-0">
-                      <p className="text-sm text-gray-600 mb-1">Bitcoin Adres</p>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <code className="text-sm bg-gray-100 px-2 py-1 rounded font-mono truncate">
-                          {wallet.address.slice(0, 8)}...{wallet.address.slice(-8)}
-                        </code>
+                return (
+                  <div key={wallet.id} className="bg-white rounded-xl p-4 shadow-lg">
+                    {/* Compact header with all info in one row */}
+                    <div className="flex items-center justify-between gap-4 mb-3">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="bg-orange-100 p-1.5 rounded-lg flex-shrink-0">
+                          <Wallet className="w-4 h-4 text-orange-600" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-sm font-semibold text-gray-900 truncate">{wallet.name}</h3>
+                            <span className="text-xs text-gray-500">•</span>
+                            <span className="text-xs text-gray-500">Toegevoegd op {addedDate}</span>
+                            <span className="text-xs text-gray-500">•</span>
+                            <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded font-mono">
+                              {wallet.address.slice(0, 6)}...{wallet.address.slice(-6)}
+                            </code>
+                            <button
+                              onClick={() => copyAddress(wallet.address)}
+                              className="p-0.5 text-gray-600 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
+                              title="Kopieer adres"
+                            >
+                              {copiedAddress === wallet.address ? (
+                                <Check className="w-3 h-3 text-green-600" />
+                              ) : (
+                                <Copy className="w-3 h-3" />
+                              )}
+                            </button>
+                            <span className="text-xs text-gray-500">•</span>
+                            <span className="text-xs font-semibold text-gray-900">
+                              {showBalances ? `${wallet.balance.toFixed(4)} BTC` : '•••• BTC'}
+                            </span>
+                            <span className="text-xs text-gray-500">•</span>
+                            <span className="text-xs text-gray-600">{wallet.transactions} transacties</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Settings dropdown */}
+                      <div className="relative flex-shrink-0">
                         <button
-                          onClick={() => copyAddress(wallet.address)}
-                          className="p-1 text-gray-600 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
-                          title="Kopieer adres"
+                          onClick={() => setOpenMenuId(openMenuId === wallet.id ? null : wallet.id)}
+                          className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                          title="Instellingen"
                         >
-                          {copiedAddress === wallet.address ? (
-                            <Check className="w-4 h-4 text-green-600" />
-                          ) : (
-                            <Copy className="w-4 h-4" />
-                          )}
+                          <Settings className="w-4 h-4" />
                         </button>
+                        {openMenuId === wallet.id && (
+                          <>
+                            <div 
+                              className="fixed inset-0 z-10" 
+                              onClick={() => setOpenMenuId(null)}
+                            ></div>
+                            <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+                              <button
+                                onClick={() => handleEditClick(wallet)}
+                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-t-lg transition-colors"
+                              >
+                                <Edit className="w-4 h-4" />
+                                Bewerken
+                              </button>
+                              <button
+                                onClick={() => handleDeleteClick(wallet)}
+                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-lg transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                Verwijderen
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
 
-                    <div className="min-w-0">
-                      <p className="text-sm text-gray-600 mb-1">Saldo</p>
-                      <p className="text-lg font-semibold text-gray-900 truncate">
-                        {showBalances ? `${wallet.balance.toFixed(4)} BTC` : '•••• BTC'}
-                      </p>
-                    </div>
-
-                    <div className="min-w-0">
-                      <p className="text-sm text-gray-600 mb-1">Transacties</p>
-                      <p className="text-lg font-semibold text-gray-900 truncate">{wallet.transactions}</p>
+                    {/* Chart Integratie with buttons */}
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <AlertCircle className="w-4 h-4 text-orange-600" />
+                            <span className="text-xs font-medium text-orange-800">Chart Integratie</span>
+                          </div>
+                          <p className="text-xs text-orange-700">
+                            Deze wallet wordt automatisch gekoppeld aan de Bitcoin Geschiedenis chart. 
+                            Je inkoop punten worden getoond op de grafiek.
+                          </p>
+                        </div>
+                        <div className="flex flex-col gap-2 flex-shrink-0">
+                          <button
+                            onClick={() => setShowBalances(!showBalances)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-600 text-white text-xs rounded-lg font-medium hover:bg-gray-700 transition-colors whitespace-nowrap"
+                          >
+                            {showBalances ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                            {showBalances ? 'Verberg' : 'Toon'}
+                          </button>
+                          <button
+                            onClick={refreshTransactionPrices}
+                            disabled={loadingWallets}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                          >
+                            {loadingWallets ? <Loader2 className="w-3 h-3 animate-spin" /> : <Loader2 className="w-3 h-3" />}
+                            Verversen
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-
-                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <AlertCircle className="w-5 h-5 text-orange-600" />
-                      <span className="text-sm font-medium text-orange-800">Chart Integratie</span>
-                    </div>
-                    <p className="text-sm text-orange-700">
-                      Deze wallet wordt automatisch gekoppeld aan de Bitcoin Geschiedenis chart. 
-                      Je inkoop punten worden getoond op de grafiek.
-                    </p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
@@ -986,6 +1040,57 @@ export default function PortfolioPage() {
                     className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                   >
                     {isLoadingMore ? 'Laden...' : 'Volgende →'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Wallet Edit Modal */}
+          {showEditWallet && walletToEdit && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-gray-900">Wallet Bewerken</h3>
+                  <button
+                    onClick={() => {
+                      setShowEditWallet(false);
+                      setWalletToEdit(null);
+                      setEditWalletName('');
+                    }}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Wallet Naam
+                  </label>
+                  <input
+                    type="text"
+                    value={editWalletName}
+                    onChange={(e) => setEditWalletName(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    placeholder="Bijv. Mijn Bitcoin Wallet"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleSaveEdit}
+                    className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors"
+                  >
+                    Opslaan
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowEditWallet(false);
+                      setWalletToEdit(null);
+                      setEditWalletName('');
+                    }}
+                    className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
+                  >
+                    Annuleren
                   </button>
                 </div>
               </div>
