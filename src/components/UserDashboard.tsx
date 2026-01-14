@@ -2983,33 +2983,69 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
     let streakBroken = false;
     let isPaused = false;
     let lastActiveMonth: string | null = null;
+    let pausedAtMonth: string | null = null;
     
-    for (let i = 0; i < months.length; i++) {
+    // Find start month index
+    const startMonthIndex = months.findIndex(m => m.isStartMonth);
+    if (startMonthIndex === -1) {
+      // No start month found, can't calculate streak
+      return {
+        months,
+        totalDeposited: depositTransactions.reduce((sum, tx) => sum + tx.amount, 0),
+        missedCount: months.filter(m => m.status === 'missed' && !m.madeUpBy).length,
+        completedCount: months.filter(m => m.status === 'completed' || m.status === 'made_up').length,
+        streak: 0,
+        streakBroken: false,
+        isPaused: false,
+        lastActiveMonth: null,
+        startMonth: '',
+        currentMonth: months.find(m => m.isCurrentMonth)?.monthKey || '',
+        totalMissedAmount: months.filter(m => m.status === 'missed' && !m.madeUpBy).reduce((sum, m) => sum + m.remainingToMakeUp, 0)
+      };
+    }
+    
+    for (let i = startMonthIndex; i < months.length; i++) {
       const month = months[i];
-      if (!month.isStartMonth && i === 0) continue; // Skip if we haven't reached start month yet
+      
+      // Skip future months for streak calculation
+      if (month.isFutureMonth) break;
       
       if (month.status === 'completed' || month.status === 'made_up') {
-        if (!streakBroken && !isPaused) {
+        if (isPaused) {
+          // Resume streak after pause
+          isPaused = false;
+          pausedAtMonth = null;
+          streak++;
+          lastActiveMonth = month.monthKey;
+        } else if (!streakBroken) {
+          // Continue streak
           streak++;
           lastActiveMonth = month.monthKey;
         }
       } else if (month.status === 'extra') {
-        // Extra deposit = pause option
-        if (streak > 0) {
+        // Extra deposit = pause option (only if streak > 0)
+        if (streak > 0 && !isPaused) {
           isPaused = true;
-          lastActiveMonth = month.monthKey;
+          pausedAtMonth = month.monthKey;
+          // Don't break streak, just pause it
+        } else if (isPaused) {
+          // Still paused, don't increment streak
+          pausedAtMonth = month.monthKey;
         }
       } else if (month.status === 'missed' && !month.madeUpBy) {
         if (month.isPastMonth) {
-          streakBroken = true;
+          // Only break streak if it's a past month and not made up
+          if (!isPaused) {
+            streakBroken = true;
+            streak = 0; // Reset streak
+          }
         }
-      }
-      
-      // Resume after pause if deposit is made
-      if (isPaused && (month.status === 'completed' || month.status === 'made_up')) {
-        isPaused = false;
-        streak++;
-        lastActiveMonth = month.monthKey;
+      } else if (month.status === 'pending' && month.isPastMonth) {
+        // Past month with no deposit = missed (should have been caught above, but just in case)
+        if (!isPaused) {
+          streakBroken = true;
+          streak = 0;
+        }
       }
     }
 
