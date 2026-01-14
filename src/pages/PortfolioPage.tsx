@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   Wallet, 
   TrendingUp, 
@@ -60,11 +60,29 @@ export default function PortfolioPage() {
   const [showEditWallet, setShowEditWallet] = useState(false);
   const [walletToEdit, setWalletToEdit] = useState<WalletData | null>(null);
   const [editWalletName, setEditWalletName] = useState('');
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
   // Get effective user email (considering impersonation)
   const effectiveUserEmail = (isImpersonating && impersonatedUser) 
     ? impersonatedUser 
     : user?.email;
+
+  // Close filter dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target as Node)) {
+        setShowFilterDropdown(false);
+      }
+    };
+
+    if (showFilterDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showFilterDropdown]);
 
   // Load wallets from Supabase (wallets added in OverviewTab)
   useEffect(() => {
@@ -906,109 +924,173 @@ export default function PortfolioPage() {
                 </div>
               </div>
 
-              {/* Filter voor Buy/Sell - Prominent geplaatst */}
-              <div className="bg-white rounded-lg p-4 border border-gray-200 mb-6">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-sm font-semibold text-gray-700">Filter transacties:</span>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => {
-                        setTransactionFilter('all');
-                        setCurrentPage(1);
-                      }}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        transactionFilter === 'all'
-                          ? 'bg-orange-600 text-white shadow-md'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      Alle
-                    </button>
-                    <button
-                      onClick={() => {
-                        setTransactionFilter('buy');
-                        setCurrentPage(1);
-                      }}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        transactionFilter === 'buy'
-                          ? 'bg-green-600 text-white shadow-md'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      Koop
-                    </button>
-                    <button
-                      onClick={() => {
-                        setTransactionFilter('sell');
-                        setCurrentPage(1);
-                      }}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        transactionFilter === 'sell'
-                          ? 'bg-red-600 text-white shadow-md'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      Verkoop
-                    </button>
-                  </div>
-                </div>
-              </div>
+              {(() => {
+                const filteredTransactions = allTransactions.filter(tx => {
+                  if (transactionFilter === 'all') return true;
+                  if (transactionFilter === 'buy') return tx.value > 0;
+                  if (transactionFilter === 'sell') return tx.value < 0;
+                  return true;
+                });
+                const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+                const showPerPage = filteredTransactions.length > 25;
+                
+                return (
+                  <div className="bg-white rounded-lg p-4 border border-gray-200 mb-6">
+                    <div className="flex items-center justify-between flex-wrap gap-4">
+                      {/* Left side: Filter and Per page */}
+                      <div className="flex items-center gap-4 flex-wrap">
+                        {/* Filter - Show as buttons on larger screens, dropdown on smaller */}
+                        <div className="hidden lg:flex items-center gap-3">
+                          <span className="text-sm font-semibold text-gray-700">Filter transacties:</span>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                setTransactionFilter('all');
+                                setCurrentPage(1);
+                              }}
+                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                                transactionFilter === 'all'
+                                  ? 'bg-orange-600 text-white shadow-md'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                            >
+                              Alle
+                            </button>
+                            <button
+                              onClick={() => {
+                                setTransactionFilter('buy');
+                                setCurrentPage(1);
+                              }}
+                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                                transactionFilter === 'buy'
+                                  ? 'bg-green-600 text-white shadow-md'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                            >
+                              Koop
+                            </button>
+                            <button
+                              onClick={() => {
+                                setTransactionFilter('sell');
+                                setCurrentPage(1);
+                              }}
+                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                                transactionFilter === 'sell'
+                                  ? 'bg-red-600 text-white shadow-md'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                            >
+                              Verkoop
+                            </button>
+                          </div>
+                        </div>
+                        
+                        {/* Filter dropdown for smaller screens or when space is limited */}
+                        <div className="lg:hidden relative" ref={filterDropdownRef}>
+                          <button
+                            onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                            className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 flex items-center gap-2"
+                          >
+                            Filter: {
+                              transactionFilter === 'all' ? 'Alle' :
+                              transactionFilter === 'buy' ? 'Koop' : 'Verkoop'
+                            }
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                          {showFilterDropdown && (
+                            <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[120px]">
+                              <button
+                                onClick={() => {
+                                  setTransactionFilter('all');
+                                  setCurrentPage(1);
+                                  setShowFilterDropdown(false);
+                                }}
+                                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg ${
+                                  transactionFilter === 'all' ? 'bg-orange-50 text-orange-700 font-medium' : 'text-gray-700'
+                                }`}
+                              >
+                                Alle
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setTransactionFilter('buy');
+                                  setCurrentPage(1);
+                                  setShowFilterDropdown(false);
+                                }}
+                                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg ${
+                                  transactionFilter === 'buy' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700'
+                                }`}
+                              >
+                                Koop
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setTransactionFilter('sell');
+                                  setCurrentPage(1);
+                                  setShowFilterDropdown(false);
+                                }}
+                                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg ${
+                                  transactionFilter === 'sell' ? 'bg-red-50 text-red-700 font-medium' : 'text-gray-700'
+                                }`}
+                              >
+                                Verkoop
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Per pagina selector - only show if more than 25 transactions */}
+                        {showPerPage && (
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-medium text-gray-700">Per pagina:</span>
+                            <div className="flex gap-2">
+                              {[25, 50, 100].map(num => (
+                                <button
+                                  key={num}
+                                  onClick={() => {
+                                    setItemsPerPage(num);
+                                    setCurrentPage(1);
+                                  }}
+                                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                                    itemsPerPage === num
+                                      ? 'bg-orange-600 text-white'
+                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                  }`}
+                                >
+                                  {num}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
 
-              {/* Pagination Controls */}
-              <div className="bg-white rounded-lg p-4 border border-gray-200 mb-6 flex items-center justify-between flex-wrap gap-4">
-                <div className="flex items-center gap-4 flex-wrap">
-                  
-                  {/* Per pagina selector */}
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-gray-700">Per pagina:</span>
-                    <div className="flex gap-2">
-                      {[25, 50, 100].map(num => (
+                      {/* Right side: Pagination */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">
+                          Pagina {currentPage} van {totalPages || 1}
+                        </span>
                         <button
-                          key={num}
-                          onClick={() => {
-                            setItemsPerPage(num);
-                            setCurrentPage(1);
-                          }}
-                          className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                            itemsPerPage === num
-                              ? 'bg-orange-600 text-white'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
+                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                          disabled={currentPage === 1}
+                          className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                         >
-                          {num}
+                          ← Vorige
                         </button>
-                      ))}
+                        <button
+                          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                          disabled={currentPage >= totalPages || totalPages <= 1}
+                          className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                        >
+                          Volgende →
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">
-                    Pagina {currentPage} van {Math.ceil(
-                      allTransactions.filter(tx => {
-                        if (transactionFilter === 'all') return true;
-                        if (transactionFilter === 'buy') return tx.value > 0;
-                        if (transactionFilter === 'sell') return tx.value < 0;
-                        return true;
-                      }).length / itemsPerPage
-                    )}
-                  </span>
-                  <button
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                  >
-                    ← Vorige
-                  </button>
-                  <button
-                    onClick={loadMoreTransactions}
-                    disabled={isLoadingMore}
-                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                  >
-                    {isLoadingMore ? 'Laden...' : 'Volgende →'}
-                  </button>
-                </div>
-              </div>
+                );
+              })()}
 
               <div className="grid gap-6">
                 {allTransactions
@@ -1032,39 +1114,43 @@ export default function PortfolioPage() {
               </div>
 
               {/* Bottom Pagination */}
-              <div className="bg-white rounded-lg p-4 border border-gray-200 mt-6 flex items-center justify-between">
-                <span className="text-sm text-gray-600">
-                  {(() => {
-                    const filteredTransactions = allTransactions.filter(tx => {
-                      if (transactionFilter === 'all') return true;
-                      if (transactionFilter === 'buy') return tx.value > 0;
-                      if (transactionFilter === 'sell') return tx.value < 0;
-                      return true;
-                    });
-                    return filteredTransactions.length > 0 ? (
-                      `${(currentPage - 1) * itemsPerPage + 1} tot ${Math.min(currentPage * itemsPerPage, filteredTransactions.length)} van ${filteredTransactions.length} transacties`
-                    ) : (
-                      'Geen transacties'
-                    );
-                  })()}
-                </span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                  >
-                    ← Vorige
-                  </button>
-                  <button
-                    onClick={loadMoreTransactions}
-                    disabled={isLoadingMore}
-                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                  >
-                    {isLoadingMore ? 'Laden...' : 'Volgende →'}
-                  </button>
-                </div>
-              </div>
+              {(() => {
+                const filteredTransactions = allTransactions.filter(tx => {
+                  if (transactionFilter === 'all') return true;
+                  if (transactionFilter === 'buy') return tx.value > 0;
+                  if (transactionFilter === 'sell') return tx.value < 0;
+                  return true;
+                });
+                const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+                
+                return (
+                  <div className="bg-white rounded-lg p-4 border border-gray-200 mt-6 flex items-center justify-between">
+                    <span className="text-sm text-gray-600">
+                      {filteredTransactions.length > 0 ? (
+                        `${(currentPage - 1) * itemsPerPage + 1} tot ${Math.min(currentPage * itemsPerPage, filteredTransactions.length)} van ${filteredTransactions.length} transacties`
+                      ) : (
+                        'Geen transacties'
+                      )}
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                      >
+                        ← Vorige
+                      </button>
+                      <button
+                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                        disabled={currentPage >= totalPages || totalPages <= 1}
+                        className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                      >
+                        Volgende →
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
