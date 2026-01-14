@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Target, TrendingUp, Calendar, DollarSign, Zap, Trash2, Check, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Plus, Target, TrendingUp, Calendar, DollarSign, Zap, Trash2, Check, Loader2, X, ExternalLink } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { bitcoinApiService } from '../services/bitcoinApiService';
@@ -47,6 +47,9 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
     targetDate: ''
   });
   const [loading, setLoading] = useState(false);
+  const [walletTransactions, setWalletTransactions] = useState<any[]>([]);
+  const [showMonthlyGoalPopup, setShowMonthlyGoalPopup] = useState(false);
+  const [selectedMonthlyGoal, setSelectedMonthlyGoal] = useState<any>(null);
 
   // Load Bitcoin price and wallet balance
   useEffect(() => {
@@ -64,13 +67,17 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
         try {
           const { data: walletData, error } = await supabase
             .from('wallets')
-            .select('wallet_data')
+            .select('wallet_data, balance')
             .eq('email', user.email)
             .single();
 
-          if (!error && walletData?.wallet_data) {
-            const balance = walletData.wallet_data.balance || 0;
+          if (!error && walletData) {
+            const balance = walletData.balance || walletData.wallet_data?.balance || 0;
             setCurrentBalance(balance);
+            
+            // Load transactions from wallet_data
+            const transactions = walletData.wallet_data?.transactions || [];
+            setWalletTransactions(transactions);
             
             // Update goals with current balance
             setGoals(prevGoals => prevGoals.map(goal => {
@@ -91,7 +98,7 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
     };
 
     loadData();
-  }, [user?.email]);
+  }, [user?.email, bitcoinPrice]);
 
   // Load goals from database
   useEffect(() => {
@@ -219,6 +226,271 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
       return remaining.toFixed(4);
     }
     return Math.ceil(remaining).toLocaleString('nl-NL', { style: 'currency', currency: 'EUR' });
+  };
+
+  // Analyze monthly goal transactions for popup with streak tracking (same as UserDashboard)
+  const analyzeMonthlyGoalTransactions = (goal: any) => {
+    // Check if this is a monthly goal
+    const isMonthly = goal.title?.toLowerCase().includes('stort elke maand') || 
+                     goal.title?.toLowerCase().includes('elke maand');
+    if (!isMonthly) return null;
+
+    const now = new Date();
+    // Use target_date (start date) - this is when the goal actually starts
+    let goalStartDate = new Date();
+    if (goal.targetDate) {
+      goalStartDate = new Date(goal.targetDate);
+    } else if (goal.createdAt) {
+      goalStartDate = new Date(goal.createdAt);
+    } else {
+      // Fallback: start from current month
+      goalStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    }
+    
+    const months: any[] = [];
+    
+    // Get all deposit transactions (positive value) from portfolio
+    // Transactions are already in BTC format with price in USD
+    const depositTransactions = walletTransactions
+      .filter(tx => tx.value > 0)
+      .map(tx => {
+        const btcAmount = Math.abs(tx.value) / 100000000; // Convert to BTC
+        const usdValue = tx.price ? btcAmount * tx.price : 0; // USD value at time of transaction
+        return {
+          ...tx,
+          date: new Date(tx.time * 1000),
+          amount: btcAmount, // Always in BTC
+          usdValue: usdValue, // USD value at time of transaction
+          txid: tx.hash || ''
+        };
+      })
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    // Calculate months: ONLY from start date to now + 3 months ahead (no months before start)
+    const startDate = new Date(goalStartDate.getFullYear(), goalStartDate.getMonth(), 1);
+    let currentDate = new Date(startDate);
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 3, 1); // Show 3 months ahead
+
+    // Parse monthly amount from goal title or description
+    let targetAmountBTC = 0;
+    const btcMatch = goal.title?.match(/(\d+\.?\d*)\s*BTC/i) || goal.description?.match(/(\d+\.?\d*)\s*BTC/i);
+    if (btcMatch) {
+      targetAmountBTC = parseFloat(btcMatch[1]);
+    } else if (goal.targetAmount) {
+      // If targetAmount is in BTC (for monthly goals)
+      targetAmountBTC = goal.targetAmount;
+    }
+
+    while (currentDate <= endDate) {
+      const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+      const monthTransactions = depositTransactions.filter(tx => {
+        const txMonth = `${tx.date.getFullYear()}-${String(tx.date.getMonth() + 1).padStart(2, '0')}`;
+        return txMonth === monthKey;
+      });
+
+      const totalAmount = monthTransactions.reduce((sum, tx) => sum + tx.amount, 0); // Always in BTC
+      const isStartMonth = currentDate.getMonth() === startDate.getMonth() && currentDate.getFullYear() === startDate.getFullYear();
+      const isCurrentMonth = currentDate.getMonth() === now.getMonth() && currentDate.getFullYear() === now.getFullYear();
+      const isPastMonth = currentDate < new Date(now.getFullYear(), now.getMonth(), 1);
+      const isFutureMonth = currentDate > new Date(now.getFullYear(), now.getMonth(), 1);
+      
+      // Calculate average price for the month (for USD conversion)
+      const avgPrice = monthTransactions.length > 0
+        ? monthTransactions.reduce((sum, tx) => sum + (tx.price || 0), 0) / monthTransactions.length
+        : bitcoinPrice;
+
+      // Determine status
+      let status: 'completed' | 'missed' | 'made_up' | 'extra' | 'pending' = 'pending';
+      let madeUpMonths: string[] = []; // Which months were made up with this deposit
+      let remainingToMakeUp = 0; // How much still needs to be deposited for missed months
+      
+      if (isFutureMonth) {
+        status = 'pending';
+      } else if (isCurrentMonth && totalAmount === 0) {
+        status = 'pending';
+      } else if (totalAmount >= targetAmountBTC) {
+        const excess = totalAmount - targetAmountBTC;
+        // Check if this excess can cover missed months
+        const previousMonths = months.filter(m => 
+          m.date < currentDate && 
+          m.status === 'missed' && 
+          !m.madeUpBy
+        );
+        
+        if (previousMonths.length > 0 && excess >= targetAmountBTC) {
+          // This deposit can make up for missed months
+          const canMakeUp = Math.floor(excess / targetAmountBTC);
+          const monthsToMakeUp = previousMonths.slice(0, canMakeUp);
+          madeUpMonths = monthsToMakeUp.map(m => m.monthKey);
+          
+          // Mark these months as made up
+          monthsToMakeUp.forEach(month => {
+            const monthIndex = months.findIndex(m => m.monthKey === month.monthKey);
+            if (monthIndex !== -1) {
+              months[monthIndex].status = 'made_up';
+              months[monthIndex].madeUpBy = monthKey;
+            }
+          });
+          
+          // If there's still excess after making up, it's extra
+          const remainingExcess = excess - (canMakeUp * targetAmountBTC);
+          if (remainingExcess > targetAmountBTC * 0.1) {
+            status = 'extra';
+          } else {
+            status = 'completed';
+          }
+        } else if (excess > targetAmountBTC * 0.1) {
+          // More than 10% over target and no missed months to cover = extra deposit
+          status = 'extra';
+        } else {
+          status = 'completed';
+        }
+      } else if (totalAmount > 0 && totalAmount < targetAmountBTC) {
+        // Partial deposit - might be making up for a missed month
+        const previousMonths = months.filter(m => 
+          m.date < currentDate && 
+          m.status === 'missed' && 
+          !m.madeUpBy
+        );
+        
+        if (previousMonths.length > 0) {
+          // Check if this partial deposit + previous excess can make up a month
+          const previousExcess = months
+            .filter(m => m.date < currentDate && m.status === 'extra')
+            .reduce((sum, m) => sum + (m.totalAmount - m.targetAmount), 0);
+          
+          if (totalAmount + previousExcess >= targetAmountBTC) {
+            status = 'made_up';
+            const firstMissed = previousMonths[0];
+            madeUpMonths = [firstMissed.monthKey];
+            const monthIndex = months.findIndex(m => m.monthKey === firstMissed.monthKey);
+            if (monthIndex !== -1) {
+              months[monthIndex].status = 'made_up';
+              months[monthIndex].madeUpBy = monthKey;
+            }
+          } else {
+            status = 'made_up'; // Partial, trying to make up
+            remainingToMakeUp = targetAmountBTC - totalAmount;
+          }
+        } else {
+          status = 'made_up'; // Partial deposit
+          remainingToMakeUp = targetAmountBTC - totalAmount;
+        }
+      } else if (isPastMonth && totalAmount === 0) {
+        status = 'missed';
+        remainingToMakeUp = targetAmountBTC;
+      }
+
+      months.push({
+        month: currentDate.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' }),
+        monthKey,
+        date: new Date(currentDate),
+        transactions: monthTransactions,
+        totalAmount,
+        targetAmount: targetAmountBTC,
+        status,
+        isStartMonth,
+        isCurrentMonth,
+        isPastMonth,
+        isFutureMonth,
+        avgPrice,
+        madeUpMonths, // Which months this deposit made up
+        remainingToMakeUp, // How much still needed
+        madeUpBy: undefined as string | undefined // Which month made this one up
+      });
+
+      // Move to next month
+      currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+    }
+
+    // Calculate streak: consecutive completed months from start
+    let streak = 0;
+    let streakBroken = false;
+    let isPaused = false;
+    let lastActiveMonth: string | null = null;
+    let pausedAtMonth: string | null = null;
+    
+    // Find start month index
+    const startMonthIndex = months.findIndex(m => m.isStartMonth);
+    if (startMonthIndex === -1) {
+      // No start month found, can't calculate streak
+      return {
+        months,
+        totalDeposited: depositTransactions.reduce((sum, tx) => sum + tx.amount, 0),
+        missedCount: months.filter(m => m.status === 'missed' && !m.madeUpBy).length,
+        completedCount: months.filter(m => m.status === 'completed' || m.status === 'made_up').length,
+        streak: 0,
+        streakBroken: false,
+        isPaused: false,
+        lastActiveMonth: null,
+        startMonth: '',
+        currentMonth: months.find(m => m.isCurrentMonth)?.monthKey || '',
+        totalMissedAmount: months.filter(m => m.status === 'missed' && !m.madeUpBy).reduce((sum, m) => sum + m.remainingToMakeUp, 0)
+      };
+    }
+    
+    for (let i = startMonthIndex; i < months.length; i++) {
+      const month = months[i];
+      
+      // Skip future months for streak calculation
+      if (month.isFutureMonth) break;
+      
+      if (month.status === 'completed' || month.status === 'made_up') {
+        if (isPaused) {
+          // Resume streak after pause
+          isPaused = false;
+          pausedAtMonth = null;
+          streak++;
+          lastActiveMonth = month.monthKey;
+        } else if (!streakBroken) {
+          // Continue streak
+          streak++;
+          lastActiveMonth = month.monthKey;
+        }
+      } else if (month.status === 'extra') {
+        // Extra deposit = pause option (only if streak > 0)
+        if (streak > 0 && !isPaused) {
+          isPaused = true;
+          pausedAtMonth = month.monthKey;
+          // Don't break streak, just pause it
+        } else if (isPaused) {
+          // Still paused, don't increment streak
+          pausedAtMonth = month.monthKey;
+        }
+      } else if (month.status === 'missed' && !month.madeUpBy) {
+        if (month.isPastMonth) {
+          // Only break streak if it's a past month and not made up
+          if (!isPaused) {
+            streakBroken = true;
+            streak = 0; // Reset streak
+          }
+        }
+      } else if (month.status === 'pending' && month.isPastMonth) {
+        // Past month with no deposit = missed (should have been caught above, but just in case)
+        if (!isPaused) {
+          streakBroken = true;
+          streak = 0;
+        }
+      }
+    }
+
+    // Count missed months that haven't been made up
+    const missedMonths = months.filter(m => m.status === 'missed' && !m.madeUpBy);
+    const totalMissedAmount = missedMonths.reduce((sum, m) => sum + m.remainingToMakeUp, 0);
+
+    return {
+      months,
+      totalDeposited: depositTransactions.reduce((sum, tx) => sum + tx.amount, 0),
+      missedCount: missedMonths.length,
+      completedCount: months.filter(m => m.status === 'completed' || m.status === 'made_up').length,
+      streak,
+      streakBroken,
+      isPaused,
+      lastActiveMonth,
+      startMonth: months.find(m => m.isStartMonth)?.monthKey || '',
+      currentMonth: months.find(m => m.isCurrentMonth)?.monthKey || '',
+      totalMissedAmount
+    };
   };
 
   // Create goal from template or custom
@@ -1156,19 +1428,69 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
               }
             }
 
+            // Check if this is a monthly BTC goal
+            const isMonthlyBTC = (goal.title?.toLowerCase().includes('stort elke maand') || 
+                                 goal.title?.toLowerCase().includes('elke maand')) &&
+                                (goal.title?.toLowerCase().includes('btc') || 
+                                 goal.description?.toLowerCase().includes('btc'));
+            const analysis = isMonthlyBTC ? analyzeMonthlyGoalTransactions(goal) : null;
+            const streak = analysis?.streak || 0;
+
             return (
               <div key={goal.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
-                    <h3 className="font-bold text-gray-900 text-lg">{goal.title}</h3>
+                    <h3 
+                      className={`font-bold text-gray-900 text-lg ${isMonthlyBTC ? 'cursor-pointer hover:text-orange-600 transition-colors' : ''}`}
+                      onClick={() => {
+                        if (isMonthlyBTC) {
+                          setSelectedMonthlyGoal(goal);
+                          setShowMonthlyGoalPopup(true);
+                        }
+                      }}
+                    >
+                      {goal.title}
+                    </h3>
                     <p className="text-sm text-gray-600 mt-1">{goal.description}</p>
+                    {isMonthlyBTC && analysis && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <span className="text-sm font-semibold text-gray-700">Streak:</span>
+                        <span className="text-base font-bold text-orange-600">🔥 {streak}</span>
+                        <span className="text-xs text-gray-500">maanden</span>
+                        {analysis.isPaused && (
+                          <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">⏸️ Gepauzeerd</span>
+                        )}
+                        {analysis.streakBroken && !analysis.isPaused && (
+                          <span className="text-xs px-2 py-0.5 bg-red-100 text-red-700 rounded-full">⚠️ Verbroken</span>
+                        )}
+                      </div>
+                    )}
+                    {isMonthlyBTC && analysis && analysis.missedCount > 0 && (
+                      <div className="mt-2 text-xs text-red-600">
+                        ⚠️ {analysis.missedCount} maand(en) gemist
+                      </div>
+                    )}
                   </div>
-                  <button
-                    onClick={() => deleteGoal(goal.id)}
-                    className="text-gray-400 hover:text-red-600 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {isMonthlyBTC && (
+                      <button
+                        onClick={() => {
+                          setSelectedMonthlyGoal(goal);
+                          setShowMonthlyGoalPopup(true);
+                        }}
+                        className="text-gray-400 hover:text-orange-600 transition-colors"
+                        title="Details bekijken"
+                      >
+                        <Target className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => deleteGoal(goal.id)}
+                      className="text-gray-400 hover:text-red-600 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Progress Bar */}
@@ -1279,6 +1601,325 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
           </div>
         )}
       </div>
+
+      {/* Monthly Goal Detail Popup */}
+      {showMonthlyGoalPopup && selectedMonthlyGoal && (() => {
+        const analysis = analyzeMonthlyGoalTransactions(selectedMonthlyGoal);
+        if (!analysis) return null;
+        
+        return (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => { setShowMonthlyGoalPopup(false); }}>
+            <div className="bg-white rounded-xl shadow-2xl p-4 sm:p-6 max-w-4xl w-full max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 sm:mb-6 gap-4">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 break-words">{selectedMonthlyGoal.title}</h3>
+                  {/* Streak Display */}
+                  <div className="mt-2 flex flex-wrap items-center gap-2 sm:gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-gray-700">Streak:</span>
+                      <span className="text-lg font-bold text-orange-600">🔥 {analysis.streak}</span>
+                      <span className="text-xs text-gray-500">maanden</span>
+                    </div>
+                    {analysis.isPaused && (
+                      <div className="flex items-center gap-2 px-2 sm:px-3 py-1 bg-blue-100 rounded-full">
+                        <span className="text-xs sm:text-sm font-semibold text-blue-700">⏸️ Gepauzeerd</span>
+                      </div>
+                    )}
+                    {analysis.streakBroken && !analysis.isPaused && (
+                      <div className="flex items-center gap-2 px-2 sm:px-3 py-1 bg-red-100 rounded-full">
+                        <span className="text-xs sm:text-sm font-semibold text-red-700">⚠️ Streak verbroken</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowMonthlyGoalPopup(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Status Summary */}
+              {(analysis.missedCount > 0 || analysis.totalMissedAmount > 0) && (
+                <div className="mb-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-red-600 font-semibold text-sm sm:text-base">⚠️ Gemiste maanden</span>
+                  </div>
+                  <div className="text-xs sm:text-sm text-red-700 break-words">
+                    Je hebt <span className="font-bold">{analysis.missedCount}</span> maand(en) gemist.
+                    {analysis.totalMissedAmount > 0 && (
+                      <span> Nog te storten: <span className="font-bold">{analysis.totalMissedAmount.toFixed(4)} BTC</span></span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Calendar Overview */}
+              <div className="mb-4 sm:mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 gap-2">
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900">Maandoverzicht</h4>
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                    {analysis.startMonth && (
+                      <div>
+                        <span className="font-semibold">Start:</span>{' '}
+                        {analysis.months.find(m => m.monthKey === analysis.startMonth)?.month || ''}
+                      </div>
+                    )}
+                    {analysis.currentMonth && (
+                      <div>
+                        <span className="font-semibold">Nu:</span>{' '}
+                        {analysis.months.find(m => m.monthKey === analysis.currentMonth)?.month || ''}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="overflow-x-auto pb-2 -mx-1 sm:-mx-2 px-1 sm:px-2 overflow-y-visible">
+                  <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2 sm:gap-3 min-w-max pt-4 sm:pt-6">
+                  {analysis.months.map((month: any) => {
+                    let bgColor = 'bg-gray-100';
+                    let borderColor = 'border-gray-300';
+                    let textColor = 'text-gray-700';
+                    let statusText = '';
+                    
+                    if (month.status === 'completed') {
+                      bgColor = 'bg-green-100';
+                      borderColor = 'border-green-500';
+                      textColor = 'text-green-900';
+                      statusText = '✓';
+                    } else if (month.status === 'missed') {
+                      bgColor = 'bg-red-100';
+                      borderColor = 'border-red-500';
+                      textColor = 'text-red-900';
+                      statusText = '✗';
+                    } else if (month.status === 'made_up') {
+                      bgColor = 'bg-orange-100';
+                      borderColor = 'border-orange-500';
+                      textColor = 'text-orange-900';
+                      statusText = '↩';
+                    } else if (month.status === 'extra') {
+                      bgColor = 'bg-blue-100';
+                      borderColor = 'border-blue-500';
+                      textColor = 'text-blue-900';
+                      statusText = '⭐';
+                    } else {
+                      bgColor = 'bg-gray-100';
+                      borderColor = 'border-gray-300';
+                      textColor = 'text-gray-600';
+                      statusText = month.isCurrentMonth ? '...' : '';
+                    }
+
+                    return (
+                      <div
+                        key={month.monthKey}
+                        className={`p-2 sm:p-3 rounded-lg border-2 ${bgColor} ${borderColor} ${textColor} text-center relative ${
+                          month.isStartMonth ? 'ring-2 ring-blue-500 ring-offset-1 sm:ring-offset-2' : ''
+                        } ${month.isCurrentMonth ? 'ring-2 ring-purple-500 ring-offset-1 sm:ring-offset-2' : ''}`}
+                        style={{ overflow: 'visible' }}
+                      >
+                        {month.isStartMonth && (
+                          <div className="absolute -top-3 -right-1 sm:-top-4 sm:-right-2 bg-blue-500 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-bold z-20 shadow-md">
+                            START
+                          </div>
+                        )}
+                        {month.isCurrentMonth && (
+                          <div className="absolute -top-3 -left-1 sm:-top-4 sm:-left-2 bg-purple-500 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-bold z-20 shadow-md">
+                            NU
+                          </div>
+                        )}
+                        <div className="text-[10px] sm:text-xs font-semibold mb-1">{month.date.toLocaleDateString('nl-NL', { month: 'short' })}</div>
+                        <div className="text-base sm:text-lg font-bold mb-1">{statusText}</div>
+                        <div className="text-[10px] sm:text-xs">{month.date.getFullYear()}</div>
+                        {month.totalAmount > 0 && (
+                          <div className="text-[10px] sm:text-xs mt-1 font-medium break-words">
+                            <span className="block">{month.totalAmount.toFixed(4)} BTC</span>
+                            {month.avgPrice > 0 && (
+                              <span className="text-gray-600 block sm:inline">
+                                (${(month.totalAmount * month.avgPrice).toFixed(2)})
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {month.remainingToMakeUp > 0 && (
+                          <div className="text-[10px] sm:text-xs mt-1 text-red-600 font-semibold break-words">
+                            Nog: {month.remainingToMakeUp.toFixed(4)} BTC
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Legend */}
+              <div className="mt-3 sm:mt-4 flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-100 border-2 border-green-500 rounded"></div>
+                  <span>Voltooid</span>
+                </div>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-100 border-2 border-red-500 rounded"></div>
+                  <span>Gemist</span>
+                </div>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-orange-100 border-2 border-orange-500 rounded"></div>
+                  <span>Goedgemaakt</span>
+                </div>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-100 border-2 border-blue-500 rounded"></div>
+                  <span>Extra storting</span>
+                </div>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-gray-100 border-2 border-gray-300 rounded"></div>
+                  <span>Nog te doen</span>
+                </div>
+              </div>
+
+              {/* Transaction Details */}
+              <div className="mt-4 sm:mt-6">
+                <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Transactie overzicht</h4>
+                <div className="space-y-3">
+                  {analysis.months
+                    .filter((month: any) => month.transactions.length > 0)
+                    .map((month: any) => (
+                      <div key={month.monthKey} className="border border-gray-200 rounded-lg p-3 sm:p-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
+                          <h5 className="font-semibold text-gray-900 text-sm sm:text-base">{month.month}</h5>
+                          <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
+                            month.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            month.status === 'missed' ? 'bg-red-100 text-red-800' :
+                            month.status === 'made_up' ? 'bg-orange-100 text-orange-800' :
+                            month.status === 'extra' ? 'bg-blue-100 text-blue-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {month.status === 'completed' && '✓ Voltooid'}
+                            {month.status === 'missed' && '✗ Gemist'}
+                            {month.status === 'made_up' && '↩ Goedgemaakt'}
+                            {month.status === 'extra' && '⭐ Extra storting'}
+                          </span>
+                        </div>
+
+                        {month.status === 'extra' && (
+                          <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
+                            🎉 Goed van je dat je extra hebt gestort!
+                            {month.madeUpMonths && month.madeUpMonths.length > 0 && (
+                              <div className="mt-1">
+                                Deze storting heeft {month.madeUpMonths.length} gemiste maand(en) goedgemaakt.
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {month.madeUpMonths && month.madeUpMonths.length > 0 && (
+                          <div className="mb-3 p-2 bg-orange-50 border border-orange-200 rounded text-sm text-orange-800">
+                            ↪️ Deze storting heeft de volgende maand(en) goedgemaakt:
+                            <ul className="mt-1 list-disc list-inside">
+                              {month.madeUpMonths.map((madeUpKey: string) => {
+                                const madeUpMonth = analysis.months.find((m: any) => m.monthKey === madeUpKey);
+                                return madeUpMonth ? (
+                                  <li key={madeUpKey}>{madeUpMonth.month}</li>
+                                ) : null;
+                              })}
+                            </ul>
+                          </div>
+                        )}
+                        {month.remainingToMakeUp > 0 && (
+                          <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-800">
+                            ⚠️ Nog te storten deze maand: {month.remainingToMakeUp.toFixed(4)} BTC
+                          </div>
+                        )}
+
+                        <div className="space-y-2">
+                          {month.transactions.map((tx: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded gap-2">
+                              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                                  month.status === 'completed' ? 'bg-green-500' :
+                                  month.status === 'made_up' ? 'bg-orange-500' :
+                                  month.status === 'extra' ? 'bg-blue-500' :
+                                  'bg-gray-400'
+                                }`}></div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-medium text-gray-900 text-sm sm:text-base break-words">
+                                    {tx.amount.toFixed(4)} BTC
+                                    {tx.price && (
+                                      <span className="text-gray-600 ml-1 sm:ml-2 font-normal">
+                                        (${tx.usdValue.toFixed(2)})
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {tx.date.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                  </div>
+                                </div>
+                              </div>
+                              <a
+                                href={`https://blockstream.info/tx/${tx.txid || tx.hash || ''}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-700 flex-shrink-0"
+                              >
+                                <ExternalLink className="w-4 h-4" />
+                              </a>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                          <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0 text-sm">
+                            <span className="text-gray-600">Totaal deze maand:</span>
+                            <span className="font-semibold text-gray-900 break-words">
+                              {month.totalAmount.toFixed(4)} BTC
+                              {month.avgPrice > 0 && (
+                                <span className="text-gray-600 ml-1 sm:ml-2 font-normal">
+                                  (${(month.totalAmount * month.avgPrice).toFixed(2)})
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                          {month.totalAmount > month.targetAmount && (
+                            <div className="mt-1 text-xs text-blue-600 break-words">
+                              +{(month.totalAmount - month.targetAmount).toFixed(4)} BTC extra
+                              {month.avgPrice > 0 && (
+                                <span className="ml-1">
+                                  (${((month.totalAmount - month.targetAmount) * month.avgPrice).toFixed(2)})
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  
+                  {analysis.months.filter((month: any) => month.transactions.length === 0 && month.status === 'missed').length > 0 && (
+                    <div className="border border-red-200 rounded-lg p-3 sm:p-4 bg-red-50">
+                      <h5 className="font-semibold text-red-900 mb-2 text-sm sm:text-base">Gemiste maanden</h5>
+                      <div className="space-y-1">
+                        {analysis.months
+                          .filter((month: any) => month.transactions.length === 0 && month.status === 'missed')
+                          .map((month: any) => (
+                            <div key={month.monthKey} className="text-xs sm:text-sm text-red-700 break-words">
+                              {month.month} - Je kunt deze maand goedmaken met een extra storting
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => setShowMonthlyGoalPopup(false)}
+                  className="px-6 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors"
+                >
+                  Sluiten
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
