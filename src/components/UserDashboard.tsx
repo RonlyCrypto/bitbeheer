@@ -3646,7 +3646,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
       {/* Bitcoin Milestones Section */}
       <div className="mb-6 p-5 bg-gradient-to-br from-orange-50 via-orange-50 to-orange-100 rounded-xl border border-orange-200">
         {/* Progress Bar with Milestones */}
-        <div className="relative">
+        <div className="relative pt-6">
           <div className="w-full bg-gray-200 rounded-full h-2 relative">
           <div 
               className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full transition-all duration-500"
@@ -3671,11 +3671,11 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
               return (
                 <div
                   key={milestone.value}
-                  className="absolute flex flex-col-reverse items-center group"
-                  style={{ left: `${position}%`, transform: 'translateX(-50%)', zIndex: 10 }}
+                  className="absolute flex flex-col items-center group"
+                  style={{ left: `${position}%`, transform: 'translateX(-50%)', zIndex: 10, top: '-20px' }}
                 >
                   {/* Tooltip */}
-                  <div className="absolute top-full mt-2 hidden group-hover:block z-20">
+                  <div className="absolute bottom-full mb-2 hidden group-hover:block z-20">
                     <div className="bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-lg max-w-xs">
                       <div className="font-semibold mb-1">{milestone.label}</div>
                       <div className="text-gray-300 whitespace-normal">{tooltipText}</div>
@@ -3684,21 +3684,21 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                           (Gebaseerd op huidige prijs: ${currentBitcoinPrice.toLocaleString('nl-NL', { maximumFractionDigits: 0 })})
                         </div>
                       )}
-                      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full">
-                        <div className="border-4 border-transparent border-b-gray-900"></div>
+                      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full">
+                        <div className="border-4 border-transparent border-t-gray-900"></div>
                       </div>
                     </div>
                   </div>
                   
                   {/* Label above bar */}
-                  <span className={`text-[10px] mb-1.5 whitespace-nowrap font-medium ${isReached ? 'text-green-700' : 'text-gray-500'}`}>
+                  <span className={`text-[10px] mb-1 whitespace-nowrap font-medium ${isReached ? 'text-green-700' : 'text-gray-500'}`}>
                     {milestone.label}
                   </span>
                   
-                  {/* Dot marker - positioned higher on bar */}
+                  {/* Dot marker - positioned on bar */}
                   <div 
                     className={`w-3 h-3 rounded-full border-2 border-white shadow-md transition-all ${isReached ? 'bg-green-500' : 'bg-gray-400'}`}
-                    style={{ marginTop: '-5px' }}
+                    style={{ marginTop: '8px' }}
                   ></div>
                 </div>
               );
