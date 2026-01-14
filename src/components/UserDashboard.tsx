@@ -3829,6 +3829,11 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
           const isCompleted = goal.completed || progress.completed;
           const monthlyCheck = goal.type === 'monthly' ? checkMonthlyGoal(goal) : null;
           const monthlyCompleted = monthlyCheck?.deposited || false;
+          // Get streak info for monthly goals
+          const monthlyAnalysis = goal.type === 'monthly' ? analyzeMonthlyGoalTransactions(goal) : null;
+          const streak = monthlyAnalysis?.streak || 0;
+          const isPaused = monthlyAnalysis?.isPaused || false;
+          const streakBroken = monthlyAnalysis?.streakBroken || false;
           
           // Calculate progress percentage for this goal
           let goalProgress = 0;
@@ -3889,18 +3894,32 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                     </p>
                   )}
                   {goal.type === 'monthly' && (
-                    <p className={`text-xs mt-0.5 ${
-                      monthlyCompleted ? 'text-green-700' : 'text-gray-500'
-                    }`}>
-                      {monthlyCompleted ? (
-                        <span className="flex items-center gap-1">
-                          <CheckCircle className="w-3 h-3" />
-                          Goed gedaan! Je hebt deze maand gestort 🎉
-                      </span>
-                      ) : (
-                        'Je hebt deze maand nog niet gestort'
+                    <div className="mt-0.5 space-y-1">
+                      <p className={`text-xs ${
+                        monthlyCompleted ? 'text-green-700' : 'text-gray-500'
+                      }`}>
+                        {monthlyCompleted ? (
+                          <span className="flex items-center gap-1">
+                            <CheckCircle className="w-3 h-3" />
+                            Goed gedaan! Je hebt deze maand gestort 🎉
+                          </span>
+                        ) : (
+                          'Je hebt deze maand nog niet gestort'
+                        )}
+                      </p>
+                      {streak > 0 && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-semibold text-orange-600">🔥 Streak: {streak}</span>
+                          <span className="text-xs text-gray-500">maanden</span>
+                          {isPaused && (
+                            <span className="text-xs text-blue-600 font-medium">⏸️ Gepauzeerd</span>
+                          )}
+                          {streakBroken && !isPaused && (
+                            <span className="text-xs text-red-600 font-medium">⚠️ Verbroken</span>
+                          )}
+                        </div>
                       )}
-                    </p>
+                    </div>
                   )}
                     </div>
                 <div className="flex items-center gap-2">
