@@ -504,53 +504,53 @@ export default function PortfolioPage() {
       <div className="container mx-auto px-4 py-0 md:py-0 pb-20 md:pb-12">
         <div className="max-w-7xl mx-auto">
           {/* Stats Cards */}
-          <div className="grid md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-xl p-6 shadow-lg">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="bg-orange-100 p-2 rounded-lg">
-                  <Wallet className="w-6 h-6 text-orange-600" />
+          <div className="grid md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white rounded-xl p-3 shadow-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="bg-orange-100 p-1.5 rounded-lg">
+                  <Wallet className="w-4 h-4 text-orange-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">Wallets</h3>
+                <h3 className="text-sm font-semibold text-gray-900">Wallets</h3>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{wallets.length}</p>
-              <p className="text-sm text-gray-600">Gekoppelde wallets</p>
+              <p className="text-xl font-bold text-gray-900">{wallets.length}</p>
+              <p className="text-xs text-gray-600">Gekoppelde wallets</p>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-lg">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="bg-green-100 p-2 rounded-lg">
-                  <TrendingUp className="w-6 h-6 text-green-600" />
+            <div className="bg-white rounded-xl p-3 shadow-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="bg-green-100 p-1.5 rounded-lg">
+                  <TrendingUp className="w-4 h-4 text-green-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">Totaal BTC</h3>
+                <h3 className="text-sm font-semibold text-gray-900">Totaal BTC</h3>
               </div>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-xl font-bold text-gray-900">
                 {showBalances ? totalBalance.toFixed(4) : '••••'}
               </p>
-              <p className="text-sm text-gray-600">Bitcoin saldo</p>
+              <p className="text-xs text-gray-600">Bitcoin saldo</p>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-lg">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="bg-blue-100 p-2 rounded-lg">
-                  <Shield className="w-6 h-6 text-blue-600" />
+            <div className="bg-white rounded-xl p-3 shadow-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="bg-blue-100 p-1.5 rounded-lg">
+                  <Shield className="w-4 h-4 text-blue-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">Transacties</h3>
+                <h3 className="text-sm font-semibold text-gray-900">Transacties</h3>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{totalTransactions}</p>
-              <p className="text-sm text-gray-600">Totaal aantal</p>
+              <p className="text-xl font-bold text-gray-900">{totalTransactions}</p>
+              <p className="text-xs text-gray-600">Totaal aantal</p>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-lg">
-              <div className="flex items-center gap-3 mb-3 min-w-0">
-                <div className="bg-purple-100 p-2 rounded-lg flex-shrink-0">
-                  <ExternalLink className="w-6 h-6 text-purple-600" />
+            <div className="bg-white rounded-xl p-3 shadow-lg">
+              <div className="flex items-center gap-2 mb-2 min-w-0">
+                <div className="bg-purple-100 p-1.5 rounded-lg flex-shrink-0">
+                  <ExternalLink className="w-4 h-4 text-purple-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 truncate">Waarde</h3>
+                <h3 className="text-sm font-semibold text-gray-900 truncate">Waarde</h3>
               </div>
-              <p className="text-2xl font-bold text-gray-900 break-words">
+              <p className="text-xl font-bold text-gray-900 break-words">
                 {showBalances ? `$${totalValue.toLocaleString('en-US')}` : '••••'}
               </p>
-              <p className="text-sm text-gray-600">Huidige waarde</p>
+              <p className="text-xs text-gray-600">Huidige waarde</p>
             </div>
           </div>
 
