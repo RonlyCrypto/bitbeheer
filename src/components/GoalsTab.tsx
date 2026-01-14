@@ -231,6 +231,144 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
         return;
       }
 
+      // Handle template goals
+      if (selectedGoalTemplate && selectedGoalTemplate.startsWith('default_')) {
+        const template = DEFAULT_GOALS.find(g => g.id === selectedGoalTemplate);
+        if (!template) return;
+
+        if ('targetBitcoinAmount' in template) {
+          const monthlyNeeded = calculateMonthlySavings(
+            template.targetBitcoinAmount,
+            template.currentBitcoinAmount || currentBalance,
+            newGoalData.timeframeMonths
+          );
+
+          const title = template.title;
+          const description = template.description;
+          const targetAmount = template.targetBitcoinAmount;
+          const isCompleted = currentBalance >= targetAmount;
+
+          const { data, error } = await supabase
+            .from('goals')
+            .insert({
+              user_id: user.id,
+              email: user.email,
+              title: title,
+              description: description,
+              category: template.category,
+              status: isCompleted ? 'completed' : 'active',
+              target_amount: targetAmount,
+              current_amount: currentBalance,
+              target_date: null,
+              monthly_investment: monthlyNeeded,
+              bitcoin_price_at_creation: bitcoinPrice
+            })
+            .select()
+            .single();
+
+          if (error) throw error;
+
+          if (data) {
+            const goal: Goal = {
+              id: data.id,
+              title: title,
+              description: description,
+              targetAmount: targetAmount * bitcoinPrice,
+              currentAmount: currentBalance * bitcoinPrice,
+              targetDate: '',
+              category: template.category,
+              status: isCompleted ? 'completed' : 'active',
+              createdAt: data.created_at || new Date().toISOString(),
+              targetBitcoinAmount: targetAmount,
+              currentBitcoinAmount: currentBalance,
+              monthlyInvestment: monthlyNeeded,
+              bitcoinPriceAtCreation: bitcoinPrice,
+              timeframeMonths: newGoalData.timeframeMonths,
+              isBitcoinGoal: true
+            };
+            
+            setGoals([...goals, goal]);
+            if (setInitialGoals) {
+              setInitialGoals([...goals, goal]);
+            }
+            
+            setShowNewGoal(false);
+            setSelectedGoalTemplate(null);
+            setNewGoalData({
+              title: '',
+              description: '',
+              targetAmount: 0,
+              targetBitcoinAmount: 0,
+              currentBitcoinAmount: 0,
+              timeframeMonths: 12,
+              category: 'bitcoin',
+              targetDate: ''
+            });
+          }
+        } else {
+          // EUR template
+          const title = template.title;
+          const description = template.description;
+          const targetAmount = template.targetAmount;
+
+          const { data, error } = await supabase
+            .from('goals')
+            .insert({
+              user_id: user.id,
+              email: user.email,
+              title: title,
+              description: description,
+              category: template.category,
+              status: 'active',
+              target_amount: targetAmount,
+              current_amount: 0,
+              target_date: new Date(Date.now() + newGoalData.timeframeMonths * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              monthly_investment: Math.ceil(targetAmount / newGoalData.timeframeMonths)
+            })
+            .select()
+            .single();
+
+          if (error) throw error;
+
+          if (data) {
+            const goal: Goal = {
+              id: data.id,
+              title: title,
+              description: description,
+              targetAmount: targetAmount,
+              currentAmount: 0,
+              targetDate: data.target_date || '',
+              category: template.category,
+              status: 'active',
+              createdAt: data.created_at || new Date().toISOString(),
+              timeframeMonths: newGoalData.timeframeMonths,
+              monthlyInvestment: Math.ceil(targetAmount / newGoalData.timeframeMonths),
+              isBitcoinGoal: false
+            };
+            
+            setGoals([...goals, goal]);
+            if (setInitialGoals) {
+              setInitialGoals([...goals, goal]);
+            }
+            
+            setShowNewGoal(false);
+            setSelectedGoalTemplate(null);
+            setNewGoalData({
+              title: '',
+              description: '',
+              targetAmount: 0,
+              targetBitcoinAmount: 0,
+              currentBitcoinAmount: 0,
+              timeframeMonths: 12,
+              category: 'bitcoin',
+              targetDate: ''
+            });
+          }
+        }
+        return;
+      }
+
+      // Handle custom goals
       if (newGoalType === 'save') {
         if (!newGoalAmount || !newGoalTimeframe) {
           alert('Vul alle velden in');
@@ -560,161 +698,298 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-gray-900">Nieuw Doel Aanmaken</h3>
-              <button onClick={() => setShowNewGoal(false)} className="text-gray-400 hover:text-gray-600">
+              <button 
+                onClick={() => {
+                  setShowNewGoal(false);
+                  setSelectedGoalTemplate(null);
+                  setNewGoalType('save');
+                  setNewGoalAmount('');
+                  setNewGoalTimeframe('');
+                  setNewGoalMonthlyAmount('');
+                  setNewGoalMonthlyEurAmount('');
+                  setNewGoalMonthlyCurrency('btc');
+                  setNewGoalStartDate('');
+                  setNewGoalData({
+                    title: '',
+                    description: '',
+                    targetAmount: 0,
+                    targetBitcoinAmount: 0,
+                    currentBitcoinAmount: 0,
+                    timeframeMonths: 12,
+                    category: 'bitcoin',
+                    targetDate: ''
+                  });
+                }} 
+                className="text-gray-400 hover:text-gray-600"
+              >
                 ✕
               </button>
             </div>
 
-              <div className="space-y-4">
-              {/* Goal Type Selection */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setNewGoalType('save')}
-                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    newGoalType === 'save'
-                      ? 'bg-orange-600 text-white'
-                      : 'bg-gray-100 text-gray-700 border border-gray-300'
-                  }`}
-                >
-                  Spaar doel
-                </button>
-                <button
-                  onClick={() => setNewGoalType('monthly')}
-                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    newGoalType === 'monthly'
-                      ? 'bg-orange-600 text-white'
-                      : 'bg-gray-100 text-gray-700 border border-gray-300'
-                  }`}
-                >
-                  Maandelijks
-                </button>
-              </div>
-              
-              {newGoalType === 'save' ? (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Hoeveel BTC wil je sparen?
-                    </label>
-                    <input
-                      type="number"
-                      step="0.0001"
-                      value={newGoalAmount}
-                      onChange={(e) => setNewGoalAmount(e.target.value)}
-                      placeholder="0.01"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Binnen hoeveel tijd? (bijv. "3 maanden")
-                    </label>
-                    <input
-                      type="text"
-                      value={newGoalTimeframe}
-                      onChange={(e) => setNewGoalTimeframe(e.target.value)}
-                      placeholder="3 maanden"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Kies valuta
-                    </label>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setNewGoalMonthlyCurrency('btc')}
-                        className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          newGoalMonthlyCurrency === 'btc'
-                            ? 'bg-orange-600 text-white'
-                            : 'bg-gray-100 text-gray-700 border border-gray-300'
-                        }`}
-                      >
-                        BTC
-                      </button>
-                  <button
-                        onClick={() => setNewGoalMonthlyCurrency('eur')}
-                        className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          newGoalMonthlyCurrency === 'eur'
-                            ? 'bg-orange-600 text-white'
-                            : 'bg-gray-100 text-gray-700 border border-gray-300'
-                        }`}
-                      >
-                        Euro
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {newGoalMonthlyCurrency === 'btc' ? 'Hoeveel BTC per maand?' : 'Hoeveel Euro per maand?'}
-                    </label>
-                    <input
-                      type="number"
-                      step={newGoalMonthlyCurrency === 'btc' ? '0.0001' : '1'}
-                      value={newGoalMonthlyCurrency === 'btc' ? newGoalMonthlyAmount : newGoalMonthlyEurAmount}
-                      onChange={(e) => {
-                        if (newGoalMonthlyCurrency === 'btc') {
-                          setNewGoalMonthlyAmount(e.target.value);
-                        } else {
-                          setNewGoalMonthlyEurAmount(e.target.value);
-                        }
-                      }}
-                      placeholder={newGoalMonthlyCurrency === 'btc' ? '0.001' : '100'}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Startdatum (optioneel - standaard vandaag)
-                    </label>
-                    <input
-                      type="date"
-                      value={newGoalStartDate}
-                      onChange={(e) => setNewGoalStartDate(e.target.value)}
-                      max={new Date().toISOString().split('T')[0]}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Vanaf deze datum wordt je maandelijkse storting geteld. Je kunt verder terug op de agenda.
-                    </p>
-                  </div>
-                </>
-              )}
-              
-              <div className="flex gap-2 pt-2">
-                <button
-                  onClick={handleCreateGoal}
-                  disabled={loading}
-                  className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors disabled:opacity-50"
-                >
-                  {loading ? 'Toevoegen...' : 'Toevoegen'}
-                </button>
-                <button
-                  onClick={() => {
-                    setShowNewGoal(false);
-                    setNewGoalAmount('');
-                    setNewGoalTimeframe('');
-                    setNewGoalMonthlyAmount('');
-                    setNewGoalMonthlyEurAmount('');
-                    setNewGoalMonthlyCurrency('btc');
-                    setNewGoalStartDate('');
-                    setNewGoalType('save');
-                  }}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
-                >
-                  Annuleren
-                  </button>
-                </div>
-            </div>
-
-            {false && !selectedGoalTemplate ? (
+            {!selectedGoalTemplate ? (
               <div className="space-y-4">
                 <p className="text-sm text-gray-600 mb-4">Kies een template of maak een custom doel:</p>
+                
+                {/* Default Goal Templates */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                  {DEFAULT_GOALS.map(template => {
+                    const isBTC = 'targetBitcoinAmount' in template;
+                    const target = isBTC ? template.targetBitcoinAmount : template.targetAmount;
+                    const targetLabel = isBTC ? `${target} BTC` : `€${target.toLocaleString('nl-NL')}`;
+                    
+                    return (
+                      <button
+                        key={template.id}
+                        onClick={() => setSelectedGoalTemplate(template.id)}
+                        className="p-4 text-left border-2 border-gray-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-all"
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="text-2xl">{template.icon}</span>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-gray-900">{template.title}</h4>
+                            <p className="text-xs text-gray-600 mt-1">{template.description}</p>
+                            <p className="text-sm font-semibold text-orange-600 mt-2">Target: {targetLabel}</p>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="border-t pt-4">
+                  <button
+                    onClick={() => setSelectedGoalTemplate('custom')}
+                    className="w-full p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="text-2xl">➕</div>
+                      <div>
+                        <h4 className="font-bold text-gray-900">Custom Doel</h4>
+                        <p className="text-xs text-gray-600">Maak je eigen doel</p>
+                      </div>
+                    </div>
+                  </button>
+                </div>
               </div>
-            ) : false && (
+            ) : (
+              <div className="space-y-4">
+                {selectedGoalTemplate !== 'custom' ? (
+                  <>
+                    <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                      <p className="text-sm font-medium text-orange-900">
+                        {DEFAULT_GOALS.find(g => g.id === selectedGoalTemplate)?.title}
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Timeframe (maanden)</label>
+                      <input
+                        type="number"
+                        value={newGoalData.timeframeMonths}
+                        onChange={(e) => setNewGoalData({ ...newGoalData, timeframeMonths: parseInt(e.target.value) || 1 })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                        min="1"
+                        max="120"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        {newGoalData.timeframeMonths} maand{newGoalData.timeframeMonths !== 1 ? 'en' : ''} = {Math.floor(newGoalData.timeframeMonths / 12)} jaar{newGoalData.timeframeMonths % 12 > 0 ? ` en ${newGoalData.timeframeMonths % 12} maand${newGoalData.timeframeMonths % 12 !== 1 ? 'en' : ''}` : ''}
+                      </p>
+                    </div>
+
+                    {/* Show calculation preview for default BTC goals */}
+                    {selectedGoalTemplate && selectedGoalTemplate.startsWith('default_') && (
+                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                        {(() => {
+                          const template = DEFAULT_GOALS.find(g => g.id === selectedGoalTemplate);
+                          if (!template || !('targetBitcoinAmount' in template)) return null;
+                          
+                          const monthly = calculateMonthlySavings(
+                            template.targetBitcoinAmount,
+                            template.currentBitcoinAmount || currentBalance,
+                            newGoalData.timeframeMonths
+                          );
+                          const remaining = calculateRemaining(
+                            template.targetBitcoinAmount,
+                            template.currentBitcoinAmount || currentBalance,
+                            true
+                          );
+
+                          return (
+                            <div className="space-y-2 text-sm">
+                              <p className="font-semibold text-gray-900">Berekening:</p>
+                              <p className="text-gray-700">
+                                Target: <span className="font-bold">{template.targetBitcoinAmount} BTC</span> (€{(template.targetBitcoinAmount * bitcoinPrice).toLocaleString('nl-NL')})
+                              </p>
+                              <p className="text-gray-700">
+                                Nog nodig: <span className="font-bold">{remaining} BTC</span>
+                              </p>
+                              <p className="text-gray-700">
+                                Maandelijks sparen: <span className="font-bold">€{monthly.toLocaleString('nl-NL')}</span>
+                              </p>
+                              <p className="text-gray-700">
+                                Over {newGoalData.timeframeMonths} maand{newGoalData.timeframeMonths !== 1 ? 'en' : ''}
+                              </p>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+
+                    <div className="flex gap-3 pt-4">
+                      <button
+                        onClick={() => setSelectedGoalTemplate(null)}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                      >
+                        Terug
+                      </button>
+                      <button
+                        onClick={handleCreateGoal}
+                        disabled={loading}
+                        className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors disabled:opacity-50"
+                      >
+                        {loading ? 'Toevoegen...' : 'Toevoegen'}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Goal Type Selection for custom */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setNewGoalType('save')}
+                        className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          newGoalType === 'save'
+                            ? 'bg-orange-600 text-white'
+                            : 'bg-gray-100 text-gray-700 border border-gray-300'
+                        }`}
+                      >
+                        Spaar doel
+                      </button>
+                      <button
+                        onClick={() => setNewGoalType('monthly')}
+                        className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          newGoalType === 'monthly'
+                            ? 'bg-orange-600 text-white'
+                            : 'bg-gray-100 text-gray-700 border border-gray-300'
+                        }`}
+                      >
+                        Maandelijks
+                      </button>
+                    </div>
+                    
+                    {newGoalType === 'save' ? (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Hoeveel BTC wil je sparen?
+                          </label>
+                          <input
+                            type="number"
+                            step="0.0001"
+                            value={newGoalAmount}
+                            onChange={(e) => setNewGoalAmount(e.target.value)}
+                            placeholder="0.01"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Binnen hoeveel tijd? (bijv. "3 maanden")
+                          </label>
+                          <input
+                            type="text"
+                            value={newGoalTimeframe}
+                            onChange={(e) => setNewGoalTimeframe(e.target.value)}
+                            placeholder="3 maanden"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Kies valuta
+                          </label>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setNewGoalMonthlyCurrency('btc')}
+                              className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                newGoalMonthlyCurrency === 'btc'
+                                  ? 'bg-orange-600 text-white'
+                                  : 'bg-gray-100 text-gray-700 border border-gray-300'
+                              }`}
+                            >
+                              BTC
+                            </button>
+                            <button
+                              onClick={() => setNewGoalMonthlyCurrency('eur')}
+                              className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                newGoalMonthlyCurrency === 'eur'
+                                  ? 'bg-orange-600 text-white'
+                                  : 'bg-gray-100 text-gray-700 border border-gray-300'
+                              }`}
+                            >
+                              Euro
+                            </button>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            {newGoalMonthlyCurrency === 'btc' ? 'Hoeveel BTC per maand?' : 'Hoeveel Euro per maand?'}
+                          </label>
+                          <input
+                            type="number"
+                            step={newGoalMonthlyCurrency === 'btc' ? '0.0001' : '1'}
+                            value={newGoalMonthlyCurrency === 'btc' ? newGoalMonthlyAmount : newGoalMonthlyEurAmount}
+                            onChange={(e) => {
+                              if (newGoalMonthlyCurrency === 'btc') {
+                                setNewGoalMonthlyAmount(e.target.value);
+                              } else {
+                                setNewGoalMonthlyEurAmount(e.target.value);
+                              }
+                            }}
+                            placeholder={newGoalMonthlyCurrency === 'btc' ? '0.001' : '100'}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Startdatum (optioneel - standaard vandaag)
+                          </label>
+                          <input
+                            type="date"
+                            value={newGoalStartDate}
+                            onChange={(e) => setNewGoalStartDate(e.target.value)}
+                            max={new Date().toISOString().split('T')[0]}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Vanaf deze datum wordt je maandelijkse storting geteld. Je kunt verder terug op de agenda.
+                          </p>
+                        </div>
+                      </>
+                    )}
+                    
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        onClick={() => setSelectedGoalTemplate(null)}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                      >
+                        Terug
+                      </button>
+                      <button
+                        onClick={handleCreateGoal}
+                        disabled={loading}
+                        className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors disabled:opacity-50"
+                      >
+                        {loading ? 'Toevoegen...' : 'Toevoegen'}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
               <div className="space-y-4">
                 {selectedGoalTemplate !== 'custom' && (
                   <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
