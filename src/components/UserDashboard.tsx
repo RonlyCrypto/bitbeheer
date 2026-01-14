@@ -2195,10 +2195,10 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 <MessageSquare className="w-5 h-5" />
                 Stel je vraag
               </button>
-            </div>
           </div>
         </div>
       </div>
+    </div>
 
       {/* Stappenblokken (Ledger & Coinbase) - Onderaan naast elkaar (1/2 1/2) */}
       <ReferralBlocksWithHelp onBookAppointment={onBookAppointment} />
@@ -2397,9 +2397,23 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
   const [editGoalMonthlyCurrency, setEditGoalMonthlyCurrency] = useState<'btc' | 'eur'>('btc');
   const [editGoalMonthlyEurAmount, setEditGoalMonthlyEurAmount] = useState<string>('');
   const [editGoalStartDate, setEditGoalStartDate] = useState<string>('');
+  const [currentBitcoinPrice, setCurrentBitcoinPrice] = useState<number>(0);
 
   // Calculate wallet balance in BTC
   const currentBalance = walletData?.balance || 0;
+
+  // Load current Bitcoin price
+  useEffect(() => {
+    const loadPrice = async () => {
+      try {
+        const price = await bitcoinApiService.getCurrentPrice();
+        setCurrentBitcoinPrice(price);
+      } catch (error) {
+        console.error('Error loading Bitcoin price:', error);
+      }
+    };
+    loadPrice();
+  }, []);
 
   // Bitcoin milestones with meaningful descriptions
   const btcMilestones = [
@@ -2795,40 +2809,52 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
     }
   };
 
-  // Analyze monthly goal transactions for popup
+  // Analyze monthly goal transactions for popup with streak tracking
   const analyzeMonthlyGoalTransactions = (goal: any) => {
     if (goal.type !== 'monthly') return null;
 
     const now = new Date();
-    // Use target_date (start date) if available, otherwise use created_at, otherwise 6 months ago
+    // Use target_date (start date) - this is when the goal actually starts
     let goalStartDate = new Date();
     if (goal.target_date) {
       goalStartDate = new Date(goal.target_date);
     } else if (goal.created_at) {
       goalStartDate = new Date(goal.created_at);
     } else {
-      // Fallback: start from 6 months ago
-      goalStartDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+      // Fallback: start from current month
+      goalStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
     }
     
     const months: any[] = [];
     
-    // Get all deposit transactions (positive value)
+    // Get all deposit transactions (positive value) from portfolio
+    // Transactions are already in BTC format with price in USD
     const depositTransactions = walletTransactions
       .filter(tx => tx.value > 0)
-      .map(tx => ({
-        ...tx,
-        date: new Date(tx.time * 1000),
-        amount: Math.abs(tx.value) / 100000000, // Convert to BTC
-        txid: tx.hash || ''
-      }))
+      .map(tx => {
+        const btcAmount = Math.abs(tx.value) / 100000000; // Convert to BTC
+        const usdValue = tx.price ? btcAmount * tx.price : 0; // USD value at time of transaction
+        return {
+          ...tx,
+          date: new Date(tx.time * 1000),
+          amount: btcAmount, // Always in BTC
+          usdValue: usdValue, // USD value at time of transaction
+          txid: tx.hash || ''
+        };
+      })
       .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-    // Calculate months: show 3 months before start date, then from start date to now + 3 months ahead
+    // Calculate months: ONLY from start date to now + 3 months ahead (no months before start)
     const startDate = new Date(goalStartDate.getFullYear(), goalStartDate.getMonth(), 1);
-    const monthsBefore = 3; // Show 3 months before start
-    let currentDate = new Date(startDate.getFullYear(), startDate.getMonth() - monthsBefore, 1);
+    let currentDate = new Date(startDate);
     const endDate = new Date(now.getFullYear(), now.getMonth() + 3, 1); // Show 3 months ahead
+
+    // Convert target amount to BTC if goal is in EUR
+    let targetAmountBTC = goal.monthlyAmount || 0;
+    if (goal.monthlyCurrency === 'eur' && currentBitcoinPrice > 0) {
+      // Convert EUR target to BTC using current price
+      targetAmountBTC = goal.monthlyAmount / currentBitcoinPrice;
+    }
 
     while (currentDate <= endDate) {
       const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
@@ -2837,25 +2863,97 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
         return txMonth === monthKey;
       });
 
-      const totalAmount = monthTransactions.reduce((sum, tx) => sum + tx.amount, 0);
-      const targetAmount = goal.monthlyAmount || 0;
+      const totalAmount = monthTransactions.reduce((sum, tx) => sum + tx.amount, 0); // Always in BTC
+      const isStartMonth = currentDate.getMonth() === startDate.getMonth() && currentDate.getFullYear() === startDate.getFullYear();
       const isCurrentMonth = currentDate.getMonth() === now.getMonth() && currentDate.getFullYear() === now.getFullYear();
+      const isPastMonth = currentDate < new Date(now.getFullYear(), now.getMonth(), 1);
+      const isFutureMonth = currentDate > new Date(now.getFullYear(), now.getMonth(), 1);
       
+      // Calculate average price for the month (for USD conversion)
+      const avgPrice = monthTransactions.length > 0
+        ? monthTransactions.reduce((sum, tx) => sum + (tx.price || 0), 0) / monthTransactions.length
+        : currentBitcoinPrice;
+
+      // Determine status
       let status: 'completed' | 'missed' | 'made_up' | 'extra' | 'pending' = 'pending';
-      if (isCurrentMonth && totalAmount === 0) {
+      let madeUpMonths: string[] = []; // Which months were made up with this deposit
+      let remainingToMakeUp = 0; // How much still needs to be deposited for missed months
+      
+      if (isFutureMonth) {
         status = 'pending';
-      } else if (totalAmount >= targetAmount) {
-        if (totalAmount > targetAmount * 1.1) {
-          // More than 10% over target = extra deposit
+      } else if (isCurrentMonth && totalAmount === 0) {
+        status = 'pending';
+      } else if (totalAmount >= targetAmountBTC) {
+        const excess = totalAmount - targetAmountBTC;
+        // Check if this excess can cover missed months
+        const previousMonths = months.filter(m => 
+          m.date < currentDate && 
+          m.status === 'missed' && 
+          !m.madeUpBy
+        );
+        
+        if (previousMonths.length > 0 && excess >= targetAmountBTC) {
+          // This deposit can make up for missed months
+          const canMakeUp = Math.floor(excess / targetAmountBTC);
+          const monthsToMakeUp = previousMonths.slice(0, canMakeUp);
+          madeUpMonths = monthsToMakeUp.map(m => m.monthKey);
+          
+          // Mark these months as made up
+          monthsToMakeUp.forEach(month => {
+            const monthIndex = months.findIndex(m => m.monthKey === month.monthKey);
+            if (monthIndex !== -1) {
+              months[monthIndex].status = 'made_up';
+              months[monthIndex].madeUpBy = monthKey;
+            }
+          });
+          
+          // If there's still excess after making up, it's extra
+          const remainingExcess = excess - (canMakeUp * targetAmountBTC);
+          if (remainingExcess > targetAmountBTC * 0.1) {
+            status = 'extra';
+          } else {
+            status = 'completed';
+          }
+        } else if (excess > targetAmountBTC * 0.1) {
+          // More than 10% over target and no missed months to cover = extra deposit
           status = 'extra';
         } else {
           status = 'completed';
         }
-      } else if (totalAmount > 0 && totalAmount < targetAmount) {
-        // Partial deposit - check if it's making up for a missed month
-        status = 'made_up';
-      } else if (!isCurrentMonth && totalAmount === 0) {
+      } else if (totalAmount > 0 && totalAmount < targetAmountBTC) {
+        // Partial deposit - might be making up for a missed month
+        const previousMonths = months.filter(m => 
+          m.date < currentDate && 
+          m.status === 'missed' && 
+          !m.madeUpBy
+        );
+        
+        if (previousMonths.length > 0) {
+          // Check if this partial deposit + previous excess can make up a month
+          const previousExcess = months
+            .filter(m => m.date < currentDate && m.status === 'extra')
+            .reduce((sum, m) => sum + (m.totalAmount - m.targetAmount), 0);
+          
+          if (totalAmount + previousExcess >= targetAmountBTC) {
+            status = 'made_up';
+            const firstMissed = previousMonths[0];
+            madeUpMonths = [firstMissed.monthKey];
+            const monthIndex = months.findIndex(m => m.monthKey === firstMissed.monthKey);
+            if (monthIndex !== -1) {
+              months[monthIndex].status = 'made_up';
+              months[monthIndex].madeUpBy = monthKey;
+            }
+          } else {
+            status = 'made_up'; // Partial, trying to make up
+            remainingToMakeUp = targetAmountBTC - totalAmount;
+          }
+        } else {
+          status = 'made_up'; // Partial deposit
+          remainingToMakeUp = targetAmountBTC - totalAmount;
+        }
+      } else if (isPastMonth && totalAmount === 0) {
         status = 'missed';
+        remainingToMakeUp = targetAmountBTC;
       }
 
       months.push({
@@ -2864,39 +2962,73 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
         date: new Date(currentDate),
         transactions: monthTransactions,
         totalAmount,
-        targetAmount,
+        targetAmount: targetAmountBTC,
         status,
-        isCurrentMonth
+        isStartMonth,
+        isCurrentMonth,
+        isPastMonth,
+        isFutureMonth,
+        avgPrice,
+        madeUpMonths, // Which months this deposit made up
+        remainingToMakeUp, // How much still needed
+        madeUpBy: undefined as string | undefined // Which month made this one up
       });
 
       // Move to next month
       currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
     }
 
-    // Check for made-up months (extra deposits that cover missed months)
-    const missedMonths = months.filter(m => m.status === 'missed');
-    const extraDeposits = months.filter(m => m.status === 'extra' || (m.status === 'completed' && m.totalAmount > m.targetAmount * 1.1));
+    // Calculate streak: consecutive completed months from start
+    let streak = 0;
+    let streakBroken = false;
+    let isPaused = false;
+    let lastActiveMonth: string | null = null;
     
-    // Try to match extra deposits with missed months (simplified logic)
-    missedMonths.forEach(missed => {
-      // Find if there's an extra deposit in a later month that could cover this missed month
-      const extraDeposit = extraDeposits.find(extra => 
-        extra.date > missed.date && 
-        extra.totalAmount >= (missed.targetAmount + extra.targetAmount)
-      );
-      if (extraDeposit) {
-        const monthIndex = months.findIndex(m => m.monthKey === missed.monthKey);
-        if (monthIndex !== -1) {
-          months[monthIndex].status = 'made_up';
+    for (let i = 0; i < months.length; i++) {
+      const month = months[i];
+      if (!month.isStartMonth && i === 0) continue; // Skip if we haven't reached start month yet
+      
+      if (month.status === 'completed' || month.status === 'made_up') {
+        if (!streakBroken && !isPaused) {
+          streak++;
+          lastActiveMonth = month.monthKey;
+        }
+      } else if (month.status === 'extra') {
+        // Extra deposit = pause option
+        if (streak > 0) {
+          isPaused = true;
+          lastActiveMonth = month.monthKey;
+        }
+      } else if (month.status === 'missed' && !month.madeUpBy) {
+        if (month.isPastMonth) {
+          streakBroken = true;
         }
       }
-    });
+      
+      // Resume after pause if deposit is made
+      if (isPaused && (month.status === 'completed' || month.status === 'made_up')) {
+        isPaused = false;
+        streak++;
+        lastActiveMonth = month.monthKey;
+      }
+    }
+
+    // Count missed months that haven't been made up
+    const missedMonths = months.filter(m => m.status === 'missed' && !m.madeUpBy);
+    const totalMissedAmount = missedMonths.reduce((sum, m) => sum + m.remainingToMakeUp, 0);
 
     return {
       months,
       totalDeposited: depositTransactions.reduce((sum, tx) => sum + tx.amount, 0),
-      missedCount: months.filter(m => m.status === 'missed').length,
-      completedCount: months.filter(m => m.status === 'completed' || m.status === 'made_up').length
+      missedCount: missedMonths.length,
+      completedCount: months.filter(m => m.status === 'completed' || m.status === 'made_up').length,
+      streak,
+      streakBroken,
+      isPaused,
+      lastActiveMonth,
+      startMonth: months.find(m => m.isStartMonth)?.monthKey || '',
+      currentMonth: months.find(m => m.isCurrentMonth)?.monthKey || '',
+      totalMissedAmount
     };
   };
 
@@ -3085,7 +3217,27 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => { setShowMonthlyGoalPopup(false); }}>
         <div className="bg-white rounded-xl shadow-2xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-2xl font-bold text-gray-900">{selectedMonthlyGoal.title}</h3>
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900">{selectedMonthlyGoal.title}</h3>
+              {/* Streak Display */}
+              <div className="mt-2 flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-gray-700">Streak:</span>
+                  <span className="text-lg font-bold text-orange-600">🔥 {analysis.streak}</span>
+                  <span className="text-xs text-gray-500">maanden</span>
+                </div>
+                {analysis.isPaused && (
+                  <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 rounded-full">
+                    <span className="text-sm font-semibold text-blue-700">⏸️ Gepauzeerd</span>
+                  </div>
+                )}
+                {analysis.streakBroken && !analysis.isPaused && (
+                  <div className="flex items-center gap-2 px-3 py-1 bg-red-100 rounded-full">
+                    <span className="text-sm font-semibold text-red-700">⚠️ Streak verbroken</span>
+                  </div>
+                )}
+              </div>
+            </div>
             <button
               onClick={() => setShowMonthlyGoalPopup(false)}
               className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -3094,16 +3246,39 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
             </button>
           </div>
 
+          {/* Status Summary */}
+          {(analysis.missedCount > 0 || analysis.totalMissedAmount > 0) && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-red-600 font-semibold">⚠️ Gemiste maanden</span>
+              </div>
+              <div className="text-sm text-red-700">
+                Je hebt <span className="font-bold">{analysis.missedCount}</span> maand(en) gemist.
+                {analysis.totalMissedAmount > 0 && (
+                  <span> Nog te storten: <span className="font-bold">{analysis.totalMissedAmount.toFixed(4)} BTC</span></span>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Calendar Overview */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
               <h4 className="text-lg font-semibold text-gray-900">Maandoverzicht</h4>
-              {selectedMonthlyGoal.target_date && (
-                <div className="text-sm text-gray-600">
-                  <span className="font-semibold">Startdatum:</span>{' '}
-                  {new Date(selectedMonthlyGoal.target_date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}
-                </div>
-              )}
+              <div className="flex items-center gap-4 text-sm text-gray-600">
+                {analysis.startMonth && (
+                  <div>
+                    <span className="font-semibold">Start:</span>{' '}
+                    {analysis.months.find(m => m.monthKey === analysis.startMonth)?.month || ''}
+                  </div>
+                )}
+                {analysis.currentMonth && (
+                  <div>
+                    <span className="font-semibold">Nu:</span>{' '}
+                    {analysis.months.find(m => m.monthKey === analysis.currentMonth)?.month || ''}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="overflow-x-auto pb-2 -mx-2 px-2">
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3 min-w-max">
@@ -3143,14 +3318,36 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                 return (
                   <div
                     key={month.monthKey}
-                    className={`p-3 rounded-lg border-2 ${bgColor} ${borderColor} ${textColor} text-center`}
+                    className={`p-3 rounded-lg border-2 ${bgColor} ${borderColor} ${textColor} text-center relative ${
+                      month.isStartMonth ? 'ring-2 ring-blue-500 ring-offset-2' : ''
+                    } ${month.isCurrentMonth ? 'ring-2 ring-purple-500 ring-offset-2' : ''}`}
                   >
+                    {month.isStartMonth && (
+                      <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                        START
+                      </div>
+                    )}
+                    {month.isCurrentMonth && (
+                      <div className="absolute -top-2 -left-2 bg-purple-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                        NU
+                      </div>
+                    )}
                     <div className="text-xs font-semibold mb-1">{month.date.toLocaleDateString('nl-NL', { month: 'short' })}</div>
                     <div className="text-lg font-bold mb-1">{statusText}</div>
                     <div className="text-xs">{month.date.getFullYear()}</div>
                     {month.totalAmount > 0 && (
                       <div className="text-xs mt-1 font-medium">
-                        {month.totalAmount.toFixed(4)} {selectedMonthlyGoal.monthlyCurrency === 'btc' ? 'BTC' : '€'}
+                        {month.totalAmount.toFixed(4)} BTC
+                        {month.avgPrice > 0 && (
+                          <span className="text-gray-600 ml-1">
+                            (${(month.totalAmount * month.avgPrice).toFixed(2)})
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {month.remainingToMakeUp > 0 && (
+                      <div className="text-xs mt-1 text-red-600 font-semibold">
+                        Nog: {month.remainingToMakeUp.toFixed(4)} BTC
                       </div>
                     )}
                   </div>
@@ -3211,11 +3408,34 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                     {month.status === 'extra' && (
                       <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
                         🎉 Goed van je dat je extra hebt gestort!
+                        {month.madeUpMonths && month.madeUpMonths.length > 0 && (
+                          <div className="mt-1">
+                            Deze storting heeft {month.madeUpMonths.length} gemiste maand(en) goedgemaakt.
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {month.madeUpMonths && month.madeUpMonths.length > 0 && (
+                      <div className="mb-3 p-2 bg-orange-50 border border-orange-200 rounded text-sm text-orange-800">
+                        ↪️ Deze storting heeft de volgende maand(en) goedgemaakt:
+                        <ul className="mt-1 list-disc list-inside">
+                          {month.madeUpMonths.map((madeUpKey: string) => {
+                            const madeUpMonth = analysis.months.find((m: any) => m.monthKey === madeUpKey);
+                            return madeUpMonth ? (
+                              <li key={madeUpKey}>{madeUpMonth.month}</li>
+                            ) : null;
+                          })}
+                        </ul>
+                      </div>
+                    )}
+                    {month.remainingToMakeUp > 0 && (
+                      <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-800">
+                        ⚠️ Nog te storten deze maand: {month.remainingToMakeUp.toFixed(4)} BTC
                       </div>
                     )}
 
                     <div className="space-y-2">
-                      {month.transactions.map((tx, idx) => (
+                      {month.transactions.map((tx: any, idx: number) => (
                         <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                           <div className="flex items-center gap-3">
                             <div className={`w-2 h-2 rounded-full ${
@@ -3226,7 +3446,12 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                             }`}></div>
                             <div>
                               <div className="font-medium text-gray-900">
-                                {tx.amount.toFixed(4)} {selectedMonthlyGoal.monthlyCurrency === 'btc' ? 'BTC' : '€'}
+                                {tx.amount.toFixed(4)} BTC
+                                {tx.price && (
+                                  <span className="text-gray-600 ml-2 font-normal">
+                                    (${tx.usdValue.toFixed(2)})
+                                  </span>
+                                )}
                               </div>
                               <div className="text-xs text-gray-500">
                                 {tx.date.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -3249,12 +3474,22 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Totaal deze maand:</span>
                         <span className="font-semibold text-gray-900">
-                          {month.totalAmount.toFixed(4)} {selectedMonthlyGoal.monthlyCurrency === 'btc' ? 'BTC' : '€'}
+                          {month.totalAmount.toFixed(4)} BTC
+                          {month.avgPrice > 0 && (
+                            <span className="text-gray-600 ml-2 font-normal">
+                              (${(month.totalAmount * month.avgPrice).toFixed(2)})
+                            </span>
+                          )}
                         </span>
                       </div>
                       {month.totalAmount > month.targetAmount && (
                         <div className="mt-1 text-xs text-blue-600">
-                          +{(month.totalAmount - month.targetAmount).toFixed(4)} {selectedMonthlyGoal.monthlyCurrency === 'btc' ? 'BTC' : '€'} extra
+                          +{(month.totalAmount - month.targetAmount).toFixed(4)} BTC extra
+                          {month.avgPrice > 0 && (
+                            <span className="ml-1">
+                              (${((month.totalAmount - month.targetAmount) * month.avgPrice).toFixed(2)})
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>
@@ -3289,7 +3524,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
         </div>
       </div>
     );
-  }, [showMonthlyGoalPopup, selectedMonthlyGoal]);
+  }, [showMonthlyGoalPopup, selectedMonthlyGoal, walletTransactions, currentBitcoinPrice]);
 
                     return (
     <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
