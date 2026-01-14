@@ -3991,7 +3991,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                         'Je hebt deze maand nog niet gestort'
                       )}
                     </p>
-                      {streak > 0 && (
+                      {monthlyAnalysis && (
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs font-semibold text-orange-600">🔥 Streak: {streak}</span>
                           <span className="text-xs text-gray-500">maanden</span>
