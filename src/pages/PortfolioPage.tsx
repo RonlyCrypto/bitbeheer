@@ -535,6 +535,19 @@ export default function PortfolioPage() {
   const totalTransactions = wallets.reduce((sum, wallet) => sum + wallet.transactions, 0);
   const totalValue = totalBalance * currentPrice;
   const totalProfit = allTransactions.reduce((sum, tx) => sum + tx.profit, 0);
+  
+  // Calculate total investment (only buy transactions)
+  const totalInvestment = allTransactions
+    .filter(tx => tx.value > 0) // Only buy transactions
+    .reduce((sum, tx) => {
+      const btcAmount = Math.abs(tx.value) / 100000000;
+      return sum + (btcAmount * tx.price);
+    }, 0);
+  
+  // Calculate profit percentage
+  const profitPercentage = totalInvestment > 0 
+    ? ((totalValue - totalInvestment) / totalInvestment) * 100 
+    : 0;
 
   return (
     <div className="min-h-screen pb-20 md:pb-0">
@@ -544,17 +557,6 @@ export default function PortfolioPage() {
         <div className="max-w-7xl mx-auto">
           {/* Stats Cards */}
           <div className="grid md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white rounded-xl p-3 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="bg-orange-100 p-1.5 rounded-lg">
-                  <Wallet className="w-4 h-4 text-orange-600" />
-                </div>
-                <h3 className="text-sm font-semibold text-gray-900">Wallets</h3>
-              </div>
-              <p className="text-xl font-bold text-gray-900">{wallets.length}</p>
-              <p className="text-xs text-gray-600">Gekoppelde wallets</p>
-            </div>
-
             <div className="bg-white rounded-xl p-3 shadow-lg">
               <div className="flex items-center gap-2 mb-2">
                 <div className="bg-green-100 p-1.5 rounded-lg">
@@ -580,6 +582,26 @@ export default function PortfolioPage() {
             </div>
 
             <div className="bg-white rounded-xl p-3 shadow-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="bg-yellow-100 p-1.5 rounded-lg">
+                  <TrendingUp className="w-4 h-4 text-yellow-600" />
+                </div>
+                <h3 className="text-sm font-semibold text-gray-900">Inleg</h3>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <p className="text-xl font-bold text-gray-900">
+                  {showBalances ? `$${totalInvestment.toLocaleString('en-US', { maximumFractionDigits: 2 })}` : '••••'}
+                </p>
+                {showBalances && profitPercentage !== 0 && (
+                  <span className={`text-xs font-medium ${profitPercentage >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    ({profitPercentage >= 0 ? '+' : ''}{profitPercentage.toFixed(1)}%)
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-gray-600">Totale inleg</p>
+            </div>
+
+            <div className="bg-white rounded-xl p-3 shadow-lg">
               <div className="flex items-center gap-2 mb-2 min-w-0">
                 <div className="bg-purple-100 p-1.5 rounded-lg flex-shrink-0">
                   <ExternalLink className="w-4 h-4 text-purple-600" />
@@ -587,7 +609,7 @@ export default function PortfolioPage() {
                 <h3 className="text-sm font-semibold text-gray-900 truncate">Waarde</h3>
               </div>
               <p className="text-xl font-bold text-gray-900 break-words">
-                {showBalances ? `$${totalValue.toLocaleString('en-US')}` : '••••'}
+                {showBalances ? `$${totalValue.toLocaleString('en-US', { maximumFractionDigits: 2 })}` : '••••'}
               </p>
               <p className="text-xs text-gray-600">Huidige waarde</p>
             </div>
