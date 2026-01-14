@@ -3374,8 +3374,8 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                 )}
               </div>
             </div>
-            <div className="overflow-x-auto pb-2 -mx-1 sm:-mx-2 px-1 sm:px-2">
-              <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2 sm:gap-3 min-w-max">
+            <div className="overflow-x-auto pb-2 -mx-1 sm:-mx-2 px-1 sm:px-2 overflow-y-visible">
+              <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2 sm:gap-3 min-w-max pt-4 sm:pt-6">
               {analysis.months.map((month) => {
                 let bgColor = 'bg-gray-100';
                 let borderColor = 'border-gray-300';
@@ -3412,17 +3412,18 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                 return (
                   <div
                     key={month.monthKey}
-                    className={`p-2 sm:p-3 rounded-lg border-2 ${bgColor} ${borderColor} ${textColor} text-center relative overflow-visible ${
+                    className={`p-2 sm:p-3 rounded-lg border-2 ${bgColor} ${borderColor} ${textColor} text-center relative ${
                       month.isStartMonth ? 'ring-2 ring-blue-500 ring-offset-1 sm:ring-offset-2' : ''
                     } ${month.isCurrentMonth ? 'ring-2 ring-purple-500 ring-offset-1 sm:ring-offset-2' : ''}`}
+                    style={{ overflow: 'visible' }}
                   >
                     {month.isStartMonth && (
-                      <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-blue-500 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-bold z-10">
+                      <div className="absolute -top-3 -right-1 sm:-top-4 sm:-right-2 bg-blue-500 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-bold z-20 shadow-md">
                         START
                       </div>
                     )}
                     {month.isCurrentMonth && (
-                      <div className="absolute -top-1 -left-1 sm:-top-2 sm:-left-2 bg-purple-500 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-bold z-10">
+                      <div className="absolute -top-3 -left-1 sm:-top-4 sm:-left-2 bg-purple-500 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-bold z-20 shadow-md">
                         NU
                       </div>
                     )}
