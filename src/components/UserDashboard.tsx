@@ -1954,8 +1954,10 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         </div>
             </div>
           ) : null}
+        </div>
+      </div>
 
-          {/* Wallet en Waarschuwingen Blok - Naast elkaar */}
+      {/* Wallet en Waarschuwingen Blok - Naast elkaar - Volledige breedte */}
       {hasWallet && walletData && !showSuccessMessage && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           {/* Wallet Block - 2/3 breedte */}
@@ -2124,7 +2126,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         </div>
       )}
 
-      {/* Leer & Waarschuwingen en Beginnersdoelen - 1 rij (2/3 1/3) */}
+      {/* Leer & Waarschuwingen en Beginnersdoelen - 1 rij (2/3 1/3) - Volledige breedte */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Beginnersdoelen - 2/3 breedte */}
         {(accountApproved || hasApprovedOneOnOne) && (
@@ -2195,8 +2197,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               </button>
             </div>
           </div>
-        </div>
-      </div>
         </div>
       </div>
 
