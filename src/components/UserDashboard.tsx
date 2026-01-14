@@ -3646,7 +3646,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
       {/* Bitcoin Milestones Section */}
       <div className="mb-6 p-5 bg-gradient-to-br from-orange-50 via-orange-50 to-orange-100 rounded-xl border border-orange-200">
         {/* Progress Bar with Milestones */}
-        <div className="relative pt-6">
+        <div className="relative pt-6 pb-2">
           <div className="w-full bg-gray-200 rounded-full h-2 relative">
           <div 
               className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full transition-all duration-500"
@@ -3672,7 +3672,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                 <div
                   key={milestone.value}
                   className="absolute flex flex-col items-center group"
-                  style={{ left: `${position}%`, transform: 'translateX(-50%)', zIndex: 10, top: '-18px' }}
+                  style={{ left: `${position}%`, transform: 'translateX(-50%)', zIndex: 10 }}
                 >
                   {/* Tooltip */}
                   <div className="absolute bottom-full mb-2 hidden group-hover:block z-20">
@@ -3691,14 +3691,17 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                   </div>
                   
                   {/* Label above bar */}
-                  <span className={`text-[10px] mb-1.5 whitespace-nowrap font-medium ${isReached ? 'text-green-700' : 'text-gray-500'}`}>
+                  <span 
+                    className={`text-[10px] mb-1.5 whitespace-nowrap font-medium ${isReached ? 'text-green-700' : 'text-gray-500'}`}
+                    style={{ marginBottom: '8px' }}
+                  >
                     {milestone.label}
                   </span>
                   
-                  {/* Dot marker - positioned centered on bar */}
+                  {/* Dot marker - positioned centered on bar (balk begint op 24px, is 8px hoog, midden is 28px, dot is 12px hoog, dus top moet 22px zijn) */}
                   <div 
                     className={`w-3 h-3 rounded-full border-2 border-white shadow-md transition-all ${isReached ? 'bg-green-500' : 'bg-gray-400'}`}
-                    style={{ marginTop: '14px' }}
+                    style={{ position: 'absolute', top: '22px' }}
                   ></div>
                 </div>
               );
