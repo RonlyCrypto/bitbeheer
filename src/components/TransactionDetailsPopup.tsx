@@ -242,6 +242,17 @@ export default function TransactionDetailsPopup({ transaction, onClose, allTrans
               <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                 <label className="text-xs font-semibold text-gray-700 mb-2 block">PERFORMANCE</label>
                 <div className="relative">
+                  {/* Percentage label - centered above bar */}
+                  <div className="absolute left-1/2 -translate-x-1/2 -top-5 z-20">
+                    <span 
+                      className={`text-xs font-semibold whitespace-nowrap ${
+                        isProfit ? 'text-green-700' : 'text-red-700'
+                      }`}
+                    >
+                      {isProfit ? '+' : ''}{profitPercent.toFixed(2)}%
+                    </span>
+                  </div>
+                  
                   {/* Center line */}
                   <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-gray-400 z-10 transform -translate-x-1/2"></div>
                   
@@ -249,46 +260,24 @@ export default function TransactionDetailsPopup({ transaction, onClose, allTrans
                   <div className="relative h-4 bg-gray-300 rounded-full overflow-visible">
                     {!isProfit ? (
                       // Loss: from center to left, orange to red
-                      <>
-                        <div
-                          className="absolute right-1/2 h-full transition-all duration-500"
-                          style={{ 
-                            width: `${barWidth}%`,
-                            background: 'linear-gradient(to left, #ef4444, #f97316)',
-                            borderRadius: '9999px 0 0 9999px'
-                          }}
-                        ></div>
-                        <span 
-                          className="absolute top-1/2 -translate-y-1/2 text-xs font-semibold text-red-700 whitespace-nowrap z-20"
-                          style={{ 
-                            right: `calc(50% - ${barWidth}%)`,
-                            paddingLeft: '4px'
-                          }}
-                        >
-                          {profitPercent.toFixed(2)}%
-                        </span>
-                      </>
+                      <div
+                        className="absolute right-1/2 h-full transition-all duration-500"
+                        style={{ 
+                          width: `${barWidth}%`,
+                          background: 'linear-gradient(to left, #ef4444, #f97316)',
+                          borderRadius: '9999px 0 0 9999px'
+                        }}
+                      ></div>
                     ) : (
                       // Profit: from center to right, orange to green
-                      <>
-                        <div
-                          className="absolute left-1/2 h-full transition-all duration-500"
-                          style={{ 
-                            width: `${barWidth}%`,
-                            background: 'linear-gradient(to right, #f97316, #22c55e)',
-                            borderRadius: '0 9999px 9999px 0'
-                          }}
-                        ></div>
-                        <span 
-                          className="absolute top-1/2 -translate-y-1/2 text-xs font-semibold text-green-700 whitespace-nowrap z-20"
-                          style={{ 
-                            left: `calc(50% + ${barWidth}%)`,
-                            paddingLeft: '4px'
-                          }}
-                        >
-                          +{profitPercent.toFixed(2)}%
-                        </span>
-                      </>
+                      <div
+                        className="absolute left-1/2 h-full transition-all duration-500"
+                        style={{ 
+                          width: `${barWidth}%`,
+                          background: 'linear-gradient(to right, #f97316, #22c55e)',
+                          borderRadius: '0 9999px 9999px 0'
+                        }}
+                      ></div>
                     )}
                   </div>
                 </div>

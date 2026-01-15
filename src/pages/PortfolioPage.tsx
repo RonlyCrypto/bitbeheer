@@ -862,7 +862,7 @@ export default function PortfolioPage() {
                             Je inkoop punten worden getoond op de grafiek.
                           </p>
                         </div>
-                        <div className="flex flex-col gap-2 flex-shrink-0">
+                        <div className="flex flex-row gap-2 flex-shrink-0">
                           <button
                             onClick={() => setShowBalances(!showBalances)}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-600 text-white text-xs rounded-lg font-medium hover:bg-gray-700 transition-colors whitespace-nowrap"
