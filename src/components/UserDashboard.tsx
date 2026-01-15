@@ -943,6 +943,9 @@ export default function UserDashboard() {
 function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppointment, accountApproved, isImpersonating, impersonatedUser, hasApprovedOneOnOne, onNavigateToPortfolio, user, emailVerified, firstAppointmentCompleted }: any) {
   const [showExchangeWarningPopup, setShowExchangeWarningPopup] = useState(false);
   const [showSelfCustodyPopup, setShowSelfCustodyPopup] = useState(false);
+  const [fearGreedIndex, setFearGreedIndex] = useState<number | null>(null);
+  const [fearGreedLoading, setFearGreedLoading] = useState(true);
+  const [currentWarningIndex, setCurrentWarningIndex] = useState(0);
   
   // 🐛 DEBUG MODE - Toggle via console: localStorage.setItem('wallet_debug', 'true') or localStorage.setItem('wallet_debug', 'false')
   const DEBUG = typeof localStorage !== 'undefined' && localStorage.getItem('wallet_debug') === 'true';
@@ -1145,6 +1148,46 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
     const interval = setInterval(loadPrice, 60000); // Update elke minuut
     return () => clearInterval(interval);
   }, []);
+
+  // Load Fear and Greed Index
+  useEffect(() => {
+    const loadFearGreedIndex = async () => {
+      try {
+        setFearGreedLoading(true);
+        // Fetch from Alternative.me API
+        const response = await fetch('https://api.alternative.me/fng/?limit=1');
+        const data = await response.json();
+        if (data.data && data.data.length > 0) {
+          setFearGreedIndex(parseInt(data.data[0].value));
+        }
+      } catch (error) {
+        console.error('Error loading Fear and Greed Index:', error);
+      } finally {
+        setFearGreedLoading(false);
+      }
+    };
+    loadFearGreedIndex();
+    const interval = setInterval(loadFearGreedIndex, 300000); // Update elke 5 minuten
+    return () => clearInterval(interval);
+  }, []);
+
+  // Rotate warnings with blur effect
+  useEffect(() => {
+    const warnings = [
+      { type: 'exchange', id: 'exchange' },
+      ...(hasWallet && walletData ? [{ type: 'wallet', id: 'wallet' }] : []),
+      { type: 'common1', id: 'common1' },
+      { type: 'common2', id: 'common2' },
+      { type: 'common3', id: 'common3' },
+      { type: 'tip', id: 'tip' }
+    ];
+    
+    const interval = setInterval(() => {
+      setCurrentWarningIndex((prev) => (prev + 1) % warnings.length);
+    }, 5000); // Change every 5 seconds
+    
+    return () => clearInterval(interval);
+  }, [hasWallet, walletData]);
 
   // Load wallet status and questions on mount
   useEffect(() => {
@@ -2082,56 +2125,124 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">⚠️ Belangrijke Waarschuwingen</h3>
           
-          <div className="space-y-4">
-            {/* Waarschuwing 1: Laat crypto niet op exchanges */}
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-2 flex-1">
-                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-red-900 mb-1">
-                      Laat je crypto niet op exchanges
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowExchangeWarningPopup(true)}
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium whitespace-nowrap"
+          <div className="relative min-h-[200px]">
+            {(() => {
+              const allWarnings = [
+                {
+                  id: 'exchange',
+                  content: (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-2 flex-1">
+                          <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-xs font-semibold text-red-900">
+                              Laat je crypto niet op exchanges
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setShowExchangeWarningPopup(true)}
+                          className="text-xs text-blue-600 hover:text-blue-700 font-medium whitespace-nowrap"
+                        >
+                          Waarom?
+                        </button>
+                      </div>
+                    </div>
+                  )
+                },
+                ...(hasWallet && walletData ? [{
+                  id: 'wallet',
+                  content: (
+                    <div 
+                      className={`border rounded-lg p-3 cursor-pointer transition-colors ${
+                        walletData?.balance > 0 
+                          ? 'bg-green-50 border-green-200 hover:bg-green-100' 
+                          : 'bg-yellow-50 border-yellow-200 hover:bg-yellow-100'
+                      }`}
+                      onClick={() => setShowSelfCustodyPopup(true)}
+                    >
+                      <div className="flex items-start gap-2">
+                        {walletData?.balance > 0 ? (
+                          <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <Lock className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                        )}
+                        <div className="flex-1">
+                          <p className={`text-xs font-semibold ${
+                            walletData?.balance > 0 ? 'text-green-900' : 'text-yellow-900'
+                          }`}>
+                            Bitcoin staat in eigen wallet veilig
+                          </p>
+                          {walletData?.balance > 0 && (
+                            <p className="text-[10px] text-green-700 mt-0.5">
+                              ✓ Je hebt Bitcoin in je eigen wallet
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                }] : []),
+                {
+                  id: 'common1',
+                  content: (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <div className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-gray-700">Koop nooit via DM's</p>
+                      </div>
+                    </div>
+                  )
+                },
+                {
+                  id: 'common2',
+                  content: (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <div className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-gray-700">Deel nooit je seed</p>
+                      </div>
+                    </div>
+                  )
+                },
+                {
+                  id: 'common3',
+                  content: (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <div className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-gray-700">Laat BTC niet lang op exchanges</p>
+                      </div>
+                    </div>
+                  )
+                },
+                {
+                  id: 'tip',
+                  content: (
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                      <p className="text-xs font-semibold text-orange-900 mb-1">💡 Niet je keys = niet je Bitcoin</p>
+                      <p className="text-[10px] text-orange-800">
+                        Gebruik altijd alleen je eigen wallet om zeker te weten dat jij je Bitcoin bezit.
+                      </p>
+                    </div>
+                  )
+                }
+              ];
+              
+              return allWarnings.map((warning, index) => (
+                <div
+                  key={warning.id}
+                  className={`absolute inset-0 transition-all duration-1000 ${
+                    index === currentWarningIndex % allWarnings.length
+                      ? 'opacity-100 blur-0'
+                      : 'opacity-0 blur-sm pointer-events-none'
+                  }`}
                 >
-                  Waarom?
-                </button>
-              </div>
-            </div>
-
-            {/* Waarschuwing 2: Bitcoin in eigen wallet */}
-            <div 
-              className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                walletData?.balance > 0 
-                  ? 'bg-green-50 border-green-200 hover:bg-green-100' 
-                  : 'bg-yellow-50 border-yellow-200 hover:bg-yellow-100'
-              }`}
-              onClick={() => setShowSelfCustodyPopup(true)}
-            >
-              <div className="flex items-start gap-2">
-                {walletData?.balance > 0 ? (
-                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                ) : (
-                  <Lock className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                )}
-                <div className="flex-1">
-                  <p className={`text-sm font-semibold mb-1 ${
-                    walletData?.balance > 0 ? 'text-green-900' : 'text-yellow-900'
-                  }`}>
-                    Bitcoin staat in eigen wallet veilig
-                  </p>
-                  {walletData?.balance > 0 && (
-                    <p className="text-xs text-green-700">
-                      ✓ Je hebt Bitcoin in je eigen wallet
-                    </p>
-                  )}
+                  {warning.content}
                 </div>
-              </div>
-            </div>
+              ));
+            })()}
           </div>
           </div>
         </div>
@@ -2146,70 +2257,113 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   </div>
         )}
         
-        {/* Leer & Waarschuwingen - 1/3 breedte */}
+        {/* Fear and Greed Index - 1/3 breedte */}
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">📚 Leer & Waarschuwingen</h3>
-            <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Vragen Beantwoord &gt;</a>
+            <h3 className="text-lg font-semibold text-gray-900">📊 Fear & Greed Index</h3>
+            <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:text-blue-700">
+              Meer info &gt;
+            </a>
           </div>
 
-          <div className="mb-4">
-            <h4 className="font-semibold text-gray-900 mb-3">⚠️ Veelgemaakte fouten</h4>
-            <div className="space-y-2 mb-4">
-              <div className="flex items-start gap-2">
-                <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-700">Koop nooit via DM's</p>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-700">Deel nooit je seed</p>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-700">Laat BTC niet lang op exchanges</p>
-              </div>
+          {fearGreedLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
             </div>
-          </div>
+          ) : fearGreedIndex !== null ? (
+            <div>
+              {(() => {
+                const getFearGreedLabel = (index: number) => {
+                  if (index < 25) return { label: 'Extreme Fear', color: 'red', gradient: 'from-red-500 to-red-600' };
+                  if (index < 45) return { label: 'Fear', color: 'orange', gradient: 'from-orange-500 to-orange-600' };
+                  if (index < 55) return { label: 'Neutral', color: 'gray', gradient: 'from-gray-500 to-gray-600' };
+                  if (index < 75) return { label: 'Greed', color: 'green', gradient: 'from-green-500 to-green-600' };
+                  return { label: 'Extreme Greed', color: 'emerald', gradient: 'from-emerald-500 to-emerald-600' };
+                };
+                const fg = getFearGreedLabel(fearGreedIndex);
                 
-          <div className="pt-4 border-t border-gray-200">
-            <h4 className="font-semibold text-gray-900 mb-2">💡 Tip van vandaag</h4>
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-3">
-              <p className="font-semibold text-orange-900 mb-1 text-sm">Niet je keys = niet je Bitcoin</p>
-              <p className="text-xs text-orange-800">
-                Gebruik altijd alleen je eigen wallet om zeker te weten dat jij je Bitcoin bezit.
-              </p>
+                return (
+                  <div>
+                    <div className="relative w-full h-32 mb-4">
+                      <svg className="w-full h-full" viewBox="0 0 200 200">
+                        <defs>
+                          <linearGradient id="fearGreedGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stopColor={fg.color === 'red' ? '#ef4444' : fg.color === 'orange' ? '#f97316' : fg.color === 'green' ? '#22c55e' : fg.color === 'emerald' ? '#10b981' : '#6b7280'} />
+                            <stop offset="100%" stopColor={fg.color === 'red' ? '#dc2626' : fg.color === 'orange' ? '#ea580c' : fg.color === 'green' ? '#16a34a' : fg.color === 'emerald' ? '#059669' : '#4b5563'} />
+                          </linearGradient>
+                        </defs>
+                        <circle
+                          cx="100"
+                          cy="100"
+                          r="80"
+                          fill="none"
+                          stroke="#e5e7eb"
+                          strokeWidth="12"
+                        />
+                        <circle
+                          cx="100"
+                          cy="100"
+                          r="80"
+                          fill="none"
+                          stroke="url(#fearGreedGradient)"
+                          strokeWidth="12"
+                          strokeDasharray={`${(fearGreedIndex / 100) * 502.65} 502.65`}
+                          strokeLinecap="round"
+                          transform="rotate(-90 100 100)"
+                          className="transition-all duration-1000"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="text-3xl font-bold text-gray-900">{fearGreedIndex}</div>
+                          <div className={`text-xs font-medium bg-gradient-to-r ${fg.gradient} bg-clip-text text-transparent`}>
+                            {fg.label}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-600 text-center">
+                      De Fear & Greed Index meet het marktsentiment. Extreme fear kan koopkansen betekenen, extreme greed waarschuwt voor overenthousiasme.
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
-          </div>
-
-          {/* Hulp nodig? */}
-          <div className="pt-4 border-t border-gray-200 mt-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Hulp nodig?</h3>
-            <p className="text-sm text-gray-700 mb-4">
-              Twijfel of vragen? Wij helpen je persoonlijk.
-            </p>
-            <div className="space-y-3">
-              <button
-                onClick={() => onBookAppointment && onBookAppointment()}
-                className="w-full bg-orange-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
-              >
-                <Calendar className="w-5 h-5" />
-                Plan gesprek
-              </button>
-              <button
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'helpdesk' }));
-                  }
-                }}
-                className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-              >
-                <MessageSquare className="w-5 h-5" />
-                Stel je vraag
-              </button>
-          </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500 text-sm">
+              Kon Fear & Greed Index niet laden
+            </div>
+          )}
         </div>
       </div>
-    </div>
+
+      {/* Hulp nodig? - Apart blok */}
+      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900 mb-3">Hulp nodig?</h3>
+        <p className="text-sm text-gray-700 mb-4">
+          Twijfel of vragen? Wij helpen je persoonlijk.
+        </p>
+        <div className="space-y-3">
+          <button
+            onClick={() => onBookAppointment && onBookAppointment()}
+            className="w-full bg-orange-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
+          >
+            <Calendar className="w-5 h-5" />
+            Plan gesprek
+          </button>
+          <button
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'helpdesk' }));
+              }
+            }}
+            className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+          >
+            <MessageSquare className="w-5 h-5" />
+            Stel je vraag
+          </button>
+        </div>
+      </div>
 
       {/* Stappenblokken (Ledger & Coinbase) - Onderaan naast elkaar (1/2 1/2) */}
       <ReferralBlocksWithHelp onBookAppointment={onBookAppointment} />
