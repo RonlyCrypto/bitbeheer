@@ -218,29 +218,71 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
 
   const filteredData = getFilteredChartData();
 
+  // Get the latest price from chart data
+  const latestChartPrice = filteredData.length > 0 ? filteredData[filteredData.length - 1].price : null;
+  
+  // Calculate 24h change from chart data
+  const calculate24hChange = () => {
+    if (!filteredData || filteredData.length < 2) return null;
+    
+    const latest = filteredData[filteredData.length - 1];
+    const latestDate = new Date(latest.date);
+    
+    // Find price from 24 hours ago
+    const yesterdayDate = new Date(latestDate);
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    
+    // Find closest data point to 24 hours ago
+    let yesterdayPrice = null;
+    for (let i = filteredData.length - 1; i >= 0; i--) {
+      const pointDate = new Date(filteredData[i].date);
+      if (pointDate <= yesterdayDate) {
+        yesterdayPrice = filteredData[i].price;
+        break;
+      }
+    }
+    
+    // If no data point found, use the first available point
+    if (yesterdayPrice === null && filteredData.length > 0) {
+      yesterdayPrice = filteredData[0].price;
+    }
+    
+    if (yesterdayPrice && latestChartPrice) {
+      const change = latestChartPrice - yesterdayPrice;
+      const changePercent = yesterdayPrice > 0 ? (change / yesterdayPrice) * 100 : 0;
+      return { change, changePercent };
+    }
+    
+    return null;
+  };
+
+  const change24h = calculate24hChange();
+
   return (
     <div className="bg-white rounded-xl p-6 shadow-lg">
       {/* Chart Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <h3 className="text-xl font-bold text-gray-900">📊 Live Bitcoin Chart</h3>
-          {priceData && (
+          {latestChartPrice && (
             <div className="flex items-center gap-2">
               <span className="text-2xl font-bold text-gray-900">
-                {formatPrice(priceData.price)}
+                {formatPrice(latestChartPrice)}
               </span>
-              <div className={`flex items-center gap-1 ${
-                priceData.changePercent24h >= 0 ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {priceData.changePercent24h >= 0 ? (
-                  <TrendingUp className="w-4 h-4" />
-                ) : (
-                  <TrendingDown className="w-4 h-4" />
-                )}
-                <span className="text-sm font-medium">
-                  {priceData.changePercent24h >= 0 ? '+' : ''}{priceData.changePercent24h.toFixed(2)}%
-                </span>
-              </div>
+              {change24h && (
+                <div className={`flex items-center gap-1 ${
+                  change24h.changePercent >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {change24h.changePercent >= 0 ? (
+                    <TrendingUp className="w-4 h-4" />
+                  ) : (
+                    <TrendingDown className="w-4 h-4" />
+                  )}
+                  <span className="text-sm font-medium">
+                    {change24h.changePercent >= 0 ? '+' : ''}{change24h.changePercent.toFixed(2)}%
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </div>
