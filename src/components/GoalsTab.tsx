@@ -1047,76 +1047,76 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
               <div className="space-y-4">
                 {selectedGoalTemplate !== 'custom' ? (
                   <>
-                    <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                      <p className="text-sm font-medium text-orange-900">
-                        {DEFAULT_GOALS.find(g => g.id === selectedGoalTemplate)?.title}
-                      </p>
-                    </div>
+                  <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                    <p className="text-sm font-medium text-orange-900">
+                      {DEFAULT_GOALS.find(g => g.id === selectedGoalTemplate)?.title}
+                    </p>
+                  </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Timeframe (maanden)</label>
-                      <input
-                        type="number"
-                        value={newGoalData.timeframeMonths}
-                        onChange={(e) => setNewGoalData({ ...newGoalData, timeframeMonths: parseInt(e.target.value) || 1 })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                        min="1"
-                        max="120"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        {newGoalData.timeframeMonths} maand{newGoalData.timeframeMonths !== 1 ? 'en' : ''} = {Math.floor(newGoalData.timeframeMonths / 12)} jaar{newGoalData.timeframeMonths % 12 > 0 ? ` en ${newGoalData.timeframeMonths % 12} maand${newGoalData.timeframeMonths % 12 !== 1 ? 'en' : ''}` : ''}
-                      </p>
-                    </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Timeframe (maanden)</label>
+                  <input
+                    type="number"
+                    value={newGoalData.timeframeMonths}
+                    onChange={(e) => setNewGoalData({ ...newGoalData, timeframeMonths: parseInt(e.target.value) || 1 })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                    min="1"
+                    max="120"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {newGoalData.timeframeMonths} maand{newGoalData.timeframeMonths !== 1 ? 'en' : ''} = {Math.floor(newGoalData.timeframeMonths / 12)} jaar{newGoalData.timeframeMonths % 12 > 0 ? ` en ${newGoalData.timeframeMonths % 12} maand${newGoalData.timeframeMonths % 12 !== 1 ? 'en' : ''}` : ''}
+                  </p>
+                </div>
 
-                    {/* Show calculation preview for default BTC goals */}
+                {/* Show calculation preview for default BTC goals */}
                     {selectedGoalTemplate && selectedGoalTemplate.startsWith('default_') && (
-                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                        {(() => {
-                          const template = DEFAULT_GOALS.find(g => g.id === selectedGoalTemplate);
-                          if (!template || !('targetBitcoinAmount' in template)) return null;
-                          
-                          const monthly = calculateMonthlySavings(
-                            template.targetBitcoinAmount,
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    {(() => {
+                      const template = DEFAULT_GOALS.find(g => g.id === selectedGoalTemplate);
+                      if (!template || !('targetBitcoinAmount' in template)) return null;
+                      
+                      const monthly = calculateMonthlySavings(
+                        template.targetBitcoinAmount,
                             template.currentBitcoinAmount || currentBalance,
-                            newGoalData.timeframeMonths
-                          );
-                          const remaining = calculateRemaining(
-                            template.targetBitcoinAmount,
+                        newGoalData.timeframeMonths
+                      );
+                      const remaining = calculateRemaining(
+                        template.targetBitcoinAmount,
                             template.currentBitcoinAmount || currentBalance,
-                            true
-                          );
+                        true
+                      );
 
-                          return (
-                            <div className="space-y-2 text-sm">
-                              <p className="font-semibold text-gray-900">Berekening:</p>
-                              <p className="text-gray-700">
-                                Target: <span className="font-bold">{template.targetBitcoinAmount} BTC</span> (€{(template.targetBitcoinAmount * bitcoinPrice).toLocaleString('nl-NL')})
-                              </p>
-                              <p className="text-gray-700">
-                                Nog nodig: <span className="font-bold">{remaining} BTC</span>
-                              </p>
-                              <p className="text-gray-700">
-                                Maandelijks sparen: <span className="font-bold">€{monthly.toLocaleString('nl-NL')}</span>
-                              </p>
-                              <p className="text-gray-700">
-                                Over {newGoalData.timeframeMonths} maand{newGoalData.timeframeMonths !== 1 ? 'en' : ''}
-                              </p>
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    )}
+                      return (
+                        <div className="space-y-2 text-sm">
+                          <p className="font-semibold text-gray-900">Berekening:</p>
+                          <p className="text-gray-700">
+                            Target: <span className="font-bold">{template.targetBitcoinAmount} BTC</span> (€{(template.targetBitcoinAmount * bitcoinPrice).toLocaleString('nl-NL')})
+                          </p>
+                          <p className="text-gray-700">
+                            Nog nodig: <span className="font-bold">{remaining} BTC</span>
+                          </p>
+                          <p className="text-gray-700">
+                            Maandelijks sparen: <span className="font-bold">€{monthly.toLocaleString('nl-NL')}</span>
+                          </p>
+                          <p className="text-gray-700">
+                            Over {newGoalData.timeframeMonths} maand{newGoalData.timeframeMonths !== 1 ? 'en' : ''}
+                          </p>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
 
-                    <div className="flex gap-3 pt-4">
-                      <button
-                        onClick={() => setSelectedGoalTemplate(null)}
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={() => setSelectedGoalTemplate(null)}
                         className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
-                      >
-                        Terug
-                      </button>
-                      <button
-                        onClick={handleCreateGoal}
-                        disabled={loading}
+                  >
+                    Terug
+                  </button>
+                  <button
+                    onClick={handleCreateGoal}
+                    disabled={loading}
                         className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors disabled:opacity-50"
                       >
                         {loading ? 'Toevoegen...' : 'Toevoegen'}
@@ -1256,8 +1256,8 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
                         className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors disabled:opacity-50"
                       >
                         {loading ? 'Toevoegen...' : 'Toevoegen'}
-                      </button>
-                    </div>
+                  </button>
+                </div>
                   </>
                 )}
               </div>
@@ -1309,6 +1309,27 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
             const analysis = isMonthlyBTC ? analyzeMonthlyGoalTransactions(goal) : null;
             const streak = analysis?.streak || 0;
 
+            // For monthly BTC goals, parse the monthly amount from title/description
+            let monthlyBTCAmount = 0;
+            if (isMonthlyBTC) {
+              const btcMatch = goal.title?.match(/(\d+\.?\d*)\s*BTC/i) || goal.description?.match(/(\d+\.?\d*)\s*BTC/i);
+              if (btcMatch) {
+                monthlyBTCAmount = parseFloat(btcMatch[1]);
+              } else if (goal.targetBitcoinAmount) {
+                monthlyBTCAmount = goal.targetBitcoinAmount;
+              } else if (goal.targetAmount && bitcoinPrice > 0) {
+                // If targetAmount is in EUR, convert to BTC
+                monthlyBTCAmount = goal.targetAmount / bitcoinPrice;
+              }
+            }
+
+            // For monthly BTC goals, calculate progress based on current wallet balance vs monthly target
+            if (isMonthlyBTC && monthlyBTCAmount > 0) {
+              // Progress is based on how much of the monthly target is in the wallet
+              progress = Math.min(100, (currentBalance / monthlyBTCAmount) * 100);
+              remaining = Math.max(0, monthlyBTCAmount - currentBalance).toFixed(4);
+            }
+
             return (
               <div key={goal.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div className="flex items-start justify-between mb-4">
@@ -1336,7 +1357,7 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
                         {analysis.streakBroken && !analysis.isPaused && (
                           <span className="text-xs px-2 py-0.5 bg-red-100 text-red-700 rounded-full">⚠️ Verbroken</span>
                         )}
-                      </div>
+                  </div>
                     )}
                     {isMonthlyBTC && analysis && analysis.missedCount > 0 && (
                       <div className="mt-2 text-xs text-red-600">
@@ -1357,12 +1378,12 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
                         <Target className="w-4 h-4" />
                       </button>
                     )}
-                    <button
-                      onClick={() => deleteGoal(goal.id)}
-                      className="text-gray-400 hover:text-red-600 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  <button
+                    onClick={() => deleteGoal(goal.id)}
+                    className="text-gray-400 hover:text-red-600 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                   </div>
                 </div>
 
@@ -1382,7 +1403,22 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
 
                 {/* Goal Details */}
                 <div className="space-y-2 text-sm">
-                  {isBTC ? (
+                  {isMonthlyBTC ? (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Huidige BTC:</span>
+                        <span className="font-medium text-gray-900">{currentBalance.toFixed(4)} BTC</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Maandelijks doel:</span>
+                        <span className="font-medium text-gray-900">{monthlyBTCAmount.toFixed(4)} BTC</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Nog nodig:</span>
+                        <span className="font-bold text-orange-600">{remaining} BTC</span>
+                      </div>
+                    </>
+                  ) : isBTC ? (
                     <>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Huidige hoeveelheid:</span>
