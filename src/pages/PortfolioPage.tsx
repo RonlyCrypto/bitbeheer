@@ -575,7 +575,7 @@ export default function PortfolioPage() {
       <div className="container mx-auto px-4 py-0 md:py-0 pb-20 md:pb-12">
         <div className="max-w-7xl mx-auto">
           {/* Stats Cards */}
-          <div className="grid md:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-4 gap-2 md:gap-4 mb-6">
             <div className="bg-white rounded-xl p-3 shadow-lg">
               <div className="flex items-center gap-2 mb-2">
                 <div className="bg-green-100 p-1.5 rounded-lg">
@@ -644,8 +644,8 @@ export default function PortfolioPage() {
             </div>
           )}
 
-          {/* Only show "Wallet Toevoegen" button if no wallets exist */}
-          {wallets.length === 0 && !loadingWallets && (
+            {/* Only show "Wallet Toevoegen" button if no wallets exist */}
+            {wallets.length === 0 && !loadingWallets && (
             <div className="mb-8">
               <button
                 onClick={() => setShowAddWallet(!showAddWallet)}
@@ -739,40 +739,40 @@ export default function PortfolioPage() {
               {wallets.map((wallet) => {
                 const addedDate = (() => {
                   try {
-                    if (!wallet.firstSeen) {
-                      const walletWithCreatedAt = wallets.find(w => w.id === wallet.id);
-                      if (walletWithCreatedAt && (walletWithCreatedAt as any).created_at) {
-                        const date = new Date((walletWithCreatedAt as any).created_at);
-                        if (!isNaN(date.getTime())) {
-                          return date.toLocaleDateString('nl-NL', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric'
-                          });
-                        }
-                      }
-                      return 'Onbekend';
-                    }
-                    
-                    let date: Date;
-                    if (typeof wallet.firstSeen === 'string' && wallet.firstSeen.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                      date = new Date(wallet.firstSeen + 'T00:00:00');
-                    } else {
-                      date = new Date(wallet.firstSeen);
-                    }
-                    
-                    if (isNaN(date.getTime())) {
-                      return wallet.firstSeen || 'Onbekend';
-                    }
-                    
-                    return date.toLocaleDateString('nl-NL', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric'
-                    });
-                  } catch (e) {
-                    return 'Onbekend';
-                  }
+                              if (!wallet.firstSeen) {
+                                const walletWithCreatedAt = wallets.find(w => w.id === wallet.id);
+                                if (walletWithCreatedAt && (walletWithCreatedAt as any).created_at) {
+                                  const date = new Date((walletWithCreatedAt as any).created_at);
+                                  if (!isNaN(date.getTime())) {
+                                    return date.toLocaleDateString('nl-NL', {
+                                      day: '2-digit',
+                                      month: '2-digit',
+                                      year: 'numeric'
+                                    });
+                                  }
+                                }
+                                return 'Onbekend';
+                              }
+                              
+                              let date: Date;
+                              if (typeof wallet.firstSeen === 'string' && wallet.firstSeen.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                                date = new Date(wallet.firstSeen + 'T00:00:00');
+                              } else {
+                                date = new Date(wallet.firstSeen);
+                              }
+                              
+                              if (isNaN(date.getTime())) {
+                                return wallet.firstSeen || 'Onbekend';
+                              }
+                              
+                              return date.toLocaleDateString('nl-NL', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric'
+                              });
+                            } catch (e) {
+                              return 'Onbekend';
+                            }
                 })();
 
                 return (
@@ -791,28 +791,28 @@ export default function PortfolioPage() {
                             <span className="text-xs text-gray-500">•</span>
                             <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded font-mono">
                               {wallet.address.slice(0, 6)}...{wallet.address.slice(-6)}
-                            </code>
-                            <button
-                              onClick={() => copyAddress(wallet.address)}
+                        </code>
+                        <button
+                          onClick={() => copyAddress(wallet.address)}
                               className="p-0.5 text-gray-600 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
-                              title="Kopieer adres"
-                            >
-                              {copiedAddress === wallet.address ? (
+                          title="Kopieer adres"
+                        >
+                          {copiedAddress === wallet.address ? (
                                 <Check className="w-3 h-3 text-green-600" />
-                              ) : (
+                          ) : (
                                 <Copy className="w-3 h-3" />
-                              )}
-                            </button>
+                          )}
+                        </button>
                             <span className="text-xs text-gray-500">•</span>
                             <span className="text-xs font-semibold text-gray-900">
                               {showBalances ? `${wallet.balance.toFixed(4)} BTC` : '•••• BTC'}
                             </span>
                             <span className="text-xs text-gray-500">•</span>
                             <span className="text-xs text-gray-600">{wallet.transactions} transacties</span>
-                          </div>
-                        </div>
                       </div>
-                      
+                    </div>
+                    </div>
+
                       {/* Settings dropdown */}
                       <div className="relative flex-shrink-0">
                         <button
@@ -846,8 +846,8 @@ export default function PortfolioPage() {
                             </div>
                           </>
                         )}
-                      </div>
                     </div>
+                  </div>
 
                     {/* Chart Integratie with buttons */}
                     <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
@@ -856,12 +856,12 @@ export default function PortfolioPage() {
                           <div className="flex items-center gap-2 mb-1">
                             <AlertCircle className="w-4 h-4 text-orange-600" />
                             <span className="text-xs font-medium text-orange-800">Chart Integratie</span>
-                          </div>
+                    </div>
                           <p className="text-xs text-orange-700">
-                            Deze wallet wordt automatisch gekoppeld aan de Bitcoin Geschiedenis chart. 
-                            Je inkoop punten worden getoond op de grafiek.
-                          </p>
-                        </div>
+                      Deze wallet wordt automatisch gekoppeld aan de Bitcoin Geschiedenis chart. 
+                      Je inkoop punten worden getoond op de grafiek.
+                    </p>
+                  </div>
                         <div className="flex flex-row gap-2 flex-shrink-0">
                           <button
                             onClick={() => setShowBalances(!showBalances)}
@@ -878,7 +878,7 @@ export default function PortfolioPage() {
                             {loadingWallets ? <Loader2 className="w-3 h-3 animate-spin" /> : <Loader2 className="w-3 h-3" />}
                             Verversen
                           </button>
-                        </div>
+                </div>
                       </div>
                     </div>
                   </div>
@@ -936,55 +936,55 @@ export default function PortfolioPage() {
                 const showPerPage = filteredTransactions.length > 25;
                 
                 return (
-                  <div className="bg-white rounded-lg p-4 border border-gray-200 mb-6">
+              <div className="bg-white rounded-lg p-4 border border-gray-200 mb-6">
                     <div className="flex items-center justify-between flex-wrap gap-4">
                       {/* Left side: Filter and Per page */}
                       <div className="flex items-center gap-4 flex-wrap">
                         {/* Filter - Show as buttons on larger screens, dropdown on smaller */}
                         <div className="hidden lg:flex items-center gap-3">
-                          <span className="text-sm font-semibold text-gray-700">Filter transacties:</span>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => {
-                                setTransactionFilter('all');
-                                setCurrentPage(1);
-                              }}
-                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                                transactionFilter === 'all'
-                                  ? 'bg-orange-600 text-white shadow-md'
-                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              }`}
-                            >
-                              Alle
-                            </button>
-                            <button
-                              onClick={() => {
-                                setTransactionFilter('buy');
-                                setCurrentPage(1);
-                              }}
-                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                                transactionFilter === 'buy'
-                                  ? 'bg-green-600 text-white shadow-md'
-                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              }`}
-                            >
-                              Koop
-                            </button>
-                            <button
-                              onClick={() => {
-                                setTransactionFilter('sell');
-                                setCurrentPage(1);
-                              }}
-                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                                transactionFilter === 'sell'
-                                  ? 'bg-red-600 text-white shadow-md'
-                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              }`}
-                            >
-                              Verkoop
-                            </button>
-                          </div>
-                        </div>
+                  <span className="text-sm font-semibold text-gray-700">Filter transacties:</span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setTransactionFilter('all');
+                        setCurrentPage(1);
+                      }}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        transactionFilter === 'all'
+                          ? 'bg-orange-600 text-white shadow-md'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      Alle
+                    </button>
+                    <button
+                      onClick={() => {
+                        setTransactionFilter('buy');
+                        setCurrentPage(1);
+                      }}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        transactionFilter === 'buy'
+                          ? 'bg-green-600 text-white shadow-md'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      Koop
+                    </button>
+                    <button
+                      onClick={() => {
+                        setTransactionFilter('sell');
+                        setCurrentPage(1);
+                      }}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        transactionFilter === 'sell'
+                          ? 'bg-red-600 text-white shadow-md'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      Verkoop
+                    </button>
+                  </div>
+                </div>
                         
                         {/* Filter dropdown for smaller screens or when space is limited */}
                         <div className="lg:hidden relative" ref={filterDropdownRef}>
@@ -1040,55 +1040,55 @@ export default function PortfolioPage() {
                               </button>
                             </div>
                           )}
-                        </div>
-                        
+              </div>
+
                         {/* Per pagina selector - only show if more than 25 transactions */}
                         {showPerPage && (
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm font-medium text-gray-700">Per pagina:</span>
-                            <div className="flex gap-2">
-                              {[25, 50, 100].map(num => (
-                                <button
-                                  key={num}
-                                  onClick={() => {
-                                    setItemsPerPage(num);
-                                    setCurrentPage(1);
-                                  }}
-                                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                                    itemsPerPage === num
-                                      ? 'bg-orange-600 text-white'
-                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                  }`}
-                                >
-                                  {num}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-gray-700">Per pagina:</span>
+                    <div className="flex gap-2">
+                      {[25, 50, 100].map(num => (
+                        <button
+                          key={num}
+                          onClick={() => {
+                            setItemsPerPage(num);
+                            setCurrentPage(1);
+                          }}
+                          className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                            itemsPerPage === num
+                              ? 'bg-orange-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                         )}
-                      </div>
+                </div>
 
                       {/* Right side: Pagination */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">
                           Pagina {currentPage} van {totalPages || 1}
-                        </span>
-                        <button
-                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                          disabled={currentPage === 1}
-                          className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                        >
-                          ← Vorige
-                        </button>
-                        <button
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                  >
+                    ← Vorige
+                  </button>
+                  <button
                           onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                           disabled={currentPage >= totalPages || totalPages <= 1}
-                          className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                        >
+                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                  >
                           Volgende →
-                        </button>
-                      </div>
-                    </div>
+                  </button>
+                </div>
+              </div>
                   </div>
                 );
               })()}
@@ -1115,37 +1115,37 @@ export default function PortfolioPage() {
               </div>
 
               {/* Bottom Pagination */}
-              {(() => {
-                const filteredTransactions = allTransactions.filter(tx => {
-                  if (transactionFilter === 'all') return true;
-                  if (transactionFilter === 'buy') return tx.value > 0;
-                  if (transactionFilter === 'sell') return tx.value < 0;
-                  return true;
-                });
+                  {(() => {
+                    const filteredTransactions = allTransactions.filter(tx => {
+                      if (transactionFilter === 'all') return true;
+                      if (transactionFilter === 'buy') return tx.value > 0;
+                      if (transactionFilter === 'sell') return tx.value < 0;
+                      return true;
+                    });
                 const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
                 
                 return (
                   <div className="bg-white rounded-lg p-4 border border-gray-200 mt-6 flex items-center justify-between">
                     <span className="text-sm text-gray-600">
                       {filteredTransactions.length > 0 ? (
-                        `${(currentPage - 1) * itemsPerPage + 1} tot ${Math.min(currentPage * itemsPerPage, filteredTransactions.length)} van ${filteredTransactions.length} transacties`
-                      ) : (
-                        'Geen transacties'
+                      `${(currentPage - 1) * itemsPerPage + 1} tot ${Math.min(currentPage * itemsPerPage, filteredTransactions.length)} van ${filteredTransactions.length} transacties`
+                    ) : (
+                      'Geen transacties'
                       )}
-                    </span>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                        disabled={currentPage === 1}
-                        className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                      >
-                        ← Vorige
-                      </button>
-                      <button
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                  >
+                    ← Vorige
+                  </button>
+                  <button
                         onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                         disabled={currentPage >= totalPages || totalPages <= 1}
-                        className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                      >
+                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                  >
                         Volgende →
                       </button>
                     </div>

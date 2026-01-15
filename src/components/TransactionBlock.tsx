@@ -498,7 +498,7 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
             <div className="text-xs font-semibold text-gray-700 mb-1.5">Performance</div>
             <div className="relative">
               {/* Percentage label - centered above bar */}
-              <div className="absolute left-1/2 -translate-x-1/2 -top-4 z-20">
+              <div className="absolute left-1/2 -translate-x-1/2 -top-5 z-20">
                 <span 
                   className={`text-xs font-semibold whitespace-nowrap ${
                     isProfit ? 'text-green-700' : 'text-red-700'

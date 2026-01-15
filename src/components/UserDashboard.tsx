@@ -3678,7 +3678,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                 <div
                   key={milestone.value}
                   className="absolute flex flex-col items-center group"
-                  style={{ left: `${position}%`, transform: 'translateX(-50%)', zIndex: 10, top: '0' }}
+                  style={{ left: `${position}%`, transform: 'translateX(-50%)', zIndex: 10, top: '-2px' }}
                 >
                   {/* Tooltip */}
                   <div className="absolute bottom-full mb-2 hidden group-hover:block z-20">
@@ -3706,7 +3706,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                   {/* Dot marker - positioned half overlapping the bar, close to text (balk is op mt-4 = 16px, dot moet half overlappen) */}
                   <div 
                     className={`w-3 h-3 rounded-full border-2 border-white shadow-md transition-all ${isReached ? 'bg-green-500' : 'bg-gray-400'}`}
-                    style={{ marginTop: '4px', marginBottom: '-6px' }}
+                    style={{ marginTop: '2px', marginBottom: '-6px' }}
                   ></div>
                 </div>
               );
