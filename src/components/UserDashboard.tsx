@@ -58,6 +58,7 @@ import NotificationSettings from './NotificationSettings';
 import GoalsTab from './GoalsTab';
 import MarketStatusWidget from './MarketStatusWidget';
 import UserSidebar from './UserSidebar';
+import UserDashboardMobileNav from './UserDashboardMobileNav';
 
 interface UserProfile {
   id: string;
@@ -760,7 +761,7 @@ export default function UserDashboard() {
       </div>
 
       <div className="min-h-screen bg-gray-100 flex">
-        {/* User Sidebar */}
+        {/* User Sidebar - Hidden on mobile */}
         <UserSidebar 
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -769,10 +770,10 @@ export default function UserDashboard() {
           unreadChatCount={unreadChatCount}
         />
 
-        {/* Main Content */}
-        <div className="flex-1 overflow-auto">
-          <div className="p-8">
-            <div className="max-w-7xl">
+        {/* Main Content - Full width on mobile */}
+        <div className="flex-1 overflow-auto w-full md:w-auto pb-20 md:pb-0">
+          <div className="p-4 md:p-8">
+            <div className="max-w-7xl w-full">
             {activeTab === 'overview' && <OverviewTab 
               userProfile={userProfile} 
               goals={goals} 
@@ -820,6 +821,7 @@ export default function UserDashboard() {
                 </div>
               </div>
             )} */}
+
             {/* Appointments tab - tijdelijk verborgen */}
             {/* 
             {activeTab === 'appointments' && (
@@ -874,6 +876,15 @@ export default function UserDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Mobile Bottom Navigation for User Dashboard */}
+      <UserDashboardMobileNav
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        accountApproved={accountApproved}
+        hasApprovedOneOnOne={hasApprovedOneOnOne}
+        unreadChatCount={unreadChatCount}
+      />
 
       {/* Profile Popup */}
       <ProfilePopup
@@ -3699,8 +3710,8 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                   ></div>
                 </div>
               );
-            })}
-          </div>
+                          })}
+                        </div>
           
           {/* Progress bar */}
           <div className="w-full bg-gray-200 rounded-full h-2 relative">
@@ -3708,8 +3719,8 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
               className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full transition-all duration-500"
               style={{ width: `${Math.min(100, Math.max(0, milestoneProgress.progress))}%` }}
             ></div>
-          </div>
-        </div>
+                        </div>
+                          </div>
 
         {/* Milestone Status List */}
         <div className="space-y-2 mb-4">
@@ -3914,9 +3925,9 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                   )}
                   {!isCompleted && (goal.type === 'btc' || goal.type === 'milestone_step') && progress.remaining > 0 && (
                     <>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        nog {progress.remaining.toFixed(4)} BTC te gaan
-                      </p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      nog {progress.remaining.toFixed(4)} BTC te gaan
+                    </p>
                       {goal.timeframe && goal.created_at && (() => {
                         // Parse timeframe (e.g., "5 maanden" -> 5)
                         const timeframeMatch = goal.timeframe.match(/(\d+)/);

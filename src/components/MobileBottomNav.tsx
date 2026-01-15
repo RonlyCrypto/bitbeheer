@@ -16,6 +16,11 @@ export default function MobileBottomNav() {
     return null;
   }
 
+  // Hide on user dashboard (UserDashboardMobileNav handles it)
+  if (location.pathname === '/user-dashboard' || location.pathname === '/') {
+    return null;
+  }
+
   const isActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
