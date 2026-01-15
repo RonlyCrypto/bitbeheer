@@ -1345,22 +1345,32 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
               const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
               const monthsSinceStart = Math.max(1, Math.floor((currentMonthStart.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30)) + 1);
               
-              // Count completed months (completed or made_up, excluding future months)
-              const completedMonths = analysis.months.filter((m: any) => 
-                (m.status === 'completed' || m.status === 'made_up') && 
-                !m.isFutureMonth &&
+              // Count completed months (completed or made_up, excluding future months and current month)
+              const pastMonths = analysis.months.filter((m: any) => 
+                m.isPastMonth &&
                 m.date >= startDate
+              );
+              const completedPastMonths = pastMonths.filter((m: any) => 
+                m.status === 'completed' || m.status === 'made_up'
               ).length;
               
-              // Progress = completed months / total months since start
+              // Get current month data
+              const currentMonthData = analysis.months.find((m: any) => m.isCurrentMonth);
+              let currentMonthProgress = 0;
+              if (currentMonthData && currentMonthData.totalAmount > 0) {
+                // Current month progress = (amount deposited / monthly target) as a fraction of 1 month
+                currentMonthProgress = Math.min(1, currentMonthData.totalAmount / monthlyBTCAmount);
+              }
+              
+              // Total progress = (completed past months + current month progress) / total months since start
+              const totalProgress = completedPastMonths + currentMonthProgress;
               if (monthsSinceStart > 0) {
-                progress = Math.min(100, (completedMonths / monthsSinceStart) * 100);
+                progress = Math.min(100, (totalProgress / monthsSinceStart) * 100);
               } else {
                 progress = 0;
               }
 
               // Calculate remaining for current month
-              const currentMonthData = analysis.months.find((m: any) => m.isCurrentMonth);
               if (currentMonthData) {
                 remaining = Math.max(0, monthlyBTCAmount - currentMonthData.totalAmount).toFixed(4);
               } else {
@@ -1460,19 +1470,28 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
                         const startDate = new Date(goalStartDate.getFullYear(), goalStartDate.getMonth(), 1);
                         const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
                         const monthsSinceStart = Math.max(1, Math.floor((currentMonthStart.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30)) + 1);
-                        const completedMonths = analysis.months.filter((m: any) => 
-                          (m.status === 'completed' || m.status === 'made_up') && 
-                          !m.isFutureMonth &&
+                        
+                        // Count completed past months
+                        const pastMonths = analysis.months.filter((m: any) => 
+                          m.isPastMonth &&
                           m.date >= startDate
+                        );
+                        const completedPastMonths = pastMonths.filter((m: any) => 
+                          m.status === 'completed' || m.status === 'made_up'
                         ).length;
+                        
                         const currentMonthData = analysis.months.find((m: any) => m.isCurrentMonth);
                         const currentMonthDeposited = currentMonthData ? currentMonthData.totalAmount : 0;
+                        const isCurrentMonthCompleted = currentMonthData && currentMonthData.totalAmount >= monthlyBTCAmount;
+                        
+                        // Total completed months = past completed + current (if completed)
+                        const totalCompleted = completedPastMonths + (isCurrentMonthCompleted ? 1 : 0);
                         
                         return (
                           <>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Voltooide maanden:</span>
-                              <span className="font-medium text-gray-900">{completedMonths} / {monthsSinceStart}</span>
+                              <span className="font-medium text-gray-900">{totalCompleted} / {monthsSinceStart}</span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Deze maand gestort:</span>
