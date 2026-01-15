@@ -531,7 +531,17 @@ export default function PriceChart({
           });
 
           // Determine if this is a buy or sell based on purchaseDetails
-          const purchaseDetail = purchaseDetails.find(p => p.date === purchase.date);
+          // Match op date en hash voor betere matching
+          const purchaseDetail = purchaseDetails.find(p => {
+            if (p.date === purchase.date) {
+              // Als hash beschikbaar is, match daarop voor betere precisie
+              if (purchase.hash && p.transaction?.hash) {
+                return p.transaction.hash === purchase.hash;
+              }
+              return true;
+            }
+            return false;
+          });
           const isBuy = purchaseDetail ? (purchaseDetail.isBuy !== undefined ? purchaseDetail.isBuy : purchaseDetail.amount > 0) : true;
           const isProfitable = purchaseDetail ? (purchaseDetail.profit > 0) : true;
           const isFullySold = purchaseDetail ? (purchaseDetail.isFullySold === true) : false;
@@ -582,12 +592,13 @@ export default function PriceChart({
           ctx.fillStyle = '#ffffff';
           ctx.fill();
           
-          // Add purchase number above/below the arrow
+          // Add purchase number above/below the arrow (use monthNumber from purchaseDetail for chronological numbering)
           ctx.fillStyle = pointColor;
           ctx.font = 'bold 12px sans-serif';
           ctx.textAlign = 'center';
           const labelY = isBuy ? y - 25 : y + 25;
-          ctx.fillText(`#${index + 1}`, x, labelY);
+          const transactionNumber = purchaseDetail?.monthNumber || (index + 1);
+          ctx.fillText(`#${transactionNumber}`, x, labelY);
           
           drawnCount++;
           console.log(`Successfully drew purchase point ${index + 1} at position:`, { x, y });
@@ -1245,27 +1256,32 @@ export default function PriceChart({
                         }`}>
                           {isBuy 
                             ? (isFullySold 
-                                ? `Inkoop #${hoveredPoint.purchaseDetail.monthNumber || ''} (Verkocht)`
-                                : `Inkoop #${hoveredPoint.purchaseDetail.monthNumber || ''}`)
+                                ? `Inkoop #${hoveredPoint.purchaseDetail.monthNumber || ''} (Verkocht - Niet meer actief)`
+                                : `Inkoop #${hoveredPoint.purchaseDetail.monthNumber || ''} (Actief)`)
                             : 'Verkoop'}
                         </div>
                       </div>
                       {isBuy ? (
                         <div className="space-y-1 text-xs">
-                          {isFullySold && soldTo.length > 0 && (
+                          {isFullySold && (
                             <div className="mb-2 p-2 bg-gray-600/50 rounded border border-gray-500">
-                              <div className="text-gray-300 text-[10px] mb-1">Verkocht aan:</div>
-                              {soldTo.map((sell: any, idx: number) => {
-                                const sellDate = new Date(sell.sellTx.time * 1000).toLocaleDateString('nl-NL', { 
-                                  day: 'numeric', 
-                                  month: 'short' 
-                                });
-                                return (
-                                  <div key={idx} className="text-blue-300 text-[10px]">
-                                    {sellDate}: {sell.amount.toFixed(8)} BTC
-                                  </div>
-                                );
-                              })}
+                              <div className="text-gray-400 text-[10px] font-semibold mb-1">⚠️ Deze trade is volledig verkocht en niet meer actief</div>
+                              {soldTo.length > 0 && (
+                                <>
+                                  <div className="text-gray-300 text-[10px] mb-1">Verkocht aan:</div>
+                                  {soldTo.map((sell: any, idx: number) => {
+                                    const sellDate = new Date(sell.sellTx.time * 1000).toLocaleDateString('nl-NL', { 
+                                      day: 'numeric', 
+                                      month: 'short' 
+                                    });
+                                    return (
+                                      <div key={idx} className="text-blue-300 text-[10px]">
+                                        {sellDate}: {sell.amount.toFixed(8)} BTC
+                                      </div>
+                                    );
+                                  })}
+                                </>
+                              )}
                             </div>
                           )}
                           <div className="flex justify-between">

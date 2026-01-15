@@ -114,7 +114,9 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
   };
 
   // Convert transactions to purchase points for the chart
-  const purchasePoints = showTransactions ? transactions.map(tx => {
+  // Sorteer eerst chronologisch zodat de nummering klopt
+  const sortedTransactionsForPoints = [...transactions].sort((a, b) => a.time - b.time);
+  const purchasePoints = showTransactions ? sortedTransactionsForPoints.map(tx => {
     // Validate transaction data
     if (!tx.time || !tx.price || isNaN(tx.time) || isNaN(tx.price)) {
       console.warn(`⚠️ Invalid transaction data:`, tx);
@@ -122,9 +124,11 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
     }
     return {
       date: new Date(tx.time * 1000).toISOString().split('T')[0],
-      price: tx.price
+      price: tx.price,
+      hash: tx.hash, // Voeg hash toe voor matching met purchaseDetails
+      time: tx.time
     };
-  }).filter(Boolean) as Array<{ date: string; price: number }> : [];
+  }).filter(Boolean) as Array<{ date: string; price: number; hash?: string; time?: number }> : [];
 
   // Track which buys are fully sold (FIFO)
   const calculateSoldStatus = () => {
@@ -164,12 +168,21 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
   const buySoldStatus = calculateSoldStatus();
 
   // Create purchase details with buy/sell information
+  // Eerst sorteren op tijd voor chronologische nummering
+  const sortedTransactions = [...transactions].sort((a, b) => a.time - b.time);
+  
   const purchaseDetails = showTransactions ? transactions.map((tx, index) => {
     if (!tx.time || !tx.price || isNaN(tx.time) || isNaN(tx.price)) {
       return null;
     }
     const isBuy = tx.value > 0;
     const btcAmount = Math.abs(tx.value) / 100000000;
+    
+    // Vind chronologische index voor nummering (oudste = #1)
+    const chronologicalIndex = sortedTransactions.findIndex(t => 
+      t.hash === tx.hash && t.time === tx.time
+    );
+    const transactionNumber = chronologicalIndex !== -1 ? chronologicalIndex + 1 : index + 1;
     
     // For sells, calculate buy price using FIFO from previous transactions
     let buyPrice = null;
@@ -225,7 +238,7 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
       amount: isBuy ? btcAmount * tx.price : -(btcAmount * tx.price), // EUR value
       price: tx.price,
       btcAcquired: isBuy ? btcAmount : -btcAmount,
-      monthNumber: index + 1,
+      monthNumber: transactionNumber,
       currentValue: tx.currentValue || 0,
       isBuy: isBuy,
       profit: tx.profit || 0,

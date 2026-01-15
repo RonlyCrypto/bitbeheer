@@ -1188,64 +1188,87 @@ export default function PortfolioPage() {
               })()}
 
               <div className="grid gap-6">
-                {allTransactions
+                {(() => {
+                  // Sorteer alle transacties chronologisch (oudste eerst) voor nummering
+                  const sortedAllTxs = [...allTransactions].sort((a, b) => a.time - b.time);
+                  
+                  // Filter en sorteer voor weergave (nieuwste eerst)
+                  const filteredAndSorted = allTransactions
                   .filter(tx => {
                     if (transactionFilter === 'all') return true;
                     if (transactionFilter === 'buy') return tx.value > 0;
                     if (transactionFilter === 'sell') return tx.value < 0;
+                      if (transactionFilter === 'active') {
+                        if (tx.value > 0) {
+                          const txIndex = allTransactions.findIndex(t => 
+                            t.hash === tx.hash && t.time === tx.time
+                          );
+                          return txIndex !== -1 && !calculateBuySoldStatus.get(txIndex);
+                        }
+                        return false;
+                      }
                     return true;
                   })
-                  .sort((a, b) => b.time - a.time) // Nieuwste eerst
+                    .sort((a, b) => b.time - a.time); // Nieuwste eerst voor weergave
+                  
+                  return filteredAndSorted
                   .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                  .map((transaction, index) => {
-                    const txIndex = allTransactions.findIndex(t => 
-                      t.hash === transaction.hash && t.time === transaction.time
-                    );
-                    const isFullySold = transaction.value > 0 && txIndex !== -1 
-                      ? calculateBuySoldStatus.get(txIndex) === true
-                      : false;
-                    
-                    // Find which sell transactions this buy was sold to
-                    const sortedTxs = [...allTransactions].sort((a, b) => a.time - b.time);
-                    const sortedIndex = sortedTxs.findIndex(t => 
-                      t.hash === transaction.hash && t.time === transaction.time
-                    );
-                    let soldToTransactions: BitcoinTransaction[] = [];
-                    
-                    if (isFullySold && sortedIndex !== -1 && transaction.value > 0) {
-                      // Calculate which sells matched this buy (FIFO)
-                      const buyAmount = Math.abs(transaction.value) / 100000000;
-                      let remainingToMatch = buyAmount;
+                    .map((transaction, index) => {
+                      // Vind de chronologische index voor nummering (oudste = #1)
+                      const chronologicalIndex = sortedAllTxs.findIndex(t => 
+                        t.hash === transaction.hash && t.time === transaction.time
+                      );
+                      const transactionNumber = chronologicalIndex !== -1 ? chronologicalIndex + 1 : index + 1;
                       
-                      for (let i = sortedIndex + 1; i < sortedTxs.length && remainingToMatch > 0; i++) {
-                        if (sortedTxs[i].value < 0) { // Sell
-                          const sellAmount = Math.abs(sortedTxs[i].value) / 100000000;
-                          const matchedAmount = Math.min(sellAmount, remainingToMatch);
-                          if (matchedAmount > 0) {
-                            const originalSellIndex = allTransactions.findIndex(t => 
-                              t.hash === sortedTxs[i].hash && t.time === sortedTxs[i].time
-                            );
-                            if (originalSellIndex !== -1) {
-                              soldToTransactions.push(allTransactions[originalSellIndex]);
+                      const txIndex = allTransactions.findIndex(t => 
+                        t.hash === transaction.hash && t.time === transaction.time
+                      );
+                      const isFullySold = transaction.value > 0 && txIndex !== -1 
+                        ? calculateBuySoldStatus.get(txIndex) === true
+                        : false;
+                      
+                      // Find which sell transactions this buy was sold to
+                      const sortedTxs = [...allTransactions].sort((a, b) => a.time - b.time);
+                      const sortedIndex = sortedTxs.findIndex(t => 
+                        t.hash === transaction.hash && t.time === transaction.time
+                      );
+                      let soldToTransactions: BitcoinTransaction[] = [];
+                      
+                      if (isFullySold && sortedIndex !== -1 && transaction.value > 0) {
+                        // Calculate which sells matched this buy (FIFO)
+                        const buyAmount = Math.abs(transaction.value) / 100000000;
+                        let remainingToMatch = buyAmount;
+                        
+                        for (let i = sortedIndex + 1; i < sortedTxs.length && remainingToMatch > 0; i++) {
+                          if (sortedTxs[i].value < 0) { // Sell
+                            const sellAmount = Math.abs(sortedTxs[i].value) / 100000000;
+                            const matchedAmount = Math.min(sellAmount, remainingToMatch);
+                            if (matchedAmount > 0) {
+                              const originalSellIndex = allTransactions.findIndex(t => 
+                                t.hash === sortedTxs[i].hash && t.time === sortedTxs[i].time
+                              );
+                              if (originalSellIndex !== -1) {
+                                soldToTransactions.push(allTransactions[originalSellIndex]);
+                              }
+                              remainingToMatch -= matchedAmount;
                             }
-                            remainingToMatch -= matchedAmount;
                           }
                         }
                       }
-                    }
-                    
-                    return (
+                      
+                      return (
                     <TransactionBlock
                       key={`${transaction.hash}-${index}`}
                       transaction={transaction}
-                      index={(currentPage - 1) * itemsPerPage + index + 1}
+                        index={transactionNumber}
                       onTransactionClick={setSelectedTransaction}
                       allTransactions={allTransactions}
-                        isFullySold={isFullySold}
-                        soldToTransactions={soldToTransactions}
+                          isFullySold={isFullySold}
+                          soldToTransactions={soldToTransactions}
                     />
-                    );
-                  })}
+                      );
+                    });
+                })()}
               </div>
 
               {/* Bottom Pagination */}
