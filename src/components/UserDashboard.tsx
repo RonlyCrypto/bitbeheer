@@ -950,6 +950,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
   const [previousATH, setPreviousATH] = useState<number>(69000);
   const [latestATH, setLatestATH] = useState<number>(124753);
   const [hypotheticalInvestment, setHypotheticalInvestment] = useState<number>(500);
+  const [showFearGreedPopup, setShowFearGreedPopup] = useState(false);
+  const [fearGreedHistory, setFearGreedHistory] = useState<any[]>([]);
+  const [nextUpdateTime, setNextUpdateTime] = useState<Date | null>(null);
   
   // 🐛 DEBUG MODE - Toggle via console: localStorage.setItem('wallet_debug', 'true') or localStorage.setItem('wallet_debug', 'false')
   const DEBUG = typeof localStorage !== 'undefined' && localStorage.getItem('wallet_debug') === 'true';
@@ -1158,11 +1161,44 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
     const loadFearGreedIndex = async () => {
       try {
         setFearGreedLoading(true);
-        // Fetch from Alternative.me API
-        const response = await fetch('https://api.alternative.me/fng/?limit=1');
+        // Fetch current and historical data from Alternative.me API
+        const response = await fetch('https://api.alternative.me/fng/?limit=30');
         const data = await response.json();
         if (data.data && data.data.length > 0) {
           setFearGreedIndex(parseInt(data.data[0].value));
+          
+          // Get historical values (now, yesterday, last week, last month)
+          const now = data.data[0];
+          const yesterday = data.data.find((d: any) => {
+            const date = new Date(parseInt(d.timestamp) * 1000);
+            const today = new Date();
+            return date.toDateString() === new Date(today.getTime() - 24 * 60 * 60 * 1000).toDateString();
+          }) || data.data[1] || now;
+          
+          const weekAgo = data.data.find((d: any) => {
+            const date = new Date(parseInt(d.timestamp) * 1000);
+            const today = new Date();
+            return date.getTime() <= today.getTime() - 7 * 24 * 60 * 60 * 1000;
+          }) || data.data[6] || now;
+          
+          const monthAgo = data.data.find((d: any) => {
+            const date = new Date(parseInt(d.timestamp) * 1000);
+            const today = new Date();
+            return date.getTime() <= today.getTime() - 30 * 24 * 60 * 60 * 1000;
+          }) || data.data[data.data.length - 1] || now;
+          
+          setFearGreedHistory([
+            { label: 'Nu', value: parseInt(now.value), timestamp: parseInt(now.timestamp) },
+            { label: 'Gisteren', value: parseInt(yesterday.value), timestamp: parseInt(yesterday.timestamp) },
+            { label: 'Vorige week', value: parseInt(weekAgo.value), timestamp: parseInt(weekAgo.timestamp) },
+            { label: 'Vorige maand', value: parseInt(monthAgo.value), timestamp: parseInt(monthAgo.timestamp) }
+          ]);
+          
+          // Calculate next update time (updates every hour, on the hour)
+          const nowDate = new Date();
+          const nextHour = new Date(nowDate);
+          nextHour.setHours(nowDate.getHours() + 1, 0, 0, 0);
+          setNextUpdateTime(nextHour);
         }
       } catch (error) {
         console.error('Error loading Fear and Greed Index:', error);
@@ -1188,6 +1224,18 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
     };
     loadATHData();
   }, []);
+
+  // Update countdown timer every second
+  useEffect(() => {
+    if (!nextUpdateTime) return;
+    
+    const interval = setInterval(() => {
+      // Force re-render to update countdown
+      setNextUpdateTime(prev => prev ? new Date(prev.getTime()) : null);
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [nextUpdateTime]);
 
   // Rotate common mistakes with blur effect (only the 3 common mistakes rotate)
   useEffect(() => {
@@ -2245,7 +2293,11 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             </div>
 
             {/* Tip van vandaag - Blijft staan */}
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+            <div className="relative bg-orange-50 border border-orange-200 rounded-lg p-3">
+              {/* Lintje in rechterbovenhoek */}
+              <div className="absolute -top-2 -right-2 bg-orange-600 text-white text-[10px] font-bold px-2 py-1 rounded-tl-lg rounded-tr-lg rounded-br-lg shadow-md z-10">
+                TIP VAN DE DAG
+              </div>
               <p className="text-xs font-semibold text-orange-900 mb-1">💡 Niet je keys = niet je Bitcoin</p>
               <p className="text-[10px] text-orange-800">
                 Gebruik altijd alleen je eigen wallet om zeker te weten dat jij je Bitcoin bezit.
@@ -2271,9 +2323,12 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-base font-semibold text-gray-900">📊 Fear & Greed Index</h3>
-              <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:text-blue-700">
+              <button
+                onClick={() => setShowFearGreedPopup(true)}
+                className="text-xs text-blue-600 hover:text-blue-700"
+              >
                 Meer info &gt;
-              </a>
+              </button>
           </div>
 
             {fearGreedLoading ? (
@@ -2634,6 +2689,215 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 
       {/* Stappenblokken (Ledger & Coinbase) - Onderaan naast elkaar (1/2 1/2) */}
       <ReferralBlocksWithHelp onBookAppointment={onBookAppointment} />
+
+      {/* Fear & Greed Index Popup */}
+      {showFearGreedPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowFearGreedPopup(false)}>
+          <div className="bg-white rounded-xl shadow-xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                  <BarChart3 className="w-6 h-6 text-orange-600" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900">Fear & Greed Index</h3>
+                  <p className="text-sm text-gray-600">Multifactorial Crypto Market Sentiment Analysis</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowFearGreedPopup(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Main Gauge */}
+              <div className="md:col-span-2">
+                {fearGreedIndex !== null ? (
+                  <div>
+                    {(() => {
+                      const getFearGreedLabel = (index: number) => {
+                        if (index < 25) return { label: 'Extreme Fear', color: 'red', bgColor: '#ef4444' };
+                        if (index < 45) return { label: 'Fear', color: 'orange', bgColor: '#f97316' };
+                        if (index < 55) return { label: 'Neutral', color: 'gray', bgColor: '#6b7280' };
+                        if (index < 75) return { label: 'Greed', color: 'green', bgColor: '#22c55e' };
+                        return { label: 'Extreme Greed', color: 'emerald', bgColor: '#10b981' };
+                      };
+                      const fg = getFearGreedLabel(fearGreedIndex);
+                      const angle = (fearGreedIndex / 100) * 180;
+                      
+                      return (
+                        <div>
+                          <div className="relative w-full h-48 mb-4">
+                            <svg className="w-full h-full" viewBox="0 0 200 120" style={{ overflow: 'visible' }}>
+                              <defs>
+                                <linearGradient id="fearGreedGradientPopup" x1="0%" y1="0%" x2="100%" y2="0%">
+                                  <stop offset="0%" stopColor="#ef4444" />
+                                  <stop offset="25%" stopColor="#f97316" />
+                                  <stop offset="50%" stopColor="#eab308" />
+                                  <stop offset="75%" stopColor="#84cc16" />
+                                  <stop offset="100%" stopColor="#22c55e" />
+                                </linearGradient>
+                              </defs>
+                              {/* Background arc */}
+                              <path
+                                d="M 20 100 A 80 80 0 0 1 180 100"
+                                fill="none"
+                                stroke="#e5e7eb"
+                                strokeWidth="10"
+                                strokeLinecap="round"
+                              />
+                              {/* Colored arc */}
+                              <path
+                                d="M 20 100 A 80 80 0 0 1 180 100"
+                                fill="none"
+                                stroke="url(#fearGreedGradientPopup)"
+                                strokeWidth="10"
+                                strokeLinecap="round"
+                                className="transition-all duration-1000"
+                              />
+                              {/* Needle */}
+                              <g transform={`translate(100, 100) rotate(${angle - 90})`}>
+                                <line
+                                  x1="0"
+                                  y1="0"
+                                  x2="0"
+                                  y2="-70"
+                                  stroke="#6b7280"
+                                  strokeWidth="4"
+                                  strokeLinecap="round"
+                                />
+                                <circle
+                                  cx="0"
+                                  cy="0"
+                                  r="8"
+                                  fill="#6b7280"
+                                />
+                                {/* Bitcoin logo at center */}
+                                <text
+                                  x="0"
+                                  y="3"
+                                  textAnchor="middle"
+                                  fontSize="12"
+                                  fill="white"
+                                  fontWeight="bold"
+                                >
+                                  ₿
+                                </text>
+                              </g>
+                              {/* Value indicator at needle tip */}
+                              <g transform={`translate(100, 100) rotate(${angle - 90}) translate(0, -70)`}>
+                                <ellipse
+                                  cx="0"
+                                  cy="0"
+                                  rx="24"
+                                  ry="16"
+                                  fill={fg.bgColor}
+                                />
+                                <text
+                                  x="0"
+                                  y="5"
+                                  textAnchor="middle"
+                                  fill="white"
+                                  fontSize="16"
+                                  fontWeight="bold"
+                                >
+                                  {fearGreedIndex}
+                                </text>
+                              </g>
+                            </svg>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-lg text-gray-700">
+                              Nu: <span className={`font-bold ${fg.color === 'red' ? 'text-red-600' : fg.color === 'orange' ? 'text-orange-600' : fg.color === 'green' ? 'text-green-600' : fg.color === 'emerald' ? 'text-emerald-600' : 'text-gray-600'}`}>{fg.label}</span>
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-gray-500">
+                    Kon Fear & Greed Index niet laden
+                  </div>
+                )}
+              </div>
+
+              {/* Historical Values */}
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Historical Values</h4>
+                <div className="space-y-3">
+                  {fearGreedHistory.map((item, index) => {
+                    const getLabel = (val: number) => {
+                      if (val < 25) return 'Extreme Fear';
+                      if (val < 45) return 'Fear';
+                      if (val < 55) return 'Neutral';
+                      if (val < 75) return 'Greed';
+                      return 'Extreme Greed';
+                    };
+                    const getColor = (val: number) => {
+                      if (val < 25) return 'bg-red-500';
+                      if (val < 45) return 'bg-orange-500';
+                      if (val < 55) return 'bg-yellow-500';
+                      if (val < 75) return 'bg-green-500';
+                      return 'bg-emerald-500';
+                    };
+                    const label = getLabel(item.value);
+                    const color = getColor(item.value);
+                    
+                    return (
+                      <div key={index} className="flex items-center justify-between py-2 border-b border-gray-200 last:border-0">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-8 h-8 rounded-full ${color} flex items-center justify-center text-white text-xs font-bold`}>
+                            {item.value}
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">{item.label}</div>
+                            <div className="text-xs text-gray-500">{label}</div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-xs text-blue-800">
+                    <strong>Wat betekenen Historical Values?</strong><br />
+                    Deze waarden tonen hoe het marktsentiment zich heeft ontwikkeld over tijd. Extreme Fear kan koopkansen betekenen, terwijl Extreme Greed waarschuwt voor mogelijke overwaardering.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Next Update */}
+            {nextUpdateTime && (
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h4 className="text-lg font-semibold text-gray-900 mb-3">Next Update</h4>
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600 mb-1">The next update will happen in:</p>
+                  <p className="text-lg font-bold text-gray-900">
+                    {(() => {
+                      const now = new Date();
+                      const diff = nextUpdateTime.getTime() - now.getTime();
+                      if (diff <= 0) return 'Nu beschikbaar';
+                      const hours = Math.floor(diff / (1000 * 60 * 60));
+                      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                      return `${hours} ${hours === 1 ? 'uur' : 'uur'}, ${minutes} ${minutes === 1 ? 'minuut' : 'minuten'}, ${seconds} ${seconds === 1 ? 'seconde' : 'seconden'}`;
+                    })()}
+                  </p>
+                </div>
+                <div className="mt-4 text-xs text-gray-500 flex items-center justify-between">
+                  <span>alternative.me</span>
+                  <span>Last updated: {new Date().toLocaleDateString('nl-NL', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Exchange Warning Popup */}
       {showExchangeWarningPopup && (
