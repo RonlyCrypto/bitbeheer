@@ -1976,101 +1976,12 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 
       {/* Grid Layout: Linkerkolom | Rechterkolom */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* LINKERKOLOM - Bitcoin Veiligheidscheck + Wallet (8 kolommen) */}
+        {/* LINKERKOLOM - Wallet (8 kolommen) */}
         <div className="lg:col-span-8 space-y-6">
-          {/* Bitcoin Veiligheidscheck - Vervangt aanmeldproces na goedkeuring */}
-          {!isLoading && accountApproved && (firstAppointmentCompleted || hasApprovedOneOnOne) ? (
-            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">🔐 Jouw Bitcoin Veiligheidscheck</h3>
-              <div className="space-y-3">
-            {/* Stap 1: Account aangemaakt */}
-            <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="font-medium text-gray-900">Account aangemaakt</p>
-            </div>
-              <button className="text-sm text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1">
-                Toevoegen <ArrowRight className="w-4 h-4" />
-              </button>
-                    </div>
-            
-            {/* Stap 2: Wallet toevoegen */}
-            {hasWallet ? (
-              <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-            <div className="flex-1">
-                  <p className="font-medium text-gray-900">Wallet toegevoegd</p>
-                  </div>
-                </div>
-            ) : (
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="w-5 h-5 border-2 border-gray-400 rounded-full flex-shrink-0"></div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">Wallet toevoegen</p>
-            </div>
-            <button
-                  onClick={() => setShowWalletForm(true)}
-                  className="text-sm text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1"
-            >
-                  Toevoegen <ArrowRight className="w-4 h-4" />
-            </button>
-        </div>
-      )}
-
-            {/* Stap 3: Seed phrase veilig opgeslagen */}
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="w-5 h-5 border-2 border-gray-400 rounded-full flex-shrink-0"></div>
-                <div className="flex-1">
-                <p className="font-medium text-gray-900">Seed phrase veilig opgeslagen</p>
-        </div>
-              <button className="text-sm text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1">
-                Uitleg <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-            
-            {/* Stap 4: Eerste aankoop gedaan */}
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="w-5 h-5 border-2 border-gray-400 rounded-full flex-shrink-0"></div>
-                <div className="flex-1">
-                <p className="font-medium text-gray-900">Eerste aankoop gedaan</p>
-                </div>
-              <button className="text-sm text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1">
-                Start <ArrowRight className="w-4 h-4" />
-              </button>
-              </div>
-
-            {/* Stap 5: Bitcoin verplaatst naar eigen wallet */}
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="w-5 h-5 border-2 border-gray-400 rounded-full flex-shrink-0"></div>
-              <div className="flex-1">
-                <p className="font-medium text-gray-900">Bitcoin verplaatst naar eigen wallet</p>
-          </div>
-              <button className="text-sm text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1">
-                Uitleg <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Uitleg nodig?</a>
-          <button
-            onClick={() => {
-                // Navigate to helpdesk
-                if (typeof window !== 'undefined') {
-                  window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'helpdesk' }));
-                }
-              }}
-              className="w-full mt-3 bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
-            >
-              <HelpCircle className="w-5 h-5" />
-              Hulp nodig? Stel je vraag
-          </button>
-        </div>
-            </div>
-          ) : null}
+          {/* Lege ruimte - Veiligheidscheck verwijderd */}
         </div>
       </div>
-
+            
       {/* Wallet en Waarschuwingen Blok - Naast elkaar - Volledige breedte */}
       {hasWallet && walletData && !showSuccessMessage && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
