@@ -1,5 +1,6 @@
 // Bitcoin API service voor echte wallet data
 import { supabase } from '../lib/supabase';
+import logger from '../utils/logger';
 
 export interface BitcoinTransaction {
   hash: string;
@@ -69,7 +70,7 @@ class BitcoinApiService {
           // Rate limited - wacht langer
           const retryAfter = parseInt(response.headers.get('Retry-After') || '60');
           const waitTime = Math.min(retryAfter * 1000, Math.pow(2, attempt) * 1000);
-          console.warn(`⚠️ Rate limited (429). Wacht ${waitTime}ms voor retry ${attempt + 1}/${retries}`);
+          logger.warn(`⚠️ Rate limited (429). Wacht ${waitTime}ms voor retry ${attempt + 1}/${retries}`);
           await new Promise(resolve => setTimeout(resolve, waitTime));
           continue;
         }
@@ -82,7 +83,7 @@ class BitcoinApiService {
       } catch (error) {
         if (attempt === retries - 1) throw error;
         const waitTime = Math.pow(2, attempt) * 1000; // Exponential backoff
-        console.warn(`⚠️ Request failed, retry in ${waitTime}ms...`);
+        logger.warn(`⚠️ Request failed, retry in ${waitTime}ms...`);
         await new Promise(resolve => setTimeout(resolve, waitTime));
       }
     }
@@ -95,7 +96,7 @@ class BitcoinApiService {
     // Check cache eerst
     const cached = this.walletCache.get(address);
     if (cached && (Date.now() - cached.timestamp) < this.CACHE_DURATION) {
-      console.log(`✅ Using cached wallet data for ${address.slice(0, 8)}...`);
+      logger.debug(`✅ Using cached wallet data for ${address.slice(0, 8)}...`);
       return cached.data;
     }
 
@@ -104,13 +105,14 @@ class BitcoinApiService {
       const walletResponse = await this.rateLimitedFetch(`${this.baseUrl}/address/${address}`);
       const walletData = await walletResponse.json();
 
-      // Haal ALLE transacties op van Blockstream (paginate through all results)
-      console.log(`🔄 Fetching ALL transactions for ${address}...`);
+      // Haal transacties op van Blockstream (met limiet voor wallets met veel tx's)
+      logger.debug(`🔄 Fetching transactions for ${address}...`);
       
       let allTransactions: any[] = [];
       let afterTxid: string | null = null;
       let page = 0;
-      let maxPages = 100; // Safety limit
+      const MAX_TRANSACTIONS = 500; // Limiet voor wallets met veel transacties (voorkomt rate limiting)
+      const maxPages = 50; // Safety limit (was 100, nu 50 voor betere performance)
       
       // Keep fetching until we have all transactions
       while (page < maxPages) {
@@ -119,38 +121,51 @@ class BitcoinApiService {
           ? `${this.baseUrl}/address/${address}/txs?after_txid=${afterTxid}`
           : `${this.baseUrl}/address/${address}/txs`;
         
-        console.log(`📄 Fetching page ${page}...`);
+        logger.debug(`📄 Fetching page ${page}...`);
         
         try {
-          // Rate limiting: wacht 1 seconde tussen paginering requests
+          // Rate limiting: wacht 1.5 seconde tussen paginering requests (verhoogd voor betere rate limiting)
           if (page > 1) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          }
+          
+          // Stop als we de limiet hebben bereikt
+          if (allTransactions.length >= MAX_TRANSACTIONS) {
+            logger.warn(`⚠️ Transaction limit reached (${MAX_TRANSACTIONS}). Stopping pagination to prevent rate limiting.`);
+            break;
           }
           
           const response = await this.rateLimitedFetch(url);
           if (!response.ok) {
-            console.error(`❌ Blockstream API error on page ${page}: ${response.status}`);
+            logger.error(`❌ Blockstream API error on page ${page}: ${response.status}`);
             break;
           }
           
           const pageTransactions = await response.json();
           
           if (!Array.isArray(pageTransactions)) {
-            console.warn(`⚠️ Page ${page} returned non-array response:`, pageTransactions);
+            logger.warn(`⚠️ Page ${page} returned non-array response:`, pageTransactions);
             break;
           }
           
           if (pageTransactions.length === 0) {
-            console.log(`📄 Page ${page}: got 0 transactions - end of results`);
+            logger.debug(`📄 Page ${page}: got 0 transactions - end of results`);
             break;
           }
           
           allTransactions = allTransactions.concat(pageTransactions);
-          console.log(`📄 Page ${page}: got ${pageTransactions.length} transactions (total: ${allTransactions.length})`);
+          logger.debug(`📄 Page ${page}: got ${pageTransactions.length} transactions (total: ${allTransactions.length})`);
+          
+          // Stop als we de limiet hebben bereikt na deze pagina
+          if (allTransactions.length >= MAX_TRANSACTIONS) {
+            logger.warn(`⚠️ Transaction limit reached (${MAX_TRANSACTIONS}). Showing most recent ${MAX_TRANSACTIONS} transactions.`);
+            allTransactions = allTransactions.slice(0, MAX_TRANSACTIONS);
+            break;
+          }
           
           // If we got less than 25, we've reached the end
           if (pageTransactions.length < 25) {
-            console.log(`📄 Page ${page} returned < 25 transactions, end of results`);
+            logger.debug(`📄 Page ${page} returned < 25 transactions, end of results`);
             break;
           }
           
@@ -159,13 +174,13 @@ class BitcoinApiService {
           if (lastTx?.txid) {
             const nextAfterTxid = lastTx.txid;
             afterTxid = nextAfterTxid;
-            console.log(`📄 Next page will use after_txid: ${nextAfterTxid.slice(0, 8)}...`);
+            logger.debug(`📄 Next page will use after_txid: ${nextAfterTxid.slice(0, 8)}...`);
           } else {
-            console.log(`📄 No txid found in last transaction, stopping pagination`);
+            logger.debug(`📄 No txid found in last transaction, stopping pagination`);
             break;
           }
         } catch (paginationError) {
-          console.error(`❌ Error fetching page ${page}:`, paginationError);
+          logger.error(`❌ Error fetching page ${page}:`, paginationError);
           break;
         }
       }
@@ -173,7 +188,7 @@ class BitcoinApiService {
       const transactions = allTransactions;
       
       if (!Array.isArray(transactions) || transactions.length === 0) {
-        console.warn(`⚠️ No transactions found for ${address}`);
+        logger.warn(`⚠️ No transactions found for ${address}`);
         return {
           address,
           balance: 0,
@@ -186,7 +201,7 @@ class BitcoinApiService {
         };
       }
       
-      console.log(`📄 Fetched ${transactions.length} transaction hashes from blockchain (will process all of them)`);
+      logger.debug(`📄 Fetched ${transactions.length} transaction hashes from blockchain (will process all of them)`);
 
       // Verwerk transacties
       const processedTransactions: BitcoinTransaction[] = [];
@@ -196,7 +211,7 @@ class BitcoinApiService {
       // Get current price once
       const currentPrice = await this.getCurrentPrice();
       
-      console.log(`🔍 Processing ALL ${transactions.length} transactions from blockchain...`);
+      logger.debug(`🔍 Processing ${transactions.length} transactions from blockchain...`);
       
       // Reset cached block height for this batch
       this.cachedBlockHeight = null;
@@ -252,7 +267,7 @@ class BitcoinApiService {
                 }
                 confirmations = this.cachedBlockHeight - txData.status.block_height + 1;
               } catch (error) {
-                console.warn('Could not fetch current block height for confirmations');
+                logger.warn('Could not fetch current block height for confirmations');
               }
             }
             
@@ -260,11 +275,11 @@ class BitcoinApiService {
             if (!blockTime) {
               blockTime = tx.time || txData.time;
               if (!blockTime) {
-                console.warn(`⏭️ Skipping ${tx.txid} - no timestamp at all`);
+                logger.warn(`⏭️ Skipping ${tx.txid} - no timestamp at all`);
                 skippedCount++;
                 continue;
               }
-              console.log(`ℹ️ Using tx.time for unconfirmed/pending tx ${tx.txid.slice(0, 8)}...`);
+              logger.debug(`ℹ️ Using tx.time for unconfirmed/pending tx ${tx.txid.slice(0, 8)}...`);
             }
             
             // Haal de BTC prijs op voor de exacte datum van de transactie (ALLEEN uit Supabase)
@@ -285,24 +300,24 @@ class BitcoinApiService {
                 
                 if (priceData?.price_usd) {
                   priceAtTime = priceData.price_usd;
-                  console.log(`✓ BTC Price op ${dateStr} (Supabase): $${priceAtTime}`);
+                  logger.debug(`✓ BTC Price op ${dateStr} (Supabase): $${priceAtTime}`);
                 } else {
                   // Prijs niet gevonden in onze database - use current price as fallback
-                  console.log(`ℹ️ Prijs voor ${dateStr} niet in database, gebruik huidige prijs: $${currentPrice}`);
+                  logger.debug(`ℹ️ Prijs voor ${dateStr} niet in database, gebruik huidige prijs: $${currentPrice}`);
                   priceAtTime = currentPrice;
                 }
               } catch (supabaseError) {
-                console.warn(`⚠️ Supabase price fetch failed for ${dateStr}, using current price: $${currentPrice}`);
+                logger.warn(`⚠️ Supabase price fetch failed for ${dateStr}, using current price: $${currentPrice}`);
                 priceAtTime = currentPrice;
               }
             } catch (e) {
-              console.error('Error fetching historical price:', e);
+              logger.error('Error fetching historical price:', e);
               priceAtTime = currentPrice; // Fallback
             }
             
             // Nu hebben we ALTIJD een prijs
             if (!priceAtTime || priceAtTime <= 0) {
-              console.error(`❌ Critical: Invalid price for ${tx.txid}`);
+              logger.error(`❌ Critical: Invalid price for ${tx.txid}`);
               continue;
             }
             
@@ -329,26 +344,18 @@ class BitcoinApiService {
             skippedCount++;
           }
         } catch (error) {
-          console.error(`Error processing transaction ${tx.txid}:`, error);
+          logger.error(`Error processing transaction ${tx.txid}:`, error);
           skippedCount++;
         }
       }
 
-      console.log(`📊 Transaction Summary:`);
-      console.log(`   Total from blockchain: ${transactions.length}`);
-      console.log(`   Successfully processed: ${processedTransactions.length}`);
-      console.log(`   Skipped (no receive output): ${skippedCount}`);
-      console.log(`   Skipped (no timestamp): ${priceErrorCount}`);
+      logger.debug(`📊 Transaction Summary: Total: ${transactions.length}, Processed: ${processedTransactions.length}, Skipped: ${skippedCount + priceErrorCount}`);
       
       const fundedSatoshis = walletData.chain_stats.funded_txo_sum;
       const spentSatoshis = walletData.chain_stats.spent_txo_sum;
       const balanceSatoshis = fundedSatoshis - spentSatoshis;
       
-      console.log(`💰 Wallet Stats:`);
-      console.log(`   Total Received: ${(fundedSatoshis / 100000000).toFixed(8)} BTC`);
-      console.log(`   Total Sent: ${(spentSatoshis / 100000000).toFixed(8)} BTC`);
-      console.log(`   Current Balance: ${(balanceSatoshis / 100000000).toFixed(8)} BTC`);
-      console.log(`   TX Count: ${walletData.chain_stats.tx_count}`);
+      logger.debug(`💰 Wallet Stats: Balance: ${(balanceSatoshis / 100000000).toFixed(8)} BTC, TX Count: ${walletData.chain_stats.tx_count}`);
 
       const result = {
         address,
@@ -365,7 +372,7 @@ class BitcoinApiService {
       this.walletCache.set(address, { data: result, timestamp: Date.now() });
       return result;
     } catch (error) {
-      console.error('Error fetching wallet data:', error);
+      logger.error('Error fetching wallet data:', error);
       throw new Error('Kon wallet data niet ophalen');
     }
   }
@@ -375,7 +382,7 @@ class BitcoinApiService {
     try {
       const offset = (page - 1) * pageSize;
       
-      console.log(`🔄 Loading transactions page ${page} (offset: ${offset}, limit: ${pageSize})...`);
+      logger.debug(`🔄 Loading transactions page ${page} (offset: ${offset}, limit: ${pageSize})...`);
       
       // Haal alle tx hashes op in één keer met rate limiting
       const url = `${this.baseUrl}/address/${address}/txs`;
@@ -383,7 +390,7 @@ class BitcoinApiService {
       const allTxs = await allTxResponse.json();
       
       if (!Array.isArray(allTxs)) {
-        console.warn(`⚠️ No transactions for ${address}`);
+        logger.warn(`⚠️ No transactions for ${address}`);
         return [];
       }
       
@@ -391,11 +398,11 @@ class BitcoinApiService {
       const pageTxs = allTxs.slice(offset, offset + pageSize);
       
       if (pageTxs.length === 0) {
-        console.log(`✓ No more transactions to load`);
+        logger.debug(`✓ No more transactions to load`);
         return [];
       }
       
-      console.log(`📄 Processing ${pageTxs.length} transactions from page ${page}...`);
+      logger.debug(`📄 Processing ${pageTxs.length} transactions from page ${page}...`);
       
       const processedTransactions: BitcoinTransaction[] = [];
       let skippedCount = 0;
@@ -444,7 +451,7 @@ class BitcoinApiService {
                 }
                 confirmations = this.cachedBlockHeight - txData.status.block_height + 1;
               } catch (error) {
-                console.warn('Could not fetch current block height for confirmations');
+                logger.warn('Could not fetch current block height for confirmations');
               }
             }
             
@@ -482,11 +489,11 @@ class BitcoinApiService {
                     priceAtTime = cgData.market_data.current_price.usd;
                   }
                 } catch (cgError) {
-                  console.error(`Error fetching price for ${dateStr}:`, cgError);
+                  logger.error(`Error fetching price for ${dateStr}:`, cgError);
                 }
               }
             } catch (e) {
-              console.error('Error fetching historical price:', e);
+              logger.error('Error fetching historical price:', e);
             }
             
             if (!priceAtTime) {
@@ -517,16 +524,16 @@ class BitcoinApiService {
             skippedCount++;
           }
         } catch (error) {
-          console.error(`Error processing transaction ${tx.txid}:`, error);
+          logger.error(`Error processing transaction ${tx.txid}:`, error);
           skippedCount++;
         }
       }
       
-      console.log(`✅ Processed ${processedTransactions.length} transactions from page ${page}`);
+      logger.debug(`✅ Processed ${processedTransactions.length} transactions from page ${page}`);
       
       return processedTransactions;
     } catch (error) {
-      console.error('Error loading transactions page:', error);
+      logger.error('Error loading transactions page:', error);
       throw error;
     }
   }
@@ -550,7 +557,7 @@ class BitcoinApiService {
         if (data.price_usd) return data.price_usd;
         if (data.price_eur) return data.price_eur;
         // No price found in database
-        console.warn(`⚠️ No price found in Supabase for ${dateStr}`);
+        logger.warn(`⚠️ No price found in Supabase for ${dateStr}`);
       }
       
       // If not found, try to find closest date
@@ -565,13 +572,13 @@ class BitcoinApiService {
       if (closestData) {
         const closestPrice = closestData.price_usd || closestData.price_eur;
         if (closestPrice) {
-          console.log(`✓ Using closest price from ${closestData.date}: $${closestPrice}`);
+          logger.debug(`✓ Using closest price from ${closestData.date}: $${closestPrice}`);
           return closestPrice;
         }
       }
       
       // Fallback naar CoinGecko
-      console.log(`Fetching from CoinGecko for ${dateStr}...`);
+      logger.debug(`Fetching from CoinGecko for ${dateStr}...`);
       const coinGeckoResponse = await fetch(
         `https://api.coingecko.com/api/v3/coins/bitcoin/history?date=${dateStr}`
       );
@@ -584,7 +591,7 @@ class BitcoinApiService {
       
       return coingeckoPrice;
     } catch (error) {
-      console.error('❌ Error fetching historical price:', error);
+      logger.error('❌ Error fetching historical price:', error);
       throw error; // Throw error instead of returning mock price
     }
   }
@@ -601,7 +608,7 @@ class BitcoinApiService {
         .maybeSingle();
 
       if (!error && data?.price_usd) {
-        console.log(`✓ Current price from Supabase: $${data.price_usd}`);
+        logger.debug(`✓ Current price from Supabase: $${data.price_usd}`);
         return data.price_usd;
       }
 
@@ -614,13 +621,13 @@ class BitcoinApiService {
         .maybeSingle();
 
       if (!latestError && latestData?.price_usd) {
-        console.log(`ℹ️ Using latest price from Supabase: $${latestData.price_usd}`);
+        logger.debug(`ℹ️ Using latest price from Supabase: $${latestData.price_usd}`);
         return latestData.price_usd;
       }
 
       throw new Error('No price data available');
     } catch (error) {
-      console.error('❌ Error fetching current price:', error);
+      logger.error('❌ Error fetching current price:', error);
       throw error; // Throw instead of returning mock price
     }
   }
@@ -655,7 +662,7 @@ class BitcoinApiService {
         .maybeSingle();
 
       if (!latestError && latestData?.price_eur) {
-        console.log(`ℹ️ Using latest price from Supabase`);
+        logger.debug(`ℹ️ Using latest price from Supabase`);
         return {
           price: latestData.price_eur,
           change24h: 0,
@@ -667,7 +674,7 @@ class BitcoinApiService {
 
       throw new Error('No price data available in Supabase');
     } catch (error) {
-      console.error('❌ Error fetching price data:', error);
+      logger.error('❌ Error fetching price data:', error);
       throw error; // Throw error instead of returning mock data
     }
   }
@@ -681,7 +688,7 @@ class BitcoinApiService {
         return height;
       }
     } catch (error) {
-      console.error('Error fetching current block height:', error);
+      logger.error('Error fetching current block height:', error);
     }
     return 0; // Fallback
   }
@@ -708,7 +715,7 @@ class BitcoinApiService {
       
       return { hasNew: true, newTxHash: newestTxHash };
     } catch (error) {
-      console.error('Error checking for new transactions:', error);
+      logger.error('Error checking for new transactions:', error);
       return { hasNew: false };
     }
   }
@@ -716,7 +723,7 @@ class BitcoinApiService {
   // Clear cache voor een specifiek adres (bijv. na nieuwe transactie)
   clearWalletCache(address: string) {
     this.walletCache.delete(address);
-    console.log(`🗑️ Cleared cache for wallet ${address.slice(0, 8)}...`);
+    logger.debug(`🗑️ Cleared cache for wallet ${address.slice(0, 8)}...`);
   }
 
   // Valideer Bitcoin adres
@@ -737,7 +744,7 @@ class BitcoinApiService {
         .limit(100);
 
       if (error || !data) {
-        console.warn('⚠️ Error fetching ATH data, using defaults');
+        logger.warn('⚠️ Error fetching ATH data, using defaults');
         return { previousATH: 69000, latestATH: 124753 };
       }
 
@@ -750,11 +757,11 @@ class BitcoinApiService {
       const previousATH = cycle3ATH;
       const latestATH = allTimeHigh;
 
-      console.log(`📊 ATH Data - Previous: $${previousATH}, Latest: $${latestATH}`);
+      logger.debug(`📊 ATH Data - Previous: $${previousATH}, Latest: $${latestATH}`);
 
       return { previousATH, latestATH };
     } catch (error) {
-      console.error('❌ Error in getATHData:', error);
+      logger.error('❌ Error in getATHData:', error);
       return { previousATH: 69000, latestATH: 124753 };
     }
   }

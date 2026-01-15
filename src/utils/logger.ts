@@ -3,7 +3,8 @@
  * Production builds should have minimal console output for security
  */
 
-const isDevelopment = process.env.NODE_ENV === 'development';
+// Vite uses import.meta.env for environment variables
+const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
 
 export const logger = {
   log: (...args: any[]) => {
@@ -13,7 +14,11 @@ export const logger = {
   },
   
   warn: (...args: any[]) => {
+    // Warnings in production too, but less verbose
     if (isDevelopment) {
+      console.warn(...args);
+    } else {
+      // In production, only log critical warnings
       console.warn(...args);
     }
   },
@@ -24,6 +29,7 @@ export const logger = {
   },
   
   debug: (...args: any[]) => {
+    // Debug only in development
     if (isDevelopment) {
       console.debug(...args);
     }
