@@ -59,8 +59,8 @@ export default function BitcoinMilestones({ wallets = [], onRefresh }: BitcoinMi
         setLoading(true);
 
         // Load current Bitcoin price
-        const priceData = await bitcoinApiService.getCurrentPrice();
-        setBitcoinPrice(priceData.price);
+        const price = await bitcoinApiService.getCurrentPrice();
+        setBitcoinPrice(typeof price === 'number' ? price : (price as any)?.price || 95000);
 
         // Calculate total BTC from wallets
         let totalBTC = 0;
@@ -193,8 +193,8 @@ export default function BitcoinMilestones({ wallets = [], onRefresh }: BitcoinMi
           {/* Current Holdings */}
           <div className="mb-6 pb-6 border-b border-gray-200">
             <p className="text-sm text-gray-600">
-              Jouw huurdige holdings: <span className="font-bold text-orange-600">{currentBTC.toFixed(4)} BTC</span>
-              {' '}(≈ €{(currentBTC * bitcoinPrice).toLocaleString('nl-NL')})
+              Jouw huidige holdings: <span className="font-bold text-orange-600">{currentBTC.toFixed(4)} BTC</span>
+              {' '}(≈ ${bitcoinPrice && bitcoinPrice > 0 ? (currentBTC * bitcoinPrice).toLocaleString('en-US', { maximumFractionDigits: 0 }) : '0'})
             </p>
           </div>
 

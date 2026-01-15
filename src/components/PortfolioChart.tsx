@@ -21,79 +21,97 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
   const [showTransactions, setShowTransactions] = useState(true);
   const [chartData, setChartData] = useState<PriceData[]>([]);
   const [timeRange, setTimeRange] = useState<TimeRange>('1y');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Fetch price data
-  useEffect(() => {
-    const fetchPriceData = async () => {
-      try {
-        const latestPrice = await bitcoinPriceDataService.getLatestPrice();
-        if (latestPrice) {
-          const vsCurrency = currency.toLowerCase();
-          const priceKey = currency === 'EUR' ? 'price_eur' : 'price_usd';
-          
-          const yesterday = new Date();
-          yesterday.setDate(yesterday.getDate() - 1);
-          const yesterdayStr = yesterday.toISOString().split('T')[0];
-          
-          const { data: yesterdayData } = await supabase
-            .from('bitcoin_price_data')
-            .select(priceKey)
-            .eq('date', yesterdayStr)
-            .single();
-          
-          const yesterdayPrice = yesterdayData?.[priceKey] || latestPrice.price;
-          const change24h = latestPrice.price - yesterdayPrice;
-          const changePercent24h = yesterdayPrice > 0 ? (change24h / yesterdayPrice) * 100 : 0;
-          
-          setPriceData({
-            price: latestPrice.price,
-            change24h: change24h,
-            changePercent24h: changePercent24h,
-            marketCap: latestPrice.market_cap || 0,
-            volume24h: 0
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching price data:', error);
+  // Fetch price data function
+  const fetchPriceData = async () => {
+    try {
+      const latestPrice = await bitcoinPriceDataService.getLatestPrice();
+      if (latestPrice) {
+        const vsCurrency = currency.toLowerCase();
+        const priceKey = currency === 'EUR' ? 'price_eur' : 'price_usd';
+        
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+        
+        const { data: yesterdayData } = await supabase
+          .from('bitcoin_price_data')
+          .select(priceKey)
+          .eq('date', yesterdayStr)
+          .single();
+        
+        const yesterdayPrice = yesterdayData?.[priceKey] || latestPrice.price;
+        const change24h = latestPrice.price - yesterdayPrice;
+        const changePercent24h = yesterdayPrice > 0 ? (change24h / yesterdayPrice) * 100 : 0;
+        
+        setPriceData({
+          price: latestPrice.price,
+          change24h: change24h,
+          changePercent24h: changePercent24h,
+          marketCap: latestPrice.market_cap || 0,
+          volume24h: 0
+        });
       }
-    };
+    } catch (error) {
+      console.error('Error fetching price data:', error);
+    }
+  };
 
+  // Fetch price data on mount and interval
+  useEffect(() => {
     fetchPriceData();
     const interval = setInterval(fetchPriceData, 60000);
     return () => clearInterval(interval);
   }, [currency]);
 
-  // Load historical price data
-  useEffect(() => {
-    const loadHistoricalData = async () => {
-      try {
-        const summary = await bitcoinPriceDataService.getSummary();
+  // Load historical price data function
+  const loadHistoricalData = async () => {
+    try {
+      const summary = await bitcoinPriceDataService.getSummary();
+      
+      if (summary && summary.available_years && summary.available_years.length > 0) {
+        const data = await bitcoinPriceDataService.getDataForYears(
+          summary.available_years,
+          currency
+        );
         
-        if (summary && summary.available_years && summary.available_years.length > 0) {
-          const data = await bitcoinPriceDataService.getDataForYears(
-            summary.available_years,
-            currency
-          );
-          
-          setChartData(data);
-        } else {
-          const currentYear = new Date().getFullYear();
-          const years = [];
-          for (let year = 2009; year <= currentYear; year++) {
-            years.push(year);
-          }
-          
-          const data = await bitcoinPriceDataService.getDataForYears(years, currency);
-          setChartData(data);
+        setChartData(data);
+      } else {
+        const currentYear = new Date().getFullYear();
+        const years = [];
+        for (let year = 2009; year <= currentYear; year++) {
+          years.push(year);
         }
-      } catch (error) {
-        console.error('Error loading historical data:', error);
-        setChartData([]);
+        
+        const data = await bitcoinPriceDataService.getDataForYears(years, currency);
+        setChartData(data);
       }
-    };
-    
+    } catch (error) {
+      console.error('Error loading historical data:', error);
+      setChartData([]);
+    }
+  };
+
+  // Load historical price data on mount
+  useEffect(() => {
     loadHistoricalData();
   }, [currency]);
+
+  // Refresh function
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        fetchPriceData(),
+        loadHistoricalData()
+      ]);
+    } catch (error) {
+      console.error('Error refreshing chart data:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Convert transactions to purchase points for the chart
   const purchasePoints = showTransactions ? transactions.map(tx => {
@@ -286,8 +304,13 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
             </span>
           </button>
 
-          <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-            <RefreshCw className="w-4 h-4" />
+          <button 
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Ververs chart data"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
