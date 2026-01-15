@@ -534,9 +534,20 @@ export default function PriceChart({
           const purchaseDetail = purchaseDetails.find(p => p.date === purchase.date);
           const isBuy = purchaseDetail ? (purchaseDetail.isBuy !== undefined ? purchaseDetail.isBuy : purchaseDetail.amount > 0) : true;
           const isProfitable = purchaseDetail ? (purchaseDetail.profit > 0) : true;
+          const isFullySold = purchaseDetail ? (purchaseDetail.isFullySold === true) : false;
           
-          // Color: green for buys/profitable, red for sells/losses
-          const pointColor = isBuy ? (isProfitable ? '#10b981' : '#ef4444') : '#ef4444';
+          // Color logic:
+          // - Sells: blue (#3b82f6)
+          // - Fully sold buys: gray (#6b7280)
+          // - Active buys: green (profitable) or red (loss)
+          let pointColor: string;
+          if (!isBuy) {
+            pointColor = '#3b82f6'; // Blue for sells
+          } else if (isFullySold) {
+            pointColor = '#6b7280'; // Gray for fully sold buys
+          } else {
+            pointColor = isProfitable ? '#10b981' : '#ef4444'; // Green/red for active buys
+          }
           
           // Draw purchase point with arrow
           ctx.beginPath();
@@ -1139,8 +1150,10 @@ export default function PriceChart({
             <div
               className={`absolute text-white px-4 py-3 rounded-xl text-sm pointer-events-none shadow-2xl max-w-xs border ${
                 isBuy 
-                  ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-gray-600' 
-                  : 'bg-gradient-to-br from-red-900 to-red-800 border-red-600'
+                  ? (hoveredPoint.purchaseDetail?.isFullySold 
+                      ? 'bg-gradient-to-br from-gray-700 to-gray-800 border-gray-500'
+                      : 'bg-gradient-to-br from-gray-800 to-gray-900 border-gray-600')
+                  : 'bg-gradient-to-br from-blue-900 to-blue-800 border-blue-600'
               }`}
               style={{
                 left: `${hoveredPoint.x}px`,
@@ -1150,7 +1163,9 @@ export default function PriceChart({
             >
               {/* Arrow pointing down */}
               <div className={`absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent ${
-                isBuy ? 'border-t-gray-800' : 'border-t-red-900'
+                isBuy 
+                  ? (hoveredPoint.purchaseDetail?.isFullySold ? 'border-t-gray-700' : 'border-t-gray-800')
+                  : 'border-t-blue-900'
               }`}></div>
                 
                 {/* Price header */}
@@ -1161,9 +1176,15 @@ export default function PriceChart({
                         : hoveredPoint.purchaseDetail.amount > 0)
                     : true;
                   
+                  const isFullySold = hoveredPoint.purchaseDetail?.isFullySold === true;
+                  
                   return (
                     <div className="flex items-center gap-2 mb-2">
-                      <div className={`w-2 h-2 rounded-full ${isBuy ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                      <div className={`w-2 h-2 rounded-full ${
+                        isBuy 
+                          ? (isFullySold ? 'bg-gray-400' : 'bg-green-400')
+                          : 'bg-blue-400'
+                      }`}></div>
                       <div className="font-bold text-lg">
                         {formatPrice(hoveredPoint.price)}
                       </div>
@@ -1202,16 +1223,51 @@ export default function PriceChart({
                   const btcAmount = Math.abs(hoveredPoint.purchaseDetail.btcAcquired || hoveredPoint.purchaseDetail.amount || 0);
                   const transactionValue = btcAmount * hoveredPoint.purchaseDetail.price;
                   
+                  const isFullySold = hoveredPoint.purchaseDetail?.isFullySold === true;
+                  const soldTo = hoveredPoint.purchaseDetail?.soldTo || [];
+                  
                   return (
-                    <div className={`rounded-lg p-3 border ${isBuy ? 'bg-gray-700 border-gray-600' : 'bg-red-900/30 border-red-600'}`}>
+                    <div className={`rounded-lg p-3 border ${
+                      isBuy 
+                        ? (isFullySold ? 'bg-gray-700/50 border-gray-500' : 'bg-gray-700 border-gray-600')
+                        : 'bg-blue-900/30 border-blue-600'
+                    }`}>
                       <div className="flex items-center gap-2 mb-2">
-                        <div className={`w-1.5 h-1.5 rounded-full ${isBuy ? 'bg-green-400' : 'bg-red-400'}`}></div>
-                        <div className={`font-semibold text-xs ${isBuy ? 'text-green-400' : 'text-red-400'}`}>
-                          {isBuy ? `Inkoop #${hoveredPoint.purchaseDetail.monthNumber || ''}` : 'Verkoop'}
+                        <div className={`w-1.5 h-1.5 rounded-full ${
+                          isBuy 
+                            ? (isFullySold ? 'bg-gray-400' : 'bg-green-400')
+                            : 'bg-blue-400'
+                        }`}></div>
+                        <div className={`font-semibold text-xs ${
+                          isBuy 
+                            ? (isFullySold ? 'text-gray-400' : 'text-green-400')
+                            : 'text-blue-400'
+                        }`}>
+                          {isBuy 
+                            ? (isFullySold 
+                                ? `Inkoop #${hoveredPoint.purchaseDetail.monthNumber || ''} (Verkocht)`
+                                : `Inkoop #${hoveredPoint.purchaseDetail.monthNumber || ''}`)
+                            : 'Verkoop'}
                         </div>
                       </div>
                       {isBuy ? (
                         <div className="space-y-1 text-xs">
+                          {isFullySold && soldTo.length > 0 && (
+                            <div className="mb-2 p-2 bg-gray-600/50 rounded border border-gray-500">
+                              <div className="text-gray-300 text-[10px] mb-1">Verkocht aan:</div>
+                              {soldTo.map((sell: any, idx: number) => {
+                                const sellDate = new Date(sell.sellTx.time * 1000).toLocaleDateString('nl-NL', { 
+                                  day: 'numeric', 
+                                  month: 'short' 
+                                });
+                                return (
+                                  <div key={idx} className="text-blue-300 text-[10px]">
+                                    {sellDate}: {sell.amount.toFixed(8)} BTC
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
                           <div className="flex justify-between">
                             <span className="text-gray-300">Ingelegd:</span>
                             <span className="text-white font-medium">€{hoveredPoint.purchaseDetail.amount.toLocaleString('en-US', { maximumFractionDigits: 2 })}</span>
@@ -1224,10 +1280,12 @@ export default function PriceChart({
                             <span className="text-gray-300">Prijs:</span>
                             <span className="text-white font-medium">{formatPrice(hoveredPoint.purchaseDetail.price)}</span>
                           </div>
-                          <div className="flex justify-between pt-1 border-t border-gray-600">
-                            <span className="text-gray-300">Huidige Waarde:</span>
-                            <span className="text-green-400 font-medium">{formatPrice(hoveredPoint.purchaseDetail.currentValue)}</span>
-                          </div>
+                          {!isFullySold && (
+                            <div className="flex justify-between pt-1 border-t border-gray-600">
+                              <span className="text-gray-300">Huidige Waarde:</span>
+                              <span className="text-green-400 font-medium">{formatPrice(hoveredPoint.purchaseDetail.currentValue)}</span>
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <div className="space-y-1 text-xs">
@@ -1244,15 +1302,21 @@ export default function PriceChart({
                             <span className="text-white font-medium">{formatPrice(hoveredPoint.purchaseDetail.price)}</span>
                           </div>
                           {hoveredPoint.purchaseDetail.buyPrice && (
-                            <div className="flex justify-between pt-1 border-t border-red-600">
+                            <div className="flex justify-between pt-1 border-t border-blue-600">
                               <span className="text-gray-300">Ingekocht bij:</span>
-                              <span className="text-red-300 font-medium">{formatPrice(hoveredPoint.purchaseDetail.buyPrice)}</span>
+                              <span className="text-blue-300 font-medium">{formatPrice(hoveredPoint.purchaseDetail.buyPrice)}</span>
                             </div>
                           )}
-                          <div className="flex justify-between pt-1 border-t border-red-600">
-                            <span className="text-gray-300">Huidige Waarde:</span>
-                            <span className="text-red-300 font-medium">{formatPrice(Math.abs(hoveredPoint.purchaseDetail.currentValue))}</span>
-                          </div>
+                          {hoveredPoint.purchaseDetail.soldBuyIndices && hoveredPoint.purchaseDetail.soldBuyIndices.length > 0 && (
+                            <div className="pt-1 border-t border-blue-600">
+                              <div className="text-gray-300 text-[10px] mb-1">Gekoppeld aan inkoop:</div>
+                              {hoveredPoint.purchaseDetail.soldBuyIndices.map((buyIdx: number) => (
+                                <div key={buyIdx} className="text-blue-300 text-[10px]">
+                                  Inkoop #{buyIdx + 1}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

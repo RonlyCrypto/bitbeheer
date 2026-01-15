@@ -789,6 +789,7 @@ export default function UserDashboard() {
               user={user}
               emailVerified={emailVerified}
               firstAppointmentCompleted={firstAppointmentCompleted}
+              isLoading={isLoading}
               onMilestoneUpdate={(milestoneProgress, celebratedMilestones) => {
                 // Update UserSidebar with milestone info
                 window.dispatchEvent(new CustomEvent('milestoneUpdate', { 
@@ -941,7 +942,7 @@ export default function UserDashboard() {
 }
 
 // Overview Tab Component
-function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppointment, accountApproved, isImpersonating, impersonatedUser, hasApprovedOneOnOne, onNavigateToPortfolio, user, emailVerified, firstAppointmentCompleted }: any) {
+function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppointment, accountApproved, isImpersonating, impersonatedUser, hasApprovedOneOnOne, onNavigateToPortfolio, user, emailVerified, firstAppointmentCompleted, isLoading = false }: any) {
   const [showExchangeWarningPopup, setShowExchangeWarningPopup] = useState(false);
   const [showSelfCustodyPopup, setShowSelfCustodyPopup] = useState(false);
   const [fearGreedIndex, setFearGreedIndex] = useState<number | null>(null);
@@ -1978,7 +1979,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         {/* LINKERKOLOM - Bitcoin Veiligheidscheck + Wallet (8 kolommen) */}
         <div className="lg:col-span-8 space-y-6">
           {/* Bitcoin Veiligheidscheck - Vervangt aanmeldproces na goedkeuring */}
-          {accountApproved && (firstAppointmentCompleted || hasApprovedOneOnOne) ? (
+          {!isLoading && accountApproved && (firstAppointmentCompleted || hasApprovedOneOnOne) ? (
             <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 mb-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">🔐 Jouw Bitcoin Veiligheidscheck</h3>
               <div className="space-y-3">

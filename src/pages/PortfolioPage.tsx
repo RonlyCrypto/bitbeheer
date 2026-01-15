@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Wallet, 
   TrendingUp, 
@@ -55,7 +55,56 @@ export default function PortfolioPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [transactionFilter, setTransactionFilter] = useState<'all' | 'buy' | 'sell'>('all');
+  const [transactionFilter, setTransactionFilter] = useState<'all' | 'buy' | 'sell' | 'active'>('all');
+  
+  // Calculate which buys are fully sold (FIFO)
+  const calculateBuySoldStatus = useMemo(() => {
+    const sortedTxs = [...allTransactions].sort((a, b) => a.time - b.time);
+    const buyStatus: Map<number, { remaining: number; soldTo: any[] }> = new Map();
+    
+    sortedTxs.forEach((tx, index) => {
+      if (tx.value > 0) { // Buy
+        const btcAmount = Math.abs(tx.value) / 100000000;
+        buyStatus.set(index, { remaining: btcAmount, soldTo: [] });
+      } else { // Sell
+        const sellAmount = Math.abs(tx.value) / 100000000;
+        let remainingToSell = sellAmount;
+        
+        // Match with buys in FIFO order
+        for (let i = 0; i < index && remainingToSell > 0; i++) {
+          if (sortedTxs[i].value > 0) { // Only buys
+            const buyStatusInfo = buyStatus.get(i);
+            if (buyStatusInfo && buyStatusInfo.remaining > 0) {
+              const soldAmount = Math.min(buyStatusInfo.remaining, remainingToSell);
+              buyStatusInfo.remaining -= soldAmount;
+              buyStatusInfo.soldTo.push({
+                sellIndex: index,
+                sellTx: sortedTxs[index],
+                amount: soldAmount
+              });
+              remainingToSell -= soldAmount;
+            }
+          }
+        }
+      }
+    });
+    
+    // Create a map of original transaction indices to sold status
+    const soldStatusMap = new Map<number, boolean>();
+    sortedTxs.forEach((tx, sortedIndex) => {
+      if (tx.value > 0) { // Buy
+        const originalIndex = allTransactions.findIndex(t => 
+          t.hash === tx.hash && t.time === tx.time
+        );
+        if (originalIndex !== -1) {
+          const status = buyStatus.get(sortedIndex);
+          soldStatusMap.set(originalIndex, status ? status.remaining <= 0.00000001 : false);
+        }
+      }
+    });
+    
+    return soldStatusMap;
+  }, [allTransactions]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [showEditWallet, setShowEditWallet] = useState(false);
   const [walletToEdit, setWalletToEdit] = useState<WalletData | null>(null);
@@ -910,6 +959,15 @@ export default function PortfolioPage() {
                         if (transactionFilter === 'all') return true;
                         if (transactionFilter === 'buy') return tx.value > 0;
                         if (transactionFilter === 'sell') return tx.value < 0;
+                        if (transactionFilter === 'active') {
+                          if (tx.value > 0) {
+                            const txIndex = allTransactions.findIndex(t => 
+                              t.hash === tx.hash && t.time === tx.time
+                            );
+                            return txIndex !== -1 && !calculateBuySoldStatus.get(txIndex);
+                          }
+                          return false;
+                        }
                         return true;
                       }).length;
                       return `${filteredCount} transacties`;
@@ -930,6 +988,16 @@ export default function PortfolioPage() {
                   if (transactionFilter === 'all') return true;
                   if (transactionFilter === 'buy') return tx.value > 0;
                   if (transactionFilter === 'sell') return tx.value < 0;
+                  if (transactionFilter === 'active') {
+                    // Only show buys that are not fully sold
+                    if (tx.value > 0) {
+                      const txIndex = allTransactions.findIndex(t => 
+                        t.hash === tx.hash && t.time === tx.time
+                      );
+                      return txIndex !== -1 && !calculateBuySoldStatus.get(txIndex);
+                    }
+                    return false;
+                  }
                   return true;
                 });
                 const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
@@ -983,6 +1051,19 @@ export default function PortfolioPage() {
                     >
                       Verkoop
                     </button>
+                    <button
+                      onClick={() => {
+                        setTransactionFilter('active');
+                        setCurrentPage(1);
+                      }}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        transactionFilter === 'active'
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      Actieve trades
+                    </button>
                   </div>
                 </div>
                         
@@ -994,7 +1075,8 @@ export default function PortfolioPage() {
                           >
                             Filter: {
                               transactionFilter === 'all' ? 'Alle' :
-                              transactionFilter === 'buy' ? 'Koop' : 'Verkoop'
+                              transactionFilter === 'buy' ? 'Koop' :
+                              transactionFilter === 'sell' ? 'Verkoop' : 'Actieve trades'
                             }
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -1037,6 +1119,18 @@ export default function PortfolioPage() {
                                 }`}
                               >
                                 Verkoop
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setTransactionFilter('active');
+                                  setCurrentPage(1);
+                                  setShowFilterDropdown(false);
+                                }}
+                                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg ${
+                                  transactionFilter === 'active' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+                                }`}
+                              >
+                                Actieve trades
                               </button>
                             </div>
                           )}
@@ -1103,15 +1197,55 @@ export default function PortfolioPage() {
                   })
                   .sort((a, b) => b.time - a.time) // Nieuwste eerst
                   .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                  .map((transaction, index) => (
+                  .map((transaction, index) => {
+                    const txIndex = allTransactions.findIndex(t => 
+                      t.hash === transaction.hash && t.time === transaction.time
+                    );
+                    const isFullySold = transaction.value > 0 && txIndex !== -1 
+                      ? calculateBuySoldStatus.get(txIndex) === true
+                      : false;
+                    
+                    // Find which sell transactions this buy was sold to
+                    const sortedTxs = [...allTransactions].sort((a, b) => a.time - b.time);
+                    const sortedIndex = sortedTxs.findIndex(t => 
+                      t.hash === transaction.hash && t.time === transaction.time
+                    );
+                    let soldToTransactions: BitcoinTransaction[] = [];
+                    
+                    if (isFullySold && sortedIndex !== -1 && transaction.value > 0) {
+                      // Calculate which sells matched this buy (FIFO)
+                      const buyAmount = Math.abs(transaction.value) / 100000000;
+                      let remainingToMatch = buyAmount;
+                      
+                      for (let i = sortedIndex + 1; i < sortedTxs.length && remainingToMatch > 0; i++) {
+                        if (sortedTxs[i].value < 0) { // Sell
+                          const sellAmount = Math.abs(sortedTxs[i].value) / 100000000;
+                          const matchedAmount = Math.min(sellAmount, remainingToMatch);
+                          if (matchedAmount > 0) {
+                            const originalSellIndex = allTransactions.findIndex(t => 
+                              t.hash === sortedTxs[i].hash && t.time === sortedTxs[i].time
+                            );
+                            if (originalSellIndex !== -1) {
+                              soldToTransactions.push(allTransactions[originalSellIndex]);
+                            }
+                            remainingToMatch -= matchedAmount;
+                          }
+                        }
+                      }
+                    }
+                    
+                    return (
                     <TransactionBlock
                       key={`${transaction.hash}-${index}`}
                       transaction={transaction}
                       index={(currentPage - 1) * itemsPerPage + index + 1}
                       onTransactionClick={setSelectedTransaction}
                       allTransactions={allTransactions}
+                        isFullySold={isFullySold}
+                        soldToTransactions={soldToTransactions}
                     />
-                  ))}
+                    );
+                  })}
               </div>
 
               {/* Bottom Pagination */}
@@ -1120,6 +1254,15 @@ export default function PortfolioPage() {
                       if (transactionFilter === 'all') return true;
                       if (transactionFilter === 'buy') return tx.value > 0;
                       if (transactionFilter === 'sell') return tx.value < 0;
+                      if (transactionFilter === 'active') {
+                        if (tx.value > 0) {
+                          const txIndex = allTransactions.findIndex(t => 
+                            t.hash === tx.hash && t.time === tx.time
+                          );
+                          return txIndex !== -1 && !calculateBuySoldStatus.get(txIndex);
+                        }
+                        return false;
+                      }
                       return true;
                     });
                 const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);

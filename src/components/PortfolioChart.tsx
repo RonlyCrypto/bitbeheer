@@ -126,6 +126,43 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
     };
   }).filter(Boolean) as Array<{ date: string; price: number }> : [];
 
+  // Track which buys are fully sold (FIFO)
+  const calculateSoldStatus = () => {
+    const sortedTxs = [...transactions].sort((a, b) => a.time - b.time);
+    const buyStatus: Map<number, { remaining: number; soldTo: any[] }> = new Map();
+    
+    sortedTxs.forEach((tx, index) => {
+      if (tx.value > 0) { // Buy
+        const btcAmount = Math.abs(tx.value) / 100000000;
+        buyStatus.set(index, { remaining: btcAmount, soldTo: [] });
+      } else { // Sell
+        const sellAmount = Math.abs(tx.value) / 100000000;
+        let remainingToSell = sellAmount;
+        
+        // Match with buys in FIFO order
+        for (let i = 0; i < index && remainingToSell > 0; i++) {
+          if (sortedTxs[i].value > 0) { // Only buys
+            const buyStatusInfo = buyStatus.get(i);
+            if (buyStatusInfo && buyStatusInfo.remaining > 0) {
+              const soldAmount = Math.min(buyStatusInfo.remaining, remainingToSell);
+              buyStatusInfo.remaining -= soldAmount;
+              buyStatusInfo.soldTo.push({
+                sellIndex: index,
+                sellTx: sortedTxs[index],
+                amount: soldAmount
+              });
+              remainingToSell -= soldAmount;
+            }
+          }
+        }
+      }
+    });
+    
+    return buyStatus;
+  };
+
+  const buySoldStatus = calculateSoldStatus();
+
   // Create purchase details with buy/sell information
   const purchaseDetails = showTransactions ? transactions.map((tx, index) => {
     if (!tx.time || !tx.price || isNaN(tx.time) || isNaN(tx.price)) {
@@ -136,6 +173,7 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
     
     // For sells, calculate buy price using FIFO from previous transactions
     let buyPrice = null;
+    let soldBuyIndices: number[] = [];
     if (!isBuy && transactions.length > 0) {
       const sortedTxs = [...transactions].sort((a, b) => a.time - b.time);
       const currentIndex = sortedTxs.findIndex(t => t.hash === tx.hash && t.time === tx.time);
@@ -154,6 +192,14 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
               const matchedAmount = Math.min(buyAmount, remainingToMatch);
               totalBuyCost += matchedAmount * buyPricePerBtc;
               remainingToMatch -= matchedAmount;
+              
+              // Track which buy this sell is linked to
+              const originalBuyIndex = transactions.findIndex(t => 
+                t.hash === sortedTxs[i].hash && t.time === sortedTxs[i].time
+              );
+              if (originalBuyIndex !== -1) {
+                soldBuyIndices.push(originalBuyIndex);
+              }
             }
           }
         }
@@ -163,6 +209,16 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
         }
       }
     }
+    
+    // Check if this buy is fully sold
+    const sortedTxs = [...transactions].sort((a, b) => a.time - b.time);
+    const sortedIndex = sortedTxs.findIndex(t => t.hash === tx.hash && t.time === tx.time);
+    const isFullySold = isBuy && sortedIndex !== -1 && buySoldStatus.has(sortedIndex) 
+      ? buySoldStatus.get(sortedIndex)!.remaining <= 0.00000001
+      : false;
+    const soldToInfo = isBuy && sortedIndex !== -1 && buySoldStatus.has(sortedIndex)
+      ? buySoldStatus.get(sortedIndex)!.soldTo
+      : [];
     
     return {
       date: new Date(tx.time * 1000).toISOString().split('T')[0],
@@ -174,7 +230,12 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
       isBuy: isBuy,
       profit: tx.profit || 0,
       profitPercent: tx.profitPercent || 0,
-      buyPrice: buyPrice
+      buyPrice: buyPrice,
+      isFullySold: isFullySold,
+      soldTo: soldToInfo,
+      soldBuyIndices: soldBuyIndices,
+      transactionIndex: index,
+      transaction: tx
     };
   }).filter(Boolean) as any[] : [];
 

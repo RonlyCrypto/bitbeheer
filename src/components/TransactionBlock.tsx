@@ -7,9 +7,11 @@ interface TransactionBlockProps {
   index: number;
   onTransactionClick?: (transaction: BitcoinTransaction) => void;
   allTransactions?: BitcoinTransaction[]; // Alle transacties voor balance tracking
+  isFullySold?: boolean; // Whether this buy is fully sold
+  soldToTransactions?: BitcoinTransaction[]; // Which sell transactions this buy was sold to
 }
 
-export default function TransactionBlock({ transaction, index, onTransactionClick, allTransactions = [] }: TransactionBlockProps) {
+export default function TransactionBlock({ transaction, index, onTransactionClick, allTransactions = [], isFullySold = false, soldToTransactions = [] }: TransactionBlockProps) {
   const [copiedHash, setCopiedHash] = useState(false);
   
   // Determine if this is a buy or sell
@@ -161,8 +163,15 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
     >
       {/* Rood lintje voor verkoop transacties */}
       {isSell && (
-        <div className="absolute top-0 right-0 bg-red-600 text-white px-4 py-2 text-sm font-bold rounded-bl-lg rounded-tr-xl shadow-lg z-10 uppercase tracking-wide">
+        <div className="absolute top-0 right-0 bg-blue-600 text-white px-4 py-2 text-sm font-bold rounded-bl-lg rounded-tr-xl shadow-lg z-10 uppercase tracking-wide">
           Verkoop
+        </div>
+      )}
+      
+      {/* Grijs lintje voor volledig verkochte buys */}
+      {isBuy && isFullySold && (
+        <div className="absolute top-0 right-0 bg-gray-600 text-white px-4 py-2 text-sm font-bold rounded-bl-lg rounded-tr-xl shadow-lg z-10 uppercase tracking-wide">
+          Verkocht
         </div>
       )}
       
@@ -415,17 +424,49 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
         </div>
 
         {/* Buy Status Indicator */}
-        <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+        <div className={`rounded-lg p-3 border ${
+          isFullySold ? 'bg-gray-100 border-gray-300' : 'bg-gray-50 border-gray-200'
+        }`}>
           <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-1">
-            <CheckCircle className="w-3 h-3 text-green-600" />
+            {isFullySold ? (
+              <CheckCircle className="w-3 h-3 text-gray-500" />
+            ) : (
+              <CheckCircle className="w-3 h-3 text-green-600" />
+            )}
             <span className="font-semibold">Status</span>
           </div>
-          <p className="text-base font-semibold text-gray-900">
-            Gekocht
+          <p className={`text-base font-semibold ${
+            isFullySold ? 'text-gray-600' : 'text-gray-900'
+          }`}>
+            {isFullySold ? 'Verkocht' : 'Gekocht'}
           </p>
-          <p className="text-[10px] text-gray-500 mt-0.5">
-            {transaction.valueInBTC?.toFixed(4) || (transaction.value / 100000000).toFixed(4)} BTC
-          </p>
+          {isFullySold && soldToTransactions.length > 0 ? (
+            <div className="mt-1 space-y-1">
+              {soldToTransactions.map((sellTx, idx) => {
+                const sellIndex = allTransactions.findIndex(t => 
+                  t.hash === sellTx.hash && t.time === sellTx.time
+                ) + 1;
+                return (
+                  <button
+                    key={idx}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onTransactionClick) {
+                        onTransactionClick(sellTx);
+                      }
+                    }}
+                    className="text-[10px] text-blue-600 hover:text-blue-700 hover:underline w-full text-left"
+                  >
+                    → Verkoop #{sellIndex}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-[10px] text-gray-500 mt-0.5">
+              {transaction.valueInBTC?.toFixed(4) || (transaction.value / 100000000).toFixed(4)} BTC
+            </p>
+          )}
         </div>
       </div>
       ) : (
