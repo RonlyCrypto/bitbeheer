@@ -1321,6 +1321,11 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               if (hasNew) {
                 log('🔄 Nieuwe transactie gedetecteerd! Wallet wordt ververst...', { newTxHash });
                 
+                // Clear cache voor dit adres zodat we fresh data krijgen
+                if (bitcoinApiService.clearWalletCache) {
+                  bitcoinApiService.clearWalletCache(walletRecord.address);
+                }
+                
                 // Fetch fresh wallet data
                 const freshWalletData = await bitcoinApiService.getWalletData(walletRecord.address, 50);
                 
@@ -1378,8 +1383,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             }
           };
           
-          // Start real-time refresh interval (every 10 seconds)
-          const refreshInterval = setInterval(refreshWalletData, 10000);
+          // Start real-time refresh interval (every 60 seconds to reduce API load)
+          const refreshInterval = setInterval(refreshWalletData, 60000);
           
           // Also check immediately
           refreshWalletData();

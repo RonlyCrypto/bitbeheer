@@ -37,18 +37,77 @@ class BitcoinApiService {
   private baseUrl = 'https://blockstream.info/api';
   private priceUrl = 'https://api.coingecko.com/api/v3';
   private cachedBlockHeight: number | null = null;
+  
+  // Cache voor wallet data (5 minuten)
+  private walletCache: Map<string, { data: BitcoinWallet; timestamp: number }> = new Map();
+  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minuten
+  
+  // Rate limiting: track laatste request tijd per endpoint
+  private lastRequestTime: Map<string, number> = new Map();
+  private readonly MIN_REQUEST_INTERVAL = 1000; // 1 seconde tussen requests
 
-  // Haal wallet data op van Blockstream API (met lazy loading)
+  // Helper: Rate limiting met delay en retry logic
+  private async rateLimitedFetch(url: string, retries: number = 3): Promise<Response> {
+    const endpoint = url.split('?')[0]; // Haal endpoint zonder query params
+    const lastRequest = this.lastRequestTime.get(endpoint) || 0;
+    const timeSinceLastRequest = Date.now() - lastRequest;
+    
+    // Wacht tot minimum interval is verstreken
+    if (timeSinceLastRequest < this.MIN_REQUEST_INTERVAL) {
+      const waitTime = this.MIN_REQUEST_INTERVAL - timeSinceLastRequest;
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+    
+    this.lastRequestTime.set(endpoint, Date.now());
+    
+    // Retry logic met exponential backoff voor 429 errors
+    for (let attempt = 0; attempt < retries; attempt++) {
+      try {
+        const response = await fetch(url);
+        
+        if (response.status === 429) {
+          // Rate limited - wacht langer
+          const retryAfter = parseInt(response.headers.get('Retry-After') || '60');
+          const waitTime = Math.min(retryAfter * 1000, Math.pow(2, attempt) * 1000);
+          console.warn(`⚠️ Rate limited (429). Wacht ${waitTime}ms voor retry ${attempt + 1}/${retries}`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        }
+        
+        if (!response.ok && response.status !== 404) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        return response;
+      } catch (error) {
+        if (attempt === retries - 1) throw error;
+        const waitTime = Math.pow(2, attempt) * 1000; // Exponential backoff
+        console.warn(`⚠️ Request failed, retry in ${waitTime}ms...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      }
+    }
+    
+    throw new Error('Max retries exceeded');
+  }
+
+  // Haal wallet data op van Blockstream API (met caching en rate limiting)
   async getWalletData(address: string, limit: number = 25): Promise<BitcoinWallet> {
+    // Check cache eerst
+    const cached = this.walletCache.get(address);
+    if (cached && (Date.now() - cached.timestamp) < this.CACHE_DURATION) {
+      console.log(`✅ Using cached wallet data for ${address.slice(0, 8)}...`);
+      return cached.data;
+    }
+
     try {
-      // Haal wallet info op
-      const walletResponse = await fetch(`${this.baseUrl}/address/${address}`);
+      // Haal wallet info op met rate limiting
+      const walletResponse = await this.rateLimitedFetch(`${this.baseUrl}/address/${address}`);
       const walletData = await walletResponse.json();
 
       // Haal ALLE transacties op van Blockstream (paginate through all results)
       console.log(`🔄 Fetching ALL transactions for ${address}...`);
       
-      let allTransactions = [];
+      let allTransactions: any[] = [];
       let afterTxid: string | null = null;
       let page = 0;
       let maxPages = 100; // Safety limit
@@ -63,7 +122,12 @@ class BitcoinApiService {
         console.log(`📄 Fetching page ${page}...`);
         
         try {
-          const response = await fetch(url);
+          // Rate limiting: wacht 1 seconde tussen paginering requests
+          if (page > 1) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+          
+          const response = await this.rateLimitedFetch(url);
           if (!response.ok) {
             console.error(`❌ Blockstream API error on page ${page}: ${response.status}`);
             break;
@@ -91,8 +155,15 @@ class BitcoinApiService {
           }
           
           // Set up next page - use last txid
-          afterTxid = pageTransactions[pageTransactions.length - 1].txid;
-          console.log(`📄 Next page will use after_txid: ${afterTxid.slice(0, 8)}...`);
+          const lastTx = pageTransactions[pageTransactions.length - 1];
+          if (lastTx?.txid) {
+            const nextAfterTxid = lastTx.txid;
+            afterTxid = nextAfterTxid;
+            console.log(`📄 Next page will use after_txid: ${nextAfterTxid.slice(0, 8)}...`);
+          } else {
+            console.log(`📄 No txid found in last transaction, stopping pagination`);
+            break;
+          }
         } catch (paginationError) {
           console.error(`❌ Error fetching page ${page}:`, paginationError);
           break;
@@ -279,7 +350,7 @@ class BitcoinApiService {
       console.log(`   Current Balance: ${(balanceSatoshis / 100000000).toFixed(8)} BTC`);
       console.log(`   TX Count: ${walletData.chain_stats.tx_count}`);
 
-      return {
+      const result = {
         address,
         balance: balanceSatoshis / 100000000,
         totalReceived: fundedSatoshis / 100000000,
@@ -289,6 +360,10 @@ class BitcoinApiService {
         lastSeen: Date.now(),
         transactions: processedTransactions
       };
+      
+      // Cache het resultaat
+      this.walletCache.set(address, { data: result, timestamp: Date.now() });
+      return result;
     } catch (error) {
       console.error('Error fetching wallet data:', error);
       throw new Error('Kon wallet data niet ophalen');
@@ -302,9 +377,9 @@ class BitcoinApiService {
       
       console.log(`🔄 Loading transactions page ${page} (offset: ${offset}, limit: ${pageSize})...`);
       
-      // Haal alle tx hashes op in één keer
+      // Haal alle tx hashes op in één keer met rate limiting
       const url = `${this.baseUrl}/address/${address}/txs`;
-      const allTxResponse = await fetch(url);
+      const allTxResponse = await this.rateLimitedFetch(url);
       const allTxs = await allTxResponse.json();
       
       if (!Array.isArray(allTxs)) {
@@ -330,7 +405,7 @@ class BitcoinApiService {
       
       for (const tx of pageTxs) {
         try {
-          const txResponse = await fetch(`${this.baseUrl}/tx/${tx.txid}`);
+          const txResponse = await this.rateLimitedFetch(`${this.baseUrl}/tx/${tx.txid}`);
           const txData = await txResponse.json();
           
           const relevantOutputs = txData.vout.filter((vout: any) => 
@@ -358,6 +433,20 @@ class BitcoinApiService {
             const valueInBTC = Math.abs(netValue) / 100000000;
             const isSend = netValue < 0;
             const blockTime = txData.status?.block_time;
+            const isPending = !blockTime || !txData.status?.block_height;
+            
+            // Haal current block height op voor confirmations
+            let confirmations = 0;
+            if (!isPending && txData.status?.block_height) {
+              try {
+                if (!this.cachedBlockHeight) {
+                  this.cachedBlockHeight = await this.getCurrentBlockHeight();
+                }
+                confirmations = this.cachedBlockHeight - txData.status.block_height + 1;
+              } catch (error) {
+                console.warn('Could not fetch current block height for confirmations');
+              }
+            }
             
             if (!blockTime) {
               skippedCount++;
