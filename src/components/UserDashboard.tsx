@@ -3678,7 +3678,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: B
                 <div
                   key={milestone.value}
                   className="absolute flex flex-col items-center group"
-                  style={{ left: `${position}%`, transform: 'translateX(-50%)', zIndex: 10, top: '-2px' }}
+                  style={{ left: `${position}%`, transform: 'translateX(-50%)', zIndex: 10, top: '-17px' }}
                 >
                   {/* Tooltip */}
                   <div className="absolute bottom-full mb-2 hidden group-hover:block z-20">
