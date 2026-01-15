@@ -250,9 +250,13 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
     const months: any[] = [];
     
     // Get all deposit transactions (positive value) from portfolio
-    // Transactions are already in BTC format with price in USD
+    // Filter transactions from start date onwards
+    const startDate = new Date(goalStartDate.getFullYear(), goalStartDate.getMonth(), 1);
     const depositTransactions = walletTransactions
-      .filter(tx => tx.value > 0)
+      .filter(tx => {
+        const txDate = new Date(tx.time * 1000);
+        return tx.value > 0 && txDate >= startDate; // Only include transactions from start date
+      })
       .map(tx => {
         const btcAmount = Math.abs(tx.value) / 100000000; // Convert to BTC
         const usdValue = tx.price ? btcAmount * tx.price : 0; // USD value at time of transaction
@@ -267,7 +271,7 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
       .sort((a, b) => a.date.getTime() - b.date.getTime());
 
     // Calculate months: ONLY from start date to now + 3 months ahead (no months before start)
-    const startDate = new Date(goalStartDate.getFullYear(), goalStartDate.getMonth(), 1);
+    // startDate is already defined above
     let currentDate = new Date(startDate);
     const endDate = new Date(now.getFullYear(), now.getMonth() + 3, 1); // Show 3 months ahead
 
@@ -1323,11 +1327,45 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
               }
             }
 
-            // For monthly BTC goals, calculate progress based on current wallet balance vs monthly target
-            if (isMonthlyBTC && monthlyBTCAmount > 0) {
-              // Progress is based on how much of the monthly target is in the wallet
-              progress = Math.min(100, (currentBalance / monthlyBTCAmount) * 100);
-              remaining = Math.max(0, monthlyBTCAmount - currentBalance).toFixed(4);
+            // For monthly BTC goals, calculate progress based on monthly completions since start date
+            if (isMonthlyBTC && monthlyBTCAmount > 0 && analysis) {
+              // Get start date
+              const now = new Date();
+              let goalStartDate = new Date();
+              if (goal.targetDate) {
+                goalStartDate = new Date(goal.targetDate);
+              } else if (goal.createdAt) {
+                goalStartDate = new Date(goal.createdAt);
+              } else {
+                goalStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
+              }
+
+              // Calculate total months since start (including current month)
+              const startDate = new Date(goalStartDate.getFullYear(), goalStartDate.getMonth(), 1);
+              const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+              const monthsSinceStart = Math.max(1, Math.floor((currentMonthStart.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30)) + 1);
+              
+              // Count completed months (completed or made_up, excluding future months)
+              const completedMonths = analysis.months.filter((m: any) => 
+                (m.status === 'completed' || m.status === 'made_up') && 
+                !m.isFutureMonth &&
+                m.date >= startDate
+              ).length;
+              
+              // Progress = completed months / total months since start
+              if (monthsSinceStart > 0) {
+                progress = Math.min(100, (completedMonths / monthsSinceStart) * 100);
+              } else {
+                progress = 0;
+              }
+
+              // Calculate remaining for current month
+              const currentMonthData = analysis.months.find((m: any) => m.isCurrentMonth);
+              if (currentMonthData) {
+                remaining = Math.max(0, monthlyBTCAmount - currentMonthData.totalAmount).toFixed(4);
+              } else {
+                remaining = monthlyBTCAmount.toFixed(4);
+              }
             }
 
             return (
@@ -1403,20 +1441,50 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
 
                 {/* Goal Details */}
                 <div className="space-y-2 text-sm">
-                  {isMonthlyBTC ? (
+                  {isMonthlyBTC && analysis ? (
                     <>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Huidige BTC:</span>
-                        <span className="font-medium text-gray-900">{currentBalance.toFixed(4)} BTC</span>
-                      </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Maandelijks doel:</span>
                         <span className="font-medium text-gray-900">{monthlyBTCAmount.toFixed(4)} BTC</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Nog nodig:</span>
-                        <span className="font-bold text-orange-600">{remaining} BTC</span>
-                      </div>
+                      {(() => {
+                        const now = new Date();
+                        let goalStartDate = new Date();
+                        if (goal.targetDate) {
+                          goalStartDate = new Date(goal.targetDate);
+                        } else if (goal.createdAt) {
+                          goalStartDate = new Date(goal.createdAt);
+                        } else {
+                          goalStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                        }
+                        const startDate = new Date(goalStartDate.getFullYear(), goalStartDate.getMonth(), 1);
+                        const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                        const monthsSinceStart = Math.max(1, Math.floor((currentMonthStart.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30)) + 1);
+                        const completedMonths = analysis.months.filter((m: any) => 
+                          (m.status === 'completed' || m.status === 'made_up') && 
+                          !m.isFutureMonth &&
+                          m.date >= startDate
+                        ).length;
+                        const currentMonthData = analysis.months.find((m: any) => m.isCurrentMonth);
+                        const currentMonthDeposited = currentMonthData ? currentMonthData.totalAmount : 0;
+                        
+                        return (
+                          <>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Voltooide maanden:</span>
+                              <span className="font-medium text-gray-900">{completedMonths} / {monthsSinceStart}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Deze maand gestort:</span>
+                              <span className="font-medium text-gray-900">{currentMonthDeposited.toFixed(4)} BTC</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Nog nodig deze maand:</span>
+                              <span className="font-bold text-orange-600">{remaining} BTC</span>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </>
                   ) : isBTC ? (
                     <>
