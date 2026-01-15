@@ -2160,34 +2160,34 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 
             {/* Waarschuwing 2: Bitcoin in eigen wallet */}
             {hasWallet && walletData && (
-              <div 
+            <div 
                 className={`border rounded-lg p-3 cursor-pointer transition-colors ${
-                  walletData?.balance > 0 
-                    ? 'bg-green-50 border-green-200 hover:bg-green-100' 
-                    : 'bg-yellow-50 border-yellow-200 hover:bg-yellow-100'
-                }`}
-                onClick={() => setShowSelfCustodyPopup(true)}
-              >
-                <div className="flex items-start gap-2">
-                  {walletData?.balance > 0 ? (
+                walletData?.balance > 0 
+                  ? 'bg-green-50 border-green-200 hover:bg-green-100' 
+                  : 'bg-yellow-50 border-yellow-200 hover:bg-yellow-100'
+              }`}
+              onClick={() => setShowSelfCustodyPopup(true)}
+            >
+              <div className="flex items-start gap-2">
+                {walletData?.balance > 0 ? (
                     <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                  ) : (
+                ) : (
                     <Lock className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
-                  )}
-                  <div className="flex-1">
+                )}
+                <div className="flex-1">
                     <p className={`text-xs font-semibold ${
-                      walletData?.balance > 0 ? 'text-green-900' : 'text-yellow-900'
-                    }`}>
-                      Bitcoin staat in eigen wallet veilig
-                    </p>
-                    {walletData?.balance > 0 && (
+                    walletData?.balance > 0 ? 'text-green-900' : 'text-yellow-900'
+                  }`}>
+                    Bitcoin staat in eigen wallet veilig
+                  </p>
+                  {walletData?.balance > 0 && (
                       <p className="text-[10px] text-green-700 mt-0.5">
-                        ✓ Je hebt Bitcoin in je eigen wallet
-                      </p>
-                    )}
-                  </div>
+                      ✓ Je hebt Bitcoin in je eigen wallet
+                    </p>
+                  )}
                 </div>
               </div>
+            </div>
             )}
 
             {/* Veelgemaakte fouten - Roteert met blur effect */}
@@ -2274,7 +2274,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:text-blue-700">
                 Meer info &gt;
               </a>
-            </div>
+          </div>
 
             {fearGreedLoading ? (
               <div className="flex items-center justify-center py-6">
@@ -2365,7 +2365,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                             </text>
                           </g>
                         </svg>
-                      </div>
+              </div>
                       {/* Label */}
                       <div className="text-center">
                         <p className="text-xs text-gray-600">
@@ -2377,8 +2377,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                             'text-gray-600'
                           }`}>{fg.label}</span>
                         </p>
-                      </div>
-                    </div>
+              </div>
+            </div>
                   );
                 })()}
               </div>
@@ -2388,7 +2388,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               </div>
             )}
           </div>
-
+                
           {/* Marktpositie – Bitcoin in context */}
           <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
             <div className="flex items-center gap-2 mb-2">
@@ -2450,11 +2450,11 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                     <div className="flex items-center justify-between text-xs">
                       <div className="text-left">
                         <div className="font-semibold text-gray-700">Vorige ATH</div>
-                        <div className="text-gray-600">€{prevATH.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}</div>
+                        <div className="text-gray-600">${prevATH.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
                       </div>
                       <div className="text-center flex-1 mx-4">
                         <div className="text-lg font-bold text-gray-900 mb-1">
-                          €{currentPrice.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}
+                          ${currentPrice.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                         </div>
                         <div className={`inline-block px-2 py-1 rounded text-[10px] font-semibold border ${statusColor}`}>
                           {statusLabel}
@@ -2462,10 +2462,10 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                       </div>
                       <div className="text-right">
                         <div className="font-semibold text-gray-700">Laatste ATH</div>
-                        <div className="text-gray-600">€{lastATH.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}</div>
-                      </div>
-                    </div>
-                    
+                        <div className="text-gray-600">${lastATH.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+            </div>
+          </div>
+
                     {/* Visual bar */}
                     <div className="relative h-8 bg-gradient-to-r from-yellow-200 via-orange-200 to-green-200 rounded-lg overflow-hidden">
                       {/* Previous ATH marker */}
@@ -2502,12 +2502,30 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                     {/* Percentages */}
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-1 text-gray-600">
-                        <TrendingDown className="w-3 h-3" />
-                        <span>{percentBelowPrevious.toFixed(0)}% onder vorige ATH</span>
+                        {currentPrice >= prevATH ? (
+                          <>
+                            <TrendingUp className="w-3 h-3 text-green-600" />
+                            <span>{percentAbovePrevious.toFixed(0)}% boven vorige ATH</span>
+                          </>
+                        ) : (
+                          <>
+                            <TrendingDown className="w-3 h-3" />
+                            <span>{percentBelowPrevious.toFixed(0)}% onder vorige ATH</span>
+                          </>
+                        )}
                       </div>
                       <div className="flex items-center gap-1 text-gray-600">
-                        <TrendingDown className="w-3 h-3" />
-                        <span>{percentBelowLatest.toFixed(0)}% onder laatste ATH</span>
+                        {currentPrice >= lastATH ? (
+                          <>
+                            <TrendingUp className="w-3 h-3 text-green-600" />
+                            <span>{((currentPrice - lastATH) / lastATH * 100).toFixed(0)}% boven laatste ATH</span>
+                          </>
+                        ) : (
+                          <>
+                            <TrendingDown className="w-3 h-3" />
+                            <span>{percentBelowLatest.toFixed(0)}% onder laatste ATH</span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -2518,7 +2536,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                       Stel: ik koop nu voor
                     </label>
                     <div className="flex items-center gap-2 mb-4">
-                      <span className="text-sm text-gray-600">€</span>
+                      <span className="text-sm text-gray-600">$</span>
                       <input
                         type="number"
                         value={hypotheticalInvestment}
@@ -2538,7 +2556,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                         </div>
                         <div className="flex items-center gap-1 mb-1">
                           <span className="text-lg font-bold text-gray-900">
-                            €{valueAtPreviousATH.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}
+                            ${valueAtPreviousATH.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                           </span>
                           <Trophy className="w-4 h-4 text-yellow-600" />
                         </div>
@@ -2554,7 +2572,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                         </div>
                         <div className="flex items-center gap-1 mb-1">
                           <span className="text-lg font-bold text-gray-900">
-                            €{valueAtLatestATH.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}
+                            ${valueAtLatestATH.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                           </span>
                           <TrendingUp className="w-4 h-4 text-green-600" />
                         </div>
@@ -2609,10 +2627,10 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 <MessageSquare className="w-4 h-4" />
                 Stel je vraag
               </button>
-            </div>
           </div>
         </div>
       </div>
+    </div>
 
       {/* Stappenblokken (Ledger & Coinbase) - Onderaan naast elkaar (1/2 1/2) */}
       <ReferralBlocksWithHelp onBookAppointment={onBookAppointment} />
