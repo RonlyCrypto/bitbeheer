@@ -478,6 +478,11 @@ export default function UserDashboard() {
             .select('last_read_at')
             .eq('user_email', effectiveEmail || user.email || '')
             .maybeSingle(); // Use maybeSingle instead of single to avoid 404 errors
+          
+          // Ignore 404 errors - they're normal when no record exists yet
+          if (readStatusError && readStatusError.code !== 'PGRST116' && readStatusError.code !== 'PGRST204') {
+            console.warn('Error fetching chat read status:', readStatusError);
+          }
 
           if (adminMessages && adminMessages.length > 0) {
             const lastReadTime = readStatus?.last_read_at 
@@ -601,11 +606,16 @@ export default function UserDashboard() {
           .eq('from_admin', true)
           .order('created_at', { ascending: false });
         
-        const { data: readStatus } = await supabase
+        const { data: readStatus, error: readStatusError } = await supabase
           .from('user_chat_read_status')
           .select('last_read_at')
           .eq('user_email', effectiveEmail)
           .maybeSingle();
+        
+        // Ignore 404 errors - they're normal when no record exists yet
+        if (readStatusError && readStatusError.code !== 'PGRST116' && readStatusError.code !== 'PGRST204') {
+          console.warn('Error fetching chat read status:', readStatusError);
+        }
         
         if (adminMessages && adminMessages.length > 0) {
           const lastReadTime = readStatus?.last_read_at 
@@ -1322,9 +1332,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 log('🔄 Nieuwe transactie gedetecteerd! Wallet wordt ververst...', { newTxHash });
                 
                 // Clear cache voor dit adres zodat we fresh data krijgen
-                if (bitcoinApiService.clearWalletCache) {
-                  bitcoinApiService.clearWalletCache(walletRecord.address);
-                }
+                bitcoinApiService.clearWalletCache(walletRecord.address);
                 
                 // Fetch fresh wallet data
                 const freshWalletData = await bitcoinApiService.getWalletData(walletRecord.address, 50);
@@ -1984,8 +1992,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         {/* LINKERKOLOM - Wallet (8 kolommen) */}
         <div className="lg:col-span-8 space-y-6">
           {/* Lege ruimte - Veiligheidscheck verwijderd */}
-        </div>
-      </div>
+            </div>
+                    </div>
             
       {/* Wallet en Waarschuwingen Blok - Naast elkaar - Volledige breedte */}
       {hasWallet && walletData && !showSuccessMessage && (

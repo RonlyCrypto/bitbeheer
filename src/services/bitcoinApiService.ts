@@ -712,6 +712,12 @@ class BitcoinApiService {
       return { hasNew: false };
     }
   }
+  
+  // Clear cache voor een specifiek adres (bijv. na nieuwe transactie)
+  clearWalletCache(address: string) {
+    this.walletCache.delete(address);
+    console.log(`🗑️ Cleared cache for wallet ${address.slice(0, 8)}...`);
+  }
 
   // Valideer Bitcoin adres
   validateBitcoinAddress(address: string): boolean {
