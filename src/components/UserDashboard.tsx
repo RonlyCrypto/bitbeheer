@@ -1503,6 +1503,72 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
     return () => {
       window.removeEventListener('walletUpdated', handleWalletUpdate);
     };
+  }, [isImpersonating, impersonatedUser, currentBitcoinPrice]);
+
+  // Reload wallet data wanneer sync compleet is
+  useEffect(() => {
+    if (walletSyncProgress && !walletSyncProgress.isSyncing && walletSyncProgress.loadedTransactions > 0) {
+      // Wacht even zodat database update compleet is, dan reload wallet data
+      const timeout = setTimeout(async () => {
+        try {
+          const { data: authData } = await supabase.auth.getUser();
+          const sessionEmail = authData?.user?.email;
+          const email = (isImpersonating && impersonatedUser) 
+            ? impersonatedUser 
+            : (sessionEmail || null);
+          
+          if (!email) return;
+
+          const { data: wallet } = await supabase
+            .from('wallets')
+            .select('*')
+            .eq('email', email)
+            .limit(1);
+
+          if (wallet && wallet.length > 0) {
+            const walletRecord = wallet[0];
+            const walletData = walletRecord.wallet_data || {};
+            const transactions = walletData.transactions || [];
+            
+            const currentPrice = await bitcoinApiService.getCurrentPrice().catch(() => currentBitcoinPrice);
+            const mappedTransactions = transactions.map((tx: any) => {
+              const txPrice = tx.price || currentPrice;
+              const txValue = tx.value || 0;
+              const txCurrentValue = tx.currentValue || (txValue ? (txValue / 100000000) * currentPrice : 0);
+              const txProfit = tx.profit !== undefined ? tx.profit : (txCurrentValue - (txValue / 100000000) * txPrice);
+              const txProfitPercent = tx.profitPercent !== undefined ? tx.profitPercent : (txPrice > 0 ? ((currentPrice - txPrice) / txPrice) * 100 : 0);
+              
+              return {
+                hash: tx.hash || '',
+                time: tx.time || Math.floor(new Date(tx.date || Date.now()).getTime() / 1000),
+                value: txValue,
+                price: txPrice,
+                currentValue: txCurrentValue,
+                profit: txProfit,
+                profitPercent: txProfitPercent,
+                status: tx.status || 'confirmed',
+                confirmations: tx.confirmations || 0
+              };
+            });
+            
+            setWalletData({
+              ...walletRecord,
+              balance: walletRecord.balance || 0,
+              transaction_count: walletRecord.transaction_count || 0,
+              total_received: walletRecord.total_received || 0,
+              total_sent: walletRecord.total_sent || 0,
+              lastTransaction: mappedTransactions[0] || null
+            });
+            setWalletTransactions(mappedTransactions);
+          }
+        } catch (error) {
+          console.error('Error reloading wallet data after sync:', error);
+        }
+      }, 2000); // Wacht 2 seconden zodat database update compleet is
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [walletSyncProgress, isImpersonating, impersonatedUser, currentBitcoinPrice]);
   }, [userAppointment, isImpersonating, impersonatedUser]);
 
   const handleAddWallet = async () => {
