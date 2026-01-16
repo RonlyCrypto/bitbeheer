@@ -1068,6 +1068,9 @@ export default function PortfolioPage() {
                                   {isSyncing && hasFirstBatch && (
                                     <span className="text-blue-600 ml-1">• Wallet wordt gesynchroniseerd...</span>
                                   )}
+                                  {!isSyncing && hasFirstBatch && syncProgress && syncProgress.loadedTransactions > 0 && (
+                                    <span className="text-green-600 ml-1">• 100% gesynct</span>
+                                  )}
                                 </>
                               )}
                             </span>

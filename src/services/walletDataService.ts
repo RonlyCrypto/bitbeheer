@@ -330,15 +330,15 @@ class WalletDataService {
             false // nog niet klaar
           );
 
-          // Check of we klaar zijn - stop wanneer max bereikt of geen transacties meer
-          if (pageTransactions.length < BATCH_SIZE || allTransactions.length >= MAX_TRANSACTIONS) {
-            logger.debug(`✅ Sync compleet: ${allTransactions.length} transacties opgehaald (max: ${MAX_TRANSACTIONS})`);
+          // Check of we alle transacties hebben - stop wanneer aantal klopt met blockchain
+          if (allTransactions.length >= totalTxCount) {
+            logger.debug(`✅ Alle transacties opgehaald: ${allTransactions.length} van ${totalTxCount} (blockchain)`);
             break;
           }
           
-          // Check of we alle transacties hebben (als er minder zijn dan MAX_TRANSACTIONS)
-          if (allTransactions.length >= totalTxCount) {
-            logger.debug(`✅ Alle transacties opgehaald: ${allTransactions.length} van ${totalTxCount}`);
+          // Check of we klaar zijn - stop wanneer max bereikt of geen transacties meer
+          if (pageTransactions.length < BATCH_SIZE || allTransactions.length >= MAX_TRANSACTIONS) {
+            logger.debug(`✅ Sync compleet: ${allTransactions.length} transacties opgehaald (max: ${MAX_TRANSACTIONS})`);
             break;
           }
 
