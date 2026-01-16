@@ -14,6 +14,7 @@ export interface WalletDataWithProgress extends BitcoinWallet {
   syncProgress?: WalletSyncProgress;
   isFromDatabase?: boolean;
   lastSynced?: Date;
+  fullySynced?: boolean; // Flag om te checken of wallet volledig gesynct is
 }
 
 class WalletDataService {
@@ -109,6 +110,7 @@ class WalletDataService {
       // Parse wallet_data JSONB
       const walletData = wallet.wallet_data || {};
       const transactions = walletData.transactions || [];
+      const isFullySynced = walletData.fully_synced === true || walletData.is_complete === true;
 
       return {
         address: wallet.address,
@@ -130,7 +132,8 @@ class WalletDataService {
           status: tx.status,
           confirmations: tx.confirmations
         })) as BitcoinTransaction[],
-        lastSynced: wallet.updated_at ? new Date(wallet.updated_at) : undefined
+        lastSynced: wallet.updated_at ? new Date(wallet.updated_at) : undefined,
+        fullySynced: isFullySynced // Flag om te checken of wallet volledig gesynct is
       };
     } catch (error) {
       logger.error('Error fetching wallet data from database:', error);
@@ -342,14 +345,14 @@ class WalletDataService {
         true // klaar
       );
 
-      // Update progress: sync compleet
+      // Update progress: sync compleet - niet meer syncen
       this.updateProgress(address, {
         totalTransactions: allTransactions.length,
         loadedTransactions: allTransactions.length,
-        isSyncing: false
+        isSyncing: false // Sync compleet, niet meer syncen
       });
 
-      logger.debug(`✅ Background sync completed for ${address.slice(0, 8)}...`);
+      logger.debug(`✅ Background sync completed for ${address.slice(0, 8)}... - wallet is nu volledig gesynct`);
     } catch (error: any) {
       if (error.name === 'AbortError') {
         logger.debug('Sync aborted');
@@ -489,7 +492,8 @@ class WalletDataService {
         wallet_data: {
           transactions: transactions,
           synced_at: new Date().toISOString(),
-          is_complete: isComplete
+          is_complete: isComplete,
+          fully_synced: isComplete // Markeer als volledig gesynct
         },
         updated_at: new Date().toISOString()
       };
