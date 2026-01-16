@@ -254,17 +254,24 @@ class WalletDataService {
             isSyncing: true
           });
 
-          // Sla batch op in database (incrementeel) - vooral belangrijk na eerste batch
-          await this.saveWalletDataToDatabase(
-            address,
-            email,
-            walletData,
-            allTransactions,
-            false // nog niet klaar
-          );
-
-          // Na eerste batch: set up voor volgende batches
+          // Na eerste batch: sla direct op en trigger UI update
           if (isFirstBatch) {
+            // Sla eerste batch direct op zodat wallet info zichtbaar wordt
+            await this.saveWalletDataToDatabase(
+              address,
+              email,
+              walletData,
+              allTransactions,
+              false // nog niet klaar, maar eerste batch is wel compleet
+            );
+            
+            // Trigger callback om UI te updaten met eerste batch
+            this.updateProgress(address, {
+              totalTransactions: totalTxCount,
+              loadedTransactions: allTransactions.length,
+              isSyncing: true
+            });
+            
             isFirstBatch = false;
             // Set up next page vanaf transactie 11 (als er meer zijn)
             if (pageTransactions.length > INITIAL_BATCH_SIZE) {
@@ -282,6 +289,15 @@ class WalletDataService {
             // Continue met volgende batches
             continue;
           }
+
+          // Sla batch op in database (incrementeel) voor volgende batches
+          await this.saveWalletDataToDatabase(
+            address,
+            email,
+            walletData,
+            allTransactions,
+            false // nog niet klaar
+          );
 
           // Check of we klaar zijn
           if (pageTransactions.length < BATCH_SIZE || allTransactions.length >= MAX_TRANSACTIONS) {

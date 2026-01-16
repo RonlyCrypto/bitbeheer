@@ -467,8 +467,8 @@ export default function PortfolioPage() {
                   return newMap;
                 });
 
-                // Reload wallets wanneer sync updates
-                if (progress.loadedTransactions > 0 && progress.loadedTransactions % 25 === 0) {
+                // Reload wallets wanneer sync updates (elke 10 transacties na eerste batch)
+                if (progress.loadedTransactions > 0 && (progress.loadedTransactions === 10 || progress.loadedTransactions % 10 === 0)) {
                   loadWallets();
                 }
               }
