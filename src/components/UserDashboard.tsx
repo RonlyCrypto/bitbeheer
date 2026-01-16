@@ -2159,9 +2159,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                       </div>
                     ) : walletSyncProgress && walletSyncProgress.isSyncing && walletSyncProgress.loadedTransactions >= 10 ? (
                       <div className="flex flex-col items-center gap-1">
-                        <span className="text-sm font-semibold text-gray-700">
-                          {walletData.balance?.toFixed(4) || '0.0000'} BTC
-                        </span>
+                    <span className="text-sm font-semibold text-gray-700">
+                      {walletData.balance?.toFixed(4) || '0.0000'} BTC
+                    </span>
                         <span className="text-xs text-green-600 font-medium">
                           Je kan je eerste paar tx zien in je portfolio
                         </span>
@@ -2379,8 +2379,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               onNavigateToGoals={onNavigateToGoals}
               goals={goals}
               setGoals={(newGoals) => {
-                // Update goals in parent component
-                if (typeof setGoals === 'function') {
+                // Update goals in parent component via setGoals prop
+                if (setGoals) {
                   setGoals(newGoals);
                 }
               }}
