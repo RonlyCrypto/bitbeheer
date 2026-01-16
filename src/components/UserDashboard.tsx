@@ -3373,21 +3373,28 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
 
   const defaultGoals = getDefaultGoals();
 
-  // Load custom goals from database
+  // Load custom goals from database - gebruik ALLE doelen, niet alleen 'beginners'
   useEffect(() => {
     const loadCustomGoals = async () => {
-      if (!user?.id) {
+      if (!user?.id && !user?.email) {
         setLoadingGoals(false);
         return;
       }
 
       try {
-        const { data, error } = await supabase
+        // Haal ALLE doelen op (niet alleen 'beginners'), zodat ze synchroon zijn met GoalsTab
+        let query = supabase
           .from('goals')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('category', 'beginners')
-          .order('created_at', { ascending: false });
+          .select('*');
+        
+        if (user?.id) {
+          query = query.eq('user_id', user.id);
+        }
+        if (user?.email) {
+          query = query.eq('email', user.email);
+        }
+        
+        const { data, error } = await query.order('created_at', { ascending: false });
 
         if (error) throw error;
 
