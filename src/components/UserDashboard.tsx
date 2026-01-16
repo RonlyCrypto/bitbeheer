@@ -2378,7 +2378,12 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               onBookAppointment={onBookAppointment} 
               onNavigateToGoals={onNavigateToGoals}
               goals={goals}
-              setGoals={setGoals}
+              setGoals={(newGoals) => {
+                // Update goals in parent component
+                if (typeof setGoals === 'function') {
+                  setGoals(newGoals);
+                }
+              }}
             />
                   </div>
         )}
