@@ -604,13 +604,13 @@ export default function PriceChart({
           const transactionNumber = purchaseDetail?.monthNumber || (index + 1);
           ctx.fillText(`#${transactionNumber}`, x, labelY);
           
+          // Mark hash als getekend om duplicates te voorkomen
+          if (purchase.hash) {
+            drawnHashes.add(purchase.hash);
+          }
           drawnCount++;
-          console.log(`Successfully drew purchase point ${index + 1} at position:`, { x, y });
-        } else {
-          console.log(`Purchase ${index + 1} not found in data - date: ${purchase.date}`);
         }
       });
-      console.log(`=== FINISHED DRAWING PURCHASE POINTS - Drew ${drawnCount} out of ${purchasePoints.length} ===`);
     } else {
       console.log('=== NO PURCHASE POINTS TO DRAW ===');
     }
