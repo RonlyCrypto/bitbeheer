@@ -149,7 +149,7 @@ export default function UserDashboard() {
   const [hasWallet, setHasWallet] = useState(false);
   const [showFirstAppointmentPrompt, setShowFirstAppointmentPrompt] = useState(false);
   const [showBitcoinCalculator, setShowBitcoinCalculator] = useState(false);
-  const [bitcoinPrice, setBitcoinPrice] = useState<BitcoinPrice | null>(null);
+  const [bitcoinPrice, setBitcoinPrice] = useState<any>(null);
   const [currentPrice, setCurrentPrice] = useState<number>(0);
   const [previousATH, setPreviousATH] = useState<number>(69000);
   const [latestATH, setLatestATH] = useState<number>(124753);
@@ -1310,18 +1310,26 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 
         if (wallet && wallet.length > 0) {
           setHasWallet(true);
-          // Load wallet_data to get transactions if needed
           const walletRecord = wallet[0];
-          // If wallet_data exists, parse it to get last transaction
+          
+          // Gebruik walletDataService voor sync progress tracking
+          const walletDataWithProgress = await walletDataService.getWalletData(
+            walletRecord.address,
+            email,
+            (progress) => {
+              setWalletSyncProgress(progress);
+            }
+          );
+          
+          // Parse wallet data
           let lastTransaction = null;
           let transactions: BitcoinTransaction[] = [];
           
-          if (walletRecord.wallet_data?.transactions && Array.isArray(walletRecord.wallet_data.transactions) && walletRecord.wallet_data.transactions.length > 0) {
-            lastTransaction = walletRecord.wallet_data.transactions[0]; // Most recent transaction
-            // Get current price for calculations
+          if (walletDataWithProgress.transactions && walletDataWithProgress.transactions.length > 0) {
+            lastTransaction = walletDataWithProgress.transactions[0];
             const currentPrice = await bitcoinApiService.getCurrentPrice().catch(() => currentBitcoinPrice);
-            // Convert wallet_data transactions to BitcoinTransaction format
-            transactions = walletRecord.wallet_data.transactions.map((tx: any) => {
+            
+            transactions = walletDataWithProgress.transactions.map((tx: any) => {
               const txPrice = tx.price || currentPrice;
               const txValue = tx.value || 0;
               const txCurrentValue = tx.currentValue || (txValue ? (txValue / 100000000) * currentPrice : 0);
@@ -1342,7 +1350,12 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             });
           }
           
-          setWalletData({ ...walletRecord, lastTransaction });
+          setWalletData({ 
+            ...walletRecord, 
+            balance: walletDataWithProgress.balance,
+            transaction_count: walletDataWithProgress.transactionCount,
+            lastTransaction 
+          });
           setWalletTransactions(transactions);
 
           // 🔄 REALTIME WALLET REFRESH: Check for new transactions every 10 seconds
