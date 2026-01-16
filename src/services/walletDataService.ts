@@ -103,7 +103,13 @@ class WalletDataService {
         .eq('email', email)
         .maybeSingle();
 
-      if (error || !wallet) {
+      if (error) {
+        logger.error('❌ Error fetching wallet from database:', error);
+        return null;
+      }
+
+      if (!wallet) {
+        logger.debug(`📭 No wallet found in database for ${address.slice(0, 8)}... (${email})`);
         return null;
       }
 
@@ -111,6 +117,16 @@ class WalletDataService {
       const walletData = wallet.wallet_data || {};
       const transactions = walletData.transactions || [];
       const isFullySynced = walletData.fully_synced === true || walletData.is_complete === true;
+
+      logger.debug(`📦 Loaded wallet from database:`, {
+        address: wallet.address.slice(0, 8) + '...',
+        email: email,
+        balance: wallet.balance,
+        transactionCount: wallet.transaction_count,
+        transactionsInWalletData: transactions.length,
+        hasWalletData: !!wallet.wallet_data,
+        fullySynced: isFullySynced
+      });
 
       return {
         address: wallet.address,
@@ -136,7 +152,7 @@ class WalletDataService {
         fullySynced: isFullySynced // Flag om te checken of wallet volledig gesynct is
       };
     } catch (error) {
-      logger.error('Error fetching wallet data from database:', error);
+      logger.error('❌ Error fetching wallet data from database:', error);
       return null;
     }
   }
