@@ -313,6 +313,97 @@ export default function PortfolioPage() {
     updateTransactions();
   }, [wallets]);
 
+  // Periodieke refresh tijdens sync - reload wallet data uit database
+  useEffect(() => {
+    const hasActiveSync = Array.from(walletSyncProgress.values()).some(p => p.isSyncing);
+    
+    if (!hasActiveSync) return;
+
+    // Snellere refresh voor eerste batch (elke 2 seconden), daarna elke 5 seconden
+    const getRefreshInterval = () => {
+      const hasFirstBatch = Array.from(walletSyncProgress.values()).some(p => p.loadedTransactions >= 10);
+      return hasFirstBatch ? 5000 : 2000; // Sneller tijdens eerste batch
+    };
+
+    const interval = setInterval(async () => {
+      if (!effectiveUserEmail) return;
+
+      try {
+        const { data: walletsData } = await supabase
+          .from('wallets')
+          .select('*')
+          .eq('email', effectiveUserEmail)
+          .order('created_at', { ascending: false });
+
+        if (walletsData && walletsData.length > 0) {
+          // Update alleen wallets die syncing zijn
+          setWallets(prevWallets => 
+            prevWallets.map(prevWallet => {
+              const dbWallet = walletsData.find((w: any) => w.address === prevWallet.address);
+              if (!dbWallet) return prevWallet;
+
+              const walletData = dbWallet.wallet_data || {};
+              const transactions = walletData.transactions || [];
+
+              const realData: BitcoinWallet = {
+                address: dbWallet.address,
+                balance: dbWallet.balance || 0,
+                totalReceived: dbWallet.total_received || 0,
+                totalSent: dbWallet.total_sent || 0,
+                transactionCount: dbWallet.transaction_count || 0,
+                firstSeen: dbWallet.first_seen ? new Date(dbWallet.first_seen).getTime() : Date.now(),
+                lastSeen: dbWallet.last_seen ? new Date(dbWallet.last_seen).getTime() : Date.now(),
+                transactions: transactions.map((tx: any) => ({
+                  hash: tx.hash,
+                  time: tx.time,
+                  value: tx.value,
+                  price: tx.price,
+                  currentValue: tx.currentValue,
+                  profit: tx.profit,
+                  profitPercent: tx.profitPercent,
+                  valueInBTC: tx.valueInBTC,
+                  status: tx.status,
+                  confirmations: tx.confirmations
+                })) as BitcoinTransaction[]
+              };
+
+              return {
+                ...prevWallet,
+                balance: realData.balance,
+                transactions: dbWallet.transaction_count || 0,
+                realData
+              };
+            })
+          );
+          
+          // Update allTransactions wanneer nieuwe transacties beschikbaar zijn
+          const allTx: BitcoinTransaction[] = [];
+          walletsData.forEach((w: any) => {
+            const walletData = w.wallet_data || {};
+            const transactions = walletData.transactions || [];
+            allTx.push(...transactions.map((tx: any) => ({
+              hash: tx.hash,
+              time: tx.time,
+              value: tx.value,
+              price: tx.price,
+              currentValue: tx.currentValue,
+              profit: tx.profit,
+              profitPercent: tx.profitPercent,
+              valueInBTC: tx.valueInBTC,
+              status: tx.status,
+              confirmations: tx.confirmations
+            })) as BitcoinTransaction[]);
+          });
+          setAllTransactions(allTx);
+        }
+      } catch (error) {
+        console.error('Error refreshing wallets during sync:', error);
+      }
+    }, getRefreshInterval());
+
+    return () => clearInterval(interval);
+  }, [walletSyncProgress, effectiveUserEmail]);
+
   // Lazy load next batch of transactions
   const loadMoreTransactions = async () => {
     const nextPage = currentPage + 1;
