@@ -183,14 +183,17 @@ class WalletDataService {
         isSyncing: true
       });
 
-      // 2. Haal transacties per 25 op
+      // 2. Haal eerst 10 transacties op voor snelle wallet info
+      const INITIAL_BATCH_SIZE = 10; // Eerste batch: snel wallet info tonen
+      const BATCH_SIZE = 10; // Rest per 10 in achtergrond
+      const MAX_TRANSACTIONS = 500; // Limiet voor wallets met veel tx's
+      
       let allTransactions: BitcoinTransaction[] = [];
       let afterTxid: string | null = null;
       let page = 0;
-      const BATCH_SIZE = 25;
-      const MAX_TRANSACTIONS = 500; // Limiet voor wallets met veel tx's
+      let isFirstBatch = true;
 
-      while (page < 50 && allTransactions.length < MAX_TRANSACTIONS) {
+      while (page < 100 && allTransactions.length < MAX_TRANSACTIONS) {
         if (controller.signal.aborted) {
           logger.debug('Sync cancelled');
           return;
@@ -198,9 +201,9 @@ class WalletDataService {
 
         page++;
         
-        // Rate limiting: wacht 1.5 seconde tussen requests
+        // Rate limiting: wacht 1 seconde tussen requests (sneller voor eerste batch)
         if (page > 1) {
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          await new Promise(resolve => setTimeout(resolve, isFirstBatch ? 1000 : 1500));
         }
 
         const url = afterTxid 
@@ -230,9 +233,14 @@ class WalletDataService {
             break;
           }
 
+          // Voor eerste batch: neem alleen eerste 10 transacties
+          const transactionsToProcess = isFirstBatch 
+            ? pageTransactions.slice(0, INITIAL_BATCH_SIZE)
+            : pageTransactions;
+
           // Process deze batch transacties
           const processedBatch = await this.processTransactionsBatch(
-            pageTransactions,
+            transactionsToProcess,
             address,
             controller.signal
           );
@@ -246,7 +254,7 @@ class WalletDataService {
             isSyncing: true
           });
 
-          // Sla batch op in database (incrementeel)
+          // Sla batch op in database (incrementeel) - vooral belangrijk na eerste batch
           await this.saveWalletDataToDatabase(
             address,
             email,
@@ -254,6 +262,26 @@ class WalletDataService {
             allTransactions,
             false // nog niet klaar
           );
+
+          // Na eerste batch: set up voor volgende batches
+          if (isFirstBatch) {
+            isFirstBatch = false;
+            // Set up next page vanaf transactie 11 (als er meer zijn)
+            if (pageTransactions.length > INITIAL_BATCH_SIZE) {
+              const lastTx = pageTransactions[INITIAL_BATCH_SIZE - 1];
+              if (lastTx?.txid) {
+                afterTxid = lastTx.txid;
+              }
+            } else if (pageTransactions.length > 0) {
+              // Als er minder dan 10 zijn, gebruik laatste
+              const lastTx = pageTransactions[pageTransactions.length - 1];
+              if (lastTx?.txid) {
+                afterTxid = lastTx.txid;
+              }
+            }
+            // Continue met volgende batches
+            continue;
+          }
 
           // Check of we klaar zijn
           if (pageTransactions.length < BATCH_SIZE || allTransactions.length >= MAX_TRANSACTIONS) {
