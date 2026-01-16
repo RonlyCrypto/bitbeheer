@@ -1137,7 +1137,7 @@ export default function PortfolioPage() {
                                 <span className="text-gray-400">Laden...</span>
                               ) : (
                                 <>
-                                  {wallet.transactions} transacties
+                                  {wallet.realData?.transactions?.length || wallet.transactions || 0} transacties
                                   {isSyncing && hasFirstBatch && (
                                     <span className="text-blue-600 ml-1">• Wallet wordt gesynchroniseerd...</span>
                                   )}
