@@ -39,6 +39,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
+import logger from '../utils/logger';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { useProfilePopup } from '../contexts/ProfilePopupContext';
@@ -364,8 +365,26 @@ export default function UserDashboard() {
             .order('created_at', { ascending: false });
           
           if (!goalsError && goalsData) {
-            console.log('📋 Loaded goals:', goalsData);
-            setGoals(goalsData);
+            // Map database columns (snake_case) to Goal interface (camelCase)
+            const mappedGoals: Goal[] = goalsData
+              .filter(goal => goal && goal.id) // Filter out empty objects
+              .map((goal: any) => ({
+                id: goal.id,
+                title: goal.title || '',
+                description: goal.description || '',
+                targetAmount: goal.target_amount || 0,
+                currentAmount: goal.current_amount || 0,
+                targetDate: goal.target_date || '',
+                status: (goal.status || 'active') as 'active' | 'completed' | 'paused',
+                category: (goal.category || 'other') as Goal['category'],
+                createdAt: goal.created_at || new Date().toISOString(),
+                isBitcoinGoal: goal.category === 'bitcoin',
+                targetBitcoinAmount: goal.target_bitcoin_amount,
+                monthlyInvestment: goal.monthly_investment
+              }));
+            
+            console.log('📋 Loaded goals:', mappedGoals);
+            setGoals(mappedGoals);
           } else {
             console.log('⚠️ Could not load goals:', goalsError?.message);
             setGoals([]);
@@ -1046,16 +1065,21 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 
         const { data, error } = await supabase
           .from('appointments')
-          .select('*, one_on_one_approved')
+          .select('*')
           .eq('user_email', effectiveEmail)
           // Load ALL appointments, not just pending/confirmed - we filter in the frontend
           .order('date', { ascending: true })
           .order('start_time', { ascending: true });
 
         if (error) {
-          // Only log real errors
-          if (error.code !== 'PGRST116' && error.code !== 'PGRST204') {
-            console.error('Error loading appointments:', error);
+          // Only log real errors (ignore 404, missing table, etc.)
+          if (error.code !== 'PGRST116' && error.code !== 'PGRST204' && error.code !== 'PGRST301') {
+            // Suppress 400 errors for appointments if table structure is different
+            if (error.code === 'PGRST202' || error.message?.includes('column') || error.message?.includes('does not exist')) {
+              logger.debug('Appointments table structure issue (non-critical):', error.message);
+            } else {
+              logger.error('Error loading appointments:', error);
+            }
           }
           setAppointmentsLoading(false);
           return;

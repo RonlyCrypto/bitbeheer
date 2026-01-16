@@ -211,10 +211,15 @@ class WalletDataService {
           const response = await fetch(url, { signal: controller.signal });
           if (!response.ok) {
             if (response.status === 429) {
-              // Rate limited - wacht langer
+              // Rate limited - wacht langer en log (niet als error)
+              logger.debug(`⚠️ Rate limited (429) for ${address.slice(0, 8)}... - waiting 10s`);
               await new Promise(resolve => setTimeout(resolve, 10000));
               page--; // Retry deze pagina
               continue;
+            }
+            // Log andere errors maar niet als kritiek
+            if (response.status !== 404) {
+              logger.debug(`API error ${response.status} for ${address.slice(0, 8)}...`);
             }
             break;
           }
