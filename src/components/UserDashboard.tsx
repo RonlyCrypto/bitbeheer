@@ -1569,7 +1569,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
       return () => clearTimeout(timeout);
     }
   }, [walletSyncProgress, isImpersonating, impersonatedUser, currentBitcoinPrice]);
-  }, [userAppointment, isImpersonating, impersonatedUser]);
 
   const handleAddWallet = async () => {
     if (!walletForm.address.trim()) {
