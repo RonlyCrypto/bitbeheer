@@ -834,9 +834,13 @@ export default function PortfolioPage() {
                 const syncProgress = walletSyncProgress.get(wallet.address);
                 const isSyncing = syncProgress?.isSyncing || false;
                 const isLoadingInitial = isSyncing && (!wallet.realData || wallet.balance === 0) && wallet.transactions === 0;
+                const hasFirstBatch = syncProgress && syncProgress.loadedTransactions >= 10;
                 const progressPercent = syncProgress && syncProgress.totalTransactions > 0
                   ? Math.min(100, (syncProgress.loadedTransactions / syncProgress.totalTransactions) * 100)
                   : (isLoadingInitial ? 0 : undefined);
+                
+                // Toon wallet info als eerste batch (10 transacties) is geladen
+                const showWalletInfo = hasFirstBatch || (wallet.realData && wallet.balance > 0);
 
                 return (
                   <div key={wallet.id} className="bg-white rounded-xl p-4 shadow-lg">
@@ -847,32 +851,44 @@ export default function PortfolioPage() {
                           <div className="flex items-center gap-2">
                             <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
                             <span className="text-sm font-medium text-blue-900">
-                              {isLoadingInitial ? 'Wallet wordt geladen...' : 'Wallet wordt gesynchroniseerd...'}
+                              {isLoadingInitial && !hasFirstBatch 
+                                ? `Wallet wordt geladen... (${syncProgress?.loadedTransactions || 0}/10 transacties)` 
+                                : hasFirstBatch && isSyncing
+                                ? 'Wallet wordt gesynchroniseerd... (rest op achtergrond)'
+                                : 'Wallet wordt gesynchroniseerd...'}
                             </span>
-                      </div>
+                          </div>
                           {syncProgress && syncProgress.totalTransactions > 0 ? (
                             <span className="text-xs text-blue-700">
                               {syncProgress.loadedTransactions || 0} / {syncProgress.totalTransactions || 0} transacties
                             </span>
                           ) : isLoadingInitial ? (
                             <span className="text-xs text-blue-700">
-                              Initialiseren...
+                              {syncProgress?.loadedTransactions || 0} / 10 transacties (eerste batch)...
                             </span>
                           ) : null}
-                    </div>
-                        <div className="w-full bg-blue-200 rounded-full h-2">
+                        </div>
+                        <div className="w-full bg-blue-200 rounded-full h-2.5">
                           <div 
-                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                            className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
                             style={{ 
                               width: progressPercent !== undefined 
                                 ? `${progressPercent}%` 
+                                : isLoadingInitial
+                                ? `${((syncProgress?.loadedTransactions || 0) / 10) * 100}%`
                                 : '100%',
                               animation: isLoadingInitial && progressPercent === undefined 
                                 ? 'pulse 2s ease-in-out infinite' 
                                 : 'none'
                             }}
                           />
-                  </div>
+                        </div>
+                        {hasFirstBatch && isSyncing && (
+                          <p className="text-xs text-green-700 mt-2 flex items-center gap-1">
+                            <Check className="w-3 h-3" />
+                            Eerste 10 transacties geladen - wallet info zichtbaar. Rest wordt op achtergrond geladen...
+                          </p>
+                        )}
                         {syncProgress?.error && (
                           <p className="text-xs text-red-600 mt-1">{syncProgress.error}</p>
                         )}
@@ -907,7 +923,7 @@ export default function PortfolioPage() {
                         </button>
                             <span className="text-xs text-gray-500">•</span>
                             <span className="text-xs font-semibold text-gray-900">
-                              {isLoadingInitial ? (
+                              {isLoadingInitial && !hasFirstBatch ? (
                                 <span className="inline-flex items-center gap-1">
                                   <Loader2 className="w-3 h-3 animate-spin text-gray-400" />
                                   <span className="text-gray-400">Laden...</span>
@@ -918,10 +934,10 @@ export default function PortfolioPage() {
                             </span>
                             <span className="text-xs text-gray-500">•</span>
                             <span className="text-xs text-gray-600">
-                              {isLoadingInitial ? (
+                              {isLoadingInitial && !hasFirstBatch ? (
                                 <span className="text-gray-400">Laden...</span>
                               ) : (
-                                `${wallet.transactions} transacties`
+                                `${wallet.transactions} transacties${isSyncing && hasFirstBatch ? ' (meer worden geladen...)' : ''}`
                               )}
                             </span>
                       </div>

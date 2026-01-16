@@ -257,6 +257,7 @@ class WalletDataService {
           // Na eerste batch: sla direct op en trigger UI update
           if (isFirstBatch) {
             // Sla eerste batch direct op zodat wallet info zichtbaar wordt
+            // Alle data (datum, tx, prijzen) wordt opgeslagen in Supabase
             await this.saveWalletDataToDatabase(
               address,
               email,
@@ -264,6 +265,8 @@ class WalletDataService {
               allTransactions,
               false // nog niet klaar, maar eerste batch is wel compleet
             );
+            
+            logger.debug(`✅ Eerste batch (10 transacties) opgeslagen voor ${address.slice(0, 8)}...`);
             
             // Trigger callback om UI te updaten met eerste batch
             this.updateProgress(address, {
