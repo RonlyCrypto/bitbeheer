@@ -187,14 +187,6 @@ export default function PortfolioPage() {
                 );
 
                 realData = walletDataWithProgress;
-
-                // Als sync actief is, update wallets periodiek
-                if (walletDataWithProgress.syncProgress?.isSyncing) {
-                  // Reload wallet data na sync updates
-                  setTimeout(() => {
-                    loadWallets();
-                  }, 5000);
-                }
               } catch (error) {
                 console.error('Error fetching wallet data:', error);
                 // Fallback: use basic data from database
@@ -313,19 +305,14 @@ export default function PortfolioPage() {
     updateTransactions();
   }, [wallets]);
 
-  // Periodieke refresh tijdens sync - reload wallet data uit database
+  // Smooth update van wallet data tijdens sync - zonder visuele sprongen
   useEffect(() => {
     const hasActiveSync = Array.from(walletSyncProgress.values()).some(p => p.isSyncing);
     
     if (!hasActiveSync) return;
 
-    // Snellere refresh voor eerste batch (elke 2 seconden), daarna elke 5 seconden
-    const getRefreshInterval = () => {
-      const hasFirstBatch = Array.from(walletSyncProgress.values()).some(p => p.loadedTransactions >= 10);
-      return hasFirstBatch ? 5000 : 2000; // Sneller tijdens eerste batch
-    };
-
-    const interval = setInterval(async () => {
+    // Update alleen wanneer sync progress verandert, niet periodiek
+    const updateWalletsFromDatabase = async () => {
       if (!effectiveUserEmail) return;
 
       try {
@@ -336,7 +323,7 @@ export default function PortfolioPage() {
           .order('created_at', { ascending: false });
 
         if (walletsData && walletsData.length > 0) {
-          // Update alleen wallets die syncing zijn
+          // Smooth update: merge nieuwe data met bestaande wallets
           setWallets(prevWallets => 
             prevWallets.map(prevWallet => {
               const dbWallet = walletsData.find((w: any) => w.address === prevWallet.address);
@@ -367,16 +354,21 @@ export default function PortfolioPage() {
                 })) as BitcoinTransaction[]
               };
 
+              // Smooth update: behoud bestaande data, update alleen wat nieuw is
               return {
                 ...prevWallet,
                 balance: realData.balance,
                 transactions: dbWallet.transaction_count || 0,
-                realData
+                realData: {
+                  ...prevWallet.realData,
+                  ...realData,
+                  transactions: realData.transactions // Update transacties
+                }
               };
             })
           );
           
-          // Update allTransactions wanneer nieuwe transacties beschikbaar zijn
+          // Update allTransactions smooth
           const allTx: BitcoinTransaction[] = [];
           walletsData.forEach((w: any) => {
             const walletData = w.wallet_data || {};
@@ -397,11 +389,18 @@ export default function PortfolioPage() {
           setAllTransactions(allTx);
         }
       } catch (error) {
-        console.error('Error refreshing wallets during sync:', error);
+        console.error('Error updating wallets during sync:', error);
       }
-    }, getRefreshInterval());
+    };
 
-    return () => clearInterval(interval);
+    // Update alleen wanneer sync progress verandert (niet periodiek)
+    const syncProgressString = JSON.stringify(Array.from(walletSyncProgress.entries()));
+    updateWalletsFromDatabase();
+    
+    // Debounce updates om visuele sprongen te voorkomen
+    const timeoutId = setTimeout(updateWalletsFromDatabase, 3000);
+    
+    return () => clearTimeout(timeoutId);
   }, [walletSyncProgress, effectiveUserEmail]);
 
   // Reload wallets wanneer sync compleet is
