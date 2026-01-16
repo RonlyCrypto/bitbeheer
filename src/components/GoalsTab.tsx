@@ -931,9 +931,10 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
         category: 'bitcoin',
         targetDate: ''
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating goal:', error);
-      alert('Er is een fout opgetreden bij het aanmaken van het doel.');
+      const errorMessage = error?.message || error?.error?.message || 'Er is een fout opgetreden bij het aanmaken van het doel.';
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
