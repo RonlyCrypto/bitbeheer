@@ -1028,7 +1028,12 @@ export default function PortfolioPage() {
                               {isLoadingInitial && !hasFirstBatch ? (
                                 <span className="text-gray-400">Laden...</span>
                               ) : (
-                                `${wallet.transactions} transacties${isSyncing && hasFirstBatch ? ' (meer worden geladen...)' : ''}`
+                                <>
+                                  {wallet.transactions} transacties
+                                  {isSyncing && hasFirstBatch && (
+                                    <span className="text-blue-600 ml-1">• Wallet wordt gesynchroniseerd...</span>
+                                  )}
+                                </>
                               )}
                             </span>
                       </div>

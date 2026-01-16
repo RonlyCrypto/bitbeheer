@@ -20,7 +20,7 @@ class WalletDataService {
   private syncProgressCallbacks: Map<string, (progress: WalletSyncProgress) => void> = new Map();
   private activeSyncs: Map<string, AbortController> = new Map();
 
-  // Haal wallet data op - eerst uit database, dan background sync indien nodig
+  // Haal wallet data op - eerst uit database, dan background sync alleen bij eerste keer
   async getWalletData(
     address: string, 
     email: string,
@@ -29,24 +29,33 @@ class WalletDataService {
     // 1. Haal eerst data uit database
     const dbData = await this.getWalletDataFromDatabase(address, email);
     
-    if (dbData && this.isDataFresh(dbData.lastSynced)) {
-      logger.debug(`✅ Using fresh database data for ${address.slice(0, 8)}...`);
+    // 2. Check of wallet al volledig gesynct is (heeft transacties in database en fully_synced flag)
+    const isFullySynced = dbData && (dbData.fullySynced || (dbData.transactions && dbData.transactions.length > 0 && dbData.transactionCount === dbData.transactions.length));
+    
+    if (isFullySynced) {
+      logger.debug(`✅ Wallet al volledig gesynct voor ${address.slice(0, 8)}... - geen sync nodig`);
       return {
         ...dbData,
         isFromDatabase: true,
-        lastSynced: dbData.lastSynced
+        lastSynced: dbData.lastSynced,
+        fullySynced: true,
+        syncProgress: {
+          totalTransactions: dbData.transactionCount || 0,
+          loadedTransactions: dbData.transactions?.length || 0,
+          isSyncing: false // Niet meer syncen, data is compleet
+        }
       };
     }
 
-    // 2. Als data verouderd is of niet bestaat, start background sync
+    // 3. Alleen syncen als er geen data is of data incompleet is (eerste keer)
     if (onProgress) {
       this.syncProgressCallbacks.set(address, onProgress);
     }
 
-    // 3. Start background sync (niet-blocking)
+    // 4. Start background sync alleen bij eerste keer (niet-blocking)
     this.syncWalletDataInBackground(address, email, dbData);
 
-    // 4. Return database data (ook als verouderd) zodat pagina niet leeg blijft
+    // 5. Return database data (ook als verouderd) zodat pagina niet leeg blijft
     if (dbData) {
       logger.debug(`📦 Using cached database data (syncing in background) for ${address.slice(0, 8)}...`);
       return {
@@ -56,12 +65,12 @@ class WalletDataService {
         syncProgress: {
           totalTransactions: dbData.transactionCount || 0,
           loadedTransactions: dbData.transactions?.length || 0,
-          isSyncing: true
+          isSyncing: true // Eerste sync actief
         }
       };
     }
 
-    // 5. Als geen database data, return lege wallet (sync zal data ophalen)
+    // 6. Als geen database data, return lege wallet (sync zal data ophalen)
     return {
       address,
       balance: 0,
@@ -75,7 +84,7 @@ class WalletDataService {
       syncProgress: {
         totalTransactions: 0,
         loadedTransactions: 0,
-        isSyncing: true
+        isSyncing: true // Eerste sync actief
       }
     };
   }
@@ -84,7 +93,7 @@ class WalletDataService {
   private async getWalletDataFromDatabase(
     address: string, 
     email: string
-  ): Promise<BitcoinWallet & { lastSynced?: Date } | null> {
+  ): Promise<BitcoinWallet & { lastSynced?: Date; fullySynced?: boolean } | null> {
     try {
       const { data: wallet, error } = await supabase
         .from('wallets')
