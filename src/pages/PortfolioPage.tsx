@@ -441,6 +441,17 @@ export default function PortfolioPage() {
         setNewWalletName('');
         setShowAddWallet(false);
 
+        // Set initial loading state for this wallet
+        setWalletSyncProgress(prev => {
+          const newMap = new Map(prev);
+          newMap.set(newWalletAddress, {
+            totalTransactions: 0,
+            loadedTransactions: 0,
+            isSyncing: true
+          });
+          return newMap;
+        });
+
         // 3. BACKGROUND PROCESSING: Start sync met nieuwe service
         setTimeout(async () => {
           try {
@@ -837,17 +848,17 @@ export default function PortfolioPage() {
                             <span className="text-sm font-medium text-blue-900">
                               Wallet wordt gesynchroniseerd...
                             </span>
-                          </div>
+                      </div>
                           <span className="text-xs text-blue-700">
                             {syncProgress?.loadedTransactions || 0} / {syncProgress?.totalTransactions || 0} transacties
                           </span>
-                        </div>
+                    </div>
                         <div className="w-full bg-blue-200 rounded-full h-2">
                           <div 
                             className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                             style={{ width: `${progressPercent}%` }}
                           />
-                        </div>
+                  </div>
                         {syncProgress?.error && (
                           <p className="text-xs text-red-600 mt-1">{syncProgress.error}</p>
                         )}
@@ -882,10 +893,23 @@ export default function PortfolioPage() {
                         </button>
                             <span className="text-xs text-gray-500">•</span>
                             <span className="text-xs font-semibold text-gray-900">
-                              {showBalances ? `${wallet.balance.toFixed(4)} BTC` : '•••• BTC'}
+                              {isLoadingInitial ? (
+                                <span className="inline-flex items-center gap-1">
+                                  <Loader2 className="w-3 h-3 animate-spin text-gray-400" />
+                                  <span className="text-gray-400">Laden...</span>
+                                </span>
+                              ) : (
+                                showBalances ? `${wallet.balance.toFixed(4)} BTC` : '•••• BTC'
+                              )}
                             </span>
                             <span className="text-xs text-gray-500">•</span>
-                            <span className="text-xs text-gray-600">{wallet.transactions} transacties</span>
+                            <span className="text-xs text-gray-600">
+                              {isLoadingInitial ? (
+                                <span className="text-gray-400">Laden...</span>
+                              ) : (
+                                `${wallet.transactions} transacties`
+                              )}
+                            </span>
                       </div>
                     </div>
                     </div>
