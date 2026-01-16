@@ -404,6 +404,17 @@ export default function PortfolioPage() {
     return () => clearInterval(interval);
   }, [walletSyncProgress, effectiveUserEmail]);
 
+  // Reload wallets wanneer sync compleet is
+  useEffect(() => {
+    const wasSyncing = Array.from(walletSyncProgress.values()).some(p => p.isSyncing);
+    const isNowComplete = !Array.from(walletSyncProgress.values()).some(p => p.isSyncing);
+    
+    // Als sync net compleet is geworden, reload wallets
+    if (wasSyncing && isNowComplete) {
+      loadWallets();
+    }
+  }, [walletSyncProgress, effectiveUserEmail]);
+
   // Lazy load next batch of transactions
   const loadMoreTransactions = async () => {
     const nextPage = currentPage + 1;
@@ -935,56 +946,6 @@ export default function PortfolioPage() {
 
                 return (
                   <div key={wallet.id} className="bg-white rounded-xl p-4 shadow-lg">
-                    {/* Loading/Sync Progress Bar */}
-                    {(isSyncing || isLoadingInitial) && (
-                      <div className="mb-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
-                            <span className="text-sm font-medium text-blue-900">
-                              {isLoadingInitial && !hasFirstBatch 
-                                ? `Wallet wordt geladen... (${syncProgress?.loadedTransactions || 0}/10 transacties)` 
-                                : hasFirstBatch && isSyncing
-                                ? 'Wallet wordt gesynchroniseerd... (rest op achtergrond)'
-                                : 'Wallet wordt gesynchroniseerd...'}
-                            </span>
-                          </div>
-                          {syncProgress && syncProgress.totalTransactions > 0 ? (
-                            <span className="text-xs text-blue-700">
-                              {syncProgress.loadedTransactions || 0} / {syncProgress.totalTransactions || 0} transacties
-                            </span>
-                          ) : isLoadingInitial ? (
-                            <span className="text-xs text-blue-700">
-                              {syncProgress?.loadedTransactions || 0} / 10 transacties (eerste batch)...
-                            </span>
-                          ) : null}
-                        </div>
-                        <div className="w-full bg-blue-200 rounded-full h-2.5">
-                          <div 
-                            className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-                            style={{ 
-                              width: progressPercent !== undefined 
-                                ? `${progressPercent}%` 
-                                : isLoadingInitial
-                                ? `${((syncProgress?.loadedTransactions || 0) / 10) * 100}%`
-                                : '100%',
-                              animation: isLoadingInitial && progressPercent === undefined 
-                                ? 'pulse 2s ease-in-out infinite' 
-                                : 'none'
-                            }}
-                          />
-                        </div>
-                        {hasFirstBatch && isSyncing && (
-                          <p className="text-xs text-green-700 mt-2 flex items-center gap-1">
-                            <Check className="w-3 h-3" />
-                            Eerste 10 transacties geladen - wallet info zichtbaar. Rest wordt op achtergrond geladen...
-                          </p>
-                        )}
-                        {syncProgress?.error && (
-                          <p className="text-xs text-red-600 mt-1">{syncProgress.error}</p>
-                        )}
-                      </div>
-                    )}
 
                     {/* Compact header with all info in one row */}
                     <div className="flex items-center justify-between gap-4 mb-3">
