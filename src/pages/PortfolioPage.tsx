@@ -323,11 +323,66 @@ export default function PortfolioPage() {
           .order('created_at', { ascending: false });
 
         if (walletsData && walletsData.length > 0) {
-          // Smooth update: merge nieuwe data met bestaande wallets
-          setWallets(prevWallets => 
-            prevWallets.map(prevWallet => {
-              const dbWallet = walletsData.find((w: any) => w.address === prevWallet.address);
-              if (!dbWallet) return prevWallet;
+          // Smooth update: merge nieuwe data met bestaande wallets - behoud structuur en volgorde
+          setWallets(prevWallets => {
+            // Zorg dat wallets altijd in dezelfde volgorde blijven (geen witte vlakken die springen)
+            const updatedWallets = walletsData.map((dbWallet: any) => {
+              const prevWallet = prevWallets.find(w => w.address === dbWallet.address);
+              
+              // Als wallet niet bestaat in prev, maak nieuwe aan (behoud structuur)
+              if (!prevWallet) {
+                const walletData = dbWallet.wallet_data || {};
+                const transactions = walletData.transactions || [];
+                const realData: BitcoinWallet = {
+                  address: dbWallet.address,
+                  balance: dbWallet.balance || 0,
+                  totalReceived: dbWallet.total_received || 0,
+                  totalSent: dbWallet.total_sent || 0,
+                  transactionCount: dbWallet.transaction_count || 0,
+                  firstSeen: dbWallet.first_seen ? new Date(dbWallet.first_seen).getTime() : Date.now(),
+                  lastSeen: dbWallet.last_seen ? new Date(dbWallet.last_seen).getTime() : Date.now(),
+                  transactions: transactions.map((tx: any) => ({
+                    hash: tx.hash,
+                    time: tx.time,
+                    value: tx.value,
+                    price: tx.price,
+                    currentValue: tx.currentValue,
+                    profit: tx.profit,
+                    profitPercent: tx.profitPercent,
+                    valueInBTC: tx.valueInBTC,
+                    status: tx.status,
+                    confirmations: tx.confirmations
+                  })) as BitcoinTransaction[]
+                };
+                
+                // Format firstSeen date
+                let firstSeenDate = new Date().toISOString().split('T')[0];
+                if (dbWallet.first_seen) {
+                  try {
+                    const date = new Date(dbWallet.first_seen);
+                    if (!isNaN(date.getTime())) {
+                      firstSeenDate = date.toISOString().split('T')[0];
+                    }
+                  } catch {}
+                } else if (dbWallet.created_at) {
+                  try {
+                    const date = new Date(dbWallet.created_at);
+                    if (!isNaN(date.getTime())) {
+                      firstSeenDate = date.toISOString().split('T')[0];
+                    }
+                  } catch {}
+                }
+                
+                return {
+                  id: dbWallet.id,
+                  name: dbWallet.name || 'Mijn Bitcoin Wallet',
+                  address: dbWallet.address,
+                  balance: dbWallet.balance || 0,
+                  transactions: dbWallet.transaction_count || 0,
+                  firstSeen: firstSeenDate,
+                  realData
+                };
+              }
 
               const walletData = dbWallet.wallet_data || {};
               const transactions = walletData.transactions || [];
