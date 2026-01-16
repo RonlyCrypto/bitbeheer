@@ -974,7 +974,7 @@ export default function UserDashboard() {
 }
 
 // Overview Tab Component
-function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppointment, accountApproved, isImpersonating, impersonatedUser, hasApprovedOneOnOne, onNavigateToPortfolio, user, emailVerified, firstAppointmentCompleted, isLoading = false }: any) {
+function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppointment, accountApproved, isImpersonating, impersonatedUser, hasApprovedOneOnOne, onNavigateToPortfolio, onNavigateToGoals, user, emailVerified, firstAppointmentCompleted, isLoading = false }: any) {
   const [showExchangeWarningPopup, setShowExchangeWarningPopup] = useState(false);
   const [showSelfCustodyPopup, setShowSelfCustodyPopup] = useState(false);
   const [fearGreedIndex, setFearGreedIndex] = useState<number | null>(null);
