@@ -349,10 +349,18 @@ class WalletDataService {
 
         const valueInBTC = Math.abs(netValue) / 100000000;
         const isSend = netValue < 0;
-        const blockTime = txData.status?.block_time;
+        let blockTime = txData.status?.block_time;
         const isPending = !blockTime || !txData.status?.block_height;
 
-        if (!blockTime) continue;
+        // Fallback naar tx.time als block_time niet beschikbaar (unconfirmed/pending)
+        if (!blockTime) {
+          blockTime = tx.time || txData.time;
+          if (!blockTime) {
+            logger.debug(`⏭️ Skipping ${tx.txid} - no timestamp at all`);
+            continue;
+          }
+          logger.debug(`ℹ️ Using tx.time for unconfirmed/pending tx ${tx.txid.slice(0, 8)}...`);
+        }
 
         // Haal historische prijs op
         const txDate = new Date(blockTime * 1000);
