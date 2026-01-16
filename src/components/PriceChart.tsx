@@ -471,12 +471,6 @@ export default function PriceChart({
     }
 
     if (purchasePoints.length > 0) {
-      console.log('=== DRAWING PURCHASE POINTS ===');
-      console.log('Total purchase points to draw:', purchasePoints.length);
-      console.log('Purchase points data:', purchasePoints);
-      console.log('Data range:', { startIndex, endIndex, dataLength: data.length });
-      console.log('Visible data range:', { startDate: visibleData[0]?.date, endDate: visibleData[visibleData.length - 1]?.date });
-      
       // Remove duplicate purchase points (same date + price + hash) om dubbele punten te voorkomen
       const uniquePurchasePoints = purchasePoints.filter((purchase, index, self) => {
         return index === self.findIndex(p => {
