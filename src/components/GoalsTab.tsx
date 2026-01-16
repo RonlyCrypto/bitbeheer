@@ -122,7 +122,10 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
   // Load goals from database - filter by user_id (per account)
   useEffect(() => {
     const loadGoals = async () => {
-      if (!effectiveUserId || !effectiveUserEmail) return;
+      if (!effectiveUserEmail) {
+        console.log('⚠️ No email available for loading goals');
+        return;
+      }
 
       try {
         // Filter by user_id to ensure goals are per account, not per email
@@ -134,14 +137,22 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
         if (isImpersonating && impersonatedUser) {
           // When impersonating, filter by email only (RLS will handle security)
           query = query.eq('email', effectiveUserEmail);
-        } else {
+        } else if (effectiveUserId) {
           // Normal case: filter by both user_id and email for extra security
           query = query.eq('user_id', effectiveUserId).eq('email', effectiveUserEmail);
+        } else {
+          // Fallback: filter by email only if user_id is not available
+          query = query.eq('email', effectiveUserEmail);
         }
         
         const { data: goalsData, error } = await query.order('created_at', { ascending: false });
 
-        if (!error && goalsData) {
+        if (error) {
+          console.error('Error loading goals:', error);
+          return;
+        }
+
+        if (goalsData && goalsData.length > 0) {
             // Transform database goals to Goal format
             const formattedGoals: Goal[] = goalsData.map((goal: any) => {
               const isMonthly = goal.title?.toLowerCase().includes('stort elke maand') || 
@@ -193,14 +204,24 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
           if (setInitialGoals) {
             setInitialGoals(formattedGoals);
           }
+        } else {
+          // No goals found - set empty array
+          setGoals([]);
+          if (setInitialGoals) {
+            setInitialGoals([]);
+          }
         }
       } catch (error) {
         console.error('Error loading goals:', error);
+        setGoals([]);
+        if (setInitialGoals) {
+          setInitialGoals([]);
+        }
       }
     };
 
     loadGoals();
-  }, [effectiveUserId, effectiveUserEmail, currentBalance, bitcoinPrice, setInitialGoals]);
+  }, [effectiveUserId, effectiveUserEmail, isImpersonating, impersonatedUser, currentBalance, bitcoinPrice, setInitialGoals]);
 
   const DEFAULT_GOALS = [
     {
@@ -473,8 +494,9 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
     try {
       setLoading(true);
       
-      if (!user?.id || !user?.email) {
+      if (!effectiveUserEmail) {
         alert('Je moet ingelogd zijn om een doel toe te voegen');
+        setLoading(false);
         return;
       }
 
@@ -630,8 +652,8 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
         const { data, error } = await supabase
           .from('goals')
           .insert({
-            user_id: user.id,
-            email: user.email,
+            user_id: effectiveUserId || null, // Database trigger will set this if null
+            email: effectiveUserEmail,
             title: title,
             description: description,
             category: 'beginners',
