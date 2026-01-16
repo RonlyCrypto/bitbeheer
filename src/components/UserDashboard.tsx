@@ -2152,10 +2152,19 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                         <div className="flex items-center gap-2">
                           <Loader2 className="w-3 h-3 text-blue-600 animate-spin" />
                           <span className="text-xs text-blue-600">
-                            {walletSyncProgress.loadedTransactions || 0}/10
+                            {walletSyncProgress.loadedTransactions || 0}/{walletSyncProgress.totalTransactions || 10}
                           </span>
                         </div>
                         <span className="text-xs text-gray-500">Laden...</span>
+                      </div>
+                    ) : walletSyncProgress && walletSyncProgress.isSyncing && walletSyncProgress.loadedTransactions >= 10 ? (
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="text-sm font-semibold text-gray-700">
+                          {walletData.balance?.toFixed(4) || '0.0000'} BTC
+                        </span>
+                        <span className="text-xs text-green-600 font-medium">
+                          Je kan je eerste paar tx zien in je portfolio
+                        </span>
                       </div>
                     ) : (
                       <span className="text-sm font-semibold text-gray-700">
@@ -2166,7 +2175,12 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   </div>
                 <button
                   onClick={() => onNavigateToPortfolio?.()}
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 flex-shrink-0"
+                  disabled={!hasWallet || (walletSyncProgress && walletSyncProgress.isSyncing && walletSyncProgress.loadedTransactions < 10)}
+                  className={`text-sm font-medium flex items-center gap-1 flex-shrink-0 transition-colors ${
+                    !hasWallet || (walletSyncProgress && walletSyncProgress.isSyncing && walletSyncProgress.loadedTransactions < 10)
+                      ? 'text-gray-400 cursor-not-allowed'
+                      : 'text-blue-600 hover:text-blue-700 cursor-pointer'
+                  }`}
                 >
                   Portfolio <ArrowRight className="w-4 h-4" />
                 </button>
