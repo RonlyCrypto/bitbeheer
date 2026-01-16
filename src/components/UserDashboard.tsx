@@ -36,7 +36,8 @@ import {
   Lock,
   Key,
   Info,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import logger from '../utils/logger';
@@ -52,6 +53,7 @@ import Helpdesk from './Helpdesk';
 import AgendaView from './AgendaView';
 import PortfolioPage from '../pages/PortfolioPage';
 import { bitcoinApiService, BitcoinTransaction } from '../services/bitcoinApiService';
+import { walletDataService } from '../services/walletDataService';
 import PortfolioChart from './PortfolioChart';
 import SignupProcessFlow from './SignupProcessFlow';
 import ReferralBlocks from './ReferralBlocks';
@@ -984,6 +986,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
   const [showFearGreedPopup, setShowFearGreedPopup] = useState(false);
   const [fearGreedHistory, setFearGreedHistory] = useState<any[]>([]);
   const [nextUpdateTime, setNextUpdateTime] = useState<Date | null>(null);
+  const [walletSyncProgress, setWalletSyncProgress] = useState<{ totalTransactions: number; loadedTransactions: number; isSyncing: boolean } | null>(null);
   
   // 🐛 DEBUG MODE - Toggle via console: localStorage.setItem('wallet_debug', 'true') or localStorage.setItem('wallet_debug', 'false')
   const DEBUG = typeof localStorage !== 'undefined' && localStorage.getItem('wallet_debug') === 'true';
@@ -2064,9 +2067,21 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   </div>
                   {/* BTC Balance in het midden */}
                   <div className="text-center mx-4">
-                    <span className="text-sm font-semibold text-gray-700">
-                      {walletData.balance?.toFixed(4) || '0.0000'} BTC
-                    </span>
+                    {walletSyncProgress && walletSyncProgress.isSyncing && walletSyncProgress.loadedTransactions < 10 ? (
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="w-3 h-3 text-blue-600 animate-spin" />
+                          <span className="text-xs text-blue-600">
+                            {walletSyncProgress.loadedTransactions || 0}/10
+                          </span>
+                        </div>
+                        <span className="text-xs text-gray-500">Laden...</span>
+                      </div>
+                    ) : (
+                      <span className="text-sm font-semibold text-gray-700">
+                        {walletData.balance?.toFixed(4) || '0.0000'} BTC
+                      </span>
+                    )}
                   </div>
                   </div>
                 <button
