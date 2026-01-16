@@ -1229,7 +1229,24 @@ export default function PortfolioPage() {
           {wallets.length > 0 && (
             <div className="mt-12">
               <PortfolioChart 
-                transactions={allTransactions}
+                transactions={(() => {
+                  // Filter transacties op basis van transactionFilter voor de chart
+                  return allTransactions.filter(tx => {
+                    if (transactionFilter === 'all') return true;
+                    if (transactionFilter === 'buy') return tx.value > 0;
+                    if (transactionFilter === 'sell') return tx.value < 0;
+                    if (transactionFilter === 'active') {
+                      if (tx.value > 0) {
+                        const txIndex = allTransactions.findIndex(t => 
+                          t.hash === tx.hash && t.time === tx.time
+                        );
+                        return txIndex !== -1 && !calculateBuySoldStatus.get(txIndex);
+                      }
+                      return false;
+                    }
+                    return true;
+                  });
+                })()}
                 currentPrice={currentPrice}
                 onTransactionClick={setSelectedTransaction}
               />
