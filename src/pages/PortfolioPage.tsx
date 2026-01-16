@@ -37,6 +37,7 @@ interface WalletData {
   transactions: number;
   firstSeen: string;
   realData?: BitcoinWallet;
+  total_investment?: number; // Total investment uit database
 }
 
 export default function PortfolioPage() {
