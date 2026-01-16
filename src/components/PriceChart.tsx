@@ -477,15 +477,32 @@ export default function PriceChart({
       console.log('Data range:', { startIndex, endIndex, dataLength: data.length });
       console.log('Visible data range:', { startDate: visibleData[0]?.date, endDate: visibleData[visibleData.length - 1]?.date });
       
+      // Remove duplicate purchase points (same date + price + hash) om dubbele punten te voorkomen
+      const uniquePurchasePoints = purchasePoints.filter((purchase, index, self) => {
+        return index === self.findIndex(p => {
+          // Match op hash als beschikbaar (meest accuraat)
+          if (purchase.hash && p.hash) {
+            return p.hash === purchase.hash;
+          }
+          // Anders match op date + price combinatie
+          return p.date === purchase.date && p.price === purchase.price;
+        });
+      });
+      
       let drawnCount = 0;
-      purchasePoints.forEach((purchase, index) => {
+      const drawnHashes = new Set<string>(); // Track welke hashes al getekend zijn
+      
+      uniquePurchasePoints.forEach((purchase, index) => {
+        // Skip als deze hash al getekend is
+        if (purchase.hash && drawnHashes.has(purchase.hash)) {
+          return;
+        }
+        
         // Try exact date match first
         let dataIndex = data.findIndex(d => d.date === purchase.date);
-        console.log(`Purchase ${index + 1}:`, { date: purchase.date, dataIndex, found: dataIndex !== -1 });
         
         // If exact match fails, try to find closest date
         if (dataIndex === -1) {
-          console.log(`Exact date match failed for ${purchase.date}, trying closest date...`);
           const purchaseDate = new Date(purchase.date);
           let closestIndex = -1;
           let minDiff = Infinity;
@@ -501,17 +518,14 @@ export default function PriceChart({
           
           if (closestIndex !== -1) {
             dataIndex = closestIndex;
-            console.log(`Found closest date match at index ${dataIndex} for ${purchase.date}`);
           }
         }
         
         if (dataIndex !== -1) {
           // Check if this purchase point is within the visible zoom range
           const isVisible = dataIndex >= startIndex && dataIndex <= endIndex;
-          console.log(`Purchase ${index + 1} visibility:`, { dataIndex, startIndex, endIndex, isVisible });
           
           if (!isVisible) {
-            console.log(`Skipping purchase ${index + 1} - not visible in zoom range`);
             return; // Skip if not visible in current zoom
           }
           
@@ -519,16 +533,6 @@ export default function PriceChart({
           const visibleDataIndex = dataIndex - startIndex;
           const x = padding.left + (visibleDataIndex / (visibleData.length - 1)) * chartWidth;
           const y = padding.top + chartHeight - ((purchase.price - minPrice) / priceRange) * chartHeight;
-
-          console.log(`Drawing purchase point ${index + 1}:`, {
-            date: purchase.date,
-            price: purchase.price,
-            x: x,
-            y: y,
-            dataIndex: dataIndex,
-            visibleDataIndex: visibleDataIndex,
-            isVisible: isVisible
-          });
 
           // Determine if this is a buy or sell based on purchaseDetails
           // Match op date en hash voor betere matching

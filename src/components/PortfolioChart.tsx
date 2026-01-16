@@ -116,19 +116,34 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
   // Convert transactions to purchase points for the chart
   // Sorteer eerst chronologisch zodat de nummering klopt
   const sortedTransactionsForPoints = [...transactions].sort((a, b) => a.time - b.time);
-  const purchasePoints = showTransactions ? sortedTransactionsForPoints.map(tx => {
-    // Validate transaction data
+  
+  // Remove duplicates based on hash (als hash beschikbaar is) of date+price combinatie
+  const uniqueTransactions = sortedTransactionsForPoints.filter((tx, index, self) => {
     if (!tx.time || !tx.price || isNaN(tx.time) || isNaN(tx.price)) {
-      console.warn(`⚠️ Invalid transaction data:`, tx);
-      return null;
+      return false; // Filter invalid transactions
     }
+    
+    // Als hash beschikbaar is, gebruik hash voor duplicate check
+    if (tx.hash) {
+      return index === self.findIndex(t => t.hash === tx.hash);
+    }
+    
+    // Anders gebruik date + price + time combinatie
+    const txDate = new Date(tx.time * 1000).toISOString().split('T')[0];
+    return index === self.findIndex(t => {
+      const tDate = new Date(t.time * 1000).toISOString().split('T')[0];
+      return tDate === txDate && t.price === tx.price && t.time === tx.time;
+    });
+  });
+  
+  const purchasePoints = showTransactions ? uniqueTransactions.map(tx => {
     return {
       date: new Date(tx.time * 1000).toISOString().split('T')[0],
       price: tx.price,
       hash: tx.hash, // Voeg hash toe voor matching met purchaseDetails
       time: tx.time
     };
-  }).filter(Boolean) as Array<{ date: string; price: number; hash?: string; time?: number }> : [];
+  }) : [];
 
   // Track which buys are fully sold (FIFO)
   const calculateSoldStatus = () => {
