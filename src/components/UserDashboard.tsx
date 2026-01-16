@@ -1359,54 +1359,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             lastTransaction 
           });
           setWalletTransactions(transactions);
-          
-          // Reload wallet data wanneer sync compleet is
-          if (walletSyncProgress && !walletSyncProgress.isSyncing && walletSyncProgress.loadedTransactions > 0) {
-            // Haal wallet data opnieuw op uit database
-            const { data: updatedWallet } = await supabase
-              .from('wallets')
-              .select('*')
-              .eq('address', walletRecord.address)
-              .eq('email', email)
-              .limit(1)
-              .maybeSingle();
-            
-            if (updatedWallet) {
-              const updatedWalletData = updatedWallet.wallet_data || {};
-              const updatedTransactions = updatedWalletData.transactions || [];
-              
-              const currentPrice = await bitcoinApiService.getCurrentPrice().catch(() => currentBitcoinPrice);
-              const mappedTransactions = updatedTransactions.map((tx: any) => {
-                const txPrice = tx.price || currentPrice;
-                const txValue = tx.value || 0;
-                const txCurrentValue = tx.currentValue || (txValue ? (txValue / 100000000) * currentPrice : 0);
-                const txProfit = tx.profit !== undefined ? tx.profit : (txCurrentValue - (txValue / 100000000) * txPrice);
-                const txProfitPercent = tx.profitPercent !== undefined ? tx.profitPercent : (txPrice > 0 ? ((currentPrice - txPrice) / txPrice) * 100 : 0);
-                
-                return {
-                  hash: tx.hash || '',
-                  time: tx.time || Math.floor(new Date(tx.date || Date.now()).getTime() / 1000),
-                  value: txValue,
-                  price: txPrice,
-                  currentValue: txCurrentValue,
-                  profit: txProfit,
-                  profitPercent: txProfitPercent,
-                  status: tx.status || 'confirmed',
-                  confirmations: tx.confirmations || 0
-                };
-              });
-              
-              setWalletData({
-                ...updatedWallet,
-                balance: updatedWallet.balance || 0,
-                transaction_count: updatedWallet.transaction_count || 0,
-                total_received: updatedWallet.total_received || 0,
-                total_sent: updatedWallet.total_sent || 0,
-                lastTransaction: mappedTransactions[0] || null
-              });
-              setWalletTransactions(mappedTransactions);
-            }
-          }
 
           // 🔄 REALTIME WALLET REFRESH: Check for new transactions every 10 seconds
           const lastKnownTxHash = lastTransaction?.hash || walletRecord.last_transaction_hash || null;
