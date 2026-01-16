@@ -24,6 +24,7 @@ import CurrencyToggle from '../components/CurrencyToggle';
 import CycleAdvisorWidget from '../components/CycleAdvisorWidget';
 import BitcoinMilestones from '../components/BitcoinMilestones';
 import { bitcoinApiService, BitcoinWallet, BitcoinTransaction } from '../services/bitcoinApiService';
+import { walletDataService, WalletSyncProgress } from '../services/walletDataService';
 import { supabase } from '../lib/supabase';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
@@ -111,6 +112,7 @@ export default function PortfolioPage() {
   const [editWalletName, setEditWalletName] = useState('');
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
+  const [walletSyncProgress, setWalletSyncProgress] = useState<Map<string, WalletSyncProgress>>(new Map());
 
   // Get effective user email (considering impersonation)
   const effectiveUserEmail = (isImpersonating && impersonatedUser) 
@@ -166,53 +168,46 @@ export default function PortfolioPage() {
           const walletsList: WalletData[] = await Promise.all(
             walletsData.map(async (wallet: any) => {
               console.log('🔍 Processing wallet:', { id: wallet.id, address: wallet.address, hasBalance: wallet.balance !== null, hasWalletData: !!wallet.wallet_data });
-              // If wallet_data exists with transactions, use it; otherwise fetch fresh data
+              
+              // Gebruik nieuwe walletDataService - haalt eerst uit database, start background sync
               let realData: BitcoinWallet | undefined;
               
-              // Always try to use stored wallet_data first, then fallback to API
-              if (wallet.wallet_data?.transactions && Array.isArray(wallet.wallet_data.transactions) && wallet.wallet_data.transactions.length > 0) {
-                // Use stored transaction data
-                realData = {
-                  address: wallet.address,
-                  balance: wallet.balance || 0,
-                  totalReceived: wallet.total_received || 0,
-                  totalSent: wallet.total_sent || 0,
-                  transactionCount: wallet.transaction_count || 0,
-                  firstSeen: wallet.first_seen ? new Date(wallet.first_seen).getTime() : Date.now(),
-                  lastSeen: wallet.last_seen ? new Date(wallet.last_seen).getTime() : Date.now(),
-                  transactions: wallet.wallet_data.transactions || []
-                };
-              } else if (wallet.balance !== null && wallet.balance !== undefined) {
-                // Use database data even if no transactions
-                realData = {
-                  address: wallet.address,
-                  balance: wallet.balance || 0,
-                  totalReceived: wallet.total_received || 0,
-                  totalSent: wallet.total_sent || 0,
-                  transactionCount: wallet.transaction_count || 0,
-                  firstSeen: wallet.first_seen ? new Date(wallet.first_seen).getTime() : Date.now(),
-                  lastSeen: wallet.last_seen ? new Date(wallet.last_seen).getTime() : Date.now(),
-                  transactions: []
-                };
-              } else {
-                // Only fetch from API if we don't have balance data
-                try {
-                  // Load ALL transactions from blockchain for accurate data
-                  realData = await bitcoinApiService.getWalletData(wallet.address);
-                } catch (error) {
-                  console.error('Error fetching wallet data from API:', error);
-                  // Fallback: use basic data from database
-                  realData = {
-                    address: wallet.address,
-                    balance: 0,
-                    totalReceived: 0,
-                    totalSent: 0,
-                    transactionCount: 0,
-                    firstSeen: Date.now(),
-                    lastSeen: Date.now(),
-                    transactions: []
-                  };
+              try {
+                const walletDataWithProgress = await walletDataService.getWalletData(
+                  wallet.address,
+                  effectiveUserEmail!,
+                  (progress) => {
+                    // Update progress state
+                    setWalletSyncProgress(prev => {
+                      const newMap = new Map(prev);
+                      newMap.set(wallet.address, progress);
+                      return newMap;
+                    });
+                  }
+                );
+
+                realData = walletDataWithProgress;
+
+                // Als sync actief is, update wallets periodiek
+                if (walletDataWithProgress.syncProgress?.isSyncing) {
+                  // Reload wallet data na sync updates
+                  setTimeout(() => {
+                    loadWallets();
+                  }, 5000);
                 }
+              } catch (error) {
+                console.error('Error fetching wallet data:', error);
+                // Fallback: use basic data from database
+                realData = {
+                  address: wallet.address,
+                  balance: wallet.balance || 0,
+                  totalReceived: wallet.total_received || 0,
+                  totalSent: wallet.total_sent || 0,
+                  transactionCount: wallet.transaction_count || 0,
+                  firstSeen: wallet.first_seen ? new Date(wallet.first_seen).getTime() : Date.now(),
+                  lastSeen: wallet.last_seen ? new Date(wallet.last_seen).getTime() : Date.now(),
+                  transactions: wallet.wallet_data?.transactions || []
+                };
               }
 
               // Format firstSeen date safely
@@ -446,45 +441,46 @@ export default function PortfolioPage() {
         setNewWalletName('');
         setShowAddWallet(false);
 
-        // 3. BACKGROUND PROCESSING: Fetch wallet data asynchronously
+        // 3. BACKGROUND PROCESSING: Start sync met nieuwe service
         setTimeout(async () => {
           try {
-            const realData = await bitcoinApiService.getWalletData(newWalletAddress, 25);
-            
-            // Update wallet in DB with actual data
-            await supabase
-              .from('wallets')
-              .update({
-                balance: realData.balance,
-                transaction_count: realData.transactionCount,
-                total_received: realData.totalReceived,
-                total_sent: realData.totalSent,
-                first_seen: new Date(realData.firstSeen).toISOString(),
-                last_seen: new Date().toISOString(),
-                wallet_data: { transactions: realData.transactions },
-                updated_at: new Date().toISOString()
-              })
-              .eq('address', newWalletAddress)
-              .eq('email', effectiveUserEmail);
+            // Gebruik nieuwe walletDataService - start background sync
+            const walletDataWithProgress = await walletDataService.getWalletData(
+              newWalletAddress,
+              effectiveUserEmail!,
+              (progress) => {
+                // Update progress state
+                setWalletSyncProgress(prev => {
+                  const newMap = new Map(prev);
+                  newMap.set(newWalletAddress, progress);
+                  return newMap;
+                });
 
-            // Update UI with real data
+                // Reload wallets wanneer sync updates
+                if (progress.loadedTransactions > 0 && progress.loadedTransactions % 25 === 0) {
+                  loadWallets();
+                }
+              }
+            );
+
+            // Update UI met data (ook als sync nog bezig is)
             setWallets(prevWallets =>
               prevWallets.map(w =>
                 w.address === newWalletAddress
                   ? {
                       ...w,
-                      balance: realData.balance,
-                      transactions: realData.transactionCount,
-                      firstSeen: new Date(realData.firstSeen).toISOString().split('T')[0],
-                      realData: realData
+                      balance: walletDataWithProgress.balance,
+                      transactions: walletDataWithProgress.transactionCount,
+                      firstSeen: new Date(walletDataWithProgress.firstSeen).toISOString().split('T')[0],
+                      realData: walletDataWithProgress
                     }
                   : w
               )
             );
             
-            console.log('✅ Wallet data synced in background:', newWalletAddress);
+            console.log('✅ Wallet sync started:', newWalletAddress);
           } catch (error) {
-            console.error('⚠️ Background wallet data fetch failed:', error);
+            console.error('⚠️ Background wallet sync failed:', error);
             // Wallet is still added, just without data - user can refresh later
           }
         }, 500); // Small delay to not block UI
@@ -824,8 +820,40 @@ export default function PortfolioPage() {
                             }
                 })();
 
+                const syncProgress = walletSyncProgress.get(wallet.address);
+                const isSyncing = syncProgress?.isSyncing || false;
+                const progressPercent = syncProgress && syncProgress.totalTransactions > 0
+                  ? Math.min(100, (syncProgress.loadedTransactions / syncProgress.totalTransactions) * 100)
+                  : 0;
+
                 return (
                   <div key={wallet.id} className="bg-white rounded-xl p-4 shadow-lg">
+                    {/* Sync Progress Bar */}
+                    {isSyncing && (
+                      <div className="mb-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+                            <span className="text-sm font-medium text-blue-900">
+                              Wallet wordt gesynchroniseerd...
+                            </span>
+                          </div>
+                          <span className="text-xs text-blue-700">
+                            {syncProgress?.loadedTransactions || 0} / {syncProgress?.totalTransactions || 0} transacties
+                          </span>
+                        </div>
+                        <div className="w-full bg-blue-200 rounded-full h-2">
+                          <div 
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${progressPercent}%` }}
+                          />
+                        </div>
+                        {syncProgress?.error && (
+                          <p className="text-xs text-red-600 mt-1">{syncProgress.error}</p>
+                        )}
+                      </div>
+                    )}
+
                     {/* Compact header with all info in one row */}
                     <div className="flex items-center justify-between gap-4 mb-3">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
