@@ -243,7 +243,8 @@ export default function PortfolioPage() {
                 balance: realData?.balance || wallet.balance || 0,
                 transactions: wallet.transaction_count || 0,
                 firstSeen: firstSeenDate,
-                realData
+                realData,
+                total_investment: wallet.total_investment || 0 // Haal total_investment uit database
               };
             })
           );
@@ -381,7 +382,8 @@ export default function PortfolioPage() {
                   balance: dbWallet.balance || 0,
                   transactions: dbWallet.transaction_count || 0,
                   firstSeen: firstSeenDate,
-                  realData
+                  realData,
+                  total_investment: dbWallet.total_investment || 0 // Haal total_investment uit database
                 };
               }
 
@@ -415,6 +417,7 @@ export default function PortfolioPage() {
                 ...prevWallet,
                 balance: realData.balance,
                 transactions: dbWallet.transaction_count || 0,
+                total_investment: dbWallet.total_investment || 0, // Update total_investment uit database
                 realData: {
                   ...prevWallet.realData,
                   ...realData,
@@ -515,6 +518,7 @@ export default function PortfolioPage() {
                   ...prevWallet,
                   balance: realData.balance,
                   transactions: dbWallet.transaction_count || 0,
+                  total_investment: dbWallet.total_investment || 0, // Update total_investment uit database
                   realData
                 };
               })
