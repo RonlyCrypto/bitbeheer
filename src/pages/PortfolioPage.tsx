@@ -365,8 +365,10 @@ export default function PortfolioPage() {
                   transactions: realData.transactions // Update transacties
                 }
               };
-            })
-          );
+            });
+            
+            return updatedWallets;
+          });
           
           // Update allTransactions smooth
           const allTx: BitcoinTransaction[] = [];

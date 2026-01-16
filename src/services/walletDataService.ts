@@ -204,10 +204,22 @@ class WalletDataService {
 
       const totalTxCount = walletData.chain_stats?.tx_count || 0;
       
+      // Check of we al alle transacties hebben in database
+      if (existingDbData && existingDbData.transactionCount === totalTxCount && existingDbData.transactions && existingDbData.transactions.length === totalTxCount) {
+        logger.debug(`✅ Wallet al volledig gesynct: ${totalTxCount} transacties in database = ${totalTxCount} op blockchain`);
+        // Update progress: sync compleet
+        this.updateProgress(address, {
+          totalTransactions: totalTxCount,
+          loadedTransactions: totalTxCount,
+          isSyncing: false
+        });
+        return; // Stop sync - alles is al binnen
+      }
+      
       // Update progress met totaal aantal transacties
       this.updateProgress(address, {
         totalTransactions: totalTxCount,
-        loadedTransactions: 0,
+        loadedTransactions: existingDbData?.transactions?.length || 0,
         isSyncing: true
       });
 
