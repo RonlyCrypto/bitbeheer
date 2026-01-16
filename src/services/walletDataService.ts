@@ -518,11 +518,20 @@ class WalletDataService {
       const spentSatoshis = walletData.chain_stats?.spent_txo_sum || 0;
       const balanceSatoshis = fundedSatoshis - spentSatoshis;
 
+      // Bereken total_investment (alleen buy transacties: value > 0)
+      const totalInvestment = transactions
+        .filter(tx => tx.value > 0) // Alleen buy transacties
+        .reduce((sum, tx) => {
+          const btcAmount = Math.abs(tx.value) / 100000000;
+          return sum + (btcAmount * tx.price);
+        }, 0);
+
       const updateData: any = {
         balance: balanceSatoshis / 100000000,
         transaction_count: walletData.chain_stats?.tx_count || 0,
         total_received: fundedSatoshis / 100000000,
         total_sent: spentSatoshis / 100000000,
+        total_investment: totalInvestment, // Sla total investment op in database
         last_seen: new Date().toISOString(),
         wallet_data: {
           transactions: transactions,

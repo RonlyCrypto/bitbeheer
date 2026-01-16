@@ -844,13 +844,24 @@ export default function PortfolioPage() {
   const totalValue = totalBalance * currentPrice;
   const totalProfit = allTransactions.reduce((sum, tx) => sum + tx.profit, 0);
   
-  // Calculate total investment (only buy transactions)
-  const totalInvestment = allTransactions
+  // Haal total investment op uit database (per wallet opgeslagen)
+  // Fallback naar berekening als database waarde niet beschikbaar is
+  const totalInvestmentFromDb = wallets.reduce((sum, wallet) => {
+    // Check of wallet total_investment heeft in database
+    const walletInvestment = (wallet as any).total_investment || 0;
+    return sum + walletInvestment;
+  }, 0);
+  
+  // Fallback: bereken uit transacties als database waarde 0 is
+  const totalInvestmentCalculated = allTransactions
     .filter(tx => tx.value > 0) // Only buy transactions
     .reduce((sum, tx) => {
       const btcAmount = Math.abs(tx.value) / 100000000;
       return sum + (btcAmount * tx.price);
     }, 0);
+  
+  // Gebruik database waarde als beschikbaar, anders berekende waarde
+  const totalInvestment = totalInvestmentFromDb > 0 ? totalInvestmentFromDb : totalInvestmentCalculated;
   
   // Calculate profit percentage
   const profitPercentage = totalInvestment > 0 
