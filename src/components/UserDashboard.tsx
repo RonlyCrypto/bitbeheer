@@ -2372,7 +2372,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         {/* Beginnersdoelen - 2/3 breedte */}
         {(accountApproved || hasApprovedOneOnOne) && (
           <div className="lg:col-span-2">
-            <BeginnersGoals walletData={walletData} walletTransactions={walletTransactions} onBookAppointment={onBookAppointment} />
+            <BeginnersGoals walletData={walletData} walletTransactions={walletTransactions} onBookAppointment={onBookAppointment} onNavigateToGoals={onNavigateToGoals} />
                   </div>
         )}
         
@@ -3125,7 +3125,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 }
 
 // BeginnersGoals Component
-const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment }: BeginnersGoalsProps): JSX.Element => {
+const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onNavigateToGoals }: BeginnersGoalsProps & { onNavigateToGoals?: () => void }): JSX.Element => {
   const { user } = useSupabaseAuth();
   const [showAddGoalPopup, setShowAddGoalPopup] = useState(false);
   const [customGoals, setCustomGoals] = useState<any[]>([]);
