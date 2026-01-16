@@ -833,30 +833,44 @@ export default function PortfolioPage() {
 
                 const syncProgress = walletSyncProgress.get(wallet.address);
                 const isSyncing = syncProgress?.isSyncing || false;
+                const isLoadingInitial = isSyncing && (!wallet.realData || wallet.balance === 0) && wallet.transactions === 0;
                 const progressPercent = syncProgress && syncProgress.totalTransactions > 0
                   ? Math.min(100, (syncProgress.loadedTransactions / syncProgress.totalTransactions) * 100)
-                  : 0;
+                  : (isLoadingInitial ? 0 : undefined);
 
                 return (
                   <div key={wallet.id} className="bg-white rounded-xl p-4 shadow-lg">
-                    {/* Sync Progress Bar */}
-                    {isSyncing && (
+                    {/* Loading/Sync Progress Bar */}
+                    {(isSyncing || isLoadingInitial) && (
                       <div className="mb-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
                             <span className="text-sm font-medium text-blue-900">
-                              Wallet wordt gesynchroniseerd...
+                              {isLoadingInitial ? 'Wallet wordt geladen...' : 'Wallet wordt gesynchroniseerd...'}
                             </span>
                       </div>
-                          <span className="text-xs text-blue-700">
-                            {syncProgress?.loadedTransactions || 0} / {syncProgress?.totalTransactions || 0} transacties
-                          </span>
+                          {syncProgress && syncProgress.totalTransactions > 0 ? (
+                            <span className="text-xs text-blue-700">
+                              {syncProgress.loadedTransactions || 0} / {syncProgress.totalTransactions || 0} transacties
+                            </span>
+                          ) : isLoadingInitial ? (
+                            <span className="text-xs text-blue-700">
+                              Initialiseren...
+                            </span>
+                          ) : null}
                     </div>
                         <div className="w-full bg-blue-200 rounded-full h-2">
                           <div 
                             className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${progressPercent}%` }}
+                            style={{ 
+                              width: progressPercent !== undefined 
+                                ? `${progressPercent}%` 
+                                : '100%',
+                              animation: isLoadingInitial && progressPercent === undefined 
+                                ? 'pulse 2s ease-in-out infinite' 
+                                : 'none'
+                            }}
                           />
                   </div>
                         {syncProgress?.error && (
