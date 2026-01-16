@@ -354,12 +354,13 @@ export default function UserDashboard() {
           }
         }
 
-        // Load goals from database
-        if (user?.email) {
+        // Load goals from database - filter by user_id (per account)
+        if (user?.id && user?.email) {
           const { data: goalsData, error: goalsError } = await supabase
             .from('goals')
             .select('*')
-            .eq('email', user.email)
+            .eq('user_id', user.id) // Filter by user_id to ensure per-account separation
+            .eq('email', user.email) // Double check with email for extra security
             .order('created_at', { ascending: false });
           
           if (!goalsError && goalsData) {

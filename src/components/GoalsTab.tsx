@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Target, TrendingUp, Calendar, DollarSign, Zap, Trash2, Check, Loader2, X, ExternalLink } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
+import { usePermissions } from '../contexts/PermissionsContext';
 import { bitcoinApiService } from '../services/bitcoinApiService';
 
 interface Goal {
@@ -24,7 +25,25 @@ interface Goal {
 
 export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoals }: any) {
   const { user } = useSupabaseAuth();
+  const { isImpersonating, impersonatedUser } = usePermissions();
   const [goals, setGoals] = useState<Goal[]>(initialGoals || []);
+  
+  // Get effective user ID and email (considering impersonation)
+  // Note: When impersonating, we filter by email since we can't easily get the impersonated user's ID
+  // The RLS policies will ensure proper access control
+  const effectiveUserId = useMemo(() => {
+    // When impersonating, we'll filter by email instead of user_id
+    // This is safe because RLS policies check auth.uid() = user_id
+    // For impersonation, we need to query by email and let RLS handle it
+    return user?.id;
+  }, [user?.id]);
+  
+  const effectiveUserEmail = useMemo(() => {
+    if (isImpersonating && impersonatedUser) {
+      return impersonatedUser;
+    }
+    return user?.email;
+  }, [user?.email, isImpersonating, impersonatedUser]);
   const [showNewGoal, setShowNewGoal] = useState(false);
   const [bitcoinPrice, setBitcoinPrice] = useState<number>(95000);
   const [currentBalance, setCurrentBalance] = useState<number>(0);
@@ -63,12 +82,12 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
       }
 
       // Load wallet balance and transactions from portfolio
-      if (user?.email) {
+      if (effectiveUserEmail) {
         try {
           const { data: walletData, error } = await supabase
             .from('wallets')
             .select('wallet_data, balance')
-            .eq('email', user.email)
+            .eq('email', effectiveUserEmail)
             .single();
 
           if (!error && walletData) {
@@ -98,19 +117,29 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
     };
 
     loadData();
-  }, [user?.email, bitcoinPrice]);
+  }, [effectiveUserEmail, bitcoinPrice]);
 
-  // Load goals from database
+  // Load goals from database - filter by user_id (per account)
   useEffect(() => {
     const loadGoals = async () => {
-      if (!user?.email) return;
+      if (!effectiveUserId || !effectiveUserEmail) return;
 
       try {
-        const { data: goalsData, error } = await supabase
+        // Filter by user_id to ensure goals are per account, not per email
+        // When impersonating, we filter by email since we can't get the impersonated user's ID easily
+        let query = supabase
           .from('goals')
-          .select('*')
-          .eq('email', user.email)
-          .order('created_at', { ascending: false });
+          .select('*');
+        
+        if (isImpersonating && impersonatedUser) {
+          // When impersonating, filter by email only (RLS will handle security)
+          query = query.eq('email', effectiveUserEmail);
+        } else {
+          // Normal case: filter by both user_id and email for extra security
+          query = query.eq('user_id', effectiveUserId).eq('email', effectiveUserEmail);
+        }
+        
+        const { data: goalsData, error } = await query.order('created_at', { ascending: false });
 
         if (!error && goalsData) {
             // Transform database goals to Goal format
@@ -171,7 +200,7 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
     };
 
     loadGoals();
-  }, [user?.email, currentBalance, bitcoinPrice, setInitialGoals]);
+  }, [effectiveUserId, effectiveUserEmail, currentBalance, bitcoinPrice, setInitialGoals]);
 
   const DEFAULT_GOALS = [
     {
@@ -469,8 +498,8 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
           const { data, error } = await supabase
             .from('goals')
             .insert({
-              user_id: user.id,
-              email: user.email,
+              user_id: effectiveUserId,
+              email: effectiveUserEmail,
               title: title,
               description: description,
               category: template.category,
@@ -532,8 +561,8 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
           const { data, error } = await supabase
             .from('goals')
             .insert({
-              user_id: user.id,
-              email: user.email,
+              user_id: effectiveUserId,
+              email: effectiveUserEmail,
               title: title,
               description: description,
               category: template.category,
@@ -656,8 +685,8 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
           const { data, error } = await supabase
             .from('goals')
             .insert({
-              user_id: user.id,
-              email: user.email,
+              user_id: effectiveUserId,
+              email: effectiveUserEmail,
               title: title,
               description: description,
               category: 'beginners',
@@ -709,8 +738,8 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
           const { data, error } = await supabase
             .from('goals')
             .insert({
-              user_id: user.id,
-              email: user.email,
+              user_id: effectiveUserId,
+              email: effectiveUserEmail,
               title: title,
               description: description,
               category: 'beginners',
@@ -813,13 +842,31 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
         };
       }
 
-      // Save to database
-      if (user?.id && user?.email) {
+      // Save to database - use effective user ID and email
+      // When impersonating, we need to get the impersonated user's ID
+      if (effectiveUserEmail) {
+        let userIdToUse = effectiveUserId;
+        
+        // If impersonating, try to get the user_id from the goals table or use a workaround
+        if (isImpersonating && impersonatedUser && !userIdToUse) {
+          // Try to find existing goal to get user_id, or we'll let the database trigger handle it
+          const { data: existingGoal } = await supabase
+            .from('goals')
+            .select('user_id')
+            .eq('email', effectiveUserEmail)
+            .limit(1)
+            .single();
+          
+          if (existingGoal?.user_id) {
+            userIdToUse = existingGoal.user_id;
+          }
+        }
+        
         const { data, error } = await supabase
           .from('goals')
           .insert({
-            user_id: user.id,
-            email: user.email,
+            user_id: userIdToUse || null, // Database trigger will set this if null
+            email: effectiveUserEmail,
             title: goal.title,
             description: goal.description,
             category: goal.category,
@@ -872,13 +919,20 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
 
   const deleteGoal = async (id: string) => {
     try {
-      // Delete from database if it's a database goal
-      if (user?.email) {
-        const { error } = await supabase
+      // Delete from database - filter by user_id to ensure per-account separation
+      if (effectiveUserEmail) {
+        let deleteQuery = supabase
           .from('goals')
           .delete()
           .eq('id', id)
-          .eq('email', user.email);
+          .eq('email', effectiveUserEmail);
+        
+        // Add user_id filter if not impersonating
+        if (!isImpersonating && effectiveUserId) {
+          deleteQuery = deleteQuery.eq('user_id', effectiveUserId);
+        }
+        
+        const { error } = await deleteQuery;
 
         if (error) {
           console.error('Error deleting goal:', error);
