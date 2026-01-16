@@ -4597,8 +4597,16 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
       {/* Goals Section - Only show if there are custom goals */}
       {allGoals.length > 0 && (
         <>
-          <div className="mb-4">
-              <span className="text-sm font-medium text-gray-700">Jouw doelen</span>
+          <div className="mb-4 flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-700">Mijn doelen</span>
+              {onNavigateToGoals && (
+                <button
+                  onClick={onNavigateToGoals}
+                  className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                >
+                  Bekijk alle doelen <ArrowRight className="w-3 h-3" />
+                </button>
+              )}
           </div>
 
           <div className="space-y-3 mb-4">
