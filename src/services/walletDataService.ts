@@ -115,15 +115,52 @@ class WalletDataService {
 
       // Parse wallet_data JSONB
       const walletData = wallet.wallet_data || {};
-      const transactions = walletData.transactions || [];
+      const rawTransactions = walletData.transactions || [];
       const isFullySynced = walletData.fully_synced === true || walletData.is_complete === true;
+
+      // Deduplicatie: verwijder duplicaten bij het laden uit database
+      const mappedTransactions = rawTransactions.map((tx: any) => ({
+        hash: tx.hash,
+        time: tx.time,
+        value: tx.value,
+        price: tx.price,
+        currentValue: tx.currentValue,
+        profit: tx.profit,
+        profitPercent: tx.profitPercent,
+        valueInBTC: tx.valueInBTC,
+        status: tx.status,
+        confirmations: tx.confirmations
+      })) as BitcoinTransaction[];
+      
+      const uniqueTransactions = this.removeDuplicateTransactions(mappedTransactions);
+      
+      if (uniqueTransactions.length !== mappedTransactions.length) {
+        const duplicatesRemoved = mappedTransactions.length - uniqueTransactions.length;
+        logger.debug(`🧹 Removed ${duplicatesRemoved} duplicate transactions from database for ${wallet.address.slice(0, 8)}...`);
+        
+        // Update database met gededupliceerde transacties als er duplicaten waren
+        if (duplicatesRemoved > 0) {
+          await supabase
+            .from('wallets')
+            .update({
+              wallet_data: {
+                ...walletData,
+                transactions: uniqueTransactions
+              },
+              updated_at: new Date().toISOString()
+            })
+            .eq('address', address)
+            .eq('email', email);
+        }
+      }
 
       logger.debug(`📦 Loaded wallet from database:`, {
         address: wallet.address.slice(0, 8) + '...',
         email: email,
         balance: wallet.balance,
         transactionCount: wallet.transaction_count,
-        transactionsInWalletData: transactions.length,
+        transactionsInWalletData: rawTransactions.length,
+        uniqueTransactions: uniqueTransactions.length,
         hasWalletData: !!wallet.wallet_data,
         fullySynced: isFullySynced
       });
@@ -136,18 +173,7 @@ class WalletDataService {
         transactionCount: wallet.transaction_count || 0,
         firstSeen: wallet.first_seen ? new Date(wallet.first_seen).getTime() : Date.now(),
         lastSeen: wallet.last_seen ? new Date(wallet.last_seen).getTime() : Date.now(),
-        transactions: transactions.map((tx: any) => ({
-          hash: tx.hash,
-          time: tx.time,
-          value: tx.value,
-          price: tx.price,
-          currentValue: tx.currentValue,
-          profit: tx.profit,
-          profitPercent: tx.profitPercent,
-          valueInBTC: tx.valueInBTC,
-          status: tx.status,
-          confirmations: tx.confirmations
-        })) as BitcoinTransaction[],
+        transactions: uniqueTransactions, // Gebruik gededupliceerde transacties
         lastSynced: wallet.updated_at ? new Date(wallet.updated_at) : undefined,
         fullySynced: isFullySynced // Flag om te checken of wallet volledig gesynct is
       };
@@ -285,7 +311,19 @@ class WalletDataService {
             controller.signal
           );
 
-          allTransactions = allTransactions.concat(processedBatch);
+          // Deduplicatie: voeg alleen nieuwe transacties toe (op basis van hash + time)
+          const existingKeys = new Set(allTransactions.map(tx => `${tx.hash}-${tx.time}`));
+          const newTransactions = processedBatch.filter(tx => {
+            const key = `${tx.hash}-${tx.time}`;
+            if (existingKeys.has(key)) {
+              logger.debug(`⚠️ Duplicate transaction skipped: ${tx.hash.slice(0, 8)}... (time: ${tx.time})`);
+              return false;
+            }
+            existingKeys.add(key);
+            return true;
+          });
+
+          allTransactions = allTransactions.concat(newTransactions);
 
           // Update progress
           this.updateProgress(address, {
@@ -514,12 +552,20 @@ class WalletDataService {
     isComplete: boolean
   ): Promise<void> {
     try {
+      // Deduplicatie: verwijder duplicaten op basis van hash + time
+      const uniqueTransactions = this.removeDuplicateTransactions(transactions);
+      
+      if (uniqueTransactions.length !== transactions.length) {
+        const duplicatesRemoved = transactions.length - uniqueTransactions.length;
+        logger.debug(`🧹 Removed ${duplicatesRemoved} duplicate transactions before saving to database`);
+      }
+
       const fundedSatoshis = walletData.chain_stats?.funded_txo_sum || 0;
       const spentSatoshis = walletData.chain_stats?.spent_txo_sum || 0;
       const balanceSatoshis = fundedSatoshis - spentSatoshis;
 
       // Bereken total_investment (alleen buy transacties: value > 0)
-      const totalInvestment = transactions
+      const totalInvestment = uniqueTransactions
         .filter(tx => tx.value > 0) // Alleen buy transacties
         .reduce((sum, tx) => {
           const btcAmount = Math.abs(tx.value) / 100000000;
@@ -534,7 +580,7 @@ class WalletDataService {
         total_investment: totalInvestment, // Sla total investment op in database
         last_seen: new Date().toISOString(),
         wallet_data: {
-          transactions: transactions,
+          transactions: uniqueTransactions, // Gebruik gededupliceerde transacties
           synced_at: new Date().toISOString(),
           is_complete: isComplete,
           fully_synced: isComplete // Markeer als volledig gesynct
@@ -542,8 +588,10 @@ class WalletDataService {
         updated_at: new Date().toISOString()
       };
 
-      if (transactions.length > 0) {
-        const lastTx = transactions[0];
+      if (uniqueTransactions.length > 0) {
+        // Sorteer op tijd (nieuwste eerst) voor last_transaction
+        const sortedTxs = [...uniqueTransactions].sort((a, b) => b.time - a.time);
+        const lastTx = sortedTxs[0];
         updateData.last_transaction_hash = lastTx.hash;
         updateData.last_transaction_time = new Date(lastTx.time * 1000).toISOString();
       }
@@ -557,7 +605,7 @@ class WalletDataService {
       if (error) {
         logger.error('Error saving wallet data to database:', error);
       } else {
-        logger.debug(`💾 Saved ${transactions.length} transactions to database for ${address.slice(0, 8)}...`);
+        logger.debug(`💾 Saved ${uniqueTransactions.length} unique transactions to database for ${address.slice(0, 8)}...`);
       }
     } catch (error) {
       logger.error('Error in saveWalletDataToDatabase:', error);
@@ -570,6 +618,27 @@ class WalletDataService {
     if (callback) {
       callback(progress);
     }
+  }
+
+  // Helper: verwijder duplicaten op basis van hash + time
+  private removeDuplicateTransactions(transactions: BitcoinTransaction[]): BitcoinTransaction[] {
+    const seen = new Map<string, BitcoinTransaction>();
+    
+    for (const tx of transactions) {
+      const key = `${tx.hash || ''}-${tx.time || 0}`;
+      // Behoud de eerste (oudste) transactie als er duplicaten zijn
+      if (!seen.has(key)) {
+        seen.set(key, tx);
+      } else {
+        // Als er al een transactie is met deze key, check of deze nieuwer is
+        const existing = seen.get(key)!;
+        if (tx.time && existing.time && tx.time < existing.time) {
+          seen.set(key, tx); // Vervang met oudere transactie
+        }
+      }
+    }
+    
+    return Array.from(seen.values());
   }
 
   // Cancel sync
