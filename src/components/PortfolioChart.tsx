@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, RefreshCw, Eye, EyeOff } from 'lucide-react';
+import { TrendingUp, TrendingDown, RefreshCw, Eye, EyeOff, ChevronDown, ChevronUp } from 'lucide-react';
 import { BitcoinPriceData, BitcoinTransaction } from '../services/bitcoinApiService';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { bitcoinPriceDataService } from '../services/bitcoinPriceDataService';
@@ -22,6 +22,7 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
   const [chartData, setChartData] = useState<PriceData[]>([]);
   const [timeRange, setTimeRange] = useState<TimeRange>('1y');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showWalletBalanceChart, setShowWalletBalanceChart] = useState(false);
 
   // Fetch price data function
   const fetchPriceData = async () => {
@@ -184,7 +185,22 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
 
   // Create purchase details with buy/sell information
   // Eerst sorteren op tijd voor chronologische nummering
-  const sortedTransactions = [...transactions].sort((a, b) => a.time - b.time);
+  const sortedTransactions = [...transactions].sort((a, b) => {
+    // Sorteer eerst op tijd, dan op hash voor unieke volgorde
+    if (a.time !== b.time) {
+      return a.time - b.time;
+    }
+    return (a.hash || '').localeCompare(b.hash || '');
+  });
+  
+  // Maak unieke mapping van hash+time naar transaction number
+  const transactionNumberMap = new Map<string, number>();
+  sortedTransactions.forEach((tx, index) => {
+    const key = `${tx.hash || ''}-${tx.time || 0}`;
+    if (!transactionNumberMap.has(key)) {
+      transactionNumberMap.set(key, index + 1);
+    }
+  });
   
   const purchaseDetails = showTransactions ? transactions.map((tx, index) => {
     if (!tx.time || !tx.price || isNaN(tx.time) || isNaN(tx.price)) {
@@ -193,11 +209,9 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
     const isBuy = tx.value > 0;
     const btcAmount = Math.abs(tx.value) / 100000000;
     
-    // Vind chronologische index voor nummering (oudste = #1)
-    const chronologicalIndex = sortedTransactions.findIndex(t => 
-      t.hash === tx.hash && t.time === tx.time
-    );
-    const transactionNumber = chronologicalIndex !== -1 ? chronologicalIndex + 1 : index + 1;
+    // Gebruik unieke mapping voor transaction number
+    const key = `${tx.hash || ''}-${tx.time || 0}`;
+    const transactionNumber = transactionNumberMap.get(key) || (index + 1);
     
     // For sells, calculate buy price using FIFO from previous transactions
     let buyPrice = null;
@@ -347,6 +361,36 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
 
   const change24h = calculate24hChange();
 
+  // Calculate wallet balance over time
+  const calculateWalletBalanceData = () => {
+    if (!transactions || transactions.length === 0) return [];
+    
+    // Sort transactions chronologically
+    const sortedTxs = [...transactions].sort((a, b) => a.time - b.time);
+    
+    // Calculate balance at each transaction point
+    let currentBalance = 0;
+    const balanceData: { date: string; balance: number }[] = [];
+    
+    sortedTxs.forEach(tx => {
+      const btcAmount = Math.abs(tx.value) / 100000000;
+      if (tx.value > 0) {
+        // Buy - add to balance
+        currentBalance += btcAmount;
+      } else {
+        // Sell - subtract from balance
+        currentBalance -= btcAmount;
+      }
+      
+      const date = new Date(tx.time * 1000).toISOString().split('T')[0];
+      balanceData.push({ date, balance: currentBalance });
+    });
+    
+    return balanceData;
+  };
+
+  const walletBalanceData = calculateWalletBalanceData();
+
   return (
     <div className="bg-white rounded-xl p-6 shadow-lg">
       {/* Chart Header */}
@@ -488,6 +532,166 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
           <p className="text-orange-600">Voeg een wallet toe met transacties om je inkoop punten op de chart te zien.</p>
         )}
       </div>
+
+      {/* Wallet Balance Chart - Inklapbaar */}
+      {transactions.length > 0 && (
+        <div className="mt-6 border-t pt-6">
+          <button
+            onClick={() => setShowWalletBalanceChart(!showWalletBalanceChart)}
+            className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">💰 Wallet Balance Chart</span>
+              <span className="text-xs text-gray-500">
+                {walletBalanceData.length > 0 && `Huidig: ${walletBalanceData[walletBalanceData.length - 1].balance.toFixed(8)} BTC`}
+              </span>
+            </div>
+            {showWalletBalanceChart ? (
+              <ChevronUp className="w-5 h-5 text-gray-500" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-500" />
+            )}
+          </button>
+          
+          {showWalletBalanceChart && (
+            <div className="mt-4">
+              <WalletBalanceChart
+                balanceData={walletBalanceData}
+                priceData={filteredData}
+                height={200}
+              />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Wallet Balance Chart Component
+function WalletBalanceChart({ 
+  balanceData, 
+  priceData, 
+  height = 200 
+}: { 
+  balanceData: { date: string; balance: number }[];
+  priceData: PriceData[];
+  height?: number;
+}) {
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+
+  React.useEffect(() => {
+    if (!canvasRef.current || balanceData.length === 0 || priceData.length === 0) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const padding = { top: 20, right: 40, bottom: 40, left: 60 };
+    const chartWidth = canvas.width - padding.left - padding.right;
+    const chartHeight = canvas.height - padding.top - padding.bottom;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Find date range
+    const allDates = [...new Set([...balanceData.map(d => d.date), ...priceData.map(d => d.date)])].sort();
+    if (allDates.length === 0) return;
+
+    const minDate = new Date(allDates[0]);
+    const maxDate = new Date(allDates[allDates.length - 1]);
+    const dateRange = maxDate.getTime() - minDate.getTime();
+
+    // Find balance range
+    const balances = balanceData.map(d => d.balance);
+    const minBalance = Math.min(0, ...balances);
+    const maxBalance = Math.max(...balances);
+    const balanceRange = maxBalance - minBalance || 1;
+
+    // Draw grid
+    ctx.strokeStyle = '#e5e7eb';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 5; i++) {
+      const y = padding.top + (chartHeight / 5) * i;
+      ctx.beginPath();
+      ctx.moveTo(padding.left, y);
+      ctx.lineTo(canvas.width - padding.right, y);
+      ctx.stroke();
+    }
+
+    // Draw balance line
+    if (balanceData.length > 0) {
+      ctx.strokeStyle = '#3b82f6';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+
+      balanceData.forEach((point, index) => {
+        const date = new Date(point.date);
+        const x = padding.left + ((date.getTime() - minDate.getTime()) / dateRange) * chartWidth;
+        const y = padding.top + chartHeight - ((point.balance - minBalance) / balanceRange) * chartHeight;
+
+        if (index === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      });
+
+      ctx.stroke();
+
+      // Draw points
+      balanceData.forEach((point) => {
+        const date = new Date(point.date);
+        const x = padding.left + ((date.getTime() - minDate.getTime()) / dateRange) * chartWidth;
+        const y = padding.top + chartHeight - ((point.balance - minBalance) / balanceRange) * chartHeight;
+
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, 2 * Math.PI);
+        ctx.fillStyle = '#3b82f6';
+        ctx.fill();
+      });
+    }
+
+    // Draw Y-axis labels (BTC balance)
+    ctx.fillStyle = '#6b7280';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= 5; i++) {
+      const value = minBalance + (balanceRange / 5) * (5 - i);
+      const y = padding.top + (chartHeight / 5) * i;
+      ctx.fillText(value.toFixed(4), padding.left - 10, y + 4);
+    }
+
+    // Draw X-axis labels (dates)
+    ctx.textAlign = 'center';
+    const dateLabels = allDates.filter((_, i) => i % Math.ceil(allDates.length / 6) === 0);
+    dateLabels.forEach(dateStr => {
+      const date = new Date(dateStr);
+      const x = padding.left + ((date.getTime() - minDate.getTime()) / dateRange) * chartWidth;
+      const month = date.toLocaleDateString('nl-NL', { month: 'short', day: 'numeric' });
+      ctx.fillText(month, x, canvas.height - padding.bottom + 20);
+    });
+
+    // Y-axis label
+    ctx.save();
+    ctx.translate(15, canvas.height / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#374151';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText('BTC Balance', 0, 0);
+    ctx.restore();
+  }, [balanceData, priceData, height]);
+
+  return (
+    <div className="bg-gray-50 rounded-lg p-4">
+      <canvas
+        ref={canvasRef}
+        width={800}
+        height={height}
+        className="w-full"
+        style={{ maxWidth: '100%', height: `${height}px` }}
+      />
     </div>
   );
 }

@@ -1496,7 +1496,22 @@ export default function PortfolioPage() {
               <div className="grid gap-6">
                 {(() => {
                   // Sorteer alle transacties chronologisch (oudste eerst) voor nummering
-                  const sortedAllTxs = [...allTransactions].sort((a, b) => a.time - b.time);
+                  const sortedAllTxs = [...allTransactions].sort((a, b) => {
+                    // Sorteer eerst op tijd, dan op hash voor unieke volgorde
+                    if (a.time !== b.time) {
+                      return a.time - b.time;
+                    }
+                    return (a.hash || '').localeCompare(b.hash || '');
+                  });
+                  
+                  // Maak unieke mapping van hash+time naar transaction number
+                  const transactionNumberMap = new Map<string, number>();
+                  sortedAllTxs.forEach((tx, index) => {
+                    const key = `${tx.hash || ''}-${tx.time || 0}`;
+                    if (!transactionNumberMap.has(key)) {
+                      transactionNumberMap.set(key, index + 1);
+                    }
+                  });
                   
                   // Filter en sorteer voor weergave (nieuwste eerst)
                   const filteredAndSorted = allTransactions
@@ -1520,11 +1535,9 @@ export default function PortfolioPage() {
                   return filteredAndSorted
                   .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                     .map((transaction, index) => {
-                      // Vind de chronologische index voor nummering (oudste = #1)
-                      const chronologicalIndex = sortedAllTxs.findIndex(t => 
-                        t.hash === transaction.hash && t.time === transaction.time
-                      );
-                      const transactionNumber = chronologicalIndex !== -1 ? chronologicalIndex + 1 : index + 1;
+                      // Gebruik unieke mapping voor transaction number
+                      const key = `${transaction.hash || ''}-${transaction.time || 0}`;
+                      const transactionNumber = transactionNumberMap.get(key) || (index + 1);
                       
                       const txIndex = allTransactions.findIndex(t => 
                         t.hash === transaction.hash && t.time === transaction.time
