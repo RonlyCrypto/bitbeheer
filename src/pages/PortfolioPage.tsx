@@ -476,6 +476,67 @@ export default function PortfolioPage() {
     return () => clearInterval(intervalId);
   }, [walletSyncProgress, effectiveUserEmail]);
 
+  // Automatische detectie van nieuwe transacties - check elke 30 seconden
+  useEffect(() => {
+    if (!effectiveUserEmail || wallets.length === 0) return;
+    
+    const checkForNewTransactions = async () => {
+      try {
+        for (const wallet of wallets) {
+          if (!wallet.realData?.transactions || wallet.realData.transactions.length === 0) continue;
+          
+          const lastTransaction = wallet.realData.transactions[0];
+          const lastKnownTxHash = lastTransaction?.hash || null;
+          
+          if (!lastKnownTxHash) continue;
+          
+          // Check for new transactions via Blockstream API
+          const { hasNew, newTxHash } = await bitcoinApiService.checkForNewTransactions(
+            wallet.address,
+            lastKnownTxHash
+          );
+          
+          if (hasNew) {
+            console.log(`🔄 Nieuwe transactie gedetecteerd voor ${wallet.name}! Wallet wordt ververst...`, { newTxHash });
+            
+            // Clear cache en haal fresh data op
+            bitcoinApiService.clearWalletCache(wallet.address);
+            
+            // Gebruik walletDataService om nieuwe transacties op te halen en op te slaan
+            const walletDataWithProgress = await walletDataService.getWalletData(
+              wallet.address,
+              effectiveUserEmail!,
+              (progress) => {
+                setWalletSyncProgress(prev => {
+                  const newMap = new Map(prev);
+                  newMap.set(wallet.address, progress);
+                  return newMap;
+                });
+              }
+            );
+            
+            // Update wallet in state
+            setWallets(prevWallets => prevWallets.map(w => 
+              w.address === wallet.address 
+                ? { ...w, realData: walletDataWithProgress }
+                : w
+            ));
+            
+            console.log(`✅ Wallet ${wallet.name} bijgewerkt met nieuwe transacties`);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking for new transactions:', error);
+      }
+    };
+    
+    // Check direct en dan elke 30 seconden
+    checkForNewTransactions();
+    const intervalId = setInterval(checkForNewTransactions, 30000);
+    
+    return () => clearInterval(intervalId);
+  }, [wallets, effectiveUserEmail]);
+
   // Reload wallets wanneer sync compleet is - smooth update zonder sprongen
   useEffect(() => {
     const wasSyncing = Array.from(walletSyncProgress.values()).some(p => p.isSyncing);
@@ -935,15 +996,19 @@ export default function PortfolioPage() {
                 )}
               </div>
               <p className="text-xl font-bold text-gray-900">
-                {totalTransactionsOnBlockchain > 0 
+                {hasActiveSync && totalTransactionsOnBlockchain > 0
                   ? `${loadedTransactions}/${totalTransactionsOnBlockchain}`
+                  : totalTransactionsOnBlockchain > 0 && loadedTransactions >= totalTransactionsOnBlockchain
+                  ? totalTransactionsOnBlockchain // Toon alleen totaal wanneer volledig geladen
                   : loadedTransactions > 0 
-                  ? `${loadedTransactions}`
+                  ? loadedTransactions
                   : totalTransactions}
               </p>
               <p className="text-xs text-gray-600">
                 {hasActiveSync 
                   ? 'Laden...'
+                  : totalTransactionsOnBlockchain > 0 && loadedTransactions >= totalTransactionsOnBlockchain
+                  ? 'Totaal aantal' // Oude overzicht wanneer volledig geladen
                   : totalTransactionsOnBlockchain > 0 
                   ? `Geladen / Totaal op blockchain`
                   : 'Totaal aantal'}
