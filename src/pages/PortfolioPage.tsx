@@ -862,6 +862,14 @@ export default function PortfolioPage() {
   const totalValue = totalBalance * currentPrice;
   const totalProfit = allTransactions.reduce((sum, tx) => sum + tx.profit, 0);
   
+  // Bereken totaal aantal transacties op blockchain (van alle wallets)
+  const totalTransactionsOnBlockchain = wallets.reduce((sum, wallet) => {
+    return sum + ((wallet as any).transaction_count || wallet.transactions || 0);
+  }, 0);
+  
+  // Aantal geladen transacties
+  const loadedTransactions = allTransactions.length;
+  
   // Haal total investment op uit database (per wallet opgeslagen)
   // Fallback naar berekening als database waarde niet beschikbaar is
   const totalInvestmentFromDb = wallets.reduce((sum, wallet) => {
@@ -914,8 +922,18 @@ export default function PortfolioPage() {
                 </div>
                 <h3 className="text-sm font-semibold text-gray-900">Transacties</h3>
               </div>
-              <p className="text-xl font-bold text-gray-900">{totalTransactions}</p>
-              <p className="text-xs text-gray-600">Totaal aantal</p>
+              <p className="text-xl font-bold text-gray-900">
+                {totalTransactionsOnBlockchain > 0 
+                  ? `${loadedTransactions}/${totalTransactionsOnBlockchain}`
+                  : loadedTransactions > 0 
+                  ? `${loadedTransactions}`
+                  : totalTransactions}
+              </p>
+              <p className="text-xs text-gray-600">
+                {totalTransactionsOnBlockchain > 0 
+                  ? `Geladen / Totaal op blockchain`
+                  : 'Totaal aantal'}
+              </p>
             </div>
 
             <div className="bg-white rounded-xl p-3 shadow-lg">
