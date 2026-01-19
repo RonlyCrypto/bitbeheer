@@ -311,10 +311,13 @@ export default function PortfolioPage() {
       const allTx: BitcoinTransaction[] = [];
       for (const wallet of wallets) {
         if (wallet.realData?.transactions) {
+          console.log(`📦 Wallet ${wallet.name}: ${wallet.realData.transactions.length} transacties`);
           allTx.push(...wallet.realData.transactions);
         }
       }
-      setAllTransactions(removeDuplicateTransactions(allTx));
+      const unique = removeDuplicateTransactions(allTx);
+      console.log(`📊 Totaal unieke transacties: ${unique.length} van ${allTx.length} totaal`);
+      setAllTransactions(unique);
     };
 
     updateTransactions();
@@ -1334,7 +1337,7 @@ export default function PortfolioPage() {
               <PortfolioChart 
                 transactions={(() => {
                   // Filter transacties op basis van transactionFilter voor de chart
-                  return allTransactions.filter(tx => {
+                  const filtered = allTransactions.filter(tx => {
                     if (transactionFilter === 'all') return true;
                     if (transactionFilter === 'buy') return tx.value > 0;
                     if (transactionFilter === 'sell') return tx.value < 0;
@@ -1349,6 +1352,11 @@ export default function PortfolioPage() {
                     }
                     return true;
                   });
+                  
+                  // Debug: log aantal transacties
+                  console.log(`📊 Chart transacties: ${filtered.length} van ${allTransactions.length} totaal`);
+                  
+                  return filtered;
                 })()}
                 currentPrice={currentPrice}
                 onTransactionClick={setSelectedTransaction}
