@@ -326,7 +326,7 @@ export default function PortfolioPage() {
     
     if (!hasActiveSync) return;
 
-    // Update alleen wanneer sync progress verandert, niet periodiek
+    // Update periodiek tijdens sync zodat we real-time progress zien
     const updateWalletsFromDatabase = async () => {
       if (!effectiveUserEmail) return;
 
@@ -467,14 +467,13 @@ export default function PortfolioPage() {
       }
     };
 
-    // Update alleen wanneer sync progress verandert (niet periodiek)
-    const syncProgressString = JSON.stringify(Array.from(walletSyncProgress.entries()));
+    // Update direct en periodiek tijdens sync (elke 2 seconden) zodat we real-time progress zien
     updateWalletsFromDatabase();
     
-    // Debounce updates om visuele sprongen te voorkomen
-    const timeoutId = setTimeout(updateWalletsFromDatabase, 3000);
+    // Periodieke updates tijdens sync zodat statistiek card real-time oploopt
+    const intervalId = setInterval(updateWalletsFromDatabase, 2000);
     
-    return () => clearTimeout(timeoutId);
+    return () => clearInterval(intervalId);
   }, [walletSyncProgress, effectiveUserEmail]);
 
   // Reload wallets wanneer sync compleet is - smooth update zonder sprongen
@@ -867,8 +866,16 @@ export default function PortfolioPage() {
     return sum + ((wallet as any).transaction_count || wallet.transactions || 0);
   }, 0);
   
-  // Aantal geladen transacties
-  const loadedTransactions = allTransactions.length;
+  // Aantal geladen transacties - gebruik sync progress tijdens sync, anders allTransactions
+  const hasActiveSync = Array.from(walletSyncProgress.values()).some(p => p.isSyncing);
+  const totalLoadedFromSync = Array.from(walletSyncProgress.values()).reduce((sum, progress) => {
+    return sum + (progress.loadedTransactions || 0);
+  }, 0);
+  
+  // Gebruik sync progress tijdens sync, anders allTransactions.length
+  const loadedTransactions = hasActiveSync && totalLoadedFromSync > 0 
+    ? totalLoadedFromSync 
+    : allTransactions.length;
   
   // Haal total investment op uit database (per wallet opgeslagen)
   // Fallback naar berekening als database waarde niet beschikbaar is
@@ -921,6 +928,11 @@ export default function PortfolioPage() {
                   <Shield className="w-4 h-4 text-blue-600" />
                 </div>
                 <h3 className="text-sm font-semibold text-gray-900">Transacties</h3>
+                {hasActiveSync && (
+                  <div className="ml-auto">
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+                  </div>
+                )}
               </div>
               <p className="text-xl font-bold text-gray-900">
                 {totalTransactionsOnBlockchain > 0 
@@ -930,7 +942,9 @@ export default function PortfolioPage() {
                   : totalTransactions}
               </p>
               <p className="text-xs text-gray-600">
-                {totalTransactionsOnBlockchain > 0 
+                {hasActiveSync 
+                  ? 'Laden...'
+                  : totalTransactionsOnBlockchain > 0 
                   ? `Geladen / Totaal op blockchain`
                   : 'Totaal aantal'}
               </p>
