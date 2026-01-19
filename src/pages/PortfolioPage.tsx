@@ -1194,8 +1194,9 @@ export default function PortfolioPage() {
                   ? Math.min(100, (syncProgress.loadedTransactions / syncProgress.totalTransactions) * 100)
                   : (isLoadingInitial ? 0 : undefined);
                 
-                // Toon wallet info als eerste batch (10 transacties) is geladen
-                const showWalletInfo = hasFirstBatch || (wallet.realData && wallet.balance > 0);
+                // Toon wallet info altijd (voorkom div veranderingen tijdens laden)
+                // Data wordt op achtergrond geladen en geüpdatet zonder visuele sprongen
+                const showWalletInfo = true;
 
                 return (
                   <div key={wallet.id} className="bg-white rounded-xl p-4 shadow-lg">
@@ -1228,29 +1229,21 @@ export default function PortfolioPage() {
                         </button>
                             <span className="text-xs text-gray-500">•</span>
                             <span className="text-xs font-semibold text-gray-900">
-                              {isLoadingInitial && !hasFirstBatch ? (
-                                <span className="inline-flex items-center gap-1">
-                                  <Loader2 className="w-3 h-3 animate-spin text-gray-400" />
-                                  <span className="text-gray-400">Laden...</span>
+                              {showBalances ? `${(wallet.balance || 0).toFixed(4)} BTC` : '•••• BTC'}
+                              {isSyncing && !hasFirstBatch && (
+                                <span className="ml-1 inline-flex items-center gap-1">
+                                  <Loader2 className="w-3 h-3 animate-spin text-blue-400" />
                                 </span>
-                              ) : (
-                                showBalances ? `${wallet.balance.toFixed(4)} BTC` : '•••• BTC'
                               )}
                             </span>
                             <span className="text-xs text-gray-500">•</span>
                             <span className="text-xs text-gray-600">
-                              {isLoadingInitial && !hasFirstBatch ? (
-                                <span className="text-gray-400">Laden...</span>
-                              ) : (
-                                <>
-                                  {wallet.realData?.transactions?.length || wallet.transactions || 0} transacties
-                                  {isSyncing && hasFirstBatch && (
-                                    <span className="text-blue-600 ml-1">• Wallet wordt gesynchroniseerd...</span>
-                                  )}
-                                  {!isSyncing && hasFirstBatch && syncProgress && syncProgress.loadedTransactions > 0 && (
-                                    <span className="text-green-600 ml-1">• 100% gesynct</span>
-                                  )}
-                                </>
+                              {wallet.realData?.transactions?.length || wallet.transactions || 0} transacties
+                              {isSyncing && hasFirstBatch && (
+                                <span className="text-blue-600 ml-1">• Synchroniseren...</span>
+                              )}
+                              {!isSyncing && hasFirstBatch && syncProgress && syncProgress.loadedTransactions > 0 && (
+                                <span className="text-green-600 ml-1">• Gesynct</span>
                               )}
                             </span>
                       </div>
@@ -1290,40 +1283,6 @@ export default function PortfolioPage() {
                             </div>
                           </>
                         )}
-                    </div>
-                  </div>
-
-                    {/* Chart Integratie with buttons */}
-                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <AlertCircle className="w-4 h-4 text-orange-600" />
-                            <span className="text-xs font-medium text-orange-800">Chart Integratie</span>
-                    </div>
-                          <p className="text-xs text-orange-700">
-                      Deze wallet wordt automatisch gekoppeld aan de Bitcoin Geschiedenis chart. 
-                      Je inkoop punten worden getoond op de grafiek.
-                    </p>
-                  </div>
-                        <div className="flex flex-row gap-2 flex-shrink-0">
-                          <button
-                            onClick={() => setShowBalances(!showBalances)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-600 text-white text-xs rounded-lg font-medium hover:bg-gray-700 transition-colors whitespace-nowrap"
-                          >
-                            {showBalances ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                            {showBalances ? 'Verberg' : 'Toon'}
-                          </button>
-                          <button
-                            onClick={refreshTransactionPrices}
-                            disabled={loadingWallets}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                          >
-                            {loadingWallets ? <Loader2 className="w-3 h-3 animate-spin" /> : <Loader2 className="w-3 h-3" />}
-                            Verversen
-                          </button>
-                </div>
-                      </div>
                     </div>
                   </div>
                 );

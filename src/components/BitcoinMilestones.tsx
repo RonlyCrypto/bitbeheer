@@ -56,8 +56,7 @@ export default function BitcoinMilestones({ wallets = [], onRefresh }: BitcoinMi
   useEffect(() => {
     const loadData = async () => {
       try {
-        setLoading(true);
-
+        // Laad op achtergrond zonder loading state te tonen (voorkom div veranderingen)
         // Load current Bitcoin price
         const price = await bitcoinApiService.getCurrentPrice();
         setBitcoinPrice(typeof price === 'number' ? price : (price as any)?.price || 95000);
@@ -71,34 +70,40 @@ export default function BitcoinMilestones({ wallets = [], onRefresh }: BitcoinMi
           }, 0);
         }
 
-        setCurrentBTC(totalBTC);
+        // Update alleen als er een verschil is (voorkom onnodige re-renders)
+        if (Math.abs(currentBTC - totalBTC) > 0.0001) {
+          setCurrentBTC(totalBTC);
 
-        // Update milestone status
-        const reached01 = totalBTC >= 0.1;
-        const reached1 = totalBTC >= 1;
+          // Update milestone status
+          const reached01 = totalBTC >= 0.1;
+          const reached1 = totalBTC >= 1;
 
-        setUserMilestones({
-          milestone01: reached01,
-          milestone1: reached1
-        });
+          setUserMilestones({
+            milestone01: reached01,
+            milestone1: reached1
+          });
 
-        // Save milestone achievement to database
-        if (user?.email && (reached01 || reached1)) {
-          await supabase
-            .from('user_milestones')
-            .upsert({
-              user_email: user.email,
-              milestone_01_btc: reached01,
-              milestone_1_btc: reached1,
-              updated_at: new Date().toISOString()
-            }, {
-              onConflict: 'user_email'
-            });
+          // Save milestone achievement to database
+          if (user?.email && (reached01 || reached1)) {
+            await supabase
+              .from('user_milestones')
+              .upsert({
+                user_email: user.email,
+                milestone_01_btc: reached01,
+                milestone_1_btc: reached1,
+                updated_at: new Date().toISOString()
+              }, {
+                onConflict: 'user_email'
+              });
+          }
         }
       } catch (error) {
         console.error('Error loading milestone data:', error);
       } finally {
-        setLoading(false);
+        // Set loading false alleen bij eerste keer
+        if (loading) {
+          setLoading(false);
+        }
       }
     };
 
@@ -114,39 +119,13 @@ export default function BitcoinMilestones({ wallets = [], onRefresh }: BitcoinMi
     return remaining > 0 ? remaining.toFixed(4) : 0;
   };
 
-  if (loading) {
-    return (
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 animate-pulse">
-        <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-        <div className="space-y-4">
-          {[1, 2].map(i => (
-            <div key={i} className="h-24 bg-gray-100 rounded"></div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   // Calculate milestone status for summary
   const milestonesReached = (userMilestones.milestone01 ? 1 : 0) + (userMilestones.milestone1 ? 1 : 0);
   const nextMilestone = !userMilestones.milestone01 ? 0.1 : !userMilestones.milestone1 ? 1 : null;
   const btcToNextMilestone = nextMilestone ? (nextMilestone - currentBTC).toFixed(4) : null;
 
-  if (loading) {
-    return (
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 animate-pulse">
-        <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-        <div className="space-y-4">
-          {[1, 2].map(i => (
-            <div key={i} className="h-24 bg-gray-100 rounded"></div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[120px]">
       {/* Collapsible Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
