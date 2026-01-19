@@ -2221,7 +2221,15 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   <div className="space-y-2">
                     {walletTransactions.slice(0, 3).map((tx, index) => {
                       const txDate = new Date(tx.time * 1000);
-                      const formattedDate = txDate.toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit' });
+                      const formattedDate = txDate.toLocaleDateString('nl-NL', { 
+                        day: '2-digit', 
+                        month: '2-digit', 
+                        year: 'numeric' 
+                      });
+                      const formattedTime = txDate.toLocaleTimeString('nl-NL', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      });
                       const btcAmount = Math.abs(tx.value) / 100000000;
                       const isIncoming = tx.value > 0;
                       const txType = isIncoming ? 'Koop' : 'Verkoop';
@@ -2238,19 +2246,22 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                             )}
                   </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">{formattedDate}</span>
+                            <div className="flex flex-col items-end gap-0.5">
+                              <span className="text-xs text-gray-700 font-medium">{formattedDate}</span>
+                              <span className="text-xs text-gray-500">{formattedTime}</span>
+                            </div>
                             {tx.hash && (
                               <a
                                 href={`https://blockstream.info/tx/${tx.hash}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-700"
+                                className="text-blue-600 hover:text-blue-700 flex-shrink-0"
                                 title={isPending ? "Bekijk pending transactie" : "Bekijk transactie"}
-                          >
-                            <ExternalLink className="w-3 h-3" />
+                              >
+                                <ExternalLink className="w-3 h-3" />
                               </a>
                             )}
-                  </div>
+                          </div>
                 </div>
               );
             })}
