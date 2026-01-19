@@ -361,28 +361,33 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
 
   const change24h = calculate24hChange();
 
-  // Calculate wallet balance over time
+  // Calculate wallet balance over time - aligned with price chart timeline
   const calculateWalletBalanceData = () => {
-    if (!transactions || transactions.length === 0) return [];
+    if (!transactions || transactions.length === 0 || filteredData.length === 0) return [];
     
     // Sort transactions chronologically
     const sortedTxs = [...transactions].sort((a, b) => a.time - b.time);
     
-    // Calculate balance at each transaction point
+    // Start balance at 0
     let currentBalance = 0;
+    
+    // Create balance data for each date in the price chart
     const balanceData: { date: string; balance: number }[] = [];
     
+    // Create a map of transaction dates to balance changes
+    const balanceChanges = new Map<string, number>();
     sortedTxs.forEach(tx => {
       const btcAmount = Math.abs(tx.value) / 100000000;
-      if (tx.value > 0) {
-        // Buy - add to balance
-        currentBalance += btcAmount;
-      } else {
-        // Sell - subtract from balance
-        currentBalance -= btcAmount;
-      }
-      
       const date = new Date(tx.time * 1000).toISOString().split('T')[0];
+      const change = tx.value > 0 ? btcAmount : -btcAmount;
+      balanceChanges.set(date, (balanceChanges.get(date) || 0) + change);
+    });
+    
+    // Calculate balance for each date in the price chart
+    filteredData.forEach(pricePoint => {
+      const date = pricePoint.date;
+      const change = balanceChanges.get(date) || 0;
+      currentBalance += change;
       balanceData.push({ date, balance: currentBalance });
     });
     
@@ -543,7 +548,15 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-gray-700">💰 Wallet Balance Chart</span>
               <span className="text-xs text-gray-500">
-                {walletBalanceData.length > 0 && `Huidig: ${walletBalanceData[walletBalanceData.length - 1].balance.toFixed(8)} BTC`}
+                {walletBalanceData.length > 0 && (() => {
+                  const balance = walletBalanceData[walletBalanceData.length - 1].balance;
+                  const formatted = Math.abs(balance) < 0.01 
+                    ? balance.toFixed(6) 
+                    : Math.abs(balance) < 1 
+                    ? balance.toFixed(4) 
+                    : balance.toFixed(2);
+                  return `Huidig: ${formatted} BTC`;
+                })()}
               </span>
             </div>
             {showWalletBalanceChart ? (
@@ -587,28 +600,28 @@ function WalletBalanceChart({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const padding = { top: 20, right: 40, bottom: 40, left: 60 };
+    // Use same dimensions as PriceChart
+    const padding = { top: 30, right: 50, bottom: 50, left: 70 };
     const chartWidth = canvas.width - padding.left - padding.right;
     const chartHeight = canvas.height - padding.top - padding.bottom;
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Find date range
-    const allDates = [...new Set([...balanceData.map(d => d.date), ...priceData.map(d => d.date)])].sort();
-    if (allDates.length === 0) return;
-
-    const minDate = new Date(allDates[0]);
-    const maxDate = new Date(allDates[allDates.length - 1]);
+    // Use same date range as price chart
+    if (priceData.length === 0) return;
+    
+    const minDate = new Date(priceData[0].date);
+    const maxDate = new Date(priceData[priceData.length - 1].date);
     const dateRange = maxDate.getTime() - minDate.getTime();
 
-    // Find balance range
+    // Find balance range - always include 0
     const balances = balanceData.map(d => d.balance);
     const minBalance = Math.min(0, ...balances);
-    const maxBalance = Math.max(...balances);
-    const balanceRange = maxBalance - minBalance || 1;
+    const maxBalance = Math.max(0, ...balances, ...balances);
+    const balanceRange = Math.max(maxBalance - minBalance, 0.1) || 0.1;
 
-    // Draw grid
+    // Draw grid (same style as PriceChart)
     ctx.strokeStyle = '#e5e7eb';
     ctx.lineWidth = 1;
     for (let i = 0; i <= 5; i++) {
@@ -619,10 +632,23 @@ function WalletBalanceChart({
       ctx.stroke();
     }
 
+    // Draw zero line
+    const zeroY = padding.top + chartHeight - ((0 - minBalance) / balanceRange) * chartHeight;
+    if (zeroY >= padding.top && zeroY <= padding.top + chartHeight) {
+      ctx.strokeStyle = '#d1d5db';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(padding.left, zeroY);
+      ctx.lineTo(canvas.width - padding.right, zeroY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
     // Draw balance line
     if (balanceData.length > 0) {
       ctx.strokeStyle = '#3b82f6';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
 
       balanceData.forEach((point, index) => {
@@ -639,46 +665,90 @@ function WalletBalanceChart({
 
       ctx.stroke();
 
-      // Draw points
-      balanceData.forEach((point) => {
-        const date = new Date(point.date);
-        const x = padding.left + ((date.getTime() - minDate.getTime()) / dateRange) * chartWidth;
-        const y = padding.top + chartHeight - ((point.balance - minBalance) / balanceRange) * chartHeight;
+      // Draw points only at transaction dates (where balance changes)
+      const balanceMap = new Map(balanceData.map(d => [d.date, d.balance]));
+      const prevBalances = new Map<string, number>();
+      balanceData.forEach((point, index) => {
+        if (index > 0) {
+          prevBalances.set(point.date, balanceData[index - 1].balance);
+        }
+      });
 
-        ctx.beginPath();
-        ctx.arc(x, y, 4, 0, 2 * Math.PI);
-        ctx.fillStyle = '#3b82f6';
-        ctx.fill();
+      balanceData.forEach((point, index) => {
+        const prevBalance = index > 0 ? balanceData[index - 1].balance : 0;
+        // Only draw point if balance changed
+        if (Math.abs(point.balance - prevBalance) > 0.00000001) {
+          const date = new Date(point.date);
+          const x = padding.left + ((date.getTime() - minDate.getTime()) / dateRange) * chartWidth;
+          const y = padding.top + chartHeight - ((point.balance - minBalance) / balanceRange) * chartHeight;
+
+          ctx.beginPath();
+          ctx.arc(x, y, 3.5, 0, 2 * Math.PI);
+          ctx.fillStyle = '#3b82f6';
+          ctx.fill();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
       });
     }
 
-    // Draw Y-axis labels (BTC balance)
+    // Draw Y-axis labels (BTC balance) - smaller, better formatted
     ctx.fillStyle = '#6b7280';
-    ctx.font = '12px sans-serif';
+    ctx.font = '10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    
     for (let i = 0; i <= 5; i++) {
       const value = minBalance + (balanceRange / 5) * (5 - i);
       const y = padding.top + (chartHeight / 5) * i;
-      ctx.fillText(value.toFixed(4), padding.left - 10, y + 4);
+      
+      // Format number nicely - less decimals for larger numbers
+      let formattedValue: string;
+      if (Math.abs(value) < 0.01) {
+        formattedValue = value.toFixed(6);
+      } else if (Math.abs(value) < 1) {
+        formattedValue = value.toFixed(4);
+      } else if (Math.abs(value) < 100) {
+        formattedValue = value.toFixed(2);
+      } else {
+        formattedValue = value.toFixed(0);
+      }
+      
+      ctx.fillText(formattedValue, padding.left - 12, y);
     }
 
-    // Draw X-axis labels (dates)
+    // Draw X-axis labels (dates) - same format as PriceChart
     ctx.textAlign = 'center';
-    const dateLabels = allDates.filter((_, i) => i % Math.ceil(allDates.length / 6) === 0);
-    dateLabels.forEach(dateStr => {
-      const date = new Date(dateStr);
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#6b7280';
+    ctx.font = '10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    
+    // Show same number of labels as PriceChart (approximately)
+    const numLabels = Math.min(8, priceData.length);
+    const step = Math.max(1, Math.floor(priceData.length / numLabels));
+    
+    for (let i = 0; i < priceData.length; i += step) {
+      const pricePoint = priceData[i];
+      const date = new Date(pricePoint.date);
       const x = padding.left + ((date.getTime() - minDate.getTime()) / dateRange) * chartWidth;
+      
+      // Format date same as PriceChart
       const month = date.toLocaleDateString('nl-NL', { month: 'short', day: 'numeric' });
-      ctx.fillText(month, x, canvas.height - padding.bottom + 20);
-    });
+      const year = date.getFullYear();
+      const yearStr = year.toString().slice(-2);
+      
+      ctx.fillText(`${month} ${yearStr}`, x, canvas.height - padding.bottom + 12);
+    }
 
-    // Y-axis label
+    // Y-axis label - smaller
     ctx.save();
-    ctx.translate(15, canvas.height / 2);
+    ctx.translate(18, canvas.height / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
     ctx.fillStyle = '#374151';
-    ctx.font = 'bold 12px sans-serif';
+    ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.fillText('BTC Balance', 0, 0);
     ctx.restore();
   }, [balanceData, priceData, height]);
