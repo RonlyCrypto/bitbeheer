@@ -924,19 +924,14 @@ export default function PortfolioPage() {
   
   // Bereken totaal aantal transacties op blockchain (van alle wallets)
   const totalTransactionsOnBlockchain = wallets.reduce((sum, wallet) => {
-    return sum + ((wallet as any).transaction_count || wallet.transactions || 0);
+    return sum + ((wallet.realData?.transactionCount) || (wallet as any).transaction_count || wallet.transactions || 0);
   }, 0);
   
-  // Aantal geladen transacties - gebruik sync progress tijdens sync, anders allTransactions
+  // Aantal geladen transacties - gebruik allTransactions.length (werkelijke aantal geladen)
+  const loadedTransactions = allTransactions.length;
+  
+  // Check of er actieve sync is
   const hasActiveSync = Array.from(walletSyncProgress.values()).some(p => p.isSyncing);
-  const totalLoadedFromSync = Array.from(walletSyncProgress.values()).reduce((sum, progress) => {
-    return sum + (progress.loadedTransactions || 0);
-  }, 0);
-  
-  // Gebruik sync progress tijdens sync, anders allTransactions.length
-  const loadedTransactions = hasActiveSync && totalLoadedFromSync > 0 
-    ? totalLoadedFromSync 
-    : allTransactions.length;
   
   // Haal total investment op uit database (per wallet opgeslagen)
   // Fallback naar berekening als database waarde niet beschikbaar is
@@ -998,8 +993,8 @@ export default function PortfolioPage() {
               <p className="text-xl font-bold text-gray-900">
                 {hasActiveSync && totalTransactionsOnBlockchain > 0
                   ? `${loadedTransactions}/${totalTransactionsOnBlockchain}`
-                  : totalTransactionsOnBlockchain > 0 && loadedTransactions >= totalTransactionsOnBlockchain
-                  ? totalTransactionsOnBlockchain // Toon alleen totaal wanneer volledig geladen
+                  : totalTransactionsOnBlockchain > 0
+                  ? totalTransactionsOnBlockchain // Toon altijd totaal aantal op blockchain
                   : loadedTransactions > 0 
                   ? loadedTransactions
                   : totalTransactions}
@@ -1007,10 +1002,8 @@ export default function PortfolioPage() {
               <p className="text-xs text-gray-600">
                 {hasActiveSync 
                   ? 'Laden...'
-                  : totalTransactionsOnBlockchain > 0 && loadedTransactions >= totalTransactionsOnBlockchain
-                  ? 'Totaal aantal' // Oude overzicht wanneer volledig geladen
-                  : totalTransactionsOnBlockchain > 0 
-                  ? `Geladen / Totaal op blockchain`
+                  : totalTransactionsOnBlockchain > 0
+                  ? 'Totaal aantal'
                   : 'Totaal aantal'}
               </p>
             </div>
