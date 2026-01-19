@@ -189,7 +189,7 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
           </div>
           <div>
             <h4 className="text-base font-semibold text-gray-900">
-              Transactie #{index + 1}
+              Transactie #{index}
             </h4>
             <p className="text-xs text-gray-600 flex items-center gap-1">
               <Calendar className="w-3 h-3" />

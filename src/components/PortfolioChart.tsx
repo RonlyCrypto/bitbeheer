@@ -714,9 +714,9 @@ function WalletBalanceChart({
       });
     }
 
-    // Draw Y-axis labels (BTC balance) - smaller, better formatted
+    // Draw Y-axis labels (BTC balance) - same style as PriceChart
     ctx.fillStyle = '#6b7280';
-    ctx.font = '10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.font = '11px sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     
@@ -736,40 +736,47 @@ function WalletBalanceChart({
         formattedValue = value.toFixed(0);
       }
       
-      ctx.fillText(formattedValue, padding.left - 12, y);
+      ctx.fillText(formattedValue, padding.left - 10, y + 4);
     }
 
-    // Draw X-axis labels (dates) - same format as PriceChart
+    // Draw X-axis labels (dates) - same format and style as PriceChart
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillStyle = '#6b7280';
-    ctx.font = '10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.font = '11px sans-serif';
     
-    // Show same number of labels as PriceChart (approximately)
-    const numLabels = Math.min(8, priceData.length);
-    const step = Math.max(1, Math.floor(priceData.length / numLabels));
+    // Use same label generation as PriceChart
+    const generateXAxisLabels = (data: PriceData[], width: number) => {
+      const numLabels = Math.min(8, data.length);
+      const step = Math.max(1, Math.floor(data.length / numLabels));
+      const labels: { x: number; text: string }[] = [];
+      
+      for (let i = 0; i < data.length; i += step) {
+        const date = new Date(data[i].date);
+        const x = (i / (data.length - 1)) * width;
+        const month = date.toLocaleDateString('nl-NL', { month: 'short', day: 'numeric' });
+        const year = date.getFullYear();
+        const yearStr = year.toString().slice(-2);
+        labels.push({ x, text: `${month} ${yearStr}` });
+      }
+      
+      return labels;
+    };
     
-    for (let i = 0; i < priceData.length; i += step) {
-      const pricePoint = priceData[i];
-      const date = new Date(pricePoint.date);
-      const x = padding.left + ((date.getTime() - minDate.getTime()) / dateRange) * chartWidth;
-      
-      // Format date same as PriceChart
-      const month = date.toLocaleDateString('nl-NL', { month: 'short', day: 'numeric' });
-      const year = date.getFullYear();
-      const yearStr = year.toString().slice(-2);
-      
-      ctx.fillText(`${month} ${yearStr}`, x, canvas.height - padding.bottom + 12);
-    }
+    const xAxisLabels = generateXAxisLabels(priceData, chartWidth);
+    xAxisLabels.forEach(label => {
+      const x = padding.left + label.x;
+      ctx.fillText(label.text, x, canvas.height - padding.bottom + 20);
+    });
 
-    // Y-axis label - smaller
+    // Y-axis label - same style as PriceChart
     ctx.save();
-    ctx.translate(18, canvas.height / 2);
+    ctx.translate(15, canvas.height / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#374151';
-    ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.font = '11px sans-serif';
     ctx.fillText('BTC Balance', 0, 0);
     ctx.restore();
   }, [balanceData, priceData, height]);

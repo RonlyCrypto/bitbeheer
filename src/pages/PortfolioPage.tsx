@@ -53,6 +53,19 @@ export default function PortfolioPage() {
   const [loadingWallets, setLoadingWallets] = useState(true);
   const [currentPrice, setCurrentPrice] = useState<number>(96640);
   const [allTransactions, setAllTransactions] = useState<BitcoinTransaction[]>([]);
+
+  // Helper function to remove duplicate transactions based on hash + time
+  const removeDuplicateTransactions = (transactions: BitcoinTransaction[]): BitcoinTransaction[] => {
+    const seen = new Set<string>();
+    return transactions.filter(tx => {
+      const key = `${tx.hash || ''}-${tx.time || 0}`;
+      if (seen.has(key)) {
+        return false; // Duplicate, skip
+      }
+      seen.add(key);
+      return true; // Unique, keep
+    });
+  };
   const [selectedTransaction, setSelectedTransaction] = useState<BitcoinTransaction | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
@@ -301,7 +314,7 @@ export default function PortfolioPage() {
           allTx.push(...wallet.realData.transactions);
         }
       }
-      setAllTransactions(allTx);
+      setAllTransactions(removeDuplicateTransactions(allTx));
     };
 
     updateTransactions();
@@ -447,7 +460,7 @@ export default function PortfolioPage() {
               confirmations: tx.confirmations
             })) as BitcoinTransaction[]);
           });
-          setAllTransactions(allTx);
+          setAllTransactions(removeDuplicateTransactions(allTx));
         }
       } catch (error) {
         console.error('Error updating wallets during sync:', error);
@@ -542,7 +555,7 @@ export default function PortfolioPage() {
                 confirmations: tx.confirmations
               })) as BitcoinTransaction[]);
             });
-            setAllTransactions(allTx);
+            setAllTransactions(removeDuplicateTransactions(allTx));
           }
         } catch (error) {
           console.error('Error reloading wallets after sync:', error);
@@ -568,7 +581,7 @@ export default function PortfolioPage() {
               const moreData = await bitcoinApiService.getTransactionsPage(wallet.realData.address, nextPage, itemsPerPage);
               
               if (moreData.length > 0) {
-                setAllTransactions(prev => [...prev, ...moreData]);
+                setAllTransactions(prev => removeDuplicateTransactions([...prev, ...moreData]));
                 console.log(`✅ Loaded ${moreData.length} more transactions`);
               } else {
                 console.log('✓ No more transactions to load');
@@ -1577,7 +1590,7 @@ export default function PortfolioPage() {
                       
                       return (
                     <TransactionBlock
-                      key={`${transaction.hash}-${index}`}
+                      key={`${transaction.hash}-${transaction.time}-${transactionNumber}`}
                       transaction={transaction}
                         index={transactionNumber}
                       onTransactionClick={setSelectedTransaction}
