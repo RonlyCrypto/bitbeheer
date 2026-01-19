@@ -365,30 +365,51 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
   const calculateWalletBalanceData = () => {
     if (!transactions || transactions.length === 0 || filteredData.length === 0) return [];
     
-    // Sort transactions chronologically
+    // Sort transactions chronologically (oldest first)
     const sortedTxs = [...transactions].sort((a, b) => a.time - b.time);
     
-    // Start balance at 0
+    // Start balance at 0 (lege wallet)
     let currentBalance = 0;
     
-    // Create balance data for each date in the price chart
-    const balanceData: { date: string; balance: number }[] = [];
+    // Create a map of dates to balance (only on transaction dates)
+    const balanceByDate = new Map<string, number>();
     
-    // Create a map of transaction dates to balance changes
-    const balanceChanges = new Map<string, number>();
+    // Process each transaction in chronological order
     sortedTxs.forEach(tx => {
       const btcAmount = Math.abs(tx.value) / 100000000;
       const date = new Date(tx.time * 1000).toISOString().split('T')[0];
-      const change = tx.value > 0 ? btcAmount : -btcAmount;
-      balanceChanges.set(date, (balanceChanges.get(date) || 0) + change);
+      
+      if (tx.value > 0) {
+        // BUY: voeg BTC toe (ga omhoog in de plus)
+        currentBalance += btcAmount;
+      } else if (tx.value < 0) {
+        // SELL: trek BTC af (ga omlaag)
+        currentBalance -= btcAmount;
+        // Zorg dat balance niet negatief wordt (kan niet verkopen wat je niet hebt)
+        if (currentBalance < 0) {
+          currentBalance = 0;
+        }
+      }
+      
+      // Sla balance op voor deze datum
+      balanceByDate.set(date, currentBalance);
     });
     
-    // Calculate balance for each date in the price chart
+    // Create balance data for each date in the price chart
+    // Balance blijft hetzelfde tot er een nieuwe transactie is
+    const balanceData: { date: string; balance: number }[] = [];
+    let lastKnownBalance = 0;
+    
     filteredData.forEach(pricePoint => {
       const date = pricePoint.date;
-      const change = balanceChanges.get(date) || 0;
-      currentBalance += change;
-      balanceData.push({ date, balance: currentBalance });
+      
+      // Als er een transactie was op deze datum, gebruik die balance
+      if (balanceByDate.has(date)) {
+        lastKnownBalance = balanceByDate.get(date)!;
+      }
+      
+      // Balance blijft hetzelfde tot volgende transactie
+      balanceData.push({ date, balance: lastKnownBalance });
     });
     
     return balanceData;
