@@ -386,9 +386,15 @@ class WalletDataService {
             break;
           }
           
-          // Check of we klaar zijn - stop wanneer max bereikt of geen transacties meer
-          if (pageTransactions.length < BATCH_SIZE || allTransactions.length >= MAX_TRANSACTIONS) {
-            logger.debug(`✅ Sync compleet: ${allTransactions.length} transacties opgehaald (max: ${MAX_TRANSACTIONS})`);
+          // Check of we klaar zijn - stop wanneer geen transacties meer (niet bij MAX_TRANSACTIONS, haal alles op)
+          if (pageTransactions.length < BATCH_SIZE) {
+            logger.debug(`✅ Sync compleet: ${allTransactions.length} transacties opgehaald (geen transacties meer)`);
+            break;
+          }
+          
+          // Alleen stoppen bij MAX_TRANSACTIONS als we echt te veel hebben (veiligheid)
+          if (allTransactions.length >= MAX_TRANSACTIONS && totalTxCount > MAX_TRANSACTIONS) {
+            logger.debug(`⚠️ Max transacties bereikt: ${allTransactions.length} van ${totalTxCount} (max: ${MAX_TRANSACTIONS})`);
             break;
           }
 
