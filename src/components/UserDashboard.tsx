@@ -810,6 +810,7 @@ export default function UserDashboard() {
             {activeTab === 'overview' && <OverviewTab 
               userProfile={userProfile} 
               goals={goals} 
+              setGoals={setGoals}
               appointments={appointments} 
               portfolio={portfolio}
               onBookAppointment={() => setShowAppointmentPopup(true)}
@@ -2147,30 +2148,57 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   </div>
                   {/* BTC Balance in het midden */}
                   <div className="text-center mx-4">
-                    {walletSyncProgress && walletSyncProgress.isSyncing && walletSyncProgress.loadedTransactions < 10 ? (
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="w-3 h-3 text-blue-600 animate-spin" />
-                          <span className="text-xs text-blue-600">
-                            {walletSyncProgress.loadedTransactions || 0}/{walletSyncProgress.totalTransactions || 10}
-                          </span>
-                        </div>
-                        <span className="text-xs text-gray-500">Laden...</span>
-                      </div>
-                    ) : walletSyncProgress && walletSyncProgress.isSyncing && walletSyncProgress.loadedTransactions >= 10 ? (
-                      <div className="flex flex-col items-center gap-1">
-                    <span className="text-sm font-semibold text-gray-700">
-                      {walletData.balance?.toFixed(4) || '0.0000'} BTC
-                    </span>
-                        <span className="text-xs text-green-600 font-medium">
-                          Je kan je eerste paar tx zien in je portfolio
+                    {(() => {
+                      const balance = walletData.balance || 0;
+                      const isSyncing = walletSyncProgress?.isSyncing || false;
+                      const hasNoTransactions = walletTransactions.length === 0;
+                      const isLoading = (balance === 0 || balance === null) && (isSyncing || hasNoTransactions);
+                      
+                      if (isLoading) {
+                        return (
+                          <div className="flex flex-col items-center gap-2">
+                            <span className="text-sm font-semibold text-gray-700">
+                              0.0000 BTC
+                            </span>
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="text-xs text-orange-600 font-medium animate-pulse">
+                                ⏳ We hebben even tijd nodig om alle data op te halen
+                              </span>
+                              <span className="text-xs text-gray-500 animate-pulse">
+                                Kom later terug wanneer je wallet geladen is
+                              </span>
+                            </div>
+                            {walletSyncProgress && walletSyncProgress.isSyncing && (
+                              <div className="flex items-center gap-2 mt-1">
+                                <Loader2 className="w-3 h-3 text-blue-600 animate-spin" />
+                                <span className="text-xs text-blue-600">
+                                  {walletSyncProgress.loadedTransactions || 0}/{walletSyncProgress.totalTransactions || '?'} transacties
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+                      
+                      if (walletSyncProgress && walletSyncProgress.isSyncing && walletSyncProgress.loadedTransactions >= 10) {
+                        return (
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="text-sm font-semibold text-gray-700">
+                              {balance.toFixed(4)} BTC
+                            </span>
+                            <span className="text-xs text-green-600 font-medium">
+                              Je kan je eerste paar tx zien in je portfolio
+                            </span>
+                          </div>
+                        );
+                      }
+                      
+                      return (
+                        <span className="text-sm font-semibold text-gray-700">
+                          {balance.toFixed(4)} BTC
                         </span>
-                      </div>
-                    ) : (
-                      <span className="text-sm font-semibold text-gray-700">
-                        {walletData.balance?.toFixed(4) || '0.0000'} BTC
-                      </span>
-                    )}
+                      );
+                    })()}
                   </div>
                   </div>
                 <button
