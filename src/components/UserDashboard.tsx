@@ -4649,19 +4649,18 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
       {/* Goals Section - Only show if there are custom goals */}
       {allGoals.length > 0 && (
         <>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-4">
-            <div className="lg:col-span-2">
-              <div className="mb-4 flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700">Mijn doelen</span>
-                {onNavigateToGoals && (
-                  <button
-                    onClick={onNavigateToGoals}
-                    className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
-                  >
-                    Bekijk alle doelen <ArrowRight className="w-3 h-3" />
-                  </button>
-                )}
-          </div>
+          <div className="mb-4">
+            <div className="mb-4 flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-700">Mijn doelen</span>
+              {onNavigateToGoals && (
+                <button
+                  onClick={onNavigateToGoals}
+                  className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                >
+                  Bekijk alle doelen <ArrowRight className="w-3 h-3" />
+                </button>
+              )}
+            </div>
 
           <div className="space-y-3 mb-4">
         {allGoals.map((goal, index) => {
@@ -4872,38 +4871,39 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
               );
             })}
           </div>
-            </div>
+          </div>
       
-            {/* Hulp nodig? - Naast Mijn doelen */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
-                <h3 className="text-base font-semibold text-gray-900 mb-2">Hulp nodig?</h3>
-                <p className="text-xs text-gray-700 mb-3">
-                  Twijfel of vragen? Wij helpen je persoonlijk.
-                </p>
-                <div className="space-y-2">
-            <button
-                    onClick={() => onBookAppointment && onBookAppointment()}
-                    className="w-full bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
-            >
-                    <Calendar className="w-4 h-4" />
-                    Plan gesprek
-            </button>
-                <button
-                    onClick={() => {
-                      if (typeof window !== 'undefined') {
-                        window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'helpdesk' }));
-                      }
-                    }}
-                    className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                >
-                    <MessageSquare className="w-4 h-4" />
-                    Stel je vraag
-                </button>
-            </div>
-                    </div>
+            {/* Hulp nodig? - Verborgen voor nu */}
+            {false && (
+              <div className="lg:col-span-1">
+                <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+                  <h3 className="text-base font-semibold text-gray-900 mb-2">Hulp nodig?</h3>
+                  <p className="text-xs text-gray-700 mb-3">
+                    Twijfel of vragen? Wij helpen je persoonlijk.
+                  </p>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => onBookAppointment && onBookAppointment()}
+                      className="w-full bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Calendar className="w-4 h-4" />
+                      Plan gesprek
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (typeof window !== 'undefined') {
+                          window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'helpdesk' }));
+                        }
+                      }}
+                      className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      Stel je vraag
+                    </button>
+                  </div>
                 </div>
-            </div>
+              </div>
+            )}
         </>
       )}
       
