@@ -880,7 +880,7 @@ export default function PortfolioPage() {
                 {hasActiveSync && (
                   <div className="ml-auto">
                     <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
-                  </div>
+              </div>
                 )}
               </div>
               <p className="text-xl font-bold text-gray-900">
@@ -1205,62 +1205,62 @@ export default function PortfolioPage() {
                     </div>
                   </div>
 
-                    {/* Chart Integratie Block - onder wallet info */}
-                    {wallet.id && (
-                      isChartIntegrationVisible ? (
-                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                          <div className="flex items-start gap-3">
-                            <div className="bg-orange-100 p-1.5 rounded-lg flex-shrink-0">
-                              <AlertCircle className="w-4 h-4 text-orange-600" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="text-sm font-semibold text-gray-900 mb-1">Chart Integratie</h4>
-                              <p className="text-xs text-gray-600 mb-3">
-                                Deze wallet wordt automatisch gekoppeld aan de Bitcoin Geschiedenis chart. Je inkoop punten worden getoond op de grafiek.
-                              </p>
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={handleWalletRefresh}
-                                  disabled={isRefreshing}
-                                  className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-                                >
-                                  {isRefreshing ? (
-                                    <>
-                                      <Loader2 className="w-3 h-3 animate-spin" />
-                                      Verversen...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <RefreshCw className="w-3 h-3" />
-                                      Verversen
-                                    </>
-                                  )}
-                                </button>
-                                <button
-                                  onClick={() => handleWalletToggle(false)}
-                                  className="px-3 py-1.5 bg-gray-300 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-400 transition-colors flex items-center gap-1.5"
-                                >
-                                  <EyeOff className="w-3 h-3" />
-                                  Verberg
-                                </button>
-                              </div>
+                  {/* Chart Integratie Block - onder wallet info */}
+                  {wallet.id && (
+                    isChartIntegrationVisible ? (
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mt-4">
+                        <div className="flex items-start gap-3">
+                          <div className="bg-orange-100 p-1.5 rounded-lg flex-shrink-0">
+                            <AlertCircle className="w-4 h-4 text-orange-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-semibold text-gray-900 mb-1">Chart Integratie</h4>
+                            <p className="text-xs text-gray-600 mb-3">
+                              Deze wallet wordt automatisch gekoppeld aan de Bitcoin Geschiedenis chart. Je inkoop punten worden getoond op de grafiek.
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={handleWalletRefresh}
+                                disabled={isRefreshing}
+                                className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                              >
+                                {isRefreshing ? (
+                                  <>
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                    Verversen...
+                                  </>
+                                ) : (
+                                  <>
+                                    <RefreshCw className="w-3 h-3" />
+                                    Verversen
+                                  </>
+                                )}
+                              </button>
+                              <button
+                                onClick={() => handleWalletToggle(false)}
+                                className="px-3 py-1.5 bg-gray-300 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-400 transition-colors flex items-center gap-1.5"
+                              >
+                                <EyeOff className="w-3 h-3" />
+                                Verberg
+                              </button>
                             </div>
                           </div>
                         </div>
-                      ) : (
-                        <div>
-                          <button
-                            onClick={() => handleWalletToggle(true)}
-                            className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-1.5"
-                          >
-                            <Eye className="w-3 h-3" />
-                            Toon Chart Integratie
-                          </button>
-                        </div>
-                      )
-                    )}
-                  </div>
-                );
+                      </div>
+                    ) : (
+                      <div className="mt-4">
+                        <button
+                          onClick={() => handleWalletToggle(true)}
+                          className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-1.5"
+                        >
+                          <Eye className="w-3 h-3" />
+                          Toon Chart Integratie
+                        </button>
+                      </div>
+                    )
+                  )}
+                </div>
+              );
               })}
             </div>
           )}
