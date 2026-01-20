@@ -5655,7 +5655,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
           </div>
         </div>
       )}
-    </div>
+                      </>
   );
 }
 
