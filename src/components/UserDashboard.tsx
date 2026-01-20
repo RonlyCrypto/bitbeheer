@@ -2620,10 +2620,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             )}
           </div>
         )}
-        </div>
-      </div>
         
-      {/* Marktpositie – Bitcoin in context */}
+        {/* Marktpositie – Bitcoin in context */}
         {(accountApproved || hasApprovedOneOnOne) && (
           <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
             <div className="flex items-center gap-2 mb-2">
@@ -2790,6 +2788,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             </div>
           </div>
         )}
+        </div>
+      </div>
 
       {/* Stappenblokken (Ledger & Coinbase) - Onderaan naast elkaar (1/2 1/2) */}
       <ReferralBlocksWithHelp onBookAppointment={onBookAppointment} />
