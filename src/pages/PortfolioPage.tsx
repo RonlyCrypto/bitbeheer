@@ -312,6 +312,9 @@ export default function PortfolioPage() {
   useEffect(() => {
     const newMap = new Map<string, boolean>();
     wallets.forEach(wallet => {
+      // Null check voor wallet.id
+      if (!wallet.id) return;
+      
       const key = `chartIntegration_${wallet.id}`;
       const saved = localStorage.getItem(key);
       if (saved !== null) {
@@ -1085,6 +1088,38 @@ export default function PortfolioPage() {
                 // Data wordt op achtergrond geladen en geüpdatet zonder visuele sprongen
                 const showWalletInfo = true;
 
+                // Chart Integratie logica
+                const walletChartIntegrationKey = wallet.id ? `chartIntegration_${wallet.id}` : '';
+                const saved = wallet.id ? localStorage.getItem(walletChartIntegrationKey) : null;
+                const defaultVisible = saved !== null ? saved === 'true' : true;
+                const isChartIntegrationVisible = wallet.id ? (walletChartIntegration.get(wallet.id) ?? defaultVisible) : false;
+                const isRefreshing = wallet.id ? (walletRefreshing.get(wallet.id) ?? false) : false;
+
+                const handleWalletRefresh = async () => {
+                  if (!wallet.id) return;
+                  setWalletRefreshing(prev => {
+                    const newMap = new Map(prev);
+                    newMap.set(wallet.id, true);
+                    return newMap;
+                  });
+                  await refreshTransactionPrices();
+                  setWalletRefreshing(prev => {
+                    const newMap = new Map(prev);
+                    newMap.set(wallet.id, false);
+                    return newMap;
+                  });
+                };
+
+                const handleWalletToggle = (show: boolean) => {
+                  if (!wallet.id) return;
+                  setWalletChartIntegration(prev => {
+                    const newMap = new Map(prev);
+                    newMap.set(wallet.id, show);
+                    return newMap;
+                  });
+                  localStorage.setItem(walletChartIntegrationKey, show.toString());
+                };
+
                 return (
                   <div key={wallet.id} className="bg-white rounded-xl p-4 shadow-lg">
                     {/* Wallet Info Header */}
@@ -1134,75 +1169,45 @@ export default function PortfolioPage() {
                             </span>
                       </div>
                     </div>
-                      {/* Settings dropdown */}
-                      <div className="relative flex-shrink-0">
-                        <button
-                          onClick={() => setOpenMenuId(openMenuId === wallet.id ? null : wallet.id)}
-                          className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                          title="Instellingen"
-                        >
-                          <Settings className="w-4 h-4" />
-                        </button>
-                        {openMenuId === wallet.id && (
-                          <>
-                            <div 
-                              className="fixed inset-0 z-10" 
-                              onClick={() => setOpenMenuId(null)}
-                            ></div>
-                            <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
-                              <button
-                                onClick={() => handleEditClick(wallet)}
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-t-lg transition-colors"
-                              >
-                                <Edit className="w-4 h-4" />
-                                Bewerken
-                              </button>
-                              <button
-                                onClick={() => handleDeleteClick(wallet)}
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-lg transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                                Verwijderen
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
+                    {/* Settings dropdown */}
+                    <div className="relative flex-shrink-0">
+                      <button
+                        onClick={() => setOpenMenuId(openMenuId === wallet.id ? null : wallet.id)}
+                        className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Instellingen"
+                      >
+                        <Settings className="w-4 h-4" />
+                      </button>
+                      {openMenuId === wallet.id && (
+                        <>
+                          <div 
+                            className="fixed inset-0 z-10" 
+                            onClick={() => setOpenMenuId(null)}
+                          ></div>
+                          <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+                            <button
+                              onClick={() => handleEditClick(wallet)}
+                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-t-lg transition-colors"
+                            >
+                              <Edit className="w-4 h-4" />
+                              Bewerken
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClick(wallet)}
+                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-lg transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              Verwijderen
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
+                  </div>
 
                     {/* Chart Integratie Block - onder wallet info */}
-                    {(() => {
-                      const walletChartIntegrationKey = `chartIntegration_${wallet.id}`;
-                      // Initialize from localStorage if not in state
-                      const saved = localStorage.getItem(walletChartIntegrationKey);
-                      const defaultVisible = saved !== null ? saved === 'true' : true;
-                      const isChartIntegrationVisible = walletChartIntegration.get(wallet.id) ?? defaultVisible;
-                      const isRefreshing = walletRefreshing.get(wallet.id) ?? false;
-
-                      const handleWalletRefresh = async () => {
-                        setWalletRefreshing(prev => {
-                          const newMap = new Map(prev);
-                          newMap.set(wallet.id, true);
-                          return newMap;
-                        });
-                        await refreshTransactionPrices();
-                        setWalletRefreshing(prev => {
-                          const newMap = new Map(prev);
-                          newMap.set(wallet.id, false);
-                          return newMap;
-                        });
-                      };
-
-                      const handleWalletToggle = (show: boolean) => {
-                        setWalletChartIntegration(prev => {
-                          const newMap = new Map(prev);
-                          newMap.set(wallet.id, show);
-                          return newMap;
-                        });
-                        localStorage.setItem(walletChartIntegrationKey, show.toString());
-                      };
-
-                      return isChartIntegrationVisible ? (
+                    {wallet.id && (
+                      isChartIntegrationVisible ? (
                         <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                           <div className="flex items-start gap-3">
                             <div className="bg-orange-100 p-1.5 rounded-lg flex-shrink-0">
@@ -1252,8 +1257,8 @@ export default function PortfolioPage() {
                             Toon Chart Integratie
                           </button>
                         </div>
-                      );
-                    })()}
+                      )
+                    )}
                   </div>
                 );
               })}

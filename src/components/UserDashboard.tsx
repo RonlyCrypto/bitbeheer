@@ -2158,7 +2158,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                       if (isLoading) {
                         return (
                           <div className="flex flex-col items-center gap-2">
-                            <span className="text-sm font-semibold text-gray-700">
+                    <span className="text-sm font-semibold text-gray-700">
                               0.0000 BTC
                             </span>
                             <div className="flex flex-col items-center gap-1">
@@ -2167,7 +2167,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                               </span>
                               <span className="text-xs text-gray-500 animate-pulse">
                                 Kom later terug wanneer je wallet geladen is
-                              </span>
+                    </span>
                             </div>
                             {walletSyncProgress && walletSyncProgress.isSyncing && (
                               <div className="flex items-center gap-2 mt-1">
@@ -2258,11 +2258,11 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                                 rel="noopener noreferrer"
                                 className="text-blue-600 hover:text-blue-700 flex-shrink-0"
                                 title={isPending ? "Bekijk pending transactie" : "Bekijk transactie"}
-                              >
-                                <ExternalLink className="w-3 h-3" />
+                          >
+                            <ExternalLink className="w-3 h-3" />
                               </a>
                             )}
-                          </div>
+                  </div>
                 </div>
               );
             })}
