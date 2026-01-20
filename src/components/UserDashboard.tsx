@@ -4751,68 +4751,11 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
       </div>
     </div>
 
-      {/* Milestone Celebration Popup */}
-      {showMilestonePopup && currentMilestoneCelebration !== null && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowMilestonePopup(false)}>
-          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 relative overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            {/* Confetti effect */}
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-4 left-4 w-3 h-3 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-              <div className="absolute top-6 right-8 w-3 h-3 bg-pink-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-              <div className="absolute top-8 left-1/2 w-3 h-3 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-              <div className="absolute top-10 right-4 w-3 h-3 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '0.6s' }}></div>
-              <div className="absolute top-12 left-8 w-3 h-3 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0.8s' }}></div>
-            </div>
-            
-            <div className="relative z-10 text-center">
-              <div className="flex justify-center mb-4">
-                <div className="relative">
-                  <CheckCircle className="w-16 h-16 text-green-600" />
-                  <PartyPopper className="w-8 h-8 text-yellow-500 absolute -top-2 -right-2 animate-bounce" />
-                  <Sparkles className="w-6 h-6 text-pink-500 absolute -bottom-1 -left-1 animate-pulse" />
-                </div>
-              </div>
-              
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                🎉 Gefeliciteerd!
-              </h3>
-              
-              <p className="text-lg text-gray-700 mb-4">
-                Je hebt de mijlpaal van <span className="font-bold text-orange-600">{currentMilestoneCelebration} BTC</span> bereikt.
-              </p>
-              
-              <p className="text-sm text-gray-600 mb-6">
-                {currentMilestoneCelebration === 0.01 && "Je hoort nu al bij een kleine groep mensen wereldwijd."}
-                {currentMilestoneCelebration === 0.1 && "Je behoort nu tot een zeer kleine groep mensen wereldwijd."}
-                {currentMilestoneCelebration === 1 && "Je behoort tot een extreem kleine groep mensen wereldwijd. Dit is een bijzondere prestatie!"}
-              </p>
-              
-              <button
-                onClick={() => {
-                  // Mark milestone as celebrated and save to localStorage
-                  if (currentMilestoneCelebration !== null && user?.id) {
-                    // Only add if not already in the list
-                    if (!celebratedMilestones.includes(currentMilestoneCelebration)) {
-                    const updated = [...celebratedMilestones, currentMilestoneCelebration];
-                    setCelebratedMilestones(updated);
-                    localStorage.setItem(`celebrated_milestones_${user.id}`, JSON.stringify(updated));
-                    }
-                  }
-                  setShowMilestonePopup(false);
-                  setCurrentMilestoneCelebration(null);
-                }}
-                className="px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors"
-              >
-                Geweldig! 🚀
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* Ritme & Discipline en Mijn Bitcoin Strategie - Naast elkaar onder Jouw Bitcoin Mijlpalen */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         {/* Ritme & Discipline - Eigen blok */}
         {allGoals.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 mt-6">
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
           <div className="mb-4">
               <div className="mb-4 flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
@@ -5076,8 +5019,8 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
           </div>
         )}
 
-      {/* Mijn Bitcoin Strategie - Eigen blok */}
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 mt-6">
+        {/* Mijn Bitcoin Strategie - Eigen blok */}
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
               🧠 Mijn Bitcoin Strategie
@@ -5108,7 +5051,8 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
             </div>
           </div>
         </div>
-      
+      </div>
+
       {/* Subtle CTA - Alleen tonen als er doelen zijn */}
       {allGoals.length > 0 && (
       <div className="mt-6 pt-4 border-t border-gray-200">
