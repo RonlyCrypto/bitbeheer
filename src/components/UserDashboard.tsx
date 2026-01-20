@@ -2791,46 +2791,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         </div>
       </div>
 
-      {/* Bitcoin Strategie Snapshot */}
-      {(accountApproved || hasApprovedOneOnOne) && (
-        <div className="mb-6">
-          <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                🧠 Mijn Bitcoin Strategie
-              </h3>
-              <button
-                onClick={() => {
-                  // TODO: Open strategy edit popup
-                  alert('Strategie bewerken komt binnenkort beschikbaar');
-                }}
-                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Bewerk
-              </button>
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <span className="text-sm text-gray-600">Strategie:</span>
-                <span className="text-sm font-medium text-gray-900">Lange termijn DCA</span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <span className="text-sm text-gray-600">Tijdshorizon:</span>
-                <span className="text-sm font-medium text-gray-900">5+ jaar</span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <span className="text-sm text-gray-600">Verkoopplan:</span>
-                <span className="text-sm font-medium text-gray-500">Nog niet ingesteld</span>
-              </div>
-              <div className="flex items-center justify-between py-2">
-                <span className="text-sm text-gray-600">Risicoprofiel:</span>
-                <span className="text-sm font-medium text-gray-900">Conservatief</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Actie voor vandaag */}
       {(accountApproved || hasApprovedOneOnOne) && goals && goals.length > 0 && (() => {
         // Find first monthly goal that hasn't been deposited this month
@@ -4748,14 +4708,16 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
         </div>
       )}
 
-      {/* Ritme & Discipline Section - Only show if there are custom goals */}
-      {allGoals.length > 0 && (
-        <>
-          <div className="mb-4">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                🔁 Ritme & Discipline
-              </span>
+      {/* Ritme & Discipline en Mijn Bitcoin Strategie - Naast elkaar onder Jouw Bitcoin Mijlpalen */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        {/* Ritme & Discipline Section - Only show if there are custom goals */}
+        {allGoals.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+            <div className="mb-4">
+              <div className="mb-4 flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  🔁 Ritme & Discipline
+                </span>
               {onNavigateToGoals && (
                 <button
                   onClick={onNavigateToGoals}
@@ -5011,10 +4973,48 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                     </div>
                 </div>
             )}
-        </>
-      )}
+          </div>
+        )}
+
+        {/* Mijn Bitcoin Strategie */}
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+              🧠 Mijn Bitcoin Strategie
+            </h3>
+            <button
+              onClick={() => {
+                // TODO: Open strategy edit popup
+                alert('Strategie bewerken komt binnenkort beschikbaar');
+              }}
+              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+            >
+              Bewerk
+            </button>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <span className="text-sm text-gray-600">Strategie:</span>
+              <span className="text-sm font-medium text-gray-900">Lange termijn DCA</span>
+            </div>
+            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <span className="text-sm text-gray-600">Tijdshorizon:</span>
+              <span className="text-sm font-medium text-gray-900">5+ jaar</span>
+            </div>
+            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <span className="text-sm text-gray-600">Verkoopplan:</span>
+              <span className="text-sm font-medium text-gray-500">Nog niet ingesteld</span>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <span className="text-sm text-gray-600">Risicoprofiel:</span>
+              <span className="text-sm font-medium text-gray-900">Conservatief</span>
+            </div>
+          </div>
+        </div>
+      </div>
       
-      {/* Subtle CTA */}
+      {/* Subtle CTA - Alleen tonen als er doelen zijn */}
+      {allGoals.length > 0 && (
               <div className="mt-6 pt-4 border-t border-gray-200">
                 <button
           onClick={() => setShowAddGoalPopup(true)}
@@ -5027,6 +5027,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
           Of <button onClick={() => onBookAppointment && onBookAppointment()} className="text-orange-600 hover:text-orange-700 underline">plan een begeleid moment</button> om je volgende stap te bespreken
         </p>
               </div>
+      )}
 
       {/* Monthly Goal Detail Popup */}
       {monthlyGoalPopup}
