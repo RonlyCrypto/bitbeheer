@@ -2651,8 +2651,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   <div className="text-right">
                     <div className="font-semibold text-gray-700">Laatste ATH</div>
                     <div className="text-gray-600">{'$'}{marketPositionData.lastATH.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
-                  </div>
-                </div>
+            </div>
+          </div>
 
                 {/* Visual bar */}
                 <div className="relative h-8 bg-gradient-to-r from-yellow-200 via-orange-200 to-green-200 rounded-lg overflow-hidden">
@@ -2912,22 +2912,22 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                                 </text>
                               </g>
                             </svg>
-                          </div>
+            </div>
                           <div className="text-center">
                             <p className="text-lg text-gray-700">
                               Nu: <span className={`font-bold ${fg.color === 'red' ? 'text-red-600' : fg.color === 'orange' ? 'text-orange-600' : fg.color === 'green' ? 'text-green-600' : fg.color === 'emerald' ? 'text-emerald-600' : 'text-gray-600'}`}>{fg.label}</span>
                             </p>
-                          </div>
-                        </div>
+          </div>
+        </div>
                       );
                     })()}
-                  </div>
+      </div>
                 ) : (
                   <div className="text-center py-12 text-gray-500">
                     Kon Fear & Greed Index niet laden
                   </div>
                 )}
-              </div>
+    </div>
 
               {/* Historical Values */}
               <div>
@@ -3933,10 +3933,16 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
     const missedMonths = months.filter(m => m.status === 'missed' && !m.madeUpBy);
     const totalMissedAmount = missedMonths.reduce((sum, m) => sum + m.remainingToMakeUp, 0);
 
+    // Find last deposit date
+    const lastDeposit = depositTransactions.length > 0 
+      ? depositTransactions[depositTransactions.length - 1].date 
+      : null;
+
     return {
       months,
       totalDeposited: depositTransactions.reduce((sum, tx) => sum + tx.amount, 0),
       missedCount: missedMonths.length,
+      lastDepositDate: lastDeposit,
       completedCount: months.filter(m => m.status === 'completed' || m.status === 'made_up').length,
       streak,
       streakBroken,
@@ -4646,12 +4652,14 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
         </div>
       )}
 
-      {/* Goals Section - Only show if there are custom goals */}
+      {/* Ritme & Discipline Section - Only show if there are custom goals */}
       {allGoals.length > 0 && (
         <>
           <div className="mb-4">
             <div className="mb-4 flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">Mijn doelen</span>
+              <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                🔁 Ritme & Discipline
+              </span>
               {onNavigateToGoals && (
                 <button
                   onClick={onNavigateToGoals}
@@ -4660,7 +4668,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                   Bekijk alle doelen <ArrowRight className="w-3 h-3" />
                 </button>
               )}
-            </div>
+          </div>
 
           <div className="space-y-3 mb-4">
         {allGoals.map((goal, index) => {
@@ -4808,9 +4816,12 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                       )}
                     </p>
                       {monthlyAnalysis && (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-xs font-semibold text-orange-600">🔥 Streak: {streak}</span>
                           <span className="text-xs text-gray-500">maanden</span>
+                          {monthlyAnalysis.lastDepositDate && (
+                            <span className="text-xs text-gray-500">📅 Laatste: {new Date(monthlyAnalysis.lastDepositDate).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                          )}
                           {isPaused && (
                             <span className="text-xs text-blue-600 font-medium">⏸️ Gepauzeerd</span>
                           )}
@@ -4882,14 +4893,14 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                     Twijfel of vragen? Wij helpen je persoonlijk.
                   </p>
                   <div className="space-y-2">
-                    <button
+            <button
                       onClick={() => onBookAppointment && onBookAppointment()}
                       className="w-full bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
-                    >
+            >
                       <Calendar className="w-4 h-4" />
                       Plan gesprek
-                    </button>
-                    <button
+            </button>
+                <button
                       onClick={() => {
                         if (typeof window !== 'undefined') {
                           window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'helpdesk' }));
@@ -4899,13 +4910,113 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                     >
                       <MessageSquare className="w-4 h-4" />
                       Stel je vraag
-                    </button>
-                  </div>
+                </button>
+            </div>
+                    </div>
                 </div>
-              </div>
             )}
         </>
       )}
+
+      {/* Bitcoin Strategie Snapshot */}
+      {(accountApproved || hasApprovedOneOnOne) && (
+        <div className="mb-6">
+          <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                🧠 Mijn Bitcoin Strategie
+              </h3>
+              <button
+                onClick={() => {
+                  // TODO: Open strategy edit popup
+                  alert('Strategie bewerken komt binnenkort beschikbaar');
+                }}
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Bewerk
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-600">Strategie:</span>
+                <span className="text-sm font-medium text-gray-900">Lange termijn DCA</span>
+          </div>
+              <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-600">Tijdshorizon:</span>
+                <span className="text-sm font-medium text-gray-900">5+ jaar</span>
+                  </div>
+              <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-600">Verkoopplan:</span>
+                <span className="text-sm font-medium text-gray-500">Nog niet ingesteld</span>
+                </div>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm text-gray-600">Risicoprofiel:</span>
+                <span className="text-sm font-medium text-gray-900">Conservatief</span>
+              </div>
+            </div>
+            </div>
+          </div>
+      )}
+
+      {/* Actie voor vandaag */}
+      {(accountApproved || hasApprovedOneOnOne) && allGoals.length > 0 && (() => {
+        // Find first monthly goal that hasn't been deposited this month
+        const monthlyGoal = allGoals.find((goal: any) => goal.type === 'monthly');
+        if (!monthlyGoal) return null;
+        
+        const monthlyCheck = checkMonthlyGoal(monthlyGoal);
+        const monthlyAnalysis = monthlyGoal.type === 'monthly' ? analyzeMonthlyGoalTransactions(monthlyGoal) : null;
+        const needsAction = !monthlyCheck?.deposited;
+        const goalAmount = monthlyGoal.monthlyCurrency === 'eur' 
+          ? `€${monthlyGoal.monthlyAmount}` 
+          : `${monthlyGoal.monthlyAmount} BTC`;
+        
+        if (!needsAction) return null;
+        
+        return (
+          <div className="mb-6">
+            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl shadow-sm p-4 border border-yellow-200">
+              <div className="flex items-start gap-3">
+                <div className="bg-yellow-100 p-2 rounded-lg">
+                  <span className="text-xl">⚡</span>
+                  </div>
+                <div className="flex-1">
+                  <h3 className="text-base font-semibold text-gray-900 mb-2">Actie voor vandaag</h3>
+                  <p className="text-sm text-gray-700 mb-1">
+                    🟡 Je hebt deze maand nog niet gestort ({goalAmount})
+                  </p>
+                  <p className="text-xs text-gray-600 mb-3">
+                    {currentBitcoinPrice > 0 && monthlyGoal.monthlyCurrency === 'eur' 
+                      ? `Dit is een goed moment om bij te storten.`
+                      : `Je zit momenteel onder je DCA-gemiddelde. Dit is een goed moment om bij te storten.`}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        if (onNavigateToGoals) {
+                          onNavigateToGoals();
+                        }
+                      }}
+                      className="px-4 py-2 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 transition-colors"
+                    >
+                      Bekijk doelen
+                    </button>
+                    <button
+                      onClick={() => {
+                        // TODO: Set reminder
+                        alert('Herinnering instellen komt binnenkort beschikbaar');
+                      }}
+                      className="px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+                    >
+                      Herinner me later
+                    </button>
+          </div>
+        </div>
+                </div>
+                </div>
+                        </div>
+        );
+      })()}
       
       {/* Subtle CTA */}
               <div className="mt-6 pt-4 border-t border-gray-200">
@@ -4914,7 +5025,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
           className="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-400 transition-colors flex items-center justify-center gap-2"
                 >
           <Plus className="w-4 h-4" />
-          Voeg een doel toe
+          Voeg een ritme toe
                 </button>
         <p className="text-xs text-gray-500 text-center mt-3">
           Of <button onClick={() => onBookAppointment && onBookAppointment()} className="text-orange-600 hover:text-orange-700 underline">plan een begeleid moment</button> om je volgende stap te bespreken
