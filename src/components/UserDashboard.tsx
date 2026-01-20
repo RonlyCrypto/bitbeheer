@@ -1736,6 +1736,70 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
     }
   };
 
+  // Calculate market position data (moved from IIFE in JSX)
+  const marketPositionData = (() => {
+    const currentPrice = currentBitcoinPrice;
+    const prevATH = previousATH;
+    const lastATH = latestATH;
+    
+    // Calculate percentages
+    const percentBelowPrevious = prevATH > 0 ? ((prevATH - currentPrice) / prevATH) * 100 : 0;
+    const percentBelowLatest = lastATH > 0 ? ((lastATH - currentPrice) / lastATH) * 100 : 0;
+    const percentAbovePrevious = currentPrice > prevATH ? ((currentPrice - prevATH) / prevATH) * 100 : 0;
+    
+    // Determine position and color
+    let position: 'below_previous' | 'between_aths' | 'above_previous' | 'above_latest' = 'between_aths';
+    let statusLabel = '';
+    let statusColor = '';
+    
+    if (currentPrice < prevATH) {
+      position = 'below_previous';
+      statusLabel = 'Historisch lage zone';
+      statusColor = 'bg-yellow-100 border-yellow-300 text-yellow-800';
+    } else if (currentPrice >= prevATH && currentPrice < lastATH) {
+      position = 'between_aths';
+      statusLabel = 'Herstelgebied';
+      statusColor = 'bg-orange-100 border-orange-300 text-orange-800';
+    } else if (currentPrice >= lastATH) {
+      position = 'above_latest';
+      statusLabel = 'Dicht bij euforie';
+      statusColor = 'bg-red-100 border-red-300 text-red-800';
+    }
+    
+    // Calculate position on bar (0-100%)
+    const minPrice = Math.min(prevATH, currentPrice, lastATH);
+    const maxPrice = Math.max(prevATH, currentPrice, lastATH);
+    const priceRange = maxPrice - minPrice;
+    const prevATHPosition = priceRange > 0 ? ((prevATH - minPrice) / priceRange) * 100 : 0;
+    const currentPosition = priceRange > 0 ? ((currentPrice - minPrice) / priceRange) * 100 : 50;
+    const lastATHPosition = priceRange > 0 ? ((lastATH - minPrice) / priceRange) * 100 : 100;
+    
+    // Calculate potential gains for hypothetical investment
+    const btcAtCurrentPrice = hypotheticalInvestment / currentPrice;
+    const valueAtPreviousATH = btcAtCurrentPrice * prevATH;
+    const valueAtLatestATH = btcAtCurrentPrice * lastATH;
+    const profitAtPrevious = ((valueAtPreviousATH - hypotheticalInvestment) / hypotheticalInvestment) * 100;
+    const profitAtLatest = ((valueAtLatestATH - hypotheticalInvestment) / hypotheticalInvestment) * 100;
+    
+    return {
+      currentPrice,
+      prevATH,
+      lastATH,
+      percentBelowPrevious,
+      percentBelowLatest,
+      percentAbovePrevious,
+      statusLabel,
+      statusColor,
+      prevATHPosition,
+      currentPosition,
+      lastATHPosition,
+      valueAtPreviousATH,
+      valueAtLatestATH,
+      profitAtPrevious,
+      profitAtLatest
+    };
+  })();
+
   return (
     <div className="space-y-6">
       {/* Appointment Status Block */}
@@ -2425,7 +2489,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 }
               }}
             />
-          </div>
+                  </div>
         )}
         
         {/* Fear and Greed Index + Hulp nodig - 1/3 breedte */}
@@ -2548,7 +2612,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             </div>
                   );
                 })()}
-              </div>
+          </div>
             ) : (
               <div className="text-center py-6 text-gray-500 text-xs">
                 Kon Fear & Greed Index niet laden
@@ -2556,8 +2620,10 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             )}
           </div>
         )}
+        </div>
+      </div>
         
-        {/* Marktpositie – Bitcoin in context */}
+      {/* Marktpositie – Bitcoin in context */}
         {(accountApproved || hasApprovedOneOnOne) && (
           <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
             <div className="flex items-center gap-2 mb-2">
@@ -2568,211 +2634,162 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               Begrijp waar de huidige prijs staat ten opzichte van eerdere pieken.
             </p>
 
-            {(() => {
-              const currentPrice = currentBitcoinPrice;
-              const prevATH = previousATH;
-              const lastATH = latestATH;
-              
-              // Calculate percentages
-              const percentBelowPrevious = prevATH > 0 ? ((prevATH - currentPrice) / prevATH) * 100 : 0;
-              const percentBelowLatest = lastATH > 0 ? ((lastATH - currentPrice) / lastATH) * 100 : 0;
-              const percentAbovePrevious = currentPrice > prevATH ? ((currentPrice - prevATH) / prevATH) * 100 : 0;
-              
-              // Determine position and color
-              let position: 'below_previous' | 'between_aths' | 'above_previous' | 'above_latest' = 'between_aths';
-              let statusLabel = '';
-              let statusColor = '';
-              
-              if (currentPrice < prevATH) {
-                position = 'below_previous';
-                statusLabel = 'Historisch lage zone';
-                statusColor = 'bg-yellow-100 border-yellow-300 text-yellow-800';
-              } else if (currentPrice >= prevATH && currentPrice < lastATH) {
-                position = 'between_aths';
-                statusLabel = 'Herstelgebied';
-                statusColor = 'bg-orange-100 border-orange-300 text-orange-800';
-              } else if (currentPrice >= lastATH) {
-                position = 'above_latest';
-                statusLabel = 'Dicht bij euforie';
-                statusColor = 'bg-red-100 border-red-300 text-red-800';
-              }
-              
-              // Calculate position on bar (0-100%)
-              const minPrice = Math.min(prevATH, currentPrice, lastATH);
-              const maxPrice = Math.max(prevATH, currentPrice, lastATH);
-              const priceRange = maxPrice - minPrice;
-              const prevATHPosition = priceRange > 0 ? ((prevATH - minPrice) / priceRange) * 100 : 0;
-              const currentPosition = priceRange > 0 ? ((currentPrice - minPrice) / priceRange) * 100 : 50;
-              const lastATHPosition = priceRange > 0 ? ((lastATH - minPrice) / priceRange) * 100 : 100;
-              
-              // Calculate potential gains for hypothetical investment
-              const btcAtCurrentPrice = hypotheticalInvestment / currentPrice;
-              const valueAtPreviousATH = btcAtCurrentPrice * prevATH;
-              const valueAtLatestATH = btcAtCurrentPrice * lastATH;
-              const profitAtPrevious = ((valueAtPreviousATH - hypotheticalInvestment) / hypotheticalInvestment) * 100;
-              const profitAtLatest = ((valueAtLatestATH - hypotheticalInvestment) / hypotheticalInvestment) * 100;
-              
-              return (
-                <div className="space-y-4">
-                  {/* Price comparison bar */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="text-left">
-                        <div className="font-semibold text-gray-700">Vorige ATH</div>
-                        <div className="text-gray-600">${prevATH.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
-                      </div>
-                      <div className="text-center flex-1 mx-4">
-                        <div className="text-lg font-bold text-gray-900 mb-1">
-                          ${currentPrice.toLocaleString('en-US', { maximumFractionDigits: 0 })}
-                        </div>
-                        <div className={`inline-block px-2 py-1 rounded text-[10px] font-semibold border ${statusColor}`}>
-                          {statusLabel}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-semibold text-gray-700">Laatste ATH</div>
-                        <div className="text-gray-600">${lastATH.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
-            </div>
-          </div>
+            <div className="space-y-4">
+              {/* Price comparison bar */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="text-left">
+                    <div className="font-semibold text-gray-700">Vorige ATH</div>
+                    <div className="text-gray-600">{'$'}{marketPositionData.prevATH.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+                  </div>
+                  <div className="text-center flex-1 mx-4">
+                    <div className="text-lg font-bold text-gray-900 mb-1">
+                      {'$'}{marketPositionData.currentPrice.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                    </div>
+                    <div className={`inline-block px-2 py-1 rounded text-[10px] font-semibold border ${marketPositionData.statusColor}`}>
+                      {marketPositionData.statusLabel}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold text-gray-700">Laatste ATH</div>
+                    <div className="text-gray-600">{'$'}{marketPositionData.lastATH.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+                  </div>
+                </div>
 
-                    {/* Visual bar */}
-                    <div className="relative h-8 bg-gradient-to-r from-yellow-200 via-orange-200 to-green-200 rounded-lg overflow-hidden">
-                      {/* Previous ATH marker */}
-                      <div 
-                        className="absolute top-0 bottom-0 w-0.5 bg-gray-600"
-                        style={{ left: `${Math.min(100, Math.max(0, prevATHPosition))}%` }}
-                      >
-                        <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 text-[10px] font-semibold text-gray-700 whitespace-nowrap">
-                          Vorige ATH
-                        </div>
-                      </div>
-                      
-                      {/* Current price marker */}
-                      <div 
-                        className="absolute top-0 bottom-0 w-1 bg-orange-600 rounded-full shadow-md"
-                        style={{ left: `${Math.min(100, Math.max(0, currentPosition))}%`, transform: 'translateX(-50%)' }}
-                      >
-                        <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 text-[10px] font-semibold text-orange-700 whitespace-nowrap">
-                          Huidige prijs
-                        </div>
-                      </div>
-                      
-                      {/* Latest ATH marker */}
-                      <div 
-                        className="absolute top-0 bottom-0 w-0.5 bg-gray-600"
-                        style={{ left: `${Math.min(100, Math.max(0, lastATHPosition))}%` }}
-                      >
-                        <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 text-[10px] font-semibold text-gray-700 whitespace-nowrap">
-                          Laatste ATH
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Percentages */}
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-1 text-gray-600">
-                        {currentPrice >= prevATH ? (
-                          <>
-                            <TrendingUp className="w-3 h-3 text-green-600" />
-                            <span>{percentAbovePrevious.toFixed(0)}% boven vorige ATH</span>
-                          </>
-                        ) : (
-                          <>
-                            <TrendingDown className="w-3 h-3" />
-                            <span>{percentBelowPrevious.toFixed(0)}% onder vorige ATH</span>
-                          </>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 text-gray-600">
-                        {currentPrice >= lastATH ? (
-                          <>
-                            <TrendingUp className="w-3 h-3 text-green-600" />
-                            <span>{((currentPrice - lastATH) / lastATH * 100).toFixed(0)}% boven laatste ATH</span>
-                          </>
-                        ) : (
-                          <>
-                            <TrendingDown className="w-3 h-3" />
-                            <span>{percentBelowLatest.toFixed(0)}% onder laatste ATH</span>
-                          </>
-                        )}
-                      </div>
+                {/* Visual bar */}
+                <div className="relative h-8 bg-gradient-to-r from-yellow-200 via-orange-200 to-green-200 rounded-lg overflow-hidden">
+                  {/* Previous ATH marker */}
+                  <div 
+                    className="absolute top-0 bottom-0 w-0.5 bg-gray-600"
+                    style={{ left: `${Math.min(100, Math.max(0, marketPositionData.prevATHPosition))}%` }}
+                  >
+                    <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 text-[10px] font-semibold text-gray-700 whitespace-nowrap">
+                      Vorige ATH
                     </div>
                   </div>
                   
-                  {/* Hypothetical investment calculator */}
-                  <div className="pt-3 border-t border-gray-200">
-                    <label className="block text-xs font-semibold text-gray-700 mb-2">
-                      Stel: ik koop nu voor
-                    </label>
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="text-sm text-gray-600">$</span>
-                      <input
-                        type="number"
-                        value={hypotheticalInvestment}
-                        onChange={(e) => setHypotheticalInvestment(parseFloat(e.target.value) || 0)}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        min="0"
-                        step="50"
-                      />
+                  {/* Current price marker */}
+                  <div 
+                    className="absolute top-0 bottom-0 w-1 bg-orange-600 rounded-full shadow-md"
+                    style={{ left: `${Math.min(100, Math.max(0, marketPositionData.currentPosition))}%`, transform: 'translateX(-50%)' }}
+                  >
+                    <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 text-[10px] font-semibold text-orange-700 whitespace-nowrap">
+                      Huidige prijs
                     </div>
-                    
-                    {/* Potential gains cards */}
-                    <div className="grid grid-cols-2 gap-3">
-                      {/* Previous ATH card */}
-                      <div className="bg-gradient-to-br from-orange-50 to-yellow-50 border border-orange-200 rounded-lg p-3">
-                        <div className="text-[10px] font-semibold text-gray-700 mb-2">
-                          Als Bitcoin teruggaat naar vorige ATH
-                        </div>
-                        <div className="flex items-center gap-1 mb-1">
-                          <span className="text-lg font-bold text-gray-900">
-                            ${valueAtPreviousATH.toLocaleString('en-US', { maximumFractionDigits: 0 })}
-                          </span>
-                          <Trophy className="w-4 h-4 text-yellow-600" />
-                        </div>
-                        <div className="text-[10px] text-green-700 font-semibold">
-                          Potentiële winst: +{profitAtPrevious.toFixed(0)}%
-                        </div>
-                      </div>
-                      
-                      {/* Latest ATH card */}
-                      <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3">
-                        <div className="text-[10px] font-semibold text-gray-700 mb-2">
-                          Als Bitcoin naar laatste ATH gaat
-                        </div>
-                        <div className="flex items-center gap-1 mb-1">
-                          <span className="text-lg font-bold text-gray-900">
-                            ${valueAtLatestATH.toLocaleString('en-US', { maximumFractionDigits: 0 })}
-                          </span>
-                          <TrendingUp className="w-4 h-4 text-green-600" />
-                        </div>
-                        <div className="text-[10px] text-green-700 font-semibold">
-                          Potentiële winst: +{profitAtLatest.toFixed(0)}%
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Disclaimer */}
-                    <p className="text-[10px] text-gray-500 italic mt-3 text-center">
-                      Dit is geen voorspelling, maar een rekenvoorbeeld.
-                    </p>
                   </div>
                   
-                  {/* Educational micro-copy */}
-                  <div className="pt-3 border-t border-gray-200">
-                    <div className="flex items-start gap-2">
-                      <HelpCircle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
-                      <p className="text-[10px] text-gray-600 leading-relaxed">
-                        Historisch gezien heeft Bitcoin meerdere cycli gekend. Dalen onder eerdere pieken zijn vaak accumulatiefases geweest voor lange termijn beleggers.
-                      </p>
+                  {/* Latest ATH marker */}
+                  <div 
+                    className="absolute top-0 bottom-0 w-0.5 bg-gray-600"
+                    style={{ left: `${Math.min(100, Math.max(0, marketPositionData.lastATHPosition))}%` }}
+                  >
+                    <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 text-[10px] font-semibold text-gray-700 whitespace-nowrap">
+                      Laatste ATH
                     </div>
                   </div>
                 </div>
-              );
-            })()}
+                
+                {/* Percentages */}
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1 text-gray-600">
+                    {marketPositionData.currentPrice >= marketPositionData.prevATH ? (
+                      <>
+                        <TrendingUp className="w-3 h-3 text-green-600" />
+                        <span>{marketPositionData.percentAbovePrevious.toFixed(0)}% boven vorige ATH</span>
+                      </>
+                    ) : (
+                      <>
+                        <TrendingDown className="w-3 h-3" />
+                        <span>{marketPositionData.percentBelowPrevious.toFixed(0)}% onder vorige ATH</span>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 text-gray-600">
+                    {marketPositionData.currentPrice >= marketPositionData.lastATH ? (
+                      <>
+                        <TrendingUp className="w-3 h-3 text-green-600" />
+                        <span>{((marketPositionData.currentPrice - marketPositionData.lastATH) / marketPositionData.lastATH * 100).toFixed(0)}% boven laatste ATH</span>
+                      </>
+                    ) : (
+                      <>
+                        <TrendingDown className="w-3 h-3" />
+                        <span>{marketPositionData.percentBelowLatest.toFixed(0)}% onder laatste ATH</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Hypothetical investment calculator */}
+              <div className="pt-3 border-t border-gray-200">
+                <label className="block text-xs font-semibold text-gray-700 mb-2">
+                  Stel: ik koop nu voor
+                </label>
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-sm text-gray-600">$</span>
+                  <input
+                    type="number"
+                    value={hypotheticalInvestment}
+                    onChange={(e) => setHypotheticalInvestment(parseFloat(e.target.value) || 0)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    min="0"
+                    step="50"
+                  />
+                </div>
+                
+                {/* Potential gains cards */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Previous ATH card */}
+                  <div className="bg-gradient-to-br from-orange-50 to-yellow-50 border border-orange-200 rounded-lg p-3">
+                    <div className="text-[10px] font-semibold text-gray-700 mb-2">
+                      Als Bitcoin teruggaat naar vorige ATH
+                    </div>
+                    <div className="flex items-center gap-1 mb-1">
+                      <span className="text-lg font-bold text-gray-900">
+                        {'$'}{marketPositionData.valueAtPreviousATH.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                      </span>
+                      <Trophy className="w-4 h-4 text-yellow-600" />
+                    </div>
+                    <div className="text-[10px] text-green-700 font-semibold">
+                      Potentiële winst: +{marketPositionData.profitAtPrevious.toFixed(0)}%
+                    </div>
+                  </div>
+                  
+                  {/* Latest ATH card */}
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3">
+                    <div className="text-[10px] font-semibold text-gray-700 mb-2">
+                      Als Bitcoin naar laatste ATH gaat
+                    </div>
+                    <div className="flex items-center gap-1 mb-1">
+                      <span className="text-lg font-bold text-gray-900">
+                        {'$'}{marketPositionData.valueAtLatestATH.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                      </span>
+                      <TrendingUp className="w-4 h-4 text-green-600" />
+                    </div>
+                    <div className="text-[10px] text-green-700 font-semibold">
+                      Potentiële winst: +{marketPositionData.profitAtLatest.toFixed(0)}%
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Disclaimer */}
+                <p className="text-[10px] text-gray-500 italic mt-3 text-center">
+                  Dit is geen voorspelling, maar een rekenvoorbeeld.
+                </p>
+              </div>
+              
+              {/* Educational micro-copy */}
+              <div className="pt-3 border-t border-gray-200">
+                <div className="flex items-start gap-2">
+                  <HelpCircle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-gray-600 leading-relaxed">
+                    Historisch gezien heeft Bitcoin meerdere cycli gekend. Dalen onder eerdere pieken zijn vaak accumulatiefases geweest voor lange termijn beleggers.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
         )}
-        </div>
 
       {/* Stappenblokken (Ledger & Coinbase) - Onderaan naast elkaar (1/2 1/2) */}
       <ReferralBlocksWithHelp onBookAppointment={onBookAppointment} />
@@ -3869,7 +3886,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
     
     for (let i = startMonthIndex; i < months.length; i++) {
       const month = months[i];
-      
+    
       // Skip future months for streak calculation
       if (month.isFutureMonth) break;
       
@@ -4644,9 +4661,9 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                     Bekijk alle doelen <ArrowRight className="w-3 h-3" />
                   </button>
                 )}
-              </div>
+          </div>
 
-              <div className="space-y-3 mb-4">
+          <div className="space-y-3 mb-4">
         {allGoals.map((goal, index) => {
           const isFirstGoal = index === 0;
           const progress = getGoalProgress(goal);
@@ -4854,9 +4871,9 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                 </div>
               );
             })}
-              </div>
+          </div>
             </div>
-            
+      
             {/* Hulp nodig? - Naast Mijn doelen */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
@@ -4865,44 +4882,44 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                   Twijfel of vragen? Wij helpen je persoonlijk.
                 </p>
                 <div className="space-y-2">
-                  <button
+            <button
                     onClick={() => onBookAppointment && onBookAppointment()}
                     className="w-full bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
-                  >
+            >
                     <Calendar className="w-4 h-4" />
                     Plan gesprek
-                  </button>
-                  <button
+            </button>
+                <button
                     onClick={() => {
                       if (typeof window !== 'undefined') {
                         window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'helpdesk' }));
                       }
                     }}
                     className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                  >
+                >
                     <MessageSquare className="w-4 h-4" />
                     Stel je vraag
-                  </button>
-                </div>
-              </div>
+                </button>
             </div>
-          </div>
+                    </div>
+                </div>
+            </div>
         </>
       )}
       
       {/* Subtle CTA */}
-      <div className="mt-6 pt-4 border-t border-gray-200">
-            <button
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <button
           onClick={() => setShowAddGoalPopup(true)}
           className="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-400 transition-colors flex items-center justify-center gap-2"
-            >
+                >
           <Plus className="w-4 h-4" />
           Voeg een doel toe
-            </button>
+                </button>
         <p className="text-xs text-gray-500 text-center mt-3">
           Of <button onClick={() => onBookAppointment && onBookAppointment()} className="text-orange-600 hover:text-orange-700 underline">plan een begeleid moment</button> om je volgende stap te bespreken
         </p>
-        </div>
+              </div>
 
       {/* Monthly Goal Detail Popup */}
       {monthlyGoalPopup}
