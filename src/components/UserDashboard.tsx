@@ -2848,7 +2848,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               <div className="flex items-start gap-3">
                 <div className="bg-yellow-100 p-2 rounded-lg">
                   <span className="text-xl">⚡</span>
-                </div>
+    </div>
                 <div className="flex-1">
                   <h3 className="text-base font-semibold text-gray-900 mb-2">Actie voor vandaag</h3>
                   <p className="text-sm text-gray-700 mb-1">
@@ -4807,11 +4807,12 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
           </div>
         </div>
       )}
+    </div>
 
       {/* Ritme & Discipline - Eigen blok */}
       {allGoals.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 mt-6">
-            <div className="mb-4">
+          <div className="mb-4">
               <div className="mb-4 flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
                   🔁 Ritme & Discipline
@@ -5109,18 +5110,18 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
       
       {/* Subtle CTA - Alleen tonen als er doelen zijn */}
       {allGoals.length > 0 && (
-              <div className="mt-6 pt-4 border-t border-gray-200">
-                <button
+      <div className="mt-6 pt-4 border-t border-gray-200">
+            <button
           onClick={() => setShowAddGoalPopup(true)}
           className="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-400 transition-colors flex items-center justify-center gap-2"
-                >
+            >
           <Plus className="w-4 h-4" />
           Voeg een ritme toe
-                </button>
+            </button>
         <p className="text-xs text-gray-500 text-center mt-3">
           Of <button onClick={() => onBookAppointment && onBookAppointment()} className="text-orange-600 hover:text-orange-700 underline">plan een begeleid moment</button> om je volgende stap te bespreken
         </p>
-              </div>
+        </div>
       )}
 
       {/* Monthly Goal Detail Popup */}
@@ -5147,19 +5148,19 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                   </h2>
                 </div>
               </div>
-              <button
+                <button
                 onClick={() => setShowInfoPopup(false)}
                 className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-              >
+                >
                 <X className="w-5 h-5" />
-              </button>
+                </button>
             </div>
 
             <div className="p-6">
               <p className="text-gray-700 dark:text-gray-300 mb-4">
                 {infoPopupMessage}
               </p>
-            </div>
+                    </div>
 
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
               <button
@@ -5170,7 +5171,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
               </button>
             </div>
           </div>
-        </div>
+                  </div>
       )}
 
       {/* Strategy Edit Popup */}
@@ -5187,24 +5188,24 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
               <div className="flex items-center gap-3">
                 <div className="bg-orange-100 dark:bg-orange-900 p-2 rounded-lg">
                   <Edit className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-                </div>
+            </div>
                 <div>
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                     Mijn Bitcoin Strategie bewerken
                   </h2>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Pas je strategie aan</p>
-                </div>
-              </div>
+            </div>
+          </div>
               <button
                 onClick={() => setShowStrategyEditPopup(false)}
                 className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
-            </div>
+        </div>
 
             <div className="p-6 space-y-4">
-              <div>
+            <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Strategie
                 </label>
@@ -5218,7 +5219,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                   <option value="HODL">HODL</option>
                   <option value="Mix strategie">Mix strategie</option>
                 </select>
-              </div>
+      </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -5234,9 +5235,9 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                   <option value="5+ jaar">5+ jaar</option>
                   <option value="10+ jaar">10+ jaar</option>
                 </select>
-              </div>
+            </div>
 
-              <div>
+                  <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Verkoopplan
                 </label>
@@ -5250,7 +5251,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                   <option value="Bij specifiek percentage winst">Bij specifiek percentage winst</option>
                   <option value="Geen verkoopplan (HODL)">Geen verkoopplan (HODL)</option>
                 </select>
-              </div>
+        </div>
 
               {/* Extra veld voor verkoopplan waarde */}
               {(strategy.verkoopplan === 'Bij specifieke prijs' || strategy.verkoopplan === 'Bij specifiek percentage winst') && (
@@ -5268,7 +5269,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                     step={strategy.verkoopplan === 'Bij specifieke prijs' ? '1000' : '1'}
                   />
                 </div>
-              )}
+                          )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -5284,11 +5285,11 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                   <option value="Gematigd">Gematigd</option>
                   <option value="Agressief">Agressief</option>
                 </select>
-              </div>
-            </div>
+        </div>
+      </div>
 
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-              <button
+                <button
                 onClick={() => setShowStrategyEditPopup(false)}
                 className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
               >
@@ -5303,10 +5304,10 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                 className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
               >
                 Opslaan
-              </button>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
       )}
 
       {/* Edit Goal Popup */}
