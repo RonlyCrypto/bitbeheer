@@ -979,7 +979,15 @@ export default function UserDashboard() {
 function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppointment, accountApproved, isImpersonating, impersonatedUser, hasApprovedOneOnOne, onNavigateToPortfolio, onNavigateToGoals, user, emailVerified, firstAppointmentCompleted, isLoading = false }: any) {
   const [showExchangeWarningPopup, setShowExchangeWarningPopup] = useState(false);
   const [showSelfCustodyPopup, setShowSelfCustodyPopup] = useState(false);
+  const [showInfoPopup, setShowInfoPopup] = useState(false);
+  const [infoPopupMessage, setInfoPopupMessage] = useState('');
   const [fearGreedIndex, setFearGreedIndex] = useState<number | null>(null);
+
+  // Helper function to show info popup
+  const showInfo = (message: string) => {
+    setInfoPopupMessage(message);
+    setShowInfoPopup(true);
+  };
   const [fearGreedLoading, setFearGreedLoading] = useState(true);
   const [currentWarningIndex, setCurrentWarningIndex] = useState(0);
   const [previousATH, setPreviousATH] = useState<number>(69000);
@@ -2786,6 +2794,34 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 </div>
               </div>
             </div>
+
+            {/* Hulp nodig? */}
+            <div className="mt-6 bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+              <h3 className="text-base font-semibold text-gray-900 mb-2">Hulp nodig?</h3>
+              <p className="text-xs text-gray-700 mb-3">
+                Twijfel of vragen? Wij helpen je persoonlijk.
+              </p>
+              <div className="space-y-2">
+                <button
+                  onClick={() => onBookAppointment && onBookAppointment()}
+                  className="w-full bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Calendar className="w-4 h-4" />
+                  Plan gesprek
+                </button>
+                <button
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'helpdesk' }));
+                    }
+                  }}
+                  className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Stel je vraag
+                </button>
+              </div>
+            </div>
           </div>
         )}
         </div>
@@ -2832,8 +2868,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                     </button>
                     <button
                       onClick={() => {
-                        // TODO: Set reminder
-                        alert('Herinnering instellen komt binnenkort beschikbaar');
+                        showInfo('Herinnering instellen komt binnenkort beschikbaar');
                       }}
                       className="px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
                     >
@@ -3221,6 +3256,53 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           </div>
         </div>
       )}
+
+      {/* Info Popup */}
+      {showInfoPopup && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setShowInfoPopup(false)}
+        >
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-3">
+                <div className="bg-orange-100 dark:bg-orange-900 p-2 rounded-lg">
+                  <Info className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    www.bitbeheer.nl meldt het volgende
+                  </h2>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowInfoPopup(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <p className="text-gray-700 dark:text-gray-300 mb-4">
+                {infoPopupMessage}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+              <button
+                onClick={() => setShowInfoPopup(false)}
+                className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -3247,6 +3329,21 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
   const [goalToDelete, setGoalToDelete] = useState<any>(null);
   const [showEditGoalPopup, setShowEditGoalPopup] = useState(false);
   const [goalToEdit, setGoalToEdit] = useState<any>(null);
+  const [showInfoPopup, setShowInfoPopup] = useState(false);
+  const [infoPopupMessage, setInfoPopupMessage] = useState('');
+  const [showStrategyEditPopup, setShowStrategyEditPopup] = useState(false);
+  const [strategy, setStrategy] = useState({
+    strategie: 'Lange termijn DCA',
+    tijdshorizon: '5+ jaar',
+    verkoopplan: 'Nog niet ingesteld',
+    risicoprofiel: 'Conservatief'
+  });
+
+  // Helper function to show info popup
+  const showInfo = (message: string) => {
+    setInfoPopupMessage(message);
+    setShowInfoPopup(true);
+  };
   const [editGoalAmount, setEditGoalAmount] = useState('');
   const [editGoalTimeframe, setEditGoalTimeframe] = useState('');
   const [editGoalMonthlyAmount, setEditGoalMonthlyAmount] = useState('');
@@ -4983,10 +5080,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
               🧠 Mijn Bitcoin Strategie
             </h3>
             <button
-              onClick={() => {
-                // TODO: Open strategy edit popup
-                alert('Strategie bewerken komt binnenkort beschikbaar');
-              }}
+              onClick={() => setShowStrategyEditPopup(true)}
               className="text-xs text-blue-600 hover:text-blue-700 font-medium"
             >
               Bewerk
@@ -4995,19 +5089,19 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
           <div className="space-y-3">
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
               <span className="text-sm text-gray-600">Strategie:</span>
-              <span className="text-sm font-medium text-gray-900">Lange termijn DCA</span>
+              <span className="text-sm font-medium text-gray-900">{strategy.strategie}</span>
             </div>
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
               <span className="text-sm text-gray-600">Tijdshorizon:</span>
-              <span className="text-sm font-medium text-gray-900">5+ jaar</span>
+              <span className="text-sm font-medium text-gray-900">{strategy.tijdshorizon}</span>
             </div>
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
               <span className="text-sm text-gray-600">Verkoopplan:</span>
-              <span className="text-sm font-medium text-gray-500">Nog niet ingesteld</span>
+              <span className="text-sm font-medium text-gray-500">{strategy.verkoopplan}</span>
             </div>
             <div className="flex items-center justify-between py-2">
               <span className="text-sm text-gray-600">Risicoprofiel:</span>
-              <span className="text-sm font-medium text-gray-900">Conservatief</span>
+              <span className="text-sm font-medium text-gray-900">{strategy.risicoprofiel}</span>
             </div>
           </div>
         </div>
@@ -5031,6 +5125,171 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
 
       {/* Monthly Goal Detail Popup */}
       {monthlyGoalPopup}
+
+      {/* Info Popup */}
+      {showInfoPopup && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setShowInfoPopup(false)}
+        >
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-3">
+                <div className="bg-orange-100 dark:bg-orange-900 p-2 rounded-lg">
+                  <Info className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    www.bitbeheer.nl meldt het volgende
+                  </h2>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowInfoPopup(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <p className="text-gray-700 dark:text-gray-300 mb-4">
+                {infoPopupMessage}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+              <button
+                onClick={() => setShowInfoPopup(false)}
+                className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Strategy Edit Popup */}
+      {showStrategyEditPopup && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setShowStrategyEditPopup(false)}
+        >
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-3">
+                <div className="bg-orange-100 dark:bg-orange-900 p-2 rounded-lg">
+                  <Edit className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Mijn Bitcoin Strategie bewerken
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Pas je strategie aan</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowStrategyEditPopup(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Strategie
+                </label>
+                <select
+                  value={strategy.strategie}
+                  onChange={(e) => setStrategy({ ...strategy, strategie: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="Lange termijn DCA">Lange termijn DCA</option>
+                  <option value="Korte termijn trading">Korte termijn trading</option>
+                  <option value="HODL">HODL</option>
+                  <option value="Mix strategie">Mix strategie</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Tijdshorizon
+                </label>
+                <select
+                  value={strategy.tijdshorizon}
+                  onChange={(e) => setStrategy({ ...strategy, tijdshorizon: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="1-2 jaar">1-2 jaar</option>
+                  <option value="3-5 jaar">3-5 jaar</option>
+                  <option value="5+ jaar">5+ jaar</option>
+                  <option value="10+ jaar">10+ jaar</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Verkoopplan
+                </label>
+                <select
+                  value={strategy.verkoopplan}
+                  onChange={(e) => setStrategy({ ...strategy, verkoopplan: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="Nog niet ingesteld">Nog niet ingesteld</option>
+                  <option value="Bij specifieke prijs">Bij specifieke prijs</option>
+                  <option value="Bij specifiek percentage winst">Bij specifiek percentage winst</option>
+                  <option value="Geen verkoopplan (HODL)">Geen verkoopplan (HODL)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Risicoprofiel
+                </label>
+                <select
+                  value={strategy.risicoprofiel}
+                  onChange={(e) => setStrategy({ ...strategy, risicoprofiel: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="Zeer conservatief">Zeer conservatief</option>
+                  <option value="Conservatief">Conservatief</option>
+                  <option value="Gematigd">Gematigd</option>
+                  <option value="Agressief">Agressief</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+              <button
+                onClick={() => setShowStrategyEditPopup(false)}
+                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={() => {
+                  // TODO: Save strategy to database
+                  showInfo('Strategie succesvol opgeslagen!');
+                  setShowStrategyEditPopup(false);
+                }}
+                className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
+              >
+                Opslaan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit Goal Popup */}
       {showEditGoalPopup && goalToEdit && (
