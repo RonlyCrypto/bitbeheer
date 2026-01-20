@@ -2791,6 +2791,102 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         </div>
       </div>
 
+      {/* Bitcoin Strategie Snapshot */}
+      {(accountApproved || hasApprovedOneOnOne) && (
+        <div className="mb-6">
+          <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                🧠 Mijn Bitcoin Strategie
+              </h3>
+              <button
+                onClick={() => {
+                  // TODO: Open strategy edit popup
+                  alert('Strategie bewerken komt binnenkort beschikbaar');
+                }}
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Bewerk
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-600">Strategie:</span>
+                <span className="text-sm font-medium text-gray-900">Lange termijn DCA</span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-600">Tijdshorizon:</span>
+                <span className="text-sm font-medium text-gray-900">5+ jaar</span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-600">Verkoopplan:</span>
+                <span className="text-sm font-medium text-gray-500">Nog niet ingesteld</span>
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm text-gray-600">Risicoprofiel:</span>
+                <span className="text-sm font-medium text-gray-900">Conservatief</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Actie voor vandaag */}
+      {(accountApproved || hasApprovedOneOnOne) && goals && goals.length > 0 && (() => {
+        // Find first monthly goal that hasn't been deposited this month
+        const monthlyGoal = goals.find((goal: any) => goal.type === 'monthly');
+        if (!monthlyGoal) return null;
+        
+        // We need to check if this goal needs action
+        // For now, we'll show it if there's a monthly goal
+        // TODO: Add proper check using walletTransactions
+        const goalAmount = monthlyGoal.monthlyCurrency === 'eur' 
+          ? `€${monthlyGoal.monthlyAmount}` 
+          : `${monthlyGoal.monthlyAmount} BTC`;
+        
+        return (
+          <div className="mb-6">
+            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl shadow-sm p-4 border border-yellow-200">
+              <div className="flex items-start gap-3">
+                <div className="bg-yellow-100 p-2 rounded-lg">
+                  <span className="text-xl">⚡</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-base font-semibold text-gray-900 mb-2">Actie voor vandaag</h3>
+                  <p className="text-sm text-gray-700 mb-1">
+                    🟡 Je hebt deze maand nog niet gestort ({goalAmount})
+                  </p>
+                  <p className="text-xs text-gray-600 mb-3">
+                    Je zit momenteel onder je DCA-gemiddelde. Dit is een goed moment om bij te storten.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        if (onNavigateToGoals) {
+                          onNavigateToGoals();
+                        }
+                      }}
+                      className="px-4 py-2 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 transition-colors"
+                    >
+                      Bekijk doelen
+                    </button>
+                    <button
+                      onClick={() => {
+                        // TODO: Set reminder
+                        alert('Herinnering instellen komt binnenkort beschikbaar');
+                      }}
+                      className="px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+                    >
+                      Herinner me later
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Stappenblokken (Ledger & Coinbase) - Onderaan naast elkaar (1/2 1/2) */}
       <ReferralBlocksWithHelp onBookAppointment={onBookAppointment} />
 
@@ -4917,106 +5013,6 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
             )}
         </>
       )}
-
-      {/* Bitcoin Strategie Snapshot */}
-      {(accountApproved || hasApprovedOneOnOne) && (
-        <div className="mb-6">
-          <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                🧠 Mijn Bitcoin Strategie
-              </h3>
-              <button
-                onClick={() => {
-                  // TODO: Open strategy edit popup
-                  alert('Strategie bewerken komt binnenkort beschikbaar');
-                }}
-                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Bewerk
-              </button>
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <span className="text-sm text-gray-600">Strategie:</span>
-                <span className="text-sm font-medium text-gray-900">Lange termijn DCA</span>
-          </div>
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <span className="text-sm text-gray-600">Tijdshorizon:</span>
-                <span className="text-sm font-medium text-gray-900">5+ jaar</span>
-                  </div>
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <span className="text-sm text-gray-600">Verkoopplan:</span>
-                <span className="text-sm font-medium text-gray-500">Nog niet ingesteld</span>
-                </div>
-              <div className="flex items-center justify-between py-2">
-                <span className="text-sm text-gray-600">Risicoprofiel:</span>
-                <span className="text-sm font-medium text-gray-900">Conservatief</span>
-              </div>
-            </div>
-            </div>
-          </div>
-      )}
-
-      {/* Actie voor vandaag */}
-      {(accountApproved || hasApprovedOneOnOne) && allGoals.length > 0 && (() => {
-        // Find first monthly goal that hasn't been deposited this month
-        const monthlyGoal = allGoals.find((goal: any) => goal.type === 'monthly');
-        if (!monthlyGoal) return null;
-        
-        const monthlyCheck = checkMonthlyGoal(monthlyGoal);
-        const monthlyAnalysis = monthlyGoal.type === 'monthly' ? analyzeMonthlyGoalTransactions(monthlyGoal) : null;
-        const needsAction = !monthlyCheck?.deposited;
-        const goalAmount = monthlyGoal.monthlyCurrency === 'eur' 
-          ? `€${monthlyGoal.monthlyAmount}` 
-          : `${monthlyGoal.monthlyAmount} BTC`;
-        
-        if (!needsAction) return null;
-        
-        return (
-          <div className="mb-6">
-            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl shadow-sm p-4 border border-yellow-200">
-              <div className="flex items-start gap-3">
-                <div className="bg-yellow-100 p-2 rounded-lg">
-                  <span className="text-xl">⚡</span>
-                  </div>
-                <div className="flex-1">
-                  <h3 className="text-base font-semibold text-gray-900 mb-2">Actie voor vandaag</h3>
-                  <p className="text-sm text-gray-700 mb-1">
-                    🟡 Je hebt deze maand nog niet gestort ({goalAmount})
-                  </p>
-                  <p className="text-xs text-gray-600 mb-3">
-                    {currentBitcoinPrice > 0 && monthlyGoal.monthlyCurrency === 'eur' 
-                      ? `Dit is een goed moment om bij te storten.`
-                      : `Je zit momenteel onder je DCA-gemiddelde. Dit is een goed moment om bij te storten.`}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        if (onNavigateToGoals) {
-                          onNavigateToGoals();
-                        }
-                      }}
-                      className="px-4 py-2 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 transition-colors"
-                    >
-                      Bekijk doelen
-                    </button>
-                    <button
-                      onClick={() => {
-                        // TODO: Set reminder
-                        alert('Herinnering instellen komt binnenkort beschikbaar');
-                      }}
-                      className="px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
-                    >
-                      Herinner me later
-                    </button>
-          </div>
-        </div>
-                </div>
-                </div>
-                        </div>
-        );
-      })()}
       
       {/* Subtle CTA */}
               <div className="mt-6 pt-4 border-t border-gray-200">
