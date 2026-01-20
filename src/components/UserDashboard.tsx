@@ -2794,33 +2794,35 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 </div>
               </div>
             </div>
+          </div>
+        )}
 
-            {/* Hulp nodig? */}
-            <div className="mt-6 bg-white rounded-xl shadow-sm p-4 border border-gray-200">
-              <h3 className="text-base font-semibold text-gray-900 mb-2">Hulp nodig?</h3>
-              <p className="text-xs text-gray-700 mb-3">
-                Twijfel of vragen? Wij helpen je persoonlijk.
-              </p>
-              <div className="space-y-2">
-                <button
-                  onClick={() => onBookAppointment && onBookAppointment()}
-                  className="w-full bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
-                >
-                  <Calendar className="w-4 h-4" />
-                  Plan gesprek
-                </button>
-                <button
-                  onClick={() => {
-                    if (typeof window !== 'undefined') {
-                      window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'helpdesk' }));
-                    }
-                  }}
-                  className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                >
-                  <MessageSquare className="w-4 h-4" />
-                  Stel je vraag
-                </button>
-              </div>
+        {/* Hulp nodig? - Eigen blok */}
+        {(accountApproved || hasApprovedOneOnOne) && (
+          <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200 mt-6">
+            <h3 className="text-base font-semibold text-gray-900 mb-2">Hulp nodig?</h3>
+            <p className="text-xs text-gray-700 mb-3">
+              Twijfel of vragen? Wij helpen je persoonlijk.
+            </p>
+            <div className="space-y-2">
+              <button
+                onClick={() => onBookAppointment && onBookAppointment()}
+                className="w-full bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <Calendar className="w-4 h-4" />
+                Plan gesprek
+              </button>
+              <button
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'helpdesk' }));
+                  }
+                }}
+                className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <MessageSquare className="w-4 h-4" />
+                Stel je vraag
+              </button>
             </div>
           </div>
         )}
@@ -3336,7 +3338,8 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
     strategie: 'Lange termijn DCA',
     tijdshorizon: '5+ jaar',
     verkoopplan: 'Nog niet ingesteld',
-    risicoprofiel: 'Conservatief'
+    risicoprofiel: 'Conservatief',
+    verkoopplanWaarde: '' // Voor "Bij specifieke prijs" of "Bij specifiek percentage winst"
   });
 
   // Helper function to show info popup
@@ -4805,11 +4808,9 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
         </div>
       )}
 
-      {/* Ritme & Discipline en Mijn Bitcoin Strategie - Naast elkaar onder Jouw Bitcoin Mijlpalen */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-        {/* Ritme & Discipline Section - Only show if there are custom goals */}
-        {allGoals.length > 0 && (
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+      {/* Ritme & Discipline - Eigen blok */}
+      {allGoals.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 mt-6">
             <div className="mb-4">
               <div className="mb-4 flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
@@ -5073,8 +5074,8 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
           </div>
         )}
 
-        {/* Mijn Bitcoin Strategie */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+      {/* Mijn Bitcoin Strategie - Eigen blok */}
+      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 mt-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
               🧠 Mijn Bitcoin Strategie
@@ -5105,7 +5106,6 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
             </div>
           </div>
         </div>
-      </div>
       
       {/* Subtle CTA - Alleen tonen als er doelen zijn */}
       {allGoals.length > 0 && (
@@ -5242,7 +5242,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                 </label>
                 <select
                   value={strategy.verkoopplan}
-                  onChange={(e) => setStrategy({ ...strategy, verkoopplan: e.target.value })}
+                  onChange={(e) => setStrategy({ ...strategy, verkoopplan: e.target.value, verkoopplanWaarde: '' })}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white"
                 >
                   <option value="Nog niet ingesteld">Nog niet ingesteld</option>
@@ -5251,6 +5251,24 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                   <option value="Geen verkoopplan (HODL)">Geen verkoopplan (HODL)</option>
                 </select>
               </div>
+
+              {/* Extra veld voor verkoopplan waarde */}
+              {(strategy.verkoopplan === 'Bij specifieke prijs' || strategy.verkoopplan === 'Bij specifiek percentage winst') && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {strategy.verkoopplan === 'Bij specifieke prijs' ? 'Prijs (USD)' : 'Percentage winst (%)'}
+                  </label>
+                  <input
+                    type="number"
+                    value={strategy.verkoopplanWaarde}
+                    onChange={(e) => setStrategy({ ...strategy, verkoopplanWaarde: e.target.value })}
+                    placeholder={strategy.verkoopplan === 'Bij specifieke prijs' ? 'Bijv. 100000' : 'Bijv. 50'}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white"
+                    min="0"
+                    step={strategy.verkoopplan === 'Bij specifieke prijs' ? '1000' : '1'}
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
