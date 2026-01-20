@@ -1087,9 +1087,8 @@ export default function PortfolioPage() {
 
                 return (
                   <div key={wallet.id} className="bg-white rounded-xl p-4 shadow-lg">
-
-                    {/* Compact header with all info in one row */}
-                    <div className="flex items-center justify-between gap-4 mb-3">
+                    {/* Wallet Info Header */}
+                    <div className="flex items-center justify-between gap-4 mb-4">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <div className="bg-orange-100 p-1.5 rounded-lg flex-shrink-0">
                           <Wallet className="w-4 h-4 text-orange-600" />
@@ -1135,9 +1134,43 @@ export default function PortfolioPage() {
                             </span>
                       </div>
                     </div>
+                      {/* Settings dropdown */}
+                      <div className="relative flex-shrink-0">
+                        <button
+                          onClick={() => setOpenMenuId(openMenuId === wallet.id ? null : wallet.id)}
+                          className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                          title="Instellingen"
+                        >
+                          <Settings className="w-4 h-4" />
+                        </button>
+                        {openMenuId === wallet.id && (
+                          <>
+                            <div 
+                              className="fixed inset-0 z-10" 
+                              onClick={() => setOpenMenuId(null)}
+                            ></div>
+                            <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+                              <button
+                                onClick={() => handleEditClick(wallet)}
+                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-t-lg transition-colors"
+                              >
+                                <Edit className="w-4 h-4" />
+                                Bewerken
+                              </button>
+                              <button
+                                onClick={() => handleDeleteClick(wallet)}
+                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-lg transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                Verwijderen
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Chart Integratie Block - binnen wallet kaart */}
+                    {/* Chart Integratie Block - onder wallet info */}
                     {(() => {
                       const walletChartIntegrationKey = `chartIntegration_${wallet.id}`;
                       // Initialize from localStorage if not in state
@@ -1170,7 +1203,7 @@ export default function PortfolioPage() {
                       };
 
                       return isChartIntegrationVisible ? (
-                        <div className="mt-4 mb-4 bg-orange-50 border border-orange-200 rounded-lg p-4">
+                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                           <div className="flex items-start gap-3">
                             <div className="bg-orange-100 p-1.5 rounded-lg flex-shrink-0">
                               <AlertCircle className="w-4 h-4 text-orange-600" />
@@ -1210,7 +1243,7 @@ export default function PortfolioPage() {
                           </div>
                         </div>
                       ) : (
-                        <div className="mt-4 mb-4">
+                        <div>
                           <button
                             onClick={() => handleWalletToggle(true)}
                             className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-1.5"
@@ -1221,42 +1254,6 @@ export default function PortfolioPage() {
                         </div>
                       );
                     })()}
-
-                      {/* Settings dropdown */}
-                      <div className="relative flex-shrink-0">
-                        <button
-                          onClick={() => setOpenMenuId(openMenuId === wallet.id ? null : wallet.id)}
-                          className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                          title="Instellingen"
-                        >
-                          <Settings className="w-4 h-4" />
-                        </button>
-                        {openMenuId === wallet.id && (
-                          <>
-                            <div 
-                              className="fixed inset-0 z-10" 
-                              onClick={() => setOpenMenuId(null)}
-                            ></div>
-                            <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
-                              <button
-                                onClick={() => handleEditClick(wallet)}
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-t-lg transition-colors"
-                              >
-                                <Edit className="w-4 h-4" />
-                                Bewerken
-                              </button>
-                              <button
-                                onClick={() => handleDeleteClick(wallet)}
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-lg transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                                Verwijderen
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
                   </div>
                 );
               })}

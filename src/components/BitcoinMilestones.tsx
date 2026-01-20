@@ -125,17 +125,17 @@ export default function BitcoinMilestones({ wallets = [], onRefresh }: BitcoinMi
   const btcToNextMilestone = nextMilestone ? (nextMilestone - currentBTC).toFixed(4) : null;
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[120px]">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       {/* Collapsible Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+        className="w-full px-6 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
       >
         <div className="flex items-center gap-4 flex-1">
           <div>
             <h3 className="text-lg font-bold text-gray-900 text-left">🎯 Bitcoin Milestones</h3>
             {!isExpanded && (
-              <div className="text-sm text-gray-600 mt-1 text-left">
+              <div className="text-sm text-gray-600 mt-0.5 text-left">
                 <p>
                   <span className="font-bold text-orange-600">{currentBTC.toFixed(4)} BTC</span>
                   {' '}
