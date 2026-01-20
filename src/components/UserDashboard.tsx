@@ -2428,43 +2428,11 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           </div>
         )}
         
-        {/* Hulp nodig? - Naast Mijn doelen */}
-        {(accountApproved || hasApprovedOneOnOne) && (
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
-              <h3 className="text-base font-semibold text-gray-900 mb-2">Hulp nodig?</h3>
-              <p className="text-xs text-gray-700 mb-3">
-                Twijfel of vragen? Wij helpen je persoonlijk.
-              </p>
-              <div className="space-y-2">
-                <button
-                  onClick={() => onBookAppointment && onBookAppointment()}
-                  className="w-full bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
-                >
-                  <Calendar className="w-4 h-4" />
-                  Plan gesprek
-                </button>
-                <button
-                  onClick={() => {
-                    if (typeof window !== 'undefined') {
-                      window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'helpdesk' }));
-                    }
-                  }}
-                  className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                >
-                  <MessageSquare className="w-4 h-4" />
-                  Stel je vraag
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Fear and Greed Index - 1/3 breedte (alleen als doelen niet zichtbaar zijn) */}
-        {!(accountApproved || hasApprovedOneOnOne) && (
-          <div className="lg:col-span-1 space-y-6">
+        {/* Fear and Greed Index + Hulp nodig - 1/3 breedte */}
+        <div className="space-y-6">
           {/* Fear and Greed Index */}
-          <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+          {(accountApproved || hasApprovedOneOnOne) && (
+            <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-base font-semibold text-gray-900">📊 Fear & Greed Index</h3>
               <button
@@ -2587,8 +2555,10 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               </div>
             )}
           </div>
-                
-          {/* Marktpositie – Bitcoin in context */}
+        )}
+        
+        {/* Marktpositie – Bitcoin in context */}
+        {(accountApproved || hasApprovedOneOnOne) && (
           <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
             <div className="flex items-center gap-2 mb-2">
               <BarChart3 className="w-4 h-4 text-orange-600" />
@@ -2800,141 +2770,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               );
             })()}
           </div>
-          </div>
-        )}
-      </div>
-      
-      {/* Fear and Greed Index - Aparte rij onder Mijn doelen en Hulp nodig */}
-      {(accountApproved || hasApprovedOneOnOne) && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-          <div className="lg:col-span-1">
-            {/* Fear and Greed Index */}
-            <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-base font-semibold text-gray-900">📊 Fear & Greed Index</h3>
-                <button
-                  onClick={() => setShowFearGreedPopup(true)}
-                  className="text-xs text-blue-600 hover:text-blue-700"
-                >
-                  Meer info &gt;
-                </button>
-              </div>
-
-              {fearGreedLoading ? (
-                <div className="flex items-center justify-center py-6">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-600"></div>
-                </div>
-              ) : fearGreedIndex !== null ? (
-                <div>
-                  {(() => {
-                    const getFearGreedLabel = (index: number) => {
-                      if (index < 25) return { label: 'Extreme Fear', color: 'red' };
-                      if (index < 45) return { label: 'Fear', color: 'orange' };
-                      if (index < 55) return { label: 'Neutral', color: 'gray' };
-                      if (index < 75) return { label: 'Greed', color: 'green' };
-                      return { label: 'Extreme Greed', color: 'emerald' };
-                    };
-                    const fg = getFearGreedLabel(fearGreedIndex);
-                    
-                    // Calculate angle for needle (0-180 degrees, where 0 = extreme fear, 180 = extreme greed)
-                    const angle = (fearGreedIndex / 100) * 180;
-                    
-                    return (
-                      <div>
-                        {/* Semi-circular gauge */}
-                        <div className="relative w-full h-24 mb-2">
-                          <svg className="w-full h-full" viewBox="0 0 200 120" style={{ overflow: 'visible' }}>
-                            <defs>
-                              <linearGradient id="fearGreedGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stopColor="#ef4444" />
-                                <stop offset="25%" stopColor="#f97316" />
-                                <stop offset="50%" stopColor="#eab308" />
-                                <stop offset="75%" stopColor="#84cc16" />
-                                <stop offset="100%" stopColor="#22c55e" />
-                              </linearGradient>
-                            </defs>
-                            {/* Background arc */}
-                            <path
-                              d="M 20 100 A 80 80 0 0 1 180 100"
-                              fill="none"
-                              stroke="#e5e7eb"
-                              strokeWidth="8"
-                              strokeLinecap="round"
-                            />
-                            {/* Colored arc */}
-                            <path
-                              d="M 20 100 A 80 80 0 0 1 180 100"
-                              fill="none"
-                              stroke="url(#fearGreedGradient)"
-                              strokeWidth="8"
-                              strokeLinecap="round"
-                              className="transition-all duration-1000"
-                            />
-                            {/* Needle */}
-                            <g transform={`translate(100, 100) rotate(${angle - 90})`}>
-                              <line
-                                x1="0"
-                                y1="0"
-                                x2="0"
-                                y2="-70"
-                                stroke="#6b7280"
-                                strokeWidth="3"
-                                strokeLinecap="round"
-                              />
-                              <circle
-                                cx="0"
-                                cy="0"
-                                r="6"
-                                fill="#6b7280"
-                              />
-                            </g>
-                            {/* Value indicator at needle tip */}
-                            <g transform={`translate(100, 100) rotate(${angle - 90}) translate(0, -70)`}>
-                              <ellipse
-                                cx="0"
-                                cy="0"
-                                rx="18"
-                                ry="12"
-                                fill={fg.color === 'red' ? '#ef4444' : fg.color === 'orange' ? '#f97316' : fg.color === 'green' ? '#22c55e' : fg.color === 'emerald' ? '#10b981' : '#6b7280'}
-                              />
-                              <text
-                                x="0"
-                                y="4"
-                                textAnchor="middle"
-                                fill="white"
-                                fontSize="12"
-                                fontWeight="bold"
-                              >
-                                {fearGreedIndex}
-                              </text>
-                            </g>
-                          </svg>
-                        </div>
-                        {/* Label */}
-                        <div className="text-center">
-                          <p className="text-xs text-gray-600">
-                            Nu: <span className={`font-semibold ${
-                              fg.color === 'red' ? 'text-red-600' : 
-                              fg.color === 'orange' ? 'text-orange-600' : 
-                              fg.color === 'green' ? 'text-green-600' : 
-                              fg.color === 'emerald' ? 'text-emerald-600' : 
-                              'text-gray-600'
-                            }`}>{fg.label}</span>
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              ) : (
-                <div className="text-center py-6 text-gray-500 text-xs">
-                  Kon Fear & Greed Index niet laden
-                </div>
-              )}
-            </div>
-          </div>
         </div>
-      )}
+        )}
+        </div>
 
       {/* Stappenblokken (Ledger & Coinbase) - Onderaan naast elkaar (1/2 1/2) */}
       <ReferralBlocksWithHelp onBookAppointment={onBookAppointment} />
@@ -4794,19 +4632,21 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
       {/* Goals Section - Only show if there are custom goals */}
       {allGoals.length > 0 && (
         <>
-          <div className="mb-4 flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">Mijn doelen</span>
-              {onNavigateToGoals && (
-                <button
-                  onClick={onNavigateToGoals}
-                  className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
-                >
-                  Bekijk alle doelen <ArrowRight className="w-3 h-3" />
-                </button>
-              )}
-          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-4">
+            <div className="lg:col-span-2">
+              <div className="mb-4 flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700">Mijn doelen</span>
+                {onNavigateToGoals && (
+                  <button
+                    onClick={onNavigateToGoals}
+                    className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                  >
+                    Bekijk alle doelen <ArrowRight className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
 
-          <div className="space-y-3 mb-4">
+              <div className="space-y-3 mb-4">
         {allGoals.map((goal, index) => {
           const isFirstGoal = index === 0;
           const progress = getGoalProgress(goal);
@@ -5014,6 +4854,38 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                 </div>
               );
             })}
+              </div>
+            </div>
+            
+            {/* Hulp nodig? - Naast Mijn doelen */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+                <h3 className="text-base font-semibold text-gray-900 mb-2">Hulp nodig?</h3>
+                <p className="text-xs text-gray-700 mb-3">
+                  Twijfel of vragen? Wij helpen je persoonlijk.
+                </p>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => onBookAppointment && onBookAppointment()}
+                    className="w-full bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    Plan gesprek
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'helpdesk' }));
+                      }
+                    }}
+                    className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    Stel je vraag
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </>
       )}
