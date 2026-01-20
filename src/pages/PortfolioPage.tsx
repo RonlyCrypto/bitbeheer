@@ -14,7 +14,8 @@ import {
   Loader2,
   X,
   Settings,
-  Edit
+  Edit,
+  RefreshCw
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PortfolioChart from '../components/PortfolioChart';
@@ -127,8 +128,8 @@ export default function PortfolioPage() {
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
   const [walletSyncProgress, setWalletSyncProgress] = useState<Map<string, WalletSyncProgress>>(new Map());
-  const [showChartIntegration, setShowChartIntegration] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [walletChartIntegration, setWalletChartIntegration] = useState<Map<string, boolean>>(new Map());
+  const [walletRefreshing, setWalletRefreshing] = useState<Map<string, boolean>>(new Map());
 
   // Get effective user email (considering impersonation)
   const effectiveUserEmail = (isImpersonating && impersonatedUser) 
@@ -306,6 +307,30 @@ export default function PortfolioPage() {
     const interval = setInterval(fetchCurrentPrice, 60000); // Update elke minuut
     return () => clearInterval(interval);
   }, []);
+
+  // Initialize chart integration state from localStorage for all wallets
+  useEffect(() => {
+    const newMap = new Map<string, boolean>();
+    wallets.forEach(wallet => {
+      const key = `chartIntegration_${wallet.id}`;
+      const saved = localStorage.getItem(key);
+      if (saved !== null) {
+        newMap.set(wallet.id, saved === 'true');
+      } else {
+        newMap.set(wallet.id, true); // Default: visible
+      }
+    });
+    setWalletChartIntegration(prev => {
+      // Merge with existing state, only update wallets that aren't in state yet
+      const merged = new Map(prev);
+      newMap.forEach((value, key) => {
+        if (!merged.has(key)) {
+          merged.set(key, value);
+        }
+      });
+      return merged;
+    });
+  }, [wallets]);
 
   // Update transacties wanneer wallets veranderen
   useEffect(() => {
@@ -917,55 +942,6 @@ export default function PortfolioPage() {
             </div>
           )}
 
-          {/* Chart Integratie Block */}
-          {wallets.length > 0 && (
-            showChartIntegration ? (
-              <div className="mb-8 bg-white rounded-xl p-6 shadow-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bold text-gray-900">Chart Integratie</h3>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={async () => {
-                        setIsRefreshing(true);
-                        await refreshTransactionPrices();
-                        setIsRefreshing(false);
-                      }}
-                      disabled={isRefreshing}
-                      className="px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                      {isRefreshing ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Verversen...
-                        </>
-                      ) : (
-                        'Ververs'
-                      )}
-                    </button>
-                    <button
-                      onClick={() => setShowChartIntegration(false)}
-                      className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
-                    >
-                      Verberg
-                    </button>
-                  </div>
-                </div>
-                <p className="text-gray-600">
-                  Chart integratie informatie en functionaliteit komt hier.
-                </p>
-              </div>
-            ) : (
-              <div className="mb-8">
-                <button
-                  onClick={() => setShowChartIntegration(true)}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
-                >
-                  Toon Chart Integratie
-                </button>
-              </div>
-            )
-          )}
-
             {/* Only show "Wallet Toevoegen" button if no wallets exist */}
             {wallets.length === 0 && !loadingWallets && (
             <div className="mb-8">
@@ -1160,6 +1136,91 @@ export default function PortfolioPage() {
                       </div>
                     </div>
                     </div>
+
+                    {/* Chart Integratie Block - binnen wallet kaart */}
+                    {(() => {
+                      const walletChartIntegrationKey = `chartIntegration_${wallet.id}`;
+                      // Initialize from localStorage if not in state
+                      const saved = localStorage.getItem(walletChartIntegrationKey);
+                      const defaultVisible = saved !== null ? saved === 'true' : true;
+                      const isChartIntegrationVisible = walletChartIntegration.get(wallet.id) ?? defaultVisible;
+                      const isRefreshing = walletRefreshing.get(wallet.id) ?? false;
+
+                      const handleWalletRefresh = async () => {
+                        setWalletRefreshing(prev => {
+                          const newMap = new Map(prev);
+                          newMap.set(wallet.id, true);
+                          return newMap;
+                        });
+                        await refreshTransactionPrices();
+                        setWalletRefreshing(prev => {
+                          const newMap = new Map(prev);
+                          newMap.set(wallet.id, false);
+                          return newMap;
+                        });
+                      };
+
+                      const handleWalletToggle = (show: boolean) => {
+                        setWalletChartIntegration(prev => {
+                          const newMap = new Map(prev);
+                          newMap.set(wallet.id, show);
+                          return newMap;
+                        });
+                        localStorage.setItem(walletChartIntegrationKey, show.toString());
+                      };
+
+                      return isChartIntegrationVisible ? (
+                        <div className="mt-4 mb-4 bg-orange-50 border border-orange-200 rounded-lg p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="bg-orange-100 p-1.5 rounded-lg flex-shrink-0">
+                              <AlertCircle className="w-4 h-4 text-orange-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-sm font-semibold text-gray-900 mb-1">Chart Integratie</h4>
+                              <p className="text-xs text-gray-600 mb-3">
+                                Deze wallet wordt automatisch gekoppeld aan de Bitcoin Geschiedenis chart. Je inkoop punten worden getoond op de grafiek.
+                              </p>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={handleWalletRefresh}
+                                  disabled={isRefreshing}
+                                  className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                                >
+                                  {isRefreshing ? (
+                                    <>
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                      Verversen...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <RefreshCw className="w-3 h-3" />
+                                      Verversen
+                                    </>
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => handleWalletToggle(false)}
+                                  className="px-3 py-1.5 bg-gray-300 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-400 transition-colors flex items-center gap-1.5"
+                                >
+                                  <EyeOff className="w-3 h-3" />
+                                  Verberg
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-4 mb-4">
+                          <button
+                            onClick={() => handleWalletToggle(true)}
+                            className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-1.5"
+                          >
+                            <Eye className="w-3 h-3" />
+                            Toon Chart Integratie
+                          </button>
+                        </div>
+                      );
+                    })()}
 
                       {/* Settings dropdown */}
                       <div className="relative flex-shrink-0">
