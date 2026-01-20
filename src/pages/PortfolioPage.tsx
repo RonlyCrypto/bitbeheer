@@ -1038,43 +1038,42 @@ export default function PortfolioPage() {
           ) : (
             <div className="grid gap-6">
               {wallets.map((wallet) => {
-                const addedDate = (() => {
-                  try {
-                              if (!wallet.firstSeen) {
-                                const walletWithCreatedAt = wallets.find(w => w.id === wallet.id);
-                                if (walletWithCreatedAt && (walletWithCreatedAt as any).created_at) {
-                                  const date = new Date((walletWithCreatedAt as any).created_at);
-                                  if (!isNaN(date.getTime())) {
-                                    return date.toLocaleDateString('nl-NL', {
-                                      day: '2-digit',
-                                      month: '2-digit',
-                                      year: 'numeric'
-                                    });
-                                  }
-                                }
-                                return 'Onbekend';
-                              }
-                              
-                              let date: Date;
-                              if (typeof wallet.firstSeen === 'string' && wallet.firstSeen.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                                date = new Date(wallet.firstSeen + 'T00:00:00');
-                              } else {
-                                date = new Date(wallet.firstSeen);
-                              }
-                              
-                              if (isNaN(date.getTime())) {
-                                return wallet.firstSeen || 'Onbekend';
-                              }
-                              
-                              return date.toLocaleDateString('nl-NL', {
-                                day: '2-digit',
-                                month: '2-digit',
-                                year: 'numeric'
-                              });
-                            } catch (e) {
-                              return 'Onbekend';
-                            }
-                })();
+                // Bereken addedDate BOVEN de return
+                let addedDate = 'Onbekend';
+                try {
+                  if (!wallet.firstSeen) {
+                    const walletWithCreatedAt = wallets.find(w => w.id === wallet.id);
+                    if (walletWithCreatedAt && (walletWithCreatedAt as any).created_at) {
+                      const date = new Date((walletWithCreatedAt as any).created_at);
+                      if (!isNaN(date.getTime())) {
+                        addedDate = date.toLocaleDateString('nl-NL', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric'
+                        });
+                      }
+                    }
+                  } else {
+                    let date: Date;
+                    if (typeof wallet.firstSeen === 'string' && wallet.firstSeen.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                      date = new Date(wallet.firstSeen + 'T00:00:00');
+                    } else {
+                      date = new Date(wallet.firstSeen);
+                    }
+                    
+                    if (!isNaN(date.getTime())) {
+                      addedDate = date.toLocaleDateString('nl-NL', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                      });
+                    } else {
+                      addedDate = wallet.firstSeen || 'Onbekend';
+                    }
+                  }
+                } catch (e) {
+                  addedDate = 'Onbekend';
+                }
 
                 const syncProgress = walletSyncProgress.get(wallet.address);
                 const isSyncing = syncProgress?.isSyncing || false;
@@ -1121,147 +1120,150 @@ export default function PortfolioPage() {
                 };
 
                 return (
-                  <div key={wallet.id} className="bg-white rounded-xl p-4 shadow-lg">
-                    {/* Wallet Info Header */}
-                    <div className="flex items-center justify-between gap-4 mb-4">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="bg-orange-100 p-1.5 rounded-lg flex-shrink-0">
-                          <Wallet className="w-4 h-4 text-orange-600" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-sm font-semibold text-gray-900 truncate">{wallet.name}</h3>
-                            <span className="text-xs text-gray-500">•</span>
-                            <span className="text-xs text-gray-500">Toegevoegd op {addedDate}</span>
-                            <span className="text-xs text-gray-500">•</span>
-                            <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded font-mono">
-                              {wallet.address.slice(0, 6)}...{wallet.address.slice(-6)}
-                        </code>
-                        <button
-                          onClick={() => copyAddress(wallet.address)}
-                              className="p-0.5 text-gray-600 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
-                          title="Kopieer adres"
-                        >
-                          {copiedAddress === wallet.address ? (
-                                <Check className="w-3 h-3 text-green-600" />
-                          ) : (
-                                <Copy className="w-3 h-3" />
-                          )}
-                        </button>
-                            <span className="text-xs text-gray-500">•</span>
-                            <span className="text-xs font-semibold text-gray-900">
-                              {showBalances ? `${(wallet.balance || 0).toFixed(4)} BTC` : '•••• BTC'}
-                              {isSyncing && !hasFirstBatch && (
-                                <span className="ml-1 inline-flex items-center gap-1">
-                                  <Loader2 className="w-3 h-3 animate-spin text-blue-400" />
-                                </span>
-                              )}
-                            </span>
-                            <span className="text-xs text-gray-500">•</span>
-                            <span className="text-xs text-gray-600">
-                              {wallet.realData?.transactions?.length || wallet.transactions || 0} transacties
-                              {isSyncing && hasFirstBatch && (
-                                <span className="text-blue-600 ml-1">• Synchroniseren...</span>
-                              )}
-                              {!isSyncing && hasFirstBatch && syncProgress && syncProgress.loadedTransactions > 0 && (
-                                <span className="text-green-600 ml-1">• Gesynct</span>
-                              )}
-                            </span>
-                      </div>
-                    </div>
-                    {/* Settings dropdown */}
-                    <div className="relative flex-shrink-0">
-                      <button
-                        onClick={() => setOpenMenuId(openMenuId === wallet.id ? null : wallet.id)}
-                        className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                        title="Instellingen"
-                      >
-                        <Settings className="w-4 h-4" />
-                      </button>
-                      {openMenuId === wallet.id && (
-                        <>
-                          <div 
-                            className="fixed inset-0 z-10" 
-                            onClick={() => setOpenMenuId(null)}
-                          ></div>
-                          <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
-                            <button
-                              onClick={() => handleEditClick(wallet)}
-                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-t-lg transition-colors"
-                            >
-                              <Edit className="w-4 h-4" />
-                              Bewerken
-                            </button>
-                            <button
-                              onClick={() => handleDeleteClick(wallet)}
-                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-lg transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                              Verwijderen
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Chart Integratie Block - onder wallet info */}
-                  {wallet.id && (
-                    isChartIntegrationVisible ? (
-                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mt-4">
-                        <div className="flex items-start gap-3">
+                  <>
+                    <div key={wallet.id} className="bg-white rounded-xl p-4 shadow-lg">
+                      {/* Wallet Info Header */}
+                      <div className="flex items-center justify-between gap-4 mb-4">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
                           <div className="bg-orange-100 p-1.5 rounded-lg flex-shrink-0">
-                            <AlertCircle className="w-4 h-4 text-orange-600" />
+                            <Wallet className="w-4 h-4 text-orange-600" />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-1">Chart Integratie</h4>
-                            <p className="text-xs text-gray-600 mb-3">
-                              Deze wallet wordt automatisch gekoppeld aan de Bitcoin Geschiedenis chart. Je inkoop punten worden getoond op de grafiek.
-                            </p>
-                            <div className="flex items-center gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="text-sm font-semibold text-gray-900 truncate">{wallet.name}</h3>
+                              <span className="text-xs text-gray-500">•</span>
+                              <span className="text-xs text-gray-500">Toegevoegd op {addedDate}</span>
+                              <span className="text-xs text-gray-500">•</span>
+                              <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded font-mono">
+                                {wallet.address.slice(0, 6)}...{wallet.address.slice(-6)}
+                              </code>
                               <button
-                                onClick={handleWalletRefresh}
-                                disabled={isRefreshing}
-                                className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                                onClick={() => copyAddress(wallet.address)}
+                                className="p-0.5 text-gray-600 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
+                                title="Kopieer adres"
                               >
-                                {isRefreshing ? (
-                                  <>
-                                    <Loader2 className="w-3 h-3 animate-spin" />
-                                    Verversen...
-                                  </>
+                                {copiedAddress === wallet.address ? (
+                                  <Check className="w-3 h-3 text-green-600" />
                                 ) : (
-                                  <>
-                                    <RefreshCw className="w-3 h-3" />
-                                    Verversen
-                                  </>
+                                  <Copy className="w-3 h-3" />
                                 )}
                               </button>
-                              <button
-                                onClick={() => handleWalletToggle(false)}
-                                className="px-3 py-1.5 bg-gray-300 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-400 transition-colors flex items-center gap-1.5"
-                              >
-                                <EyeOff className="w-3 h-3" />
-                                Verberg
-                              </button>
+                              <span className="text-xs text-gray-500">•</span>
+                              <span className="text-xs font-semibold text-gray-900">
+                                {showBalances ? `${(wallet.balance || 0).toFixed(4)} BTC` : '•••• BTC'}
+                                {isSyncing && !hasFirstBatch && (
+                                  <span className="ml-1 inline-flex items-center gap-1">
+                                    <Loader2 className="w-3 h-3 animate-spin text-blue-400" />
+                                  </span>
+                                )}
+                              </span>
+                              <span className="text-xs text-gray-500">•</span>
+                              <span className="text-xs text-gray-600">
+                                {wallet.realData?.transactions?.length || wallet.transactions || 0} transacties
+                                {isSyncing && hasFirstBatch && (
+                                  <span className="text-blue-600 ml-1">• Synchroniseren...</span>
+                                )}
+                                {!isSyncing && hasFirstBatch && syncProgress && syncProgress.loadedTransactions > 0 && (
+                                  <span className="text-green-600 ml-1">• Gesynct</span>
+                                )}
+                              </span>
                             </div>
                           </div>
                         </div>
+                        {/* Settings dropdown */}
+                        <div className="relative flex-shrink-0">
+                          <button
+                            onClick={() => setOpenMenuId(openMenuId === wallet.id ? null : wallet.id)}
+                            className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                            title="Instellingen"
+                          >
+                            <Settings className="w-4 h-4" />
+                          </button>
+                          {openMenuId === wallet.id && (
+                            <>
+                              <div 
+                                className="fixed inset-0 z-10" 
+                                onClick={() => setOpenMenuId(null)}
+                              ></div>
+                              <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+                                <button
+                                  onClick={() => handleEditClick(wallet)}
+                                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-t-lg transition-colors"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                  Bewerken
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteClick(wallet)}
+                                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-lg transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  Verwijderen
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
                       </div>
-                    ) : (
-                      <div className="mt-4">
-                        <button
-                          onClick={() => handleWalletToggle(true)}
-                          className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-1.5"
-                        >
-                          <Eye className="w-3 h-3" />
-                          Toon Chart Integratie
-                        </button>
-                      </div>
-                    )
-                  )}
-                </div>
-              );
-              })}
+
+                      {/* Chart Integratie Block - onder wallet info */}
+                      {wallet.id && (
+                        isChartIntegrationVisible ? (
+                          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mt-4">
+                            <div className="flex items-start gap-3">
+                              <div className="bg-orange-100 p-1.5 rounded-lg flex-shrink-0">
+                                <AlertCircle className="w-4 h-4 text-orange-600" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-sm font-semibold text-gray-900 mb-1">Chart Integratie</h4>
+                                <p className="text-xs text-gray-600 mb-3">
+                                  Deze wallet wordt automatisch gekoppeld aan de Bitcoin Geschiedenis chart. Je inkoop punten worden getoond op de grafiek.
+                                </p>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={handleWalletRefresh}
+                                    disabled={isRefreshing}
+                                    className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                                  >
+                                    {isRefreshing ? (
+                                      <>
+                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                        Verversen...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <RefreshCw className="w-3 h-3" />
+                                        Verversen
+                                      </>
+                                    )}
+                                  </button>
+                                  <button
+                                    onClick={() => handleWalletToggle(false)}
+                                    className="px-3 py-1.5 bg-gray-300 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-400 transition-colors flex items-center gap-1.5"
+                                  >
+                                    <EyeOff className="w-3 h-3" />
+                                    Verberg
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mt-4">
+                            <button
+                              onClick={() => handleWalletToggle(true)}
+                              className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-1.5"
+                            >
+                              <Eye className="w-3 h-3" />
+                              Toon Chart Integratie
+                            </button>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </>
+                );
+            })}
             </div>
           )}
 
