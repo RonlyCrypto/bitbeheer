@@ -495,8 +495,9 @@ export default function UserDashboard() {
             .order('created_at', { ascending: false });
 
           // Get read status (404 is normal if no record exists yet)
+          // Fix: gebruik 'chat_read_status' in plaats van 'chat_read_status'
           const { data: readStatus, error: readStatusError } = await supabase
-            .from('user_chat_read_status')
+            .from('chat_read_status')
             .select('last_read_at')
             .eq('user_email', effectiveEmail || user.email || '')
             .maybeSingle(); // Use maybeSingle instead of single to avoid 404 errors
@@ -629,7 +630,7 @@ export default function UserDashboard() {
           .order('created_at', { ascending: false });
         
         const { data: readStatus, error: readStatusError } = await supabase
-          .from('user_chat_read_status')
+          .from('chat_read_status')
           .select('last_read_at')
           .eq('user_email', effectiveEmail)
           .maybeSingle();
@@ -878,7 +879,7 @@ export default function UserDashboard() {
                   if (user?.email) {
                     try {
                       const { data: existing } = await supabase
-                        .from('user_chat_read_status')
+                        .from('chat_read_status')
                         .select('id')
                         .eq('user_email', user.email)
                         .maybeSingle(); // Use maybeSingle to avoid 404 errors
@@ -891,12 +892,12 @@ export default function UserDashboard() {
 
                       if (existing) {
                         await supabase
-                          .from('user_chat_read_status')
+                          .from('chat_read_status')
                           .update(readStatus)
                           .eq('id', existing.id);
                       } else {
                         await supabase
-                          .from('user_chat_read_status')
+                          .from('chat_read_status')
                           .insert([readStatus]);
                       }
                       setUnreadChatCount(0);

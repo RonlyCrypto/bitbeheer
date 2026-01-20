@@ -529,15 +529,27 @@ export default function PriceChart({
           const y = padding.top + chartHeight - ((purchase.price - minPrice) / priceRange) * chartHeight;
 
           // Determine if this is a buy or sell based on purchaseDetails
-          // Match op date en hash voor betere matching
+          // Match op hash (meest accuraat), anders op date + time + price combinatie
           const purchaseDetail = purchaseDetails.find(p => {
-            if (p.date === purchase.date) {
-              // Als hash beschikbaar is, match daarop voor betere precisie
-              if (purchase.hash && p.transaction?.hash) {
-                return p.transaction.hash === purchase.hash;
+            // Eerst proberen op hash te matchen (meest accuraat)
+            if (purchase.hash && p.transaction?.hash) {
+              if (p.transaction.hash === purchase.hash) {
+                return true;
               }
-              return true;
             }
+            
+            // Als hash match faalt, match op date + time + price combinatie
+            if (p.date === purchase.date && purchase.time) {
+              // Check of time overeenkomt (binnen 1 seconde tolerantie voor floating point issues)
+              const pTime = p.transaction?.time || 0;
+              if (Math.abs(pTime - purchase.time) < 2) {
+                // Check ook of prijs overeenkomt (binnen kleine tolerantie)
+                if (Math.abs(p.price - purchase.price) < 0.01) {
+                  return true;
+                }
+              }
+            }
+            
             return false;
           });
           const isBuy = purchaseDetail ? (purchaseDetail.isBuy !== undefined ? purchaseDetail.isBuy : purchaseDetail.amount > 0) : true;

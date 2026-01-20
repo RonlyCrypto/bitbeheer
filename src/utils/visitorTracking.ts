@@ -171,15 +171,24 @@ class VisitorTracker {
       };
 
       // Get IP address via Edge Function (more secure)
+      // CORS errors worden opgevangen en we vallen terug op alternatieve methode
       let ipAddress: string | undefined;
       try {
         const { supabase } = await import('../lib/supabase');
-        const { data } = await supabase.functions.invoke('get-visitor-ip');
-        if (data?.ip) {
+        const { data, error } = await supabase.functions.invoke('get-visitor-ip', {
+          // Add headers to help with CORS if needed
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        if (error) {
+          console.debug('get-visitor-ip function error (non-critical):', error);
+        } else if (data?.ip) {
           ipAddress = data.ip;
         }
-      } catch (error) {
-        // Fallback: try to get IP from a public service
+      } catch (error: any) {
+        // CORS of andere errors - fallback naar alternatieve methode
+        console.debug('get-visitor-ip function failed (non-critical), using fallback:', error?.message || error);
         try {
           const ipResponse = await fetch('https://api.ipify.org?format=json');
           if (ipResponse.ok) {
@@ -187,7 +196,7 @@ class VisitorTracker {
             ipAddress = ipData.ip;
           }
         } catch (e) {
-          // IP is optional
+          // IP is optional - geen probleem als dit faalt
         }
       }
 

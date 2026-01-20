@@ -127,6 +127,8 @@ export default function PortfolioPage() {
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
   const [walletSyncProgress, setWalletSyncProgress] = useState<Map<string, WalletSyncProgress>>(new Map());
+  const [showChartIntegration, setShowChartIntegration] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Get effective user email (considering impersonation)
   const effectiveUserEmail = (isImpersonating && impersonatedUser) 
@@ -323,161 +325,19 @@ export default function PortfolioPage() {
     updateTransactions();
   }, [wallets]);
 
-  // Smooth update van wallet data tijdens sync - zonder visuele sprongen
+  // Update alleen progress tijdens sync - GEEN data updates tot 100% geladen
+  // Frontend toont alleen progress getal, maar transacties lijst blijft ongewijzigd tot sync compleet is
   useEffect(() => {
     const hasActiveSync = Array.from(walletSyncProgress.values()).some(p => p.isSyncing);
     
+    // Als er geen actieve sync is, hoef je niets te doen
+    // Progress wordt al bijgewerkt via de callback in getWalletData
     if (!hasActiveSync) return;
-
-    // Update periodiek tijdens sync zodat we real-time progress zien
-    const updateWalletsFromDatabase = async () => {
-      if (!effectiveUserEmail) return;
-
-      try {
-        const { data: walletsData } = await supabase
-          .from('wallets')
-          .select('*')
-          .eq('email', effectiveUserEmail)
-          .order('created_at', { ascending: false });
-
-        if (walletsData && walletsData.length > 0) {
-          // Smooth update: merge nieuwe data met bestaande wallets - behoud structuur en volgorde
-          setWallets(prevWallets => {
-            // Zorg dat wallets altijd in dezelfde volgorde blijven (geen witte vlakken die springen)
-            const updatedWallets = walletsData.map((dbWallet: any) => {
-              const prevWallet = prevWallets.find(w => w.address === dbWallet.address);
-              
-              // Als wallet niet bestaat in prev, maak nieuwe aan (behoud structuur)
-              if (!prevWallet) {
-                const walletData = dbWallet.wallet_data || {};
-                const transactions = walletData.transactions || [];
-                const realData: BitcoinWallet = {
-                  address: dbWallet.address,
-                  balance: dbWallet.balance || 0,
-                  totalReceived: dbWallet.total_received || 0,
-                  totalSent: dbWallet.total_sent || 0,
-                  transactionCount: dbWallet.transaction_count || 0,
-                  firstSeen: dbWallet.first_seen ? new Date(dbWallet.first_seen).getTime() : Date.now(),
-                  lastSeen: dbWallet.last_seen ? new Date(dbWallet.last_seen).getTime() : Date.now(),
-                  transactions: transactions.map((tx: any) => ({
-                    hash: tx.hash,
-                    time: tx.time,
-                    value: tx.value,
-                    price: tx.price,
-                    currentValue: tx.currentValue,
-                    profit: tx.profit,
-                    profitPercent: tx.profitPercent,
-                    valueInBTC: tx.valueInBTC,
-                    status: tx.status,
-                    confirmations: tx.confirmations
-                  })) as BitcoinTransaction[]
-                };
-                
-                // Format firstSeen date
-                let firstSeenDate = new Date().toISOString().split('T')[0];
-                if (dbWallet.first_seen) {
-                  try {
-                    const date = new Date(dbWallet.first_seen);
-                    if (!isNaN(date.getTime())) {
-                      firstSeenDate = date.toISOString().split('T')[0];
-                    }
-                  } catch {}
-                } else if (dbWallet.created_at) {
-                  try {
-                    const date = new Date(dbWallet.created_at);
-                    if (!isNaN(date.getTime())) {
-                      firstSeenDate = date.toISOString().split('T')[0];
-                    }
-                  } catch {}
-                }
-                
-                return {
-                  id: dbWallet.id,
-                  name: dbWallet.name || 'Mijn Bitcoin Wallet',
-                  address: dbWallet.address,
-                  balance: dbWallet.balance || 0,
-                  transactions: dbWallet.transaction_count || 0,
-                  firstSeen: firstSeenDate,
-                  realData,
-                  total_investment: dbWallet.total_investment || 0 // Haal total_investment uit database
-                };
-              }
-
-              const walletData = dbWallet.wallet_data || {};
-              const transactions = walletData.transactions || [];
-
-              const realData: BitcoinWallet = {
-                address: dbWallet.address,
-                balance: dbWallet.balance || 0,
-                totalReceived: dbWallet.total_received || 0,
-                totalSent: dbWallet.total_sent || 0,
-                transactionCount: dbWallet.transaction_count || 0,
-                firstSeen: dbWallet.first_seen ? new Date(dbWallet.first_seen).getTime() : Date.now(),
-                lastSeen: dbWallet.last_seen ? new Date(dbWallet.last_seen).getTime() : Date.now(),
-                transactions: transactions.map((tx: any) => ({
-                  hash: tx.hash,
-                  time: tx.time,
-                  value: tx.value,
-                  price: tx.price,
-                  currentValue: tx.currentValue,
-                  profit: tx.profit,
-                  profitPercent: tx.profitPercent,
-                  valueInBTC: tx.valueInBTC,
-                  status: tx.status,
-                  confirmations: tx.confirmations
-                })) as BitcoinTransaction[]
-              };
-
-              // Smooth update: behoud bestaande data, update alleen wat nieuw is
-              return {
-                ...prevWallet,
-                balance: realData.balance,
-                transactions: dbWallet.transaction_count || 0,
-                total_investment: dbWallet.total_investment || 0, // Update total_investment uit database
-                realData: {
-                  ...prevWallet.realData,
-                  ...realData,
-                  transactions: realData.transactions // Update transacties
-                }
-              };
-            });
-            
-            return updatedWallets;
-          });
-          
-          // Update allTransactions smooth
-          const allTx: BitcoinTransaction[] = [];
-          walletsData.forEach((w: any) => {
-            const walletData = w.wallet_data || {};
-            const transactions = walletData.transactions || [];
-            allTx.push(...transactions.map((tx: any) => ({
-              hash: tx.hash,
-              time: tx.time,
-              value: tx.value,
-              price: tx.price,
-              currentValue: tx.currentValue,
-              profit: tx.profit,
-              profitPercent: tx.profitPercent,
-              valueInBTC: tx.valueInBTC,
-              status: tx.status,
-              confirmations: tx.confirmations
-            })) as BitcoinTransaction[]);
-          });
-          setAllTransactions(removeDuplicateTransactions(allTx));
-        }
-      } catch (error) {
-        console.error('Error updating wallets during sync:', error);
-      }
-    };
-
-    // Update direct en periodiek tijdens sync (elke 2 seconden) zodat we real-time progress zien
-    updateWalletsFromDatabase();
     
-    // Periodieke updates tijdens sync zodat statistiek card real-time oploopt
-    const intervalId = setInterval(updateWalletsFromDatabase, 2000);
-    
-    return () => clearInterval(intervalId);
-  }, [walletSyncProgress, effectiveUserEmail]);
+    // Tijdens sync: alleen progress indicator updaten, GEEN transacties/amounts updaten
+    // Dit voorkomt dat de UI "springt" tijdens het laden
+    // De transacties worden pas getoond wanneer sync 100% compleet is (zie useEffect hieronder)
+  }, [walletSyncProgress]);
 
   // Automatische detectie van nieuwe transacties - check elke 30 seconden
   useEffect(() => {
@@ -540,12 +400,12 @@ export default function PortfolioPage() {
     return () => clearInterval(intervalId);
   }, [wallets, effectiveUserEmail]);
 
-  // Reload wallets wanneer sync compleet is - smooth update zonder sprongen
+  // Reload wallets ALLEEN wanneer sync 100% compleet is - dit is de enige keer dat data wordt getoond
   useEffect(() => {
     const wasSyncing = Array.from(walletSyncProgress.values()).some(p => p.isSyncing);
     const isNowComplete = !Array.from(walletSyncProgress.values()).some(p => p.isSyncing);
     
-    // Als sync net compleet is geworden, update wallets smooth
+    // Als sync net compleet is geworden (100%), update wallets en toon alle data
     if (wasSyncing && isNowComplete) {
       // Wacht even zodat database update compleet is
       setTimeout(async () => {
@@ -559,7 +419,7 @@ export default function PortfolioPage() {
             .order('created_at', { ascending: false });
 
           if (walletsData && walletsData.length > 0) {
-            // Smooth update zonder visuele sprongen
+            // Update wallets met volledige data (alleen bij 100% compleet)
             setWallets(prevWallets => 
               prevWallets.map(prevWallet => {
                 const dbWallet = walletsData.find((w: any) => w.address === prevWallet.address);
@@ -594,13 +454,13 @@ export default function PortfolioPage() {
                   ...prevWallet,
                   balance: realData.balance,
                   transactions: dbWallet.transaction_count || 0,
-                  total_investment: dbWallet.total_investment || 0, // Update total_investment uit database
-                  realData
+                  total_investment: dbWallet.total_investment || 0,
+                  realData // Update met volledige transacties (alleen bij 100%)
                 };
               })
             );
             
-            // Update allTransactions
+            // Update allTransactions met ALLE transacties (alleen bij 100% compleet)
             const allTx: BitcoinTransaction[] = [];
             walletsData.forEach((w: any) => {
               const walletData = w.wallet_data || {};
@@ -619,6 +479,8 @@ export default function PortfolioPage() {
               })) as BitcoinTransaction[]);
             });
             setAllTransactions(removeDuplicateTransactions(allTx));
+            
+            console.log(`✅ Sync compleet: ${allTx.length} transacties geladen en getoond`);
           }
         } catch (error) {
           console.error('Error reloading wallets after sync:', error);
@@ -1055,6 +917,55 @@ export default function PortfolioPage() {
             </div>
           )}
 
+          {/* Chart Integratie Block */}
+          {wallets.length > 0 && (
+            showChartIntegration ? (
+              <div className="mb-8 bg-white rounded-xl p-6 shadow-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-gray-900">Chart Integratie</h3>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={async () => {
+                        setIsRefreshing(true);
+                        await refreshTransactionPrices();
+                        setIsRefreshing(false);
+                      }}
+                      disabled={isRefreshing}
+                      className="px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {isRefreshing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Verversen...
+                        </>
+                      ) : (
+                        'Ververs'
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setShowChartIntegration(false)}
+                      className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
+                    >
+                      Verberg
+                    </button>
+                  </div>
+                </div>
+                <p className="text-gray-600">
+                  Chart integratie informatie en functionaliteit komt hier.
+                </p>
+              </div>
+            ) : (
+              <div className="mb-8">
+                <button
+                  onClick={() => setShowChartIntegration(true)}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                >
+                  Toon Chart Integratie
+                </button>
+              </div>
+            )
+          )}
+
             {/* Only show "Wallet Toevoegen" button if no wallets exist */}
             {wallets.length === 0 && !loadingWallets && (
             <div className="mb-8">
@@ -1315,6 +1226,10 @@ export default function PortfolioPage() {
                   
                   // Debug: log aantal transacties
                   console.log(`📊 Chart transacties: ${filtered.length} van ${allTransactions.length} totaal`);
+                  console.log(`📊 Filter: ${transactionFilter}, All transactions: ${allTransactions.length}`);
+                  if (filtered.length !== allTransactions.length && transactionFilter === 'all') {
+                    console.warn(`⚠️ Waarschuwing: Filter zou alle transacties moeten tonen, maar toont ${filtered.length} van ${allTransactions.length}`);
+                  }
                   
                   return filtered;
                 })()}

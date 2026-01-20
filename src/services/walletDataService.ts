@@ -231,7 +231,7 @@ class WalletDataService {
       const totalTxCount = walletData.chain_stats?.tx_count || 0;
       
       // Check of we al alle transacties hebben in database
-      if (existingDbData && existingDbData.transactionCount === totalTxCount && existingDbData.transactions && existingDbData.transactions.length === totalTxCount) {
+      if (existingData && existingData.transactionCount === totalTxCount && existingData.transactions && existingData.transactions.length === totalTxCount) {
         logger.debug(`✅ Wallet al volledig gesynct: ${totalTxCount} transacties in database = ${totalTxCount} op blockchain`);
         // Update progress: sync compleet
         this.updateProgress(address, {
@@ -245,19 +245,19 @@ class WalletDataService {
       // Update progress met totaal aantal transacties
       this.updateProgress(address, {
         totalTransactions: totalTxCount,
-        loadedTransactions: existingDbData?.transactions?.length || 0,
+        loadedTransactions: existingData?.transactions?.length || 0,
         isSyncing: true
       });
 
-      // 2. Haal eerst 10 transacties op voor snelle wallet info
-      const INITIAL_BATCH_SIZE = 10; // Eerste batch: snel wallet info tonen
-      const BATCH_SIZE = 10; // Rest per 10 in achtergrond
+      // 2. Haal transacties op in batches van 25 met delays tussen batches
+      const BATCH_SIZE = 25; // Batch size zoals gevraagd
+      const DELAY_BETWEEN_BATCHES_MS = 6000; // 6 seconden delay tussen batches (zoals gevraagd: "een aantal sec of min")
       const MAX_TRANSACTIONS = 500; // Limiet voor wallets met veel tx's
       
       let allTransactions: BitcoinTransaction[] = [];
       let afterTxid: string | null = null;
       let page = 0;
-      let isFirstBatch = true;
+      let batchNumber = 0;
 
       while (page < 100 && allTransactions.length < MAX_TRANSACTIONS) {
         if (controller.signal.aborted) {
@@ -266,10 +266,11 @@ class WalletDataService {
         }
 
         page++;
+        batchNumber++;
         
-        // Rate limiting: wacht 1 seconde tussen requests (sneller voor eerste batch)
-        if (page > 1) {
-          await new Promise(resolve => setTimeout(resolve, isFirstBatch ? 1000 : 1500));
+        // Rate limiting: wacht tussen batches (6 seconden zoals gevraagd)
+        if (batchNumber > 1) {
+          await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES_MS));
         }
 
         const url = afterTxid 
@@ -299,10 +300,8 @@ class WalletDataService {
             break;
           }
 
-          // Voor eerste batch: neem alleen eerste 10 transacties
-          const transactionsToProcess = isFirstBatch 
-            ? pageTransactions.slice(0, INITIAL_BATCH_SIZE)
-            : pageTransactions;
+          // Process batch van 25 transacties (of minder als er minder zijn)
+          const transactionsToProcess = pageTransactions.slice(0, BATCH_SIZE);
 
           // Process deze batch transacties
           const processedBatch = await this.processTransactionsBatch(
@@ -325,53 +324,14 @@ class WalletDataService {
 
           allTransactions = allTransactions.concat(newTransactions);
 
-          // Update progress
+          // Update progress (alleen voor tracking, frontend wacht tot 100%)
           this.updateProgress(address, {
             totalTransactions: totalTxCount,
             loadedTransactions: allTransactions.length,
             isSyncing: true
           });
 
-          // Na eerste batch: sla direct op en trigger UI update
-          if (isFirstBatch) {
-            // Sla eerste batch direct op zodat wallet info zichtbaar wordt
-            // Alle data (datum, tx, prijzen) wordt opgeslagen in Supabase
-            await this.saveWalletDataToDatabase(
-              address,
-              email,
-              walletData,
-              allTransactions,
-              false // nog niet klaar, maar eerste batch is wel compleet
-            );
-            
-            logger.debug(`✅ Eerste batch (10 transacties) opgeslagen voor ${address.slice(0, 8)}...`);
-            
-            // Trigger callback om UI te updaten met eerste batch
-            this.updateProgress(address, {
-              totalTransactions: totalTxCount,
-              loadedTransactions: allTransactions.length,
-              isSyncing: true
-            });
-            
-            isFirstBatch = false;
-            // Set up next page vanaf transactie 11 (als er meer zijn)
-            if (pageTransactions.length > INITIAL_BATCH_SIZE) {
-              const lastTx = pageTransactions[INITIAL_BATCH_SIZE - 1];
-              if (lastTx?.txid) {
-                afterTxid = lastTx.txid;
-              }
-            } else if (pageTransactions.length > 0) {
-              // Als er minder dan 10 zijn, gebruik laatste
-              const lastTx = pageTransactions[pageTransactions.length - 1];
-              if (lastTx?.txid) {
-                afterTxid = lastTx.txid;
-              }
-            }
-            // Continue met volgende batches
-            continue;
-          }
-
-          // Sla batch op in database (incrementeel) voor volgende batches
+          // Sla batch op in database (incrementeel) - maar frontend wacht tot 100%
           await this.saveWalletDataToDatabase(
             address,
             email,
@@ -379,6 +339,8 @@ class WalletDataService {
             allTransactions,
             false // nog niet klaar
           );
+          
+          logger.debug(`✅ Batch ${batchNumber} (${newTransactions.length} nieuwe transacties) opgeslagen voor ${address.slice(0, 8)}... - Totaal: ${allTransactions.length}/${totalTxCount}`);
 
           // Check of we alle transacties hebben - stop wanneer aantal klopt met blockchain
           if (allTransactions.length >= totalTxCount) {
@@ -386,7 +348,7 @@ class WalletDataService {
             break;
           }
           
-          // Check of we klaar zijn - stop wanneer geen transacties meer (niet bij MAX_TRANSACTIONS, haal alles op)
+          // Check of we klaar zijn - stop wanneer geen transacties meer
           if (pageTransactions.length < BATCH_SIZE) {
             logger.debug(`✅ Sync compleet: ${allTransactions.length} transacties opgehaald (geen transacties meer)`);
             break;
@@ -398,10 +360,18 @@ class WalletDataService {
             break;
           }
 
-          // Set up next page
-          const lastTx = pageTransactions[pageTransactions.length - 1];
+          // Set up next page - gebruik laatste transactie van deze batch
+          const lastTx = transactionsToProcess[transactionsToProcess.length - 1];
           if (lastTx?.txid) {
             afterTxid = lastTx.txid;
+          } else if (pageTransactions.length > 0) {
+            // Fallback: gebruik laatste van volledige pagina
+            const fallbackLastTx = pageTransactions[pageTransactions.length - 1];
+            if (fallbackLastTx?.txid) {
+              afterTxid = fallbackLastTx.txid;
+            } else {
+              break;
+            }
           } else {
             break;
           }

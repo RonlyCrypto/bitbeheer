@@ -118,24 +118,37 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
   // Sorteer eerst chronologisch zodat de nummering klopt
   const sortedTransactionsForPoints = [...transactions].sort((a, b) => a.time - b.time);
   
-  // Remove duplicates based on hash (als hash beschikbaar is) of date+price combinatie
+  // Remove duplicates based on hash (als hash beschikbaar is) - gebruik hash als primaire key
+  // BELANGRIJK: Elke transactie met een unieke hash of time+value combinatie moet worden getoond
   const uniqueTransactions = sortedTransactionsForPoints.filter((tx, index, self) => {
     if (!tx.time || !tx.price || isNaN(tx.time) || isNaN(tx.price)) {
       return false; // Filter invalid transactions
     }
     
-    // Als hash beschikbaar is, gebruik hash voor duplicate check
+    // Gebruik hash als primaire key voor duplicate check (meest accuraat)
+    // Als hash beschikbaar is, gebruik alleen hash voor matching
     if (tx.hash) {
-      return index === self.findIndex(t => t.hash === tx.hash);
+      const firstIndex = self.findIndex(t => t.hash === tx.hash && t.hash !== null && t.hash !== undefined && t.hash !== '');
+      return index === firstIndex;
     }
     
-    // Anders gebruik date + price + time combinatie
-    const txDate = new Date(tx.time * 1000).toISOString().split('T')[0];
-    return index === self.findIndex(t => {
-      const tDate = new Date(t.time * 1000).toISOString().split('T')[0];
-      return tDate === txDate && t.price === tx.price && t.time === tx.time;
-    });
+    // Als geen hash, gebruik time + value combinatie (uniek per transactie)
+    // Dit zorgt ervoor dat alle transacties worden getoond, ook als ze op dezelfde datum/prijs zijn
+    // Time + value is uniek per transactie (zelfs op dezelfde datum)
+    const firstIndex = self.findIndex(t => 
+      t.time === tx.time && 
+      t.value === tx.value &&
+      (!t.hash || t.hash === '') && // Alleen als geen hash
+      (!tx.hash || tx.hash === '') // Alleen als geen hash
+    );
+    return index === firstIndex;
   });
+  
+  // Debug: log aantal transacties
+  console.log(`📊 PortfolioChart: ${transactions.length} transacties ontvangen, ${uniqueTransactions.length} unieke transacties na filtering`);
+  if (transactions.length !== uniqueTransactions.length) {
+    console.warn(`⚠️ Waarschuwing: ${transactions.length - uniqueTransactions.length} transacties gefilterd als duplicaat`);
+  }
   
   const purchasePoints = showTransactions ? uniqueTransactions.map(tx => {
     return {
@@ -277,7 +290,7 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
       soldTo: soldToInfo,
       soldBuyIndices: soldBuyIndices,
       transactionIndex: index,
-      transaction: tx
+      transaction: tx // Voeg volledige transaction toe voor matching
     };
   }).filter(Boolean) as any[] : [];
 
@@ -550,7 +563,7 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
                 <span className="text-gray-700"><strong>Rood</strong> = Verliesgevend</span>
               </div>
               <div className="text-gray-500 ml-auto">
-                ✅ <strong>{transactions.length}</strong> transactie{transactions.length !== 1 ? 's' : ''} zichtbaar op chart
+                ✅ <strong>{purchasePoints.length}</strong> transactie{purchasePoints.length !== 1 ? 's' : ''} zichtbaar op chart
               </div>
             </div>
           </div>
