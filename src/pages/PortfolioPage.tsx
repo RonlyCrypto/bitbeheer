@@ -1041,37 +1041,37 @@ export default function PortfolioPage() {
                 // Bereken addedDate BOVEN de return
                 let addedDate = 'Onbekend';
                 try {
-                  if (!wallet.firstSeen) {
-                    const walletWithCreatedAt = wallets.find(w => w.id === wallet.id);
-                    if (walletWithCreatedAt && (walletWithCreatedAt as any).created_at) {
-                      const date = new Date((walletWithCreatedAt as any).created_at);
-                      if (!isNaN(date.getTime())) {
+                              if (!wallet.firstSeen) {
+                                const walletWithCreatedAt = wallets.find(w => w.id === wallet.id);
+                                if (walletWithCreatedAt && (walletWithCreatedAt as any).created_at) {
+                                  const date = new Date((walletWithCreatedAt as any).created_at);
+                                  if (!isNaN(date.getTime())) {
                         addedDate = date.toLocaleDateString('nl-NL', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric'
-                        });
-                      }
-                    }
+                                      day: '2-digit',
+                                      month: '2-digit',
+                                      year: 'numeric'
+                                    });
+                                  }
+                                }
                   } else {
-                    let date: Date;
-                    if (typeof wallet.firstSeen === 'string' && wallet.firstSeen.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                      date = new Date(wallet.firstSeen + 'T00:00:00');
-                    } else {
-                      date = new Date(wallet.firstSeen);
-                    }
-                    
+                              let date: Date;
+                              if (typeof wallet.firstSeen === 'string' && wallet.firstSeen.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                                date = new Date(wallet.firstSeen + 'T00:00:00');
+                              } else {
+                                date = new Date(wallet.firstSeen);
+                              }
+                              
                     if (!isNaN(date.getTime())) {
                       addedDate = date.toLocaleDateString('nl-NL', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric'
-                      });
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric'
+                              });
                     } else {
                       addedDate = wallet.firstSeen || 'Onbekend';
                     }
                   }
-                } catch (e) {
+                            } catch (e) {
                   addedDate = 'Onbekend';
                 }
 
@@ -1136,18 +1136,18 @@ export default function PortfolioPage() {
                               <span className="text-xs text-gray-500">•</span>
                               <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded font-mono">
                                 {wallet.address.slice(0, 6)}...{wallet.address.slice(-6)}
-                              </code>
-                              <button
-                                onClick={() => copyAddress(wallet.address)}
+                        </code>
+                        <button
+                          onClick={() => copyAddress(wallet.address)}
                                 className="p-0.5 text-gray-600 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
-                                title="Kopieer adres"
-                              >
-                                {copiedAddress === wallet.address ? (
+                          title="Kopieer adres"
+                        >
+                          {copiedAddress === wallet.address ? (
                                   <Check className="w-3 h-3 text-green-600" />
-                                ) : (
+                          ) : (
                                   <Copy className="w-3 h-3" />
-                                )}
-                              </button>
+                          )}
+                        </button>
                               <span className="text-xs text-gray-500">•</span>
                               <span className="text-xs font-semibold text-gray-900">
                                 {showBalances ? `${(wallet.balance || 0).toFixed(4)} BTC` : '•••• BTC'}
@@ -1167,9 +1167,9 @@ export default function PortfolioPage() {
                                   <span className="text-green-600 ml-1">• Gesynct</span>
                                 )}
                               </span>
-                            </div>
-                          </div>
-                        </div>
+                      </div>
+                    </div>
+                    </div>
                         {/* Settings dropdown */}
                         <div className="relative flex-shrink-0">
                           <button
@@ -1203,8 +1203,8 @@ export default function PortfolioPage() {
                               </div>
                             </>
                           )}
-                        </div>
-                      </div>
+                    </div>
+                  </div>
 
                       {/* Chart Integratie Block - onder wallet info */}
                       {wallet.id && (
@@ -1213,37 +1213,41 @@ export default function PortfolioPage() {
                             <div className="flex items-start gap-3">
                               <div className="bg-orange-100 p-1.5 rounded-lg flex-shrink-0">
                                 <AlertCircle className="w-4 h-4 text-orange-600" />
-                              </div>
+                    </div>
                               <div className="flex-1 min-w-0">
-                                <h4 className="text-sm font-semibold text-gray-900 mb-1">Chart Integratie</h4>
-                                <p className="text-xs text-gray-600 mb-3">
-                                  Deze wallet wordt automatisch gekoppeld aan de Bitcoin Geschiedenis chart. Je inkoop punten worden getoond op de grafiek.
-                                </p>
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    onClick={handleWalletRefresh}
-                                    disabled={isRefreshing}
-                                    className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-                                  >
-                                    {isRefreshing ? (
-                                      <>
-                                        <Loader2 className="w-3 h-3 animate-spin" />
-                                        Verversen...
-                                      </>
-                                    ) : (
-                                      <>
-                                        <RefreshCw className="w-3 h-3" />
-                                        Verversen
-                                      </>
-                                    )}
-                                  </button>
-                                  <button
-                                    onClick={() => handleWalletToggle(false)}
-                                    className="px-3 py-1.5 bg-gray-300 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-400 transition-colors flex items-center gap-1.5"
-                                  >
-                                    <EyeOff className="w-3 h-3" />
-                                    Verberg
-                                  </button>
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="text-sm font-semibold text-gray-900 mb-1">Chart Integratie</h4>
+                                    <p className="text-xs text-gray-600">
+                                      Deze wallet wordt automatisch gekoppeld aan de Bitcoin Geschiedenis chart. Je inkoop punten worden getoond op de grafiek.
+                    </p>
+                  </div>
+                                  <div className="flex items-center gap-2 flex-shrink-0">
+                                    <button
+                                      onClick={handleWalletRefresh}
+                                      disabled={isRefreshing}
+                                      className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                                    >
+                                      {isRefreshing ? (
+                                        <>
+                                          <Loader2 className="w-3 h-3 animate-spin" />
+                                          Verversen...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <RefreshCw className="w-3 h-3" />
+                                          Verversen
+                                        </>
+                                      )}
+                                    </button>
+                                    <button
+                                      onClick={() => handleWalletToggle(false)}
+                                      className="px-3 py-1.5 bg-gray-300 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-400 transition-colors flex items-center gap-1.5"
+                                    >
+                                      <EyeOff className="w-3 h-3" />
+                                      Verberg
+                                    </button>
+                </div>
                                 </div>
                               </div>
                             </div>
