@@ -4606,6 +4606,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
   }, [showMonthlyGoalPopup, selectedMonthlyGoal, walletTransactions, currentBitcoinPrice]);
 
                     return (
+                      <>
     <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-gray-900">🎯 Jouw Bitcoin Mijlpalen</h3>
@@ -4748,6 +4749,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
             </div>
         )}
       </div>
+    </div>
 
       {/* Milestone Celebration Popup */}
       {showMilestonePopup && currentMilestoneCelebration !== null && (
@@ -4807,10 +4809,9 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
           </div>
         </div>
       )}
-    </div>
 
-      {/* Ritme & Discipline - Eigen blok */}
-      {allGoals.length > 0 && (
+        {/* Ritme & Discipline - Eigen blok */}
+        {allGoals.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 mt-6">
           <div className="mb-4">
               <div className="mb-4 flex items-center justify-between">
