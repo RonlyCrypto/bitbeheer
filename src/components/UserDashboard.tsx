@@ -1808,8 +1808,71 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
     };
   })();
 
+  // Determine journey step for approved users
+  const hasBitcoin = walletTransactions.length > 0;
+  const journeyStep = !accountApproved && !hasApprovedOneOnOne ? 0
+    : !hasWallet && !hasBitcoin ? 1
+    : hasWallet && !hasBitcoin ? 2
+    : 3;
+
+  const journeySteps = [
+    { label: 'Kennismaking', icon: '🤝', description: 'Eerste gesprek met Giovanni' },
+    { label: 'Hardware Wallet', icon: '🔐', description: 'Bestel een Ledger' },
+    { label: 'Bitcoin kopen', icon: '₿', description: 'Je eerste aankoop' },
+    { label: 'Eigen beheer', icon: '🏆', description: 'Bitcoin in je eigen wallet' },
+  ];
+
   return (
     <div className="space-y-6">
+
+      {/* Jouw Bitcoin Reis - Journey Progress (alleen voor goedgekeurde gebruikers) */}
+      {(accountApproved || hasApprovedOneOnOne) && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-lg">🗺️</span>
+            <h3 className="text-base font-semibold text-gray-900">Jouw Bitcoin Reis</h3>
+            <span className="ml-auto text-xs text-gray-500">Stap {Math.min(journeyStep + 1, 4)} van 4</span>
+          </div>
+          <div className="flex items-start gap-0">
+            {journeySteps.map((step, index) => {
+              const done = index < journeyStep;
+              const active = index === journeyStep;
+              return (
+                <div key={index} className="flex-1 flex flex-col items-center relative">
+                  {/* Verbindingslijn */}
+                  {index < journeySteps.length - 1 && (
+                    <div className={`absolute top-5 left-1/2 w-full h-0.5 ${done ? 'bg-orange-400' : 'bg-gray-200'}`} style={{zIndex: 0}} />
+                  )}
+                  {/* Cirkel */}
+                  <div className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center text-lg border-2 transition-all
+                    ${done ? 'bg-orange-500 border-orange-500 text-white' : active ? 'bg-orange-50 border-orange-400' : 'bg-gray-50 border-gray-200'}`}>
+                    {done ? '✓' : step.icon}
+                  </div>
+                  {/* Label */}
+                  <div className="mt-2 text-center px-1">
+                    <p className={`text-xs font-semibold ${active ? 'text-orange-600' : done ? 'text-gray-700' : 'text-gray-400'}`}>
+                      {step.label}
+                    </p>
+                    {active && (
+                      <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">{step.description}</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {/* Huidige stap uitleg */}
+          {journeyStep < 4 && (
+            <div className="mt-4 bg-orange-50 rounded-lg px-4 py-3 text-sm text-orange-800">
+              <strong>Nu aan de beurt:</strong> {journeySteps[Math.min(journeyStep, 3)].description}
+              {journeyStep === 1 && ' — Bestel een Ledger hardware wallet om je Bitcoin veilig op te slaan.'}
+              {journeyStep === 2 && ' — Koop je eerste Bitcoin via een exchange zoals Coinbase.'}
+              {journeyStep === 3 && ' — Zet je Bitcoin over naar je eigen Ledger wallet.'}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Appointment Status Block */}
       {/* Hide appointment block if account is approved/activated OR one-on-one is approved */}
       {!(accountApproved || hasApprovedOneOnOne) && (
@@ -2884,8 +2947,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         );
       })()}
 
-      {/* Stappenblokken (Ledger & Coinbase) - Onderaan naast elkaar (1/2 1/2) */}
-      <ReferralBlocksWithHelp onBookAppointment={onBookAppointment} />
+      {/* Stappenblokken (Ledger & Coinbase) - alleen tonen als gebruiker nog geen wallet heeft ingericht */}
+      {!hasWallet && <ReferralBlocksWithHelp onBookAppointment={onBookAppointment} />}
 
       {/* Fear & Greed Index Popup */}
       {showFearGreedPopup && (
