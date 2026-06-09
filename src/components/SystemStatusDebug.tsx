@@ -146,7 +146,7 @@ export default function SystemStatusDebug() {
             <button
               onClick={() => {
                 console.log('🧪 Testing impersonation with Gio...');
-                impersonationUtils.startImpersonation('giovanni.hooten@gmail.com', 'admin@bitbeheer.nl');
+                impersonationUtils.startImpersonation('admin@bitbeheer.nl', 'admin@bitbeheer.nl');
                 // Trigger a state refresh instead of page reload
                 setRefreshKey(prev => prev + 1);
               }}

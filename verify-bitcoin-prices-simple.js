@@ -2,9 +2,9 @@
 
 import fetch from 'node-fetch';
 
-// Hardcoded Supabase URL
-const supabaseUrl = 'https://xvbsdnfjibcyibpgcqeb.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2YnNkbmZqaWJjeWlicGdjcWViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDU4NjE0MzUsImV4cCI6MTkyMTQzNzQzNX0.k0WvGNjkQrYEJo4_P-C4s-2w6fKP5WMQ0kU3X7R4bDA';
+const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
+if (!supabaseUrl || !supabaseKey) { console.error('❌ Set SUPABASE_URL and SUPABASE_ANON_KEY env vars'); process.exit(1); }
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 

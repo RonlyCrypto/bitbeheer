@@ -9,8 +9,10 @@ import json
 from supabase import create_client, Client
 
 # Supabase credentials
-SUPABASE_URL = "https://xvbsdnfjibcyibpgcqeb.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2YnNkbmZqaWJjeWlicGdjcWViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDU4NjE0MzUsImV4cCI6MTkyMTQzNzQzNX0.k0WvGNjkQrYEJo4_P-C4s-2w6fKP5WMQ0kU3X7R4bDA"
+SUPABASE_URL = os.environ.get("SUPABASE_URL") or os.environ.get("REACT_APP_SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_ANON_KEY") or os.environ.get("VITE_SUPABASE_ANON_KEY") or os.environ.get("REACT_APP_SUPABASE_ANON_KEY")
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise SystemExit("❌ Set SUPABASE_URL and SUPABASE_ANON_KEY env vars")
 
 # Correct July 2024 prices
 JULY_2024_PRICES = {
