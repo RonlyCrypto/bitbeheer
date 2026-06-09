@@ -603,7 +603,7 @@ class BitcoinApiService {
       const today = new Date().toISOString().split('T')[0];
       const { data, error } = await supabase
         .from('bitcoin_price_data')
-        .select('price_usd')
+        .select('price_usd, date')
         .eq('date', today)
         .maybeSingle();
 
@@ -612,23 +612,50 @@ class BitcoinApiService {
         return data.price_usd;
       }
 
-      // If no data for today, get the latest price
+      // If no data for today, get the latest price from DB
       const { data: latestData, error: latestError } = await supabase
         .from('bitcoin_price_data')
-        .select('price_usd')
+        .select('price_usd, date')
         .order('date', { ascending: false })
         .limit(1)
         .maybeSingle();
 
+      // Check if DB data is stale (older than 1 day) — if so, fetch live from CoinGecko
+      if (!latestError && latestData?.price_usd && latestData?.date) {
+        const daysDiff = Math.floor(
+          (new Date(today).getTime() - new Date(latestData.date).getTime()) / (1000 * 60 * 60 * 24)
+        );
+        if (daysDiff <= 1) {
+          logger.debug(`ℹ️ Using latest price from Supabase (${latestData.date}): $${latestData.price_usd}`);
+          return latestData.price_usd;
+        }
+        logger.debug(`⚠️ Supabase price is ${daysDiff} days old, fetching live price from CoinGecko...`);
+      }
+
+      // Fallback: fetch live price from CoinGecko simple API
+      const liveResponse = await fetch(
+        'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd',
+        { signal: AbortSignal.timeout(5000) }
+      );
+      if (liveResponse.ok) {
+        const liveData = await liveResponse.json();
+        const livePrice = liveData?.bitcoin?.usd;
+        if (livePrice) {
+          logger.debug(`✅ Live price from CoinGecko: $${livePrice}`);
+          return livePrice;
+        }
+      }
+
+      // Last resort: return latest DB price even if stale
       if (!latestError && latestData?.price_usd) {
-        logger.debug(`ℹ️ Using latest price from Supabase: $${latestData.price_usd}`);
+        logger.debug(`⚠️ Using stale price from Supabase: $${latestData.price_usd}`);
         return latestData.price_usd;
       }
 
       throw new Error('No price data available');
     } catch (error) {
       logger.error('❌ Error fetching current price:', error);
-      throw error; // Throw instead of returning mock price
+      throw error;
     }
   }
 
