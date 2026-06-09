@@ -153,29 +153,92 @@
     </div>
   </section>
 
-  <!-- WAT WE DOEN — 3 blokjes -->
+  <!-- WAT WE DOEN — 3 hover kaarten -->
+  <style>
+    .flip-card { perspective: 1000px; }
+    .flip-inner {
+      position: relative; transition: transform 0.45s ease;
+      transform-style: preserve-3d;
+    }
+    .flip-card:hover .flip-inner { transform: translateY(-10px); }
+    .extra-info {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.4s ease, opacity 0.4s ease, margin-top 0.4s ease;
+      opacity: 0; margin-top: 0;
+    }
+    .flip-card:hover .extra-info {
+      max-height: 200px; opacity: 1; margin-top: 12px;
+    }
+    .flip-card:hover .card-inner {
+      border-color: #f97316; box-shadow: 0 12px 32px rgba(249,115,22,0.12);
+    }
+    .card-inner { transition: border-color 0.3s, box-shadow 0.3s; }
+  </style>
   <section class="bg-gray-50 py-16 px-6">
     <div class="max-w-5xl mx-auto">
       <div class="text-center mb-10">
         <h2 class="text-3xl font-black text-gray-900 mb-3">Hoe wij jou helpen</h2>
-        <p class="text-gray-600">Stap voor stap, op jouw tempo, met persoonlijke begeleiding</p>
+        <p class="text-gray-600">Beweeg over een kaart voor meer uitleg</p>
       </div>
       <div class="grid md:grid-cols-3 gap-6">
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-4 text-2xl">🤝</div>
-          <h3 class="font-bold text-lg text-gray-900 mb-2">1-op-1 begeleiding</h3>
-          <p class="text-gray-600 text-sm leading-relaxed">Persoonlijk gesprek met Giovanni. We kijken samen naar jouw situatie, doelen en risicoprofiel. Geen standaard advies.</p>
+
+        <!-- Kaart 1 -->
+        <div class="flip-card cursor-default">
+          <div class="flip-inner">
+            <div class="card-inner bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-4 text-2xl">🤝</div>
+              <h3 class="font-bold text-lg text-gray-900 mb-2">1-op-1 begeleiding</h3>
+              <p class="text-gray-600 text-sm leading-relaxed">Persoonlijk gesprek zodat jij begrijpt wat je doet. Wij dragen kennis over — jij neemt zelf de beslissingen.</p>
+              <div class="extra-info border-t border-gray-100 pt-3">
+                <ul class="text-sm text-gray-500 space-y-1.5">
+                  <li>✓ Jij leert hoe Bitcoin werkt</li>
+                  <li>✓ We kijken samen naar jouw situatie</li>
+                  <li>✓ Geen advies, wel inzicht</li>
+                  <li>✓ Gratis kennismakingsgesprek van 20 min</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4 text-2xl">🔐</div>
-          <h3 class="font-bold text-lg text-gray-900 mb-2">Eigen beheer</h3>
-          <p class="text-gray-600 text-sm leading-relaxed">Jij houdt je eigen keys. Bitcoin op een exchange is niet jouw Bitcoin. Wij helpen je een hardware wallet instellen.</p>
+
+        <!-- Kaart 2 -->
+        <div class="flip-card cursor-default">
+          <div class="flip-inner">
+            <div class="card-inner bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4 text-2xl">🔐</div>
+              <h3 class="font-bold text-lg text-gray-900 mb-2">Eigen beheer</h3>
+              <p class="text-gray-600 text-sm leading-relaxed">Jij houdt je eigen keys. Bitcoin op een exchange is niet jouw Bitcoin. Wij helpen je een hardware wallet instellen.</p>
+              <div class="extra-info border-t border-gray-100 pt-3">
+                <ul class="text-sm text-gray-500 space-y-1.5">
+                  <li>✓ Geen exchange risico</li>
+                  <li>✓ Jij bent de enige eigenaar</li>
+                  <li>✓ Ledger hardware wallet setup</li>
+                  <li>✓ Stap voor stap begeleid</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4 text-2xl">📈</div>
-          <h3 class="font-bold text-lg text-gray-900 mb-2">Slimme DCA strategie</h3>
-          <p class="text-gray-600 text-sm leading-relaxed">Maandelijks een vast bedrag investeren. Geen timing, geen stress. Bewezen strategie voor lange termijn groei.</p>
+
+        <!-- Kaart 3 -->
+        <div class="flip-card cursor-default">
+          <div class="flip-inner">
+            <div class="card-inner bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4 text-2xl">📈</div>
+              <h3 class="font-bold text-lg text-gray-900 mb-2">Slimme instapstrategie</h3>
+              <p class="text-gray-600 text-sm leading-relaxed">Leer het juiste moment te herkennen. Rustig instappen, je inleg het werk laten doen en ontspannen achterover zitten.</p>
+              <div class="extra-info border-t border-gray-100 pt-3">
+                <ul class="text-sm text-gray-500 space-y-1.5">
+                  <li>✓ DCA: maandelijks vast bedrag</li>
+                  <li>✓ Juiste instapmoment herkennen</li>
+                  <li>✓ Geen paniek bij dips</li>
+                  <li>✓ Lange termijn denken</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
+
       </div>
     </div>
   </section>
