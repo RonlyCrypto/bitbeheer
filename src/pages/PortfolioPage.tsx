@@ -604,21 +604,29 @@ export default function PortfolioPage() {
 
   const addWallet = async () => {
     if (newWalletAddress && newWalletName) {
-      // Valideer Bitcoin adres
-      if (!bitcoinApiService.validateBitcoinAddress(newWalletAddress)) {
-        alert('Ongeldig Bitcoin adres');
+      // Valideer Bitcoin adres — trim whitespace eerst
+      const trimmedAddress = newWalletAddress.trim();
+      if (!bitcoinApiService.validateBitcoinAddress(trimmedAddress)) {
+        alert(`Ongeldig Bitcoin adres: "${trimmedAddress}"\n\nVerwacht: begint met 1, 3 of bc1`);
         return;
       }
 
       setLoading(true);
       try {
-        // 1. SNELLE OPSLAG: upsert zodat het ook werkt als wallet eerder verwijderd was
+        // 1. Verwijder eventuele stale rij (werkt ook als die niet bestaat)
+        await supabase
+          .from('wallets')
+          .delete()
+          .eq('email', effectiveUserEmail)
+          .eq('address', trimmedAddress);
+
+        // 2. Vers invoegen
         const { error: insertError } = await supabase
           .from('wallets')
-          .upsert([{
+          .insert([{
             email: effectiveUserEmail,
-            address: newWalletAddress,
-            name: newWalletName,
+            address: trimmedAddress,
+            name: newWalletName.trim(),
             type: 'bitcoin',
             balance: 0,
             transaction_count: 0,
@@ -627,24 +635,29 @@ export default function PortfolioPage() {
             first_seen: null,
             last_seen: new Date().toISOString(),
             wallet_data: null,
+            created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
-          }], { onConflict: 'email,address' });
+          }]);
 
         if (insertError) {
-          console.error('Insert error:', insertError);
-          alert(`Kon wallet niet toevoegen: ${insertError.message}`);
+          console.error('Insert error details:', JSON.stringify(insertError));
+          alert(`Kon wallet niet toevoegen:\n${insertError.message}\n\nCode: ${insertError.code}`);
           return;
         }
+
+        // Update newWalletAddress in rest van de functie naar getrimde versie
+        // (lokale variabele gebruiken)
+        const walletAddressToUse = trimmedAddress;
 
         // 2. OPTIMISTIC UI: Add wallet to UI with placeholder data
         const newWallet: WalletData = {
           id: Date.now().toString(),
-          name: newWalletName,
-          address: newWalletAddress,
+          name: newWalletName.trim(),
+          address: walletAddressToUse,
           balance: 0,
           transactions: 0,
           firstSeen: new Date().toISOString().split('T')[0],
-          realData: undefined // Will be loaded in background
+          realData: undefined
         };
 
         setWallets([...wallets, newWallet]);
@@ -655,7 +668,7 @@ export default function PortfolioPage() {
         // Set initial loading state for this wallet
         setWalletSyncProgress(prev => {
           const newMap = new Map(prev);
-          newMap.set(newWalletAddress, {
+          newMap.set(walletAddressToUse, {
             totalTransactions: 0,
             loadedTransactions: 0,
             isSyncing: true
@@ -663,32 +676,27 @@ export default function PortfolioPage() {
           return newMap;
         });
 
-        // 3. BACKGROUND PROCESSING: Start sync met nieuwe service
+        // 3. BACKGROUND PROCESSING: Start sync
         setTimeout(async () => {
           try {
-            // Gebruik nieuwe walletDataService - start background sync
             const walletDataWithProgress = await walletDataService.getWalletData(
-              newWalletAddress,
+              walletAddressToUse,
               effectiveUserEmail!,
               (progress) => {
-                // Update progress state
                 setWalletSyncProgress(prev => {
                   const newMap = new Map(prev);
-                  newMap.set(newWalletAddress, progress);
+                  newMap.set(walletAddressToUse, progress);
                   return newMap;
                 });
-
-                // Reload wallets wanneer sync updates (elke 10 transacties na eerste batch)
-                if (progress.loadedTransactions > 0 && (progress.loadedTransactions === 10 || progress.loadedTransactions % 10 === 0)) {
+                if (progress.loadedTransactions > 0 && progress.loadedTransactions % 25 === 0) {
                   loadWallets();
                 }
               }
             );
 
-            // Update UI met data (ook als sync nog bezig is)
             setWallets(prevWallets =>
               prevWallets.map(w =>
-                w.address === newWalletAddress
+                w.address === walletAddressToUse
                   ? {
                       ...w,
                       balance: walletDataWithProgress.balance,
@@ -699,13 +707,11 @@ export default function PortfolioPage() {
                   : w
               )
             );
-            
-            console.log('✅ Wallet sync started:', newWalletAddress);
+            console.log('✅ Wallet sync started:', walletAddressToUse);
           } catch (error) {
             console.error('⚠️ Background wallet sync failed:', error);
-            // Wallet is still added, just without data - user can refresh later
           }
-        }, 500); // Small delay to not block UI
+        }, 500);
       } catch (error) {
         console.error('Error adding wallet:', error);
         alert('Kon wallet niet toevoegen. Probeer opnieuw.');
