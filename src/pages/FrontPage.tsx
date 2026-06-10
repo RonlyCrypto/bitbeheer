@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { bitcoinApiService } from '../services/bitcoinApiService'; // fallback voor prijs
-import LoginRegister from '../components/LoginRegister';
 
 const PREV_ATH = 69000; // Nov 2021 — historische referentie, blijft vast
 
@@ -203,7 +202,9 @@ export default function FrontPage() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <LoginRegister />
+          <Link to="/aanmelden" className="bg-white text-orange-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-orange-50 transition">
+            Inloggen
+          </Link>
         </div>
       </nav>
 
