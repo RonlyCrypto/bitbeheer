@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { ArrowRight } from 'lucide-react';
+import LoginRegister from '../components/LoginRegister';
 import { createUser } from '../lib/supabase';
 import { DirectEmailService } from '../services/directEmailService';
 import { checkHoneypot, checkFormTiming, generateMathChallenge, verifyMathChallenge } from '../utils/botProtection';
@@ -233,9 +234,12 @@ export default function SoonOnlinePage() {
           <div className="font-bold text-lg leading-tight">BitBeheer</div>
           <div className="text-orange-100 text-xs">Persoonlijke Bitcoin begeleiding</div>
         </div>
-        <div className="flex items-center gap-2 bg-white bg-opacity-20 border border-white border-opacity-30 px-3 py-1.5 rounded-full text-sm font-medium">
-          <span className="w-2 h-2 bg-white rounded-full inline-block animate-pulse" />
-          Binnenkort live
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-white bg-opacity-20 border border-white border-opacity-30 px-3 py-1.5 rounded-full text-sm font-medium">
+            <span className="w-2 h-2 bg-white rounded-full inline-block animate-pulse" />
+            Binnenkort live
+          </div>
+          <LoginRegister />
         </div>
       </nav>
 
