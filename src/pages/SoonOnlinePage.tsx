@@ -1,507 +1,418 @@
-import { Bitcoin, Clock, Shield, Users, Mail, ArrowRight, CheckCircle, AlertCircle, User } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { useState, useRef, useEffect } from 'react';
-import { protectFormSubmission, createHoneypotField, checkHoneypot, checkFormTiming, generateMathChallenge, verifyMathChallenge, generateFingerprint } from '../utils/botProtection';
-import { createUser, createFormSubmission } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { useState, useEffect, useRef } from 'react';
+import { ArrowRight } from 'lucide-react';
+import { createUser } from '../lib/supabase';
 import { DirectEmailService } from '../services/directEmailService';
+import { checkHoneypot, checkFormTiming, generateMathChallenge, verifyMathChallenge } from '../utils/botProtection';
 
-export default function SoonOnlinePage() {
-  const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [message, setMessage] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  
-  // Bot protection state
-  const [mathChallenge, setMathChallenge] = useState<{ question: string; answer: number } | null>(null);
-  const [mathAnswer, setMathAnswer] = useState('');
-  const [formStartTime] = useState(Date.now());
-  const honeypotRef = useRef<HTMLInputElement | null>(null);
+const PREV_ATH = 69000;
+const LAST_ATH = 108268;
 
-  // Generate math challenge on component mount
+function formatUsd(n: number) {
+  return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
+
+function useLiveBtcPrice() {
+  const [price, setPrice] = useState<number | null>(null);
+  const [change24h, setChange24h] = useState<number | null>(null);
+
   useEffect(() => {
-    // Only show math challenge for suspicious behavior (random 10% chance)
-    if (Math.random() < 0.1) {
-      setMathChallenge(generateMathChallenge());
-    }
+    fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true', {
+      signal: AbortSignal.timeout(5000),
+    })
+      .then(r => r.json())
+      .then(d => {
+        setPrice(d.bitcoin.usd);
+        setChange24h(d.bitcoin.usd_24h_change);
+      })
+      .catch(() => {});
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitStatus('idle');
+  return { price, change24h };
+}
 
-    // Simple validation
-    if (!email || !email.includes('@')) {
-      setSubmitStatus('error');
-      setIsSubmitting(false);
-      return;
-    }
+function MarktpositieMini({ price }: { price: number }) {
+  const pctVanLastATH = (price / LAST_ATH) * 100;
+  const onderVorigATH = price < PREV_ATH;
+  const balPos = Math.min(Math.max(((price - PREV_ATH * 0.3) / (LAST_ATH - PREV_ATH * 0.3)) * 100, 2), 96);
 
-    // Bot protection checks
-    try {
-      // Check honeypot
-      if (honeypotRef.current && checkHoneypot({ website: honeypotRef.current.value })) {
-        console.log('Bot detected: honeypot filled');
-        setSubmitStatus('error');
-        setIsSubmitting(false);
-        return;
-      }
+  let fase = 'Accumulatiefase';
+  let faseKleur = 'green';
+  let uitleg = 'Bitcoin zit onder de vorige ATH. Historisch gezien een goede koopperiode.';
 
-      // Check form timing (must be filled in at least 3 seconds)
-      if (!checkFormTiming(formStartTime, 3000)) {
-        console.log('Bot detected: form filled too quickly');
-        setSubmitStatus('error');
-        setIsSubmitting(false);
-        return;
-      }
+  if (price > LAST_ATH) {
+    fase = 'Prijsontdekking'; faseKleur = 'red';
+    uitleg = 'Bitcoin staat op een nieuw all-time high. Wees voorzichtig.';
+  } else if (pctVanLastATH > 85) {
+    fase = 'Hoog risico'; faseKleur = 'orange';
+    uitleg = 'Bitcoin nadert het laatste all-time high. Pas op voor hype.';
+  } else if (price > PREV_ATH) {
+    fase = 'Herstelfase'; faseKleur = 'yellow';
+    uitleg = 'Bitcoin is boven de vorige ATH, maar nog onder het laatste record.';
+  }
 
-      // Check math challenge if present
-      if (mathChallenge && !verifyMathChallenge(mathAnswer, mathChallenge.answer)) {
-        console.log('Bot detected: math challenge failed');
-        setSubmitStatus('error');
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Bot protection simplified for testing
-      console.log('Bot protection checks passed');
-    } catch (error) {
-      console.error('Bot protection check failed:', error);
-      // Continue with submission if protection fails
-    }
-
-            try {
-              // Save user to Supabase
-              const userData = {
-                email: email.trim().toLowerCase(),
-                name: name?.trim() || 'Niet opgegeven',
-                message: message?.trim() || 'Geen bericht',
-                category: 'opening_website'
-              };
-
-              const { data: user, error: userError } = await createUser(userData);
-              
-              if (userError) {
-                console.error('Failed to save user to Supabase:', userError);
-                // Check if it's a duplicate email error
-                if (userError.message && userError.message.includes('duplicate')) {
-                  setSubmitStatus('error');
-                  setIsSubmitting(false);
-                  return;
-                }
-                // For other errors, try localStorage fallback
-                console.log('Using localStorage fallback...');
-                try {
-                  const emailData = {
-                    id: Date.now().toString(),
-                    email: email.trim().toLowerCase(),
-                    name: name?.trim() || 'Niet opgegeven',
-                    message: message?.trim() || 'Geen bericht',
-                    category: 'opening_website',
-                    timestamp: new Date().toISOString(),
-                    date: new Date().toLocaleString('nl-NL')
-                  };
-
-                  const existingEmails = JSON.parse(localStorage.getItem('bitbeheer_emails') || '[]');
-                  existingEmails.push(emailData);
-                  localStorage.setItem('bitbeheer_emails', JSON.stringify(existingEmails));
-                  // User saved to localStorage (silent)
-                } catch (fallbackError) {
-                  console.error('Fallback save failed:', fallbackError);
-                  setSubmitStatus('error');
-                  setIsSubmitting(false);
-                  return;
-                }
-              } else {
-                // User saved to Supabase (silent - no sensitive data)
-              }
-
-              // Send notification email to admin using direct service
-              try {
-                const emailSuccess = await DirectEmailService.sendNotificationRequest(
-                  email.trim().toLowerCase(),
-                  name?.trim() || 'Niet opgegeven',
-                  message?.trim() || 'Geen bericht'
-                );
-
-                if (emailSuccess) {
-                  // Notification email sent (silent)
-                } else {
-                  // Failed to send notification email (logged silently)
-                }
-              } catch (emailError) {
-                // Error sending notification email (logged silently)
-                // Continue even if email fails
-              }
-
-              // Send confirmation email to user
-              try {
-                const confirmationSuccess = await DirectEmailService.sendNotificationConfirmation(
-                  email.trim().toLowerCase(),
-                  name?.trim() || 'Niet opgegeven'
-                );
-
-                if (confirmationSuccess) {
-                  // Confirmation email sent (silent)
-                } else {
-                  // Failed to send confirmation email (logged silently)
-                }
-              } catch (confirmationError) {
-                // Error sending confirmation email (logged silently)
-                // Continue even if confirmation email fails
-              }
-
-              setSubmitStatus('success');
-              setEmail('');
-              setName('');
-              setMessage('');
-            } catch (error) {
-              console.error('Error submitting form:', error);
-              setSubmitStatus('error');
-            } finally {
-              setIsSubmitting(false);
-            }
+  const badge: Record<string, string> = {
+    green:  'bg-green-50 border-green-200 text-green-700',
+    yellow: 'bg-yellow-50 border-yellow-200 text-yellow-700',
+    orange: 'bg-orange-50 border-orange-200 text-orange-700',
+    red:    'bg-red-50 border-red-200 text-red-700',
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-        <div className="container mx-auto px-4 py-20">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="flex justify-center mb-8">
-              <div className="bg-white bg-opacity-20 p-4 rounded-2xl backdrop-blur-sm">
-                <Bitcoin className="w-16 h-16" />
-              </div>
-            </div>
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
-              Binnenkort Online
-            </h1>
-            <p className="text-xl md:text-2xl text-orange-100 mb-8 max-w-3xl mx-auto leading-relaxed">
-              BitBeheer - Persoonlijke Bitcoin Begeleiding
-            </p>
-            <div className="bg-white bg-opacity-20 rounded-2xl p-6 backdrop-blur-sm max-w-2xl mx-auto">
-              <div className="flex items-center justify-center gap-3 mb-4">
-                <Clock className="w-8 h-8" />
-                <span className="text-2xl font-bold">We zijn bijna klaar!</span>
-              </div>
-              <p className="text-orange-100">
-                We werken hard aan de laatste details om je de beste Bitcoin begeleiding te kunnen bieden.
-              </p>
-            </div>
-          </div>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-lg p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-7 h-7 bg-orange-100 rounded-lg flex items-center justify-center">
+          <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
         </div>
-      </section>
+        <span className="font-bold text-gray-900 text-sm">Marktpositie</span>
+        <span className="ml-auto text-xs text-gray-400">Waar staat Bitcoin nu?</span>
+      </div>
 
-      {/* What's Coming Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                Wat komt er aan?
-              </h2>
-                          <p className="text-xl text-gray-600 leading-relaxed">
-                            Persoonlijke 1-op-1 begeleiding bij het investeren in Bitcoin.
-                          </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8 mb-16">
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8 text-center">
-                <div className="bg-orange-500 p-4 rounded-xl w-fit mx-auto mb-6">
-                  <Shield className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">Veilig Bitcoin Kopen</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Leer stap voor stap hoe je veilig Bitcoin koopt via betrouwbare exchanges en wat je moet weten voordat je begint.
-                </p>
-              </div>
-
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-8 text-center">
-                <div className="bg-blue-500 p-4 rounded-xl w-fit mx-auto mb-6">
-                  <Bitcoin className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">Eigen Beheer</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Het belangrijkste onderdeel: hoe bewaar je je Bitcoin veilig en houd je volledige controle over je eigen geld.
-                </p>
-              </div>
-
-              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-8 text-center">
-                <div className="bg-green-500 p-4 rounded-xl w-fit mx-auto mb-6">
-                  <Users className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">Persoonlijke Begeleiding</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  1-op-1 begeleiding op jouw tempo en niveau, met voorbeelden en echte data.
-                </p>
-              </div>
-            </div>
-          </div>
+      <div className="grid grid-cols-3 gap-2 mb-4 text-center text-xs">
+        <div className="bg-gray-50 rounded-xl p-2.5">
+          <div className="text-gray-400 mb-1">Vorige ATH</div>
+          <div className="font-bold text-gray-800">{formatUsd(PREV_ATH)}</div>
+          <div className="text-gray-400">Nov 2021</div>
         </div>
-      </section>
-
-      {/* Notification Form Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto text-center">
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <div className="bg-orange-100 p-3 rounded-xl">
-                <Mail className="w-8 h-8 text-orange-600" />
-              </div>
-              <h2 className="text-3xl font-bold text-gray-900">
-                Blijf Op De Hoogte
-              </h2>
-            </div>
-            <p className="text-gray-600 mb-8">
-              Wil je op de hoogte blijven van wanneer we live gaan? Laat je gegevens achter en we sturen je een bericht zodra we klaar zijn.
-            </p>
-
-            <div className="bg-white rounded-2xl p-8 shadow-lg">
-              {/* Success Message */}
-              {submitStatus === 'success' && (
-                <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-lg flex items-center justify-center gap-3 mb-6">
-                  <CheckCircle className="w-6 h-6" />
-                  <span className="text-lg font-medium">Bedankt! We houden je op de hoogte.</span>
-                </div>
-              )}
-              
-              {/* Form */}
-              {submitStatus !== 'success' && (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  {/* Error Messages */}
-                  {submitStatus === 'error' && (
-                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
-                      <AlertCircle className="w-5 h-5" />
-                      <span>Er is een fout opgetreden. Controleer je e-mail adres.</span>
-                    </div>
-                  )}
-
-                  {/* Honeypot field (hidden) */}
-                  <input
-                    ref={honeypotRef}
-                    type="text"
-                    name="website"
-                    style={{ display: 'none' }}
-                    tabIndex={-1}
-                    autoComplete="off"
-                    aria-hidden="true"
-                  />
-
-                  <div>
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Je naam (optioneel)"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Je e-mailadres *"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <textarea
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      placeholder="Extra bericht (optioneel)"
-                      rows={3}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                  </div>
-
-                  {/* Math Challenge (only show if needed) */}
-                  {mathChallenge && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Beveiligingsvraag: {mathChallenge.question}
-                      </label>
-                      <input
-                        type="number"
-                        value={mathAnswer}
-                        onChange={(e) => setMathAnswer(e.target.value)}
-                        placeholder="Je antwoord"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                        required
-                      />
-                    </div>
-                  )}
-                
-                  <button
-                    type="submit"
-                    disabled={isSubmitting || !email}
-                    className="w-full bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        Versturen...
-                      </>
-                    ) : (
-                      <>
-                        <Mail className="w-5 h-5" />
-                        Notificatie Aanvragen
-                        <ArrowRight className="w-5 h-5" />
-                      </>
-                    )}
-                  </button>
-                  
-                  <p className="text-sm text-gray-500 text-center">
-                    Je e-mail wordt automatisch opgeslagen en we sturen je een notificatie zodra we live gaan.
-                  </p>
-                </form>
-              )}
-            </div>
-          </div>
+        <div className="bg-orange-50 rounded-xl p-2.5 border border-orange-200">
+          <div className="text-orange-600 font-medium mb-1">Nu · Live</div>
+          <div className="font-bold text-orange-600 text-base">{formatUsd(price)}</div>
+          <div className="text-gray-400">{pctVanLastATH.toFixed(0)}% van ATH</div>
         </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-300 py-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-              <div className="text-center md:text-left">
-                <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
-                  <Bitcoin className="w-8 h-8 text-orange-500" />
-                  <h3 className="text-2xl font-bold text-white">BitBeheer</h3>
-                </div>
-                <p className="text-gray-400 mb-4">
-                  Persoonlijke begeleiding bij het investeren in Bitcoin.
-                </p>
-                <div className="flex items-center justify-center md:justify-start gap-6 text-sm">
-                  <span>© 2026 BitBeheer</span>
-                  <span>•</span>
-                  <span>Binnenkort online</span>
-                </div>
-              </div>
-              
-            </div>
-          </div>
-        </div>
-      </footer>
-
-      {/* Hidden Admin Access - Ezelsoortje */}
-      <div className="fixed bottom-4 right-4 z-50">
-        <div 
-          className="group cursor-pointer"
-          onClick={() => {
-            // Create a beautiful modal for login
-            const modal = document.createElement('div');
-            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-            modal.innerHTML = `
-              <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl">
-                <div class="text-center mb-6">
-                  <div class="bg-orange-100 p-3 rounded-xl w-fit mx-auto mb-4">
-                    <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                    </svg>
-                  </div>
-                  <h3 class="text-2xl font-bold text-gray-900 mb-2">Admin Login</h3>
-                  <p class="text-gray-600">Voer je wachtwoord in om toegang te krijgen</p>
-                </div>
-                <form id="adminLoginForm" class="space-y-4">
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Wachtwoord</label>
-                    <input 
-                      type="password" 
-                      id="adminPassword" 
-                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                      placeholder="Admin wachtwoord"
-                      required
-                    />
-                  </div>
-                  <div class="flex gap-3">
-                    <button 
-                      type="submit" 
-                      class="flex-1 bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-                    >
-                      Inloggen
-                    </button>
-                    <button 
-                      type="button" 
-                      id="cancelLogin"
-                      class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      Annuleren
-                    </button>
-                  </div>
-                </form>
-              </div>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            const form = modal.querySelector('#adminLoginForm');
-            const passwordInput = modal.querySelector('#adminPassword');
-            const cancelBtn = modal.querySelector('#cancelLogin');
-            
-            form.addEventListener('submit', async (e) => {
-              e.preventDefault();
-              const password = passwordInput.value;
-              
-              // Simple password check for now
-              if (password === 'admin123') {
-                localStorage.setItem('admin_authenticated', 'true');
-                localStorage.setItem('user_type', 'admin');
-                document.body.removeChild(modal);
-                alert('Admin login succesvol! Je wordt doorgestuurd naar de admin pagina.');
-                window.location.href = '/admin';
-              } else if (password === 'test123') {
-                localStorage.setItem('admin_authenticated', 'true');
-                localStorage.setItem('user_type', 'test');
-                document.body.removeChild(modal);
-                alert('Test gebruiker login succesvol! Je wordt doorgestuurd naar de admin pagina.');
-                window.location.href = '/admin';
-              } else {
-                alert('Onjuist wachtwoord. Probeer opnieuw.');
-              }
-            });
-            
-            cancelBtn.addEventListener('click', () => {
-              document.body.removeChild(modal);
-            });
-            
-            // Close on outside click
-            modal.addEventListener('click', (e) => {
-              if (e.target === modal) {
-                document.body.removeChild(modal);
-              }
-            });
-          }}
-        >
-          {/* Ezelsoortje - Hidden by default, shows on hover */}
-          <div className="relative">
-            {/* Main circle */}
-            <div className="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center group-hover:bg-orange-600 transition-all duration-300 group-hover:scale-110">
-              <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
-                <div className="w-3 h-3 bg-gray-600 rounded-full group-hover:bg-orange-600 transition-colors"></div>
-              </div>
-            </div>
-            
-            {/* Ezelsoortje text - Hidden by default, shows on hover */}
-            <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <div className="bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-                Admin Login
-              </div>
-              {/* Arrow pointing down */}
-              <div className="absolute top-full right-2 w-0 h-0 border-l-2 border-r-2 border-t-2 border-transparent border-t-gray-800"></div>
-            </div>
-          </div>
+        <div className="bg-gray-50 rounded-xl p-2.5">
+          <div className="text-gray-400 mb-1">Laatste ATH</div>
+          <div className="font-bold text-gray-800">{formatUsd(LAST_ATH)}</div>
+          <div className="text-gray-400">Jan 2025</div>
         </div>
       </div>
+
+      <div className="mb-3">
+        <div className="relative h-3 rounded-full overflow-hidden" style={{
+          background: 'linear-gradient(to right, #22c55e 0%, #86efac 25%, #fbbf24 50%, #f97316 75%, #ef4444 100%)'
+        }}>
+          <div className="absolute top-0 bottom-0 flex items-center" style={{ left: `${balPos}%` }}>
+            <div className="w-3.5 h-3.5 bg-white rounded-full border-2 border-gray-800 shadow -translate-x-1/2" />
+          </div>
+        </div>
+        <div className="flex justify-between text-xs text-gray-400 mt-1">
+          <span>Accumulatie</span><span>Herstel</span><span>Hoog risico</span>
+        </div>
+      </div>
+
+      <div className={`border rounded-xl p-3 ${badge[faseKleur]}`}>
+        <div className="font-bold text-xs">✓ {fase}</div>
+        <p className="text-xs mt-0.5">{uitleg}</p>
+        {onderVorigATH && (
+          <p className="text-xs mt-1 font-medium">
+            {((1 - price / PREV_ATH) * 100).toFixed(1)}% onder de vorige ATH van {formatUsd(PREV_ATH)}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function SoonOnlinePage() {
+  const { price, change24h } = useLiveBtcPrice();
+  const isPositive = (change24h ?? 0) >= 0;
+
+  // Form state
+  const [quickEmail, setQuickEmail] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [formStartTime] = useState(Date.now());
+  const honeypotRef = useRef<HTMLInputElement>(null);
+  const [mathChallenge] = useState(() => Math.random() < 0.1 ? generateMathChallenge() : null);
+  const [mathAnswer, setMathAnswer] = useState('');
+
+  const submitForm = async (submittedEmail: string, submittedName: string, submittedMessage: string) => {
+    if (!submittedEmail || !submittedEmail.includes('@')) {
+      setErrorMsg('Vul een geldig e-mailadres in.');
+      setStatus('error');
+      return;
+    }
+
+    if (honeypotRef.current && checkHoneypot({ website: honeypotRef.current.value })) return;
+    if (!checkFormTiming(formStartTime, 3000)) return;
+    if (mathChallenge && !verifyMathChallenge(mathAnswer, mathChallenge.answer)) {
+      setErrorMsg('Beveiligingsvraag onjuist beantwoord.');
+      setStatus('error');
+      return;
+    }
+
+    setStatus('loading');
+    setErrorMsg('');
+
+    try {
+      await createUser({
+        email: submittedEmail.trim().toLowerCase(),
+        name: submittedName?.trim() || 'Niet opgegeven',
+        message: submittedMessage?.trim() || 'Geen bericht',
+        category: 'opening_website',
+      });
+
+      await DirectEmailService.sendNotificationRequest(
+        submittedEmail.trim().toLowerCase(),
+        submittedName?.trim() || 'Niet opgegeven',
+        submittedMessage?.trim() || 'Geen bericht'
+      ).catch(() => {});
+
+      await DirectEmailService.sendNotificationConfirmation(
+        submittedEmail.trim().toLowerCase(),
+        submittedName?.trim() || 'Niet opgegeven'
+      ).catch(() => {});
+
+      setStatus('success');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('duplicate')) {
+        setErrorMsg('Dit e-mailadres is al aangemeld.');
+      } else {
+        setErrorMsg('Er ging iets mis. Probeer het opnieuw.');
+      }
+      setStatus('error');
+    }
+  };
+
+  const handleQuickSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    submitForm(quickEmail, '', '');
+  };
+
+  const handleFullSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    submitForm(email, name, message);
+  };
+
+  return (
+    <div className="min-h-screen bg-white text-gray-900" style={{ fontFamily: 'Inter, sans-serif' }}>
+
+      {/* NAVBAR */}
+      <nav className="bg-orange-500 text-white px-6 py-4 flex items-center justify-between shadow-md">
+        <div>
+          <div className="font-bold text-lg leading-tight">BitBeheer</div>
+          <div className="text-orange-100 text-xs">Persoonlijke Bitcoin begeleiding</div>
+        </div>
+        <div className="flex items-center gap-2 bg-white bg-opacity-20 border border-white border-opacity-30 px-3 py-1.5 rounded-full text-sm font-medium">
+          <span className="w-2 h-2 bg-white rounded-full inline-block animate-pulse" />
+          Binnenkort live
+        </div>
+      </nav>
+
+      {/* HERO */}
+      <section className="min-h-[90vh] flex items-center px-6 py-20" style={{
+        background: 'radial-gradient(ellipse at 70% 30%, rgba(249,115,22,0.10) 0%, transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(249,115,22,0.05) 0%, transparent 50%)'
+      }}>
+        <div className="max-w-6xl mx-auto w-full grid md:grid-cols-2 gap-16 items-center">
+
+          {/* Links */}
+          <div>
+            <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 text-orange-700 text-sm font-medium px-3 py-1.5 rounded-full mb-6">
+              <span className="w-2 h-2 bg-orange-500 rounded-full inline-block animate-pulse" />
+              We zijn bijna klaar
+            </div>
+
+            <h1 className="text-5xl md:text-6xl font-black text-gray-900 leading-tight mb-5">
+              Binnenkort<br />
+              <span className="text-orange-500">Online.</span>
+            </h1>
+
+            <p className="text-lg text-gray-600 mb-6 leading-relaxed max-w-md">
+              We werken hard aan de laatste details om je de beste Bitcoin begeleiding van Nederland te kunnen bieden.
+              Persoonlijk, eerlijk en in eigen beheer.
+            </p>
+
+            {/* Checkpunten */}
+            <div className="space-y-3 mb-8">
+              {[
+                '1-op-1 begeleiding voor Bitcoin beginners',
+                'Bitcoin in eigen beheer via hardware wallet',
+                'Slimme instapstrategie en marktanalyse',
+              ].map(item => (
+                <div key={item} className="flex items-center gap-3 text-gray-700">
+                  <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-3.5 h-3.5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-medium">{item}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Snelle aanmelding */}
+            {status === 'success' ? (
+              <div className="bg-green-50 border border-green-200 rounded-2xl p-5 text-center">
+                <div className="text-2xl mb-2">🎉</div>
+                <p className="font-bold text-green-800">Aangemeld!</p>
+                <p className="text-sm text-green-700 mt-1">We sturen je een bericht zodra we live zijn.</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                <p className="text-sm font-semibold text-gray-700 mb-3">
+                  Meld je aan en wij laten je als eerste weten wanneer we live gaan:
+                </p>
+                <form onSubmit={handleQuickSubmit} className="flex gap-3">
+                  <input ref={honeypotRef as React.RefObject<HTMLInputElement>} type="text" name="website"
+                    style={{ display: 'none' }} tabIndex={-1} autoComplete="off" aria-hidden="true" />
+                  <input type="email" value={quickEmail} onChange={e => setQuickEmail(e.target.value)}
+                    placeholder="jouw@email.nl"
+                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm transition focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100" />
+                  <button type="submit" disabled={status === 'loading'}
+                    className="bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white px-5 py-3 rounded-xl font-semibold text-sm transition shadow-md flex items-center gap-2 whitespace-nowrap">
+                    Houd me op de hoogte
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </form>
+                {status === 'error' && <p className="text-red-500 text-xs mt-2">{errorMsg}</p>}
+                <p className="text-xs text-gray-400 mt-2">Geen spam. Alleen een berichtje als we live zijn.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Rechts: live prijs + markt */}
+          <div className="space-y-4">
+            {/* Live prijs */}
+            <div className="bg-gray-900 text-white rounded-2xl p-5 flex items-center gap-4 shadow-xl">
+              <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center text-xl font-black flex-shrink-0">₿</div>
+              <div className="flex-1">
+                <div className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Live Bitcoin prijs</div>
+                <div className="text-2xl font-black">{price ? formatUsd(price) : 'Laden...'}</div>
+              </div>
+              {change24h !== null && (
+                <div className={`text-sm font-semibold px-3 py-1.5 rounded-lg ${isPositive ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                  {isPositive ? '▲ +' : '▼ '}{Math.abs(change24h).toFixed(1)}%
+                </div>
+              )}
+            </div>
+
+            {/* Marktpositie */}
+            {price ? <MarktpositieMini price={price} /> : (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-lg p-5 h-48 flex items-center justify-center text-gray-400 text-sm">
+                Marktdata laden...
+              </div>
+            )}
+
+            {/* Quote */}
+            <div className="bg-gray-900 text-white rounded-2xl p-5">
+              <p className="text-sm leading-relaxed italic">
+                "Echte winners kopen als er <span className="text-orange-400 font-semibold">angst</span> is.
+                De massa koopt pas als het al in het nieuws is, dan is het te laat."
+              </p>
+              <div className="flex items-center gap-2 mt-3">
+                <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold">B</div>
+                <span className="text-xs text-gray-400">BitBeheer</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* WAT KOMT ER AAN */}
+      <section className="bg-gray-50 py-16 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-black text-gray-900 mb-3">Wat komt er aan?</h2>
+            <p className="text-gray-600">Alles wat je nodig hebt om verstandig in Bitcoin te investeren</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              { emoji: '🤝', color: 'bg-orange-100', title: '1-op-1 begeleiding', text: 'Persoonlijk gesprek zodat jij begrijpt wat je doet. Wij dragen kennis over, jij neemt zelf de beslissingen.' },
+              { emoji: '🔐', color: 'bg-blue-100', title: 'Eigen beheer', text: 'Jij houdt je eigen keys. Bitcoin op een exchange is niet jouw Bitcoin. Wij helpen je een hardware wallet instellen.' },
+              { emoji: '📈', color: 'bg-green-100', title: 'Slimme instapstrategie', text: 'Leer het juiste moment te herkennen. Rustig instappen, je inleg het werk laten doen en ontspannen achterover zitten.' },
+            ].map(card => (
+              <div key={card.title} className="group cursor-default">
+                <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm transition-all duration-300 group-hover:-translate-y-2 group-hover:border-orange-300 group-hover:shadow-lg">
+                  <div className={`w-12 h-12 ${card.color} rounded-xl flex items-center justify-center mb-4 text-2xl`}>{card.emoji}</div>
+                  <h3 className="font-bold text-lg text-gray-900 mb-2">{card.title}</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">{card.text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* UITGEBREID FORMULIER */}
+      <section className="py-16 px-6 bg-white">
+        <div className="max-w-xl mx-auto">
+          <div className="text-center mb-8">
+            <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">✉️</div>
+            <h2 className="text-3xl font-black text-gray-900 mb-3">Blijf op de hoogte</h2>
+            <p className="text-gray-600">Laat je gegevens achter en we sturen je een bericht zodra we live gaan.</p>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+            {status === 'success' ? (
+              <div className="text-center py-6">
+                <div className="text-4xl mb-4">🎉</div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Aanmelding ontvangen!</h3>
+                <p className="text-gray-600">We sturen je een bericht zodra we live zijn.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleFullSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Naam <span className="text-gray-400 font-normal">(optioneel)</span>
+                  </label>
+                  <input type="text" value={name} onChange={e => setName(e.target.value)}
+                    placeholder="Jan Jansen"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-sm transition" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">E-mailadres *</label>
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                    placeholder="jan@voorbeeld.nl" required
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-sm transition" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Extra bericht <span className="text-gray-400 font-normal">(optioneel)</span>
+                  </label>
+                  <textarea value={message} onChange={e => setMessage(e.target.value)}
+                    placeholder="Stel gerust een vraag..." rows={3}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-sm transition resize-none" />
+                </div>
+
+                {mathChallenge && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Beveiligingsvraag: {mathChallenge.question}
+                    </label>
+                    <input type="number" value={mathAnswer} onChange={e => setMathAnswer(e.target.value)}
+                      placeholder="Jouw antwoord"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-sm transition" />
+                  </div>
+                )}
+
+                {status === 'error' && <p className="text-red-500 text-sm">{errorMsg}</p>}
+
+                <button type="submit" disabled={status === 'loading'}
+                  className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white py-4 rounded-xl font-bold text-base transition shadow-lg hover:shadow-xl flex items-center justify-center gap-2 mt-2">
+                  {status === 'loading' ? 'Versturen...' : 'Houd me op de hoogte'}
+                  {status !== 'loading' && <ArrowRight className="w-5 h-5" />}
+                </button>
+
+                <div className="flex items-center justify-center gap-6 mt-2 text-xs text-gray-400">
+                  <span>✓ Geen spam</span>
+                  <span>✓ Gratis</span>
+                  <span>✓ Je data is veilig</span>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="bg-gray-900 text-gray-400 py-8 px-6 text-center text-sm">
+        <p>© {new Date().getFullYear()} BitBeheer. Persoonlijke begeleiding bij het investeren in Bitcoin.</p>
+        <p className="mt-1 text-xs text-gray-600">Deze site biedt educatieve informatie en geen financieel advies. Investeer verantwoord.</p>
+      </footer>
     </div>
   );
 }
