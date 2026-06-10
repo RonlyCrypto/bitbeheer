@@ -250,8 +250,8 @@ class WalletDataService {
       });
 
       // 2. Haal transacties op in batches van 25 met delays tussen batches
-      const BATCH_SIZE = 25; // Batch size zoals gevraagd
-      const DELAY_BETWEEN_BATCHES_MS = 6000; // 6 seconden delay tussen batches (zoals gevraagd: "een aantal sec of min")
+      const BATCH_SIZE = 25;
+      const DELAY_BETWEEN_BATCHES_MS = 1500; // 1.5s tussen batches — geen individuele tx fetches meer, dus rate limit risico laag
       const MAX_TRANSACTIONS = 500; // Limiet voor wallets met veel tx's
       
       let allTransactions: BitcoinTransaction[] = [];
@@ -420,82 +420,83 @@ class WalletDataService {
   }
 
   // Process een batch transacties (25 stuks)
+  // Gebruikt de data uit het /txs endpoint direct — GEEN individuele tx fetches meer
   private async processTransactionsBatch(
     pageTransactions: any[],
     address: string,
     signal: AbortSignal
   ): Promise<BitcoinTransaction[]> {
+    if (signal.aborted) return [];
+
+    // Haal huidige prijs 1x op voor de hele batch
+    let currentPrice: number;
+    try {
+      currentPrice = await bitcoinApiService.getCurrentPrice();
+    } catch {
+      currentPrice = 50000; // Laatste fallback
+    }
+
+    // Verzamel alle unieke datums voor een gebatched Supabase prijsopzoek (1 query i.p.v. 25)
+    const datumSet = new Set<string>();
+    for (const tx of pageTransactions) {
+      const blockTime = tx.status?.block_time || tx.time;
+      if (blockTime) datumSet.add(new Date(blockTime * 1000).toISOString().split('T')[0]);
+    }
+
+    // 1 Supabase query voor alle datums in de batch
+    const prijsMap = new Map<string, number>();
+    if (datumSet.size > 0) {
+      try {
+        const { data: prijsData } = await supabase
+          .from('bitcoin_price_data')
+          .select('date, price_usd')
+          .in('date', Array.from(datumSet));
+        if (prijsData) {
+          for (const row of prijsData) {
+            prijsMap.set(row.date, parseFloat(row.price_usd));
+          }
+        }
+      } catch {
+        // Fallback: alle datums krijgen currentPrice
+      }
+    }
+
     const processed: BitcoinTransaction[] = [];
-    const currentPrice = await bitcoinApiService.getCurrentPrice();
 
     for (const tx of pageTransactions) {
       if (signal.aborted) break;
 
       try {
-        // Haal transactie details op
-        const txResponse = await fetch(`https://blockstream.info/api/tx/${tx.txid}`, {
-          signal
-        });
-        if (!txResponse.ok) continue;
-        const txData = await txResponse.json();
-
-        // Process transactie (vergelijkbaar met bitcoinApiService)
-        const relevantOutputs = txData.vout?.filter((vout: any) => 
+        // /txs endpoint geeft al volledige vin/vout/status mee — geen extra fetch nodig
+        const relevantOutputs = (tx.vout || []).filter((vout: any) =>
           vout.scriptpubkey_address === address
-        ) || [];
+        );
 
         let totalSent = 0;
-        if (txData.vin && Array.isArray(txData.vin)) {
-          for (const vin of txData.vin) {
-            if (vin.prevout?.scriptpubkey_address === address) {
-              totalSent += vin.prevout.value || 0;
-            }
+        for (const vin of (tx.vin || [])) {
+          if (vin.prevout?.scriptpubkey_address === address) {
+            totalSent += vin.prevout.value || 0;
           }
         }
 
-        const totalReceived = relevantOutputs.length > 0 
-          ? relevantOutputs.reduce((sum: number, vout: any) => sum + vout.value, 0)
-          : 0;
-
+        const totalReceived = relevantOutputs.reduce((sum: number, vout: any) => sum + vout.value, 0);
         const netValue = totalReceived - totalSent;
         if (netValue === 0) continue;
 
-        const valueInBTC = Math.abs(netValue) / 100000000;
+        const blockTime = tx.status?.block_time || tx.time;
+        if (!blockTime) continue;
+
+        const isPending = !tx.status?.confirmed;
         const isSend = netValue < 0;
-        let blockTime = txData.status?.block_time;
-        const isPending = !blockTime || !txData.status?.block_height;
-
-        // Fallback naar tx.time als block_time niet beschikbaar (unconfirmed/pending)
-        if (!blockTime) {
-          blockTime = tx.time || txData.time;
-          if (!blockTime) {
-            logger.debug(`⏭️ Skipping ${tx.txid} - no timestamp at all`);
-            continue;
-          }
-          logger.debug(`ℹ️ Using tx.time for unconfirmed/pending tx ${tx.txid.slice(0, 8)}...`);
-        }
-
-        // Haal historische prijs op
-        const txDate = new Date(blockTime * 1000);
-        const dateStr = txDate.toISOString().split('T')[0];
-        
-        let priceAtTime: number;
-        try {
-          const { data: priceData } = await supabase
-            .from('bitcoin_price_data')
-            .select('price_usd')
-            .eq('date', dateStr)
-            .maybeSingle();
-          
-          priceAtTime = priceData?.price_usd || currentPrice;
-        } catch {
-          priceAtTime = currentPrice;
-        }
+        const valueInBTC = Math.abs(netValue) / 100000000;
+        const dateStr = new Date(blockTime * 1000).toISOString().split('T')[0];
+        const priceAtTime = prijsMap.get(dateStr) || currentPrice;
 
         const valueInSatoshis = isSend ? -Math.abs(netValue) : Math.abs(netValue);
         const currentValueUSD = valueInBTC * currentPrice;
-        const priceAtTimeUSD = valueInBTC * priceAtTime;
-        const profitUSD = isSend ? -(currentValueUSD - priceAtTimeUSD) : (currentValueUSD - priceAtTimeUSD);
+        const profitUSD = isSend
+          ? -(currentValueUSD - valueInBTC * priceAtTime)
+          : currentValueUSD - valueInBTC * priceAtTime;
         const profitPercent = priceAtTime > 0 ? ((currentPrice - priceAtTime) / priceAtTime) * 100 : 0;
 
         processed.push({
@@ -505,14 +506,13 @@ class WalletDataService {
           price: priceAtTime,
           currentValue: isSend ? -currentValueUSD : currentValueUSD,
           profit: profitUSD,
-          profitPercent: profitPercent,
-          valueInBTC: valueInBTC,
+          profitPercent,
+          valueInBTC,
           status: isPending ? 'pending' : 'confirmed',
           confirmations: 0
         });
       } catch (error) {
         logger.debug(`Error processing transaction ${tx.txid}:`, error);
-        continue;
       }
     }
 
