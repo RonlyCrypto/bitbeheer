@@ -5,31 +5,50 @@ import { bitcoinApiService } from '../services/bitcoinApiService'; // fallback v
 
 const PREV_ATH = 69000; // Nov 2021 — historische referentie, blijft vast
 
+const CACHE_KEY = 'btc_market_cache';
+
 function useLiveBtcData() {
-  const [price, setPrice] = useState<number | null>(null);
-  const [change24h, setChange24h] = useState<number | null>(null);
-  const [ath, setAth] = useState<number | null>(null);
-  const [athDate, setAthDate] = useState<string | null>(null);
+  // Laad direct uit cache zodat er nooit een lege staat is
+  const cached = (() => {
+    try { return JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); } catch { return null; }
+  })();
+
+  const [price, setPrice] = useState<number | null>(cached?.price ?? null);
+  const [change24h, setChange24h] = useState<number | null>(cached?.change24h ?? null);
+  const [ath, setAth] = useState<number | null>(cached?.ath ?? null);
+  const [athDate, setAthDate] = useState<string | null>(cached?.athDate ?? null);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        // markets endpoint geeft prijs + ATH in één call
         const res = await fetch(
           'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin',
-          { signal: AbortSignal.timeout(5000) }
+          { signal: AbortSignal.timeout(8000) }
         );
         const [data] = await res.json();
+        const formattedDate = data.ath_date
+          ? new Date(data.ath_date).toLocaleDateString('nl-NL', { month: 'short', year: 'numeric' })
+          : null;
+
         setPrice(data.current_price);
         setChange24h(data.price_change_percentage_24h);
         setAth(data.ath);
-        setAthDate(data.ath_date
-          ? new Date(data.ath_date).toLocaleDateString('nl-NL', { month: 'short', year: 'numeric' })
-          : null);
+        setAthDate(formattedDate);
+
+        // Sla op in cache voor volgende keer
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          price: data.current_price,
+          change24h: data.price_change_percentage_24h,
+          ath: data.ath,
+          athDate: formattedDate,
+          cachedAt: Date.now(),
+        }));
       } catch {
-        // Fallback op database voor prijs
-        const fallback = await bitcoinApiService.getCurrentPrice();
-        setPrice(fallback);
+        // API mislukt — cache is al geladen, fallback op database voor prijs
+        if (!price) {
+          const fallback = await bitcoinApiService.getCurrentPrice().catch(() => null);
+          if (fallback) setPrice(fallback);
+        }
       }
     }
     fetchData();

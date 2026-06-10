@@ -10,26 +10,40 @@ function formatUsd(n: number) {
   return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
 }
 
+const CACHE_KEY = 'btc_market_cache';
+
 function useLiveBtcData() {
-  const [price, setPrice] = useState<number | null>(null);
-  const [change24h, setChange24h] = useState<number | null>(null);
-  const [ath, setAth] = useState<number | null>(null);
-  const [athDate, setAthDate] = useState<string | null>(null);
+  const cached = (() => {
+    try { return JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); } catch { return null; }
+  })();
+
+  const [price, setPrice] = useState<number | null>(cached?.price ?? null);
+  const [change24h, setChange24h] = useState<number | null>(cached?.change24h ?? null);
+  const [ath, setAth] = useState<number | null>(cached?.ath ?? null);
+  const [athDate, setAthDate] = useState<string | null>(cached?.athDate ?? null);
 
   useEffect(() => {
     fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin', {
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(8000),
     })
       .then(r => r.json())
       .then(([d]) => {
+        const formattedDate = d.ath_date
+          ? new Date(d.ath_date).toLocaleDateString('nl-NL', { month: 'short', year: 'numeric' })
+          : null;
         setPrice(d.current_price);
         setChange24h(d.price_change_percentage_24h);
         setAth(d.ath);
-        setAthDate(d.ath_date
-          ? new Date(d.ath_date).toLocaleDateString('nl-NL', { month: 'short', year: 'numeric' })
-          : null);
+        setAthDate(formattedDate);
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          price: d.current_price,
+          change24h: d.price_change_percentage_24h,
+          ath: d.ath,
+          athDate: formattedDate,
+          cachedAt: Date.now(),
+        }));
       })
-      .catch(() => {});
+      .catch(() => {}); // cache is al geladen, geen actie nodig
   }, []);
 
   return { price, change24h, ath, athDate };
