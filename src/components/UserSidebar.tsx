@@ -104,7 +104,7 @@ export default function UserSidebar({
   ];
 
   return (
-    <div className={`bg-white border-r border-gray-100 shadow-sm flex-col h-full transition-all duration-300 hidden md:flex ${
+    <div className={`bg-white border-r border-gray-100 shadow-sm flex-col sticky top-0 h-screen transition-all duration-300 hidden md:flex ${
       isExpanded ? 'w-56' : 'w-16'
     }`}>
       {/* Menu Items */}

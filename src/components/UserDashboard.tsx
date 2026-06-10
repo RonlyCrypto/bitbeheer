@@ -776,9 +776,9 @@ export default function UserDashboard() {
         </div>
       </nav>
 
-      <div className="min-h-screen bg-gray-50 flex">
-        {/* User Sidebar - Hidden on mobile */}
-        <UserSidebar 
+      <div className="flex min-h-screen bg-gray-50">
+        {/* Sidebar */}
+        <UserSidebar
           activeTab={activeTab}
           onTabChange={setActiveTab}
           accountApproved={accountApproved}
@@ -786,10 +786,9 @@ export default function UserDashboard() {
           unreadChatCount={unreadChatCount}
         />
 
-        {/* Main Content - Full width on mobile */}
-        <div className="flex-1 overflow-auto w-full md:w-auto pb-20 md:pb-0">
-          <div className="p-4 md:p-8">
-            <div className="max-w-7xl w-full">
+        {/* Main Content */}
+        <div className="flex-1 overflow-auto pb-20 md:pb-0">
+          <div className="max-w-4xl mx-auto px-4 py-8">
             {activeTab === 'overview' && <OverviewTab 
               userProfile={userProfile} 
               goals={goals} 
