@@ -52,7 +52,9 @@ export default function PortfolioPage() {
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingWallets, setLoadingWallets] = useState(true);
-  const [currentPrice, setCurrentPrice] = useState<number>(96640);
+  const [currentPrice, setCurrentPrice] = useState<number>(() => {
+    try { const c = JSON.parse(localStorage.getItem('btc_market_cache') || 'null'); return c?.price || 96640; } catch { return 96640; }
+  });
   const [allTransactions, setAllTransactions] = useState<BitcoinTransaction[]>([]);
 
   // Helper function to remove duplicate transactions based on hash + time
@@ -154,8 +156,8 @@ export default function PortfolioPage() {
   }, [showFilterDropdown]);
 
   // Load wallets from Supabase (wallets added in OverviewTab)
-  useEffect(() => {
-    const loadWallets = async () => {
+  // Defined outside useEffect so it can also be called from addWallet
+  const loadWallets = async () => {
       if (!effectiveUserEmail) {
         console.log('⚠️ No email provided for wallet loading');
         setLoadingWallets(false);
@@ -277,8 +279,9 @@ export default function PortfolioPage() {
       } finally {
         setLoadingWallets(false);
       }
-    };
+  };
 
+  useEffect(() => {
     loadWallets();
 
     // Listen for wallet updates from OverviewTab
@@ -292,14 +295,18 @@ export default function PortfolioPage() {
     };
   }, [effectiveUserEmail]);
 
-  // Haal huidige Bitcoin prijs op
+  // Haal huidige Bitcoin prijs op — zelfde cache als FrontPage
   useEffect(() => {
     const fetchCurrentPrice = async () => {
       try {
-        const price = await bitcoinApiService.getCurrentPrice();
-        setCurrentPrice(price);
+        const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin', { signal: AbortSignal.timeout(8000) });
+        const [data] = await res.json();
+        setCurrentPrice(data.current_price);
+        const athDate = data.ath_date ? new Date(data.ath_date).toLocaleDateString('nl-NL', { month: 'short', year: 'numeric' }) : null;
+        localStorage.setItem('btc_market_cache', JSON.stringify({ price: data.current_price, change24h: data.price_change_percentage_24h, ath: data.ath, athDate, cachedAt: Date.now() }));
       } catch (error) {
         console.error('Error fetching current price:', error);
+        try { const p = await bitcoinApiService.getCurrentPrice(); setCurrentPrice(p); } catch {}
       }
     };
 
@@ -873,8 +880,8 @@ export default function PortfolioPage() {
 
             <div className="bg-white rounded-xl p-3 shadow-lg">
               <div className="flex items-center gap-2 mb-2">
-                <div className="bg-blue-100 p-1.5 rounded-lg">
-                  <Shield className="w-4 h-4 text-blue-600" />
+                <div className="bg-orange-100 p-1.5 rounded-lg">
+                  <Shield className="w-4 h-4 text-orange-600" />
                 </div>
                 <h3 className="text-sm font-semibold text-gray-900">Transacties</h3>
                 {hasActiveSync && (
@@ -1226,7 +1233,7 @@ export default function PortfolioPage() {
                                     <button
                                       onClick={handleWalletRefresh}
                                       disabled={isRefreshing}
-                                      className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                                      className="px-3 py-1.5 bg-orange-600 text-white text-xs font-medium rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                                     >
                                       {isRefreshing ? (
                                         <>
