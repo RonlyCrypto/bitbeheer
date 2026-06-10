@@ -612,28 +612,28 @@ export default function PortfolioPage() {
 
       setLoading(true);
       try {
-        // 1. SNELLE OPSLAG: Save wallet immediately to DB without fetching data
+        // 1. SNELLE OPSLAG: upsert zodat het ook werkt als wallet eerder verwijderd was
         const { error: insertError } = await supabase
           .from('wallets')
-          .insert([{
+          .upsert([{
             email: effectiveUserEmail,
             address: newWalletAddress,
             name: newWalletName,
             type: 'bitcoin',
-            balance: 0, // Placeholder, will be updated in background
+            balance: 0,
             transaction_count: 0,
             total_received: 0,
             total_sent: 0,
             first_seen: null,
             last_seen: new Date().toISOString(),
             wallet_data: null,
-            created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
-          }]);
+          }], { onConflict: 'email,address' });
 
         if (insertError) {
           console.error('Insert error:', insertError);
-          throw insertError;
+          alert(`Kon wallet niet toevoegen: ${insertError.message}`);
+          return;
         }
 
         // 2. OPTIMISTIC UI: Add wallet to UI with placeholder data
