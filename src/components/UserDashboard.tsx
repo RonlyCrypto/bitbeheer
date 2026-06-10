@@ -762,34 +762,9 @@ export default function UserDashboard() {
         unreadChatCount={unreadChatCount}
       />
 
-      {/* Right column: header + content */}
-      <div className="flex-1 flex flex-col min-h-screen overflow-auto">
-        {/* Header — zelfde stijl als frontpage */}
-        <nav className="bg-orange-500 text-white px-6 py-4 flex items-center justify-between shadow-md">
-          <div>
-            <div className="font-bold text-lg leading-tight">BitBeheer</div>
-            <div className="text-orange-100 text-xs">
-              Welkom terug, {getDisplayName(user, isImpersonating, impersonatedUser, userProfile)}!
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <NotificationDropdown
-              unreadCount={unreadChatCount}
-              onNotificationClick={(notification) => {
-                if (notification.type === 'unread_message') setActiveTab('helpdesk');
-                else if (notification.type === 'appointment_approved') setActiveTab('overview');
-                else if (notification.type === 'goal_achieved') setActiveTab('goals');
-              }}
-            />
-            <NotificationSettings
-              onPhoneNumberSaved={(phone) => setUserProfile({ ...userProfile, phone })}
-            />
-          </div>
-        </nav>
-
-        {/* Main Content */}
-        <div className="flex-1 pb-20 md:pb-0">
-          <div className="px-6 py-8">
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto pb-20 md:pb-0">
+        <div className="p-8">
             {activeTab === 'overview' && <OverviewTab 
               userProfile={userProfile} 
               goals={goals} 
@@ -892,7 +867,6 @@ export default function UserDashboard() {
             )}
             </div>
           </div>
-        </div>
 
       {/* Mobile Bottom Navigation for User Dashboard */}
       <UserDashboardMobileNav
