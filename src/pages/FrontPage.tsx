@@ -191,7 +191,7 @@ export default function FrontPage() {
   const isPositive = (change24h ?? 0) >= 0;
 
   return (
-    <div className="min-h-screen bg-white text-gray-900" style={{ fontFamily: 'Inter, sans-serif' }}>
+    <div className="min-h-screen bg-white text-gray-900" style={{ fontFamily: 'Inter, sans-serif', scrollBehavior: 'smooth' }}>
 
       {/* NAVBAR */}
       <nav className="bg-orange-500 text-white px-6 py-4 flex items-center justify-between shadow-md">
@@ -202,9 +202,9 @@ export default function FrontPage() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <Link to="/aanmelden" className="bg-white text-orange-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-orange-50 transition">
+          <a href="#aanmelden" className="bg-white text-orange-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-orange-50 transition">
             Inloggen
-          </Link>
+          </a>
         </div>
       </nav>
 
@@ -353,7 +353,7 @@ export default function FrontPage() {
       </section>
 
       {/* AANMELDFORMULIER */}
-      <section className="py-16 px-6 bg-white">
+      <section id="aanmelden" className="py-16 px-6 bg-white">
         <div className="max-w-xl mx-auto">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-black text-gray-900 mb-3">Start je Bitcoin reis</h2>
