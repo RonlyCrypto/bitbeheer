@@ -65,9 +65,16 @@ function MarktpositieBadge({ price, ath, athDate }: { price: number; ath: number
   const pctVanATH = (price / ath) * 100;
   const onderVorigATH = price < PREV_ATH;
 
-  const LOW = 20000;
-  const HIGH = ath * 1.1;
-  const balPos = Math.min(Math.max(((price - LOW) / (HIGH - LOW)) * 100, 2), 96);
+  // Fase-gestuurd: PREV_ATH = 50% (grens groen/geel), ATH = 85% (grens oranje/rood)
+  let balPos: number;
+  if (price <= PREV_ATH) {
+    balPos = (price / PREV_ATH) * 50;            // 0–50% = groen
+  } else if (price <= ath) {
+    balPos = 50 + ((price - PREV_ATH) / (ath - PREV_ATH)) * 35; // 50–85% = geel/oranje
+  } else {
+    balPos = 85 + Math.min(((price - ath) / ath) * 15, 11); // 85–96% = rood
+  }
+  balPos = Math.min(Math.max(balPos, 2), 96);
 
   let fase = 'Accumulatiefase';
   let faseKleur = 'green';

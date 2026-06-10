@@ -52,9 +52,15 @@ function useLiveBtcData() {
 function MarktpositieMini({ price, ath, athDate }: { price: number; ath: number; athDate: string | null }) {
   const pctVanATH = (price / ath) * 100;
   const onderVorigATH = price < PREV_ATH;
-  const LOW = 20000;
-  const HIGH = ath * 1.1;
-  const balPos = Math.min(Math.max(((price - LOW) / (HIGH - LOW)) * 100, 2), 96);
+  let balPos: number;
+  if (price <= PREV_ATH) {
+    balPos = (price / PREV_ATH) * 50;
+  } else if (price <= ath) {
+    balPos = 50 + ((price - PREV_ATH) / (ath - PREV_ATH)) * 35;
+  } else {
+    balPos = 85 + Math.min(((price - ath) / ath) * 15, 11);
+  }
+  balPos = Math.min(Math.max(balPos, 2), 96);
 
   let fase = 'Accumulatiefase';
   let faseKleur = 'green';
