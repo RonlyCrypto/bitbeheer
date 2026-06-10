@@ -891,20 +891,15 @@ export default function PortfolioPage() {
                 )}
               </div>
               <p className="text-xl font-bold text-gray-900">
-                {hasActiveSync && totalTransactionsOnBlockchain > 0
-                  ? `${loadedTransactions}/${totalTransactionsOnBlockchain}`
-                  : totalTransactionsOnBlockchain > 0
-                  ? totalTransactionsOnBlockchain // Toon altijd totaal aantal op blockchain
-                  : loadedTransactions > 0 
-                  ? loadedTransactions
-                  : totalTransactions}
+                {totalTransactionsOnBlockchain > 0 ? totalTransactionsOnBlockchain : loadedTransactions > 0 ? loadedTransactions : totalTransactions}
               </p>
-              <p className="text-xs text-gray-600">
-                {hasActiveSync 
-                  ? 'Laden...'
-                  : totalTransactionsOnBlockchain > 0
-                  ? 'Totaal aantal'
-                  : 'Totaal aantal'}
+              <p className="text-xs text-gray-600 flex items-center gap-1">
+                {hasActiveSync ? (
+                  <>
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Syncing...
+                  </>
+                ) : 'Totaal aantal'}
               </p>
             </div>
 
@@ -1126,6 +1121,9 @@ export default function PortfolioPage() {
                   localStorage.setItem(walletChartIntegrationKey, show.toString());
                 };
 
+                const isFullySynced = !isSyncing && syncProgress && syncProgress.totalTransactions > 0 && syncProgress.loadedTransactions >= syncProgress.totalTransactions;
+                const justSynced = isFullySynced && syncProgress && syncProgress.loadedTransactions > 0;
+
                 return (
                   <>
                     <div key={wallet.id} className="bg-white rounded-xl p-4 shadow-lg">
@@ -1143,38 +1141,23 @@ export default function PortfolioPage() {
                               <span className="text-xs text-gray-500">•</span>
                               <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded font-mono">
                                 {wallet.address.slice(0, 6)}...{wallet.address.slice(-6)}
-                        </code>
-                        <button
-                          onClick={() => copyAddress(wallet.address)}
+                              </code>
+                              <button
+                                onClick={() => copyAddress(wallet.address)}
                                 className="p-0.5 text-gray-600 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
-                          title="Kopieer adres"
-                        >
-                          {copiedAddress === wallet.address ? (
+                                title="Kopieer adres"
+                              >
+                                {copiedAddress === wallet.address ? (
                                   <Check className="w-3 h-3 text-green-600" />
-                          ) : (
+                                ) : (
                                   <Copy className="w-3 h-3" />
-                          )}
-                        </button>
+                                )}
+                              </button>
                               <span className="text-xs text-gray-500">•</span>
                               <span className="text-xs font-semibold text-gray-900">
                                 {showBalances ? `${(wallet.balance || 0).toFixed(4)} BTC` : '•••• BTC'}
-                                {isSyncing && !hasFirstBatch && (
-                                  <span className="ml-1 inline-flex items-center gap-1">
-                                    <Loader2 className="w-3 h-3 animate-spin text-blue-400" />
-                                  </span>
-                                )}
                               </span>
-                              <span className="text-xs text-gray-500">•</span>
-                              <span className="text-xs text-gray-600">
-                                {wallet.realData?.transactions?.length || wallet.transactions || 0} transacties
-                                {isSyncing && hasFirstBatch && (
-                                  <span className="text-blue-600 ml-1">• Synchroniseren...</span>
-                                )}
-                                {!isSyncing && hasFirstBatch && syncProgress && syncProgress.loadedTransactions > 0 && (
-                                  <span className="text-green-600 ml-1">• Gesynct</span>
-                                )}
-                              </span>
-                      </div>
+                            </div>
                     </div>
                     </div>
                         {/* Settings dropdown */}
@@ -1212,6 +1195,50 @@ export default function PortfolioPage() {
                           )}
                     </div>
                   </div>
+
+                      {/* Sync Progress Block */}
+                      {(isSyncing || justSynced) && (
+                        <div className={`mt-3 rounded-lg p-3 ${isSyncing ? 'bg-orange-50 border border-orange-200' : 'bg-green-50 border border-green-200'}`}>
+                          {isSyncing ? (
+                            <>
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                  <Loader2 className="w-4 h-4 animate-spin text-orange-500" />
+                                  <span className="text-sm font-medium text-orange-800">
+                                    Transacties laden uit blockchain...
+                                  </span>
+                                </div>
+                                <span className="text-sm font-bold text-orange-700">
+                                  {syncProgress?.loadedTransactions ?? 0}
+                                  {syncProgress?.totalTransactions ? ` / ${syncProgress.totalTransactions}` : ''}
+                                </span>
+                              </div>
+                              {/* Progress bar */}
+                              <div className="w-full bg-orange-200 rounded-full h-2">
+                                <div
+                                  className="bg-orange-500 h-2 rounded-full transition-all duration-500"
+                                  style={{ width: `${progressPercent ?? 0}%` }}
+                                />
+                              </div>
+                              <p className="text-xs text-orange-600 mt-1.5">
+                                Elke batch wordt direct opgeslagen in je account. Je kunt de pagina veilig verlaten.
+                              </p>
+                            </>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <div className="bg-green-100 rounded-full p-1">
+                                <Check className="w-4 h-4 text-green-600" />
+                              </div>
+                              <div>
+                                <span className="text-sm font-semibold text-green-800">
+                                  Alle {syncProgress?.loadedTransactions} transacties geladen en opgeslagen
+                                </span>
+                                <p className="text-xs text-green-600">Opgeslagen in je account — volgende keer direct beschikbaar</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Chart Integratie Block - onder wallet info */}
                       {wallet.id && (
