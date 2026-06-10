@@ -613,30 +613,31 @@ export default function PortfolioPage() {
 
       setLoading(true);
       try {
-        // 1. Verwijder eventuele stale rij (werkt ook als die niet bestaat)
+        // Gebruik altijd de ingelogde user, niet effectiveUserEmail (voor RLS)
+        const insertEmail = user?.email;
+        const insertUserId = user?.id;
+        if (!insertEmail) {
+          alert('Niet ingelogd. Log opnieuw in en probeer het opnieuw.');
+          return;
+        }
+
+        // 1. Verwijder eventuele stale rij
         await supabase
           .from('wallets')
           .delete()
-          .eq('email', effectiveUserEmail)
+          .eq('email', insertEmail)
           .eq('address', trimmedAddress);
 
-        // 2. Vers invoegen
+        // 2. Vers invoegen — zelfde minimale velden als UserDashboard (werkt met RLS)
         const { error: insertError } = await supabase
           .from('wallets')
           .insert([{
-            email: effectiveUserEmail,
+            email: insertEmail,
+            ...(insertUserId ? { user_id: insertUserId } : {}),
             address: trimmedAddress,
             name: newWalletName.trim(),
             type: 'bitcoin',
-            balance: 0,
-            transaction_count: 0,
-            total_received: 0,
-            total_sent: 0,
-            first_seen: null,
-            last_seen: new Date().toISOString(),
-            wallet_data: null,
             created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
           }]);
 
         if (insertError) {
@@ -645,8 +646,6 @@ export default function PortfolioPage() {
           return;
         }
 
-        // Update newWalletAddress in rest van de functie naar getrimde versie
-        // (lokale variabele gebruiken)
         const walletAddressToUse = trimmedAddress;
 
         // 2. OPTIMISTIC UI: Add wallet to UI with placeholder data
