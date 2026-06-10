@@ -946,7 +946,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
   const [fearGreedLoading, setFearGreedLoading] = useState(true);
   const [currentWarningIndex, setCurrentWarningIndex] = useState(0);
   const [previousATH, setPreviousATH] = useState<number>(69000);
-  const [latestATH, setLatestATH] = useState<number>(124753);
+  const [latestATH, setLatestATH] = useState<number>(() => {
+    try { const c = JSON.parse(localStorage.getItem('btc_market_cache') || 'null'); return c?.ath || 124753; } catch { return 124753; }
+  });
   const [hypotheticalInvestment, setHypotheticalInvestment] = useState<number>(500);
   const [showFearGreedPopup, setShowFearGreedPopup] = useState(false);
   const [fearGreedHistory, setFearGreedHistory] = useState<any[]>([]);
@@ -1009,7 +1011,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
   const [hasWallet, setHasWallet] = useState(false);
   const [userAppointments, setUserAppointments] = useState<any[]>([]);
   const [walletTransactions, setWalletTransactions] = useState<BitcoinTransaction[]>([]);
-  const [currentBitcoinPrice, setCurrentBitcoinPrice] = useState<number>(96640);
+  const [currentBitcoinPrice, setCurrentBitcoinPrice] = useState<number>(() => {
+    try { const c = JSON.parse(localStorage.getItem('btc_market_cache') || 'null'); return c?.price || 96640; } catch { return 96640; }
+  });
   const [selectedTransaction, setSelectedTransaction] = useState<BitcoinTransaction | null>(null);
   
   const activeGoals = displayGoals.filter((goal) => (goal.status as string) === 'active').length;
@@ -1142,17 +1146,41 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
   const [isAddingWallet, setIsAddingWallet] = useState(false);
   const [walletData, setWalletData] = useState<any>(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  const [bitcoinPrice, setBitcoinPrice] = useState<number>(96640);
+  const [bitcoinPrice, setBitcoinPrice] = useState<number>(() => {
+    try { const c = JSON.parse(localStorage.getItem('btc_market_cache') || 'null'); return c?.price || 96640; } catch { return 96640; }
+  });
 
-  // Load Bitcoin price
+  // Load Bitcoin price + ATH — uses same btc_market_cache as FrontPage
   useEffect(() => {
     const loadPrice = async () => {
       try {
-        const price = await bitcoinApiService.getCurrentPrice();
+        // 1️⃣ Try shared cache from FrontPage/SoonOnlinePage first
+        const cached = (() => { try { return JSON.parse(localStorage.getItem('btc_market_cache') || 'null'); } catch { return null; } })();
+        if (cached?.price) {
+          setBitcoinPrice(cached.price);
+          setCurrentBitcoinPrice(cached.price);
+          if (cached.ath) setLatestATH(cached.ath);
+        }
+
+        // 2️⃣ Fetch fresh from CoinGecko (same endpoint as FrontPage)
+        const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin', { signal: AbortSignal.timeout(8000) });
+        const [data] = await res.json();
+        const price = data.current_price;
+        const ath = data.ath;
         setBitcoinPrice(price);
         setCurrentBitcoinPrice(price);
+        if (ath) setLatestATH(ath);
+        // Update shared cache
+        const athDate = data.ath_date ? new Date(data.ath_date).toLocaleDateString('nl-NL', { month: 'short', year: 'numeric' }) : null;
+        localStorage.setItem('btc_market_cache', JSON.stringify({ price, change24h: data.price_change_percentage_24h, ath, athDate, cachedAt: Date.now() }));
       } catch (error) {
         console.error('Error loading Bitcoin price:', error);
+        // Fallback to bitcoinApiService
+        try {
+          const price = await bitcoinApiService.getCurrentPrice();
+          setBitcoinPrice(price);
+          setCurrentBitcoinPrice(price);
+        } catch {}
       }
     };
     loadPrice();
