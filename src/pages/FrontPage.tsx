@@ -1,399 +1,446 @@
-import { Bitcoin, Shield, BookOpen, TrendingUp, Users, Target, ArrowRight, CheckCircle, BarChart3, Wallet, Lock, Smartphone, Monitor, Database } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
-import AnimatedBitcoinBackground from '../components/AnimatedBitcoinBackground';
-import HeroSlider from '../components/HeroSlider';
+import { ArrowRight } from 'lucide-react';
+import { bitcoinApiService } from '../services/bitcoinApiService';
+
+const PREV_ATH = 69000;   // Nov 2021
+const LAST_ATH = 108268;  // Jan 2025
+
+function useLiveBtcPrice() {
+  const [price, setPrice] = useState<number | null>(null);
+  const [change24h, setChange24h] = useState<number | null>(null);
+
+  useEffect(() => {
+    async function fetchPrice() {
+      try {
+        // Probeer live CoinGecko eerst
+        const res = await fetch(
+          'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true',
+          { signal: AbortSignal.timeout(5000) }
+        );
+        const data = await res.json();
+        setPrice(data.bitcoin.usd);
+        setChange24h(data.bitcoin.usd_24h_change);
+      } catch {
+        // Fallback op database
+        const fallback = await bitcoinApiService.getCurrentPrice();
+        setPrice(fallback);
+      }
+    }
+    fetchPrice();
+  }, []);
+
+  return { price, change24h };
+}
+
+function formatUsd(n: number) {
+  return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
+
+function MarktpositieBadge({ price }: { price: number }) {
+  const pctVanPrevATH = (price / PREV_ATH) * 100;
+  const pctVanLastATH = (price / LAST_ATH) * 100;
+  const onderVorigATH = price < PREV_ATH;
+  const onderLaatsteATH = price < LAST_ATH;
+
+  // Bereken positie op de balk (0% = diep dal, 100% = nieuwe ATH)
+  const balPos = Math.min(Math.max(((price - PREV_ATH * 0.3) / (LAST_ATH - PREV_ATH * 0.3)) * 100, 2), 96);
+
+  let fase = 'Accumulatiefase';
+  let faseKleur = 'green';
+  let uitleg = 'Bitcoin zit onder de vorige ATH. Historisch gezien een goede koopperiode.';
+
+  if (price > LAST_ATH) {
+    fase = 'Prijsontdekking';
+    faseKleur = 'red';
+    uitleg = 'Bitcoin staat op een nieuw all-time high. Wees voorzichtig.';
+  } else if (pctVanLastATH > 85) {
+    fase = 'Hoog risico';
+    faseKleur = 'orange';
+    uitleg = 'Bitcoin nadert het laatste all-time high. Pas op voor hype.';
+  } else if (pctVanPrevATH > 100) {
+    fase = 'Herstelfase';
+    faseKleur = 'yellow';
+    uitleg = 'Bitcoin is boven de vorige ATH, maar nog onder het laatste record.';
+  }
+
+  const kleurMap: Record<string, string> = {
+    green: 'bg-green-50 border-green-200 text-green-700',
+    yellow: 'bg-yellow-50 border-yellow-200 text-yellow-700',
+    orange: 'bg-orange-50 border-orange-200 text-orange-700',
+    red: 'bg-red-50 border-red-200 text-red-700',
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-5">
+        <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+          <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </div>
+        <div>
+          <h3 className="font-bold text-gray-900">Marktpositie</h3>
+          <p className="text-xs text-gray-500">Waar staat Bitcoin nu?</p>
+        </div>
+      </div>
+
+      {/* ATH vergelijking */}
+      <div className="grid grid-cols-3 gap-3 mb-5 text-center">
+        <div className="bg-gray-50 rounded-xl p-3">
+          <div className="text-xs text-gray-500 mb-1">Vorige ATH</div>
+          <div className="font-bold text-gray-800 text-sm">{formatUsd(PREV_ATH)}</div>
+          <div className="text-xs text-gray-400">Nov 2021</div>
+        </div>
+        <div className="bg-orange-50 rounded-xl p-3 border border-orange-200">
+          <div className="text-xs text-orange-600 font-medium mb-1">Nu · Live</div>
+          <div className="font-bold text-orange-600 text-lg">{formatUsd(price)}</div>
+          <div className="text-xs text-gray-400">{pctVanLastATH.toFixed(0)}% van ATH</div>
+        </div>
+        <div className="bg-gray-50 rounded-xl p-3">
+          <div className="text-xs text-gray-500 mb-1">Laatste ATH</div>
+          <div className="font-bold text-gray-800 text-sm">{formatUsd(LAST_ATH)}</div>
+          <div className="text-xs text-gray-400">Jan 2025</div>
+        </div>
+      </div>
+
+      {/* Positiebalk */}
+      <div className="mb-4">
+        <div className="relative h-4 rounded-full overflow-hidden" style={{
+          background: 'linear-gradient(to right, #22c55e 0%, #86efac 25%, #fbbf24 50%, #f97316 75%, #ef4444 100%)'
+        }}>
+          <div className="absolute top-0 bottom-0 flex items-center" style={{ left: `${balPos}%` }}>
+            <div className="w-4 h-4 bg-white rounded-full border-2 border-gray-800 shadow-lg -translate-x-1/2" />
+          </div>
+        </div>
+        <div className="flex justify-between text-xs text-gray-400 mt-1">
+          <span>Accumulatie</span>
+          <span>Herstel</span>
+          <span>Hoog risico</span>
+        </div>
+      </div>
+
+      {/* Status */}
+      <div className={`border rounded-xl p-3 mb-4 ${kleurMap[faseKleur]}`}>
+        <div className="font-bold text-sm">✓ {fase}</div>
+        <p className="text-xs mt-1">{uitleg}</p>
+        {onderVorigATH && (
+          <p className="text-xs mt-1 font-medium">
+            {((1 - price / PREV_ATH) * 100).toFixed(1)}% onder de vorige ATH van {formatUsd(PREV_ATH)}
+          </p>
+        )}
+        {!onderVorigATH && onderLaatsteATH && (
+          <p className="text-xs mt-1 font-medium">
+            {((1 - price / LAST_ATH) * 100).toFixed(1)}% onder het laatste ATH van {formatUsd(LAST_ATH)}
+          </p>
+        )}
+      </div>
+
+      {/* Quote */}
+      <div className="bg-gray-900 text-white rounded-xl p-4">
+        <p className="text-sm leading-relaxed italic">
+          "Echte winners kopen als er <span className="text-orange-400 font-semibold">angst</span> is.
+          De massa koopt pas als het al in het nieuws is, dan is het te laat."
+        </p>
+        <div className="flex items-center gap-2 mt-3">
+          <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold">B</div>
+          <span className="text-xs text-gray-400">BitBeheer</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function FrontPage() {
-  const { isAuthenticated } = useSupabaseAuth();
+  const { price, change24h } = useLiveBtcPrice();
+  const isPositive = (change24h ?? 0) >= 0;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 relative">
-      <AnimatedBitcoinBackground />
-      <div className="relative z-10">
-      {/* Hero Slider Section */}
-      <HeroSlider />
+    <div className="min-h-screen bg-white text-gray-900" style={{ fontFamily: 'Inter, sans-serif' }}>
 
-      {/* My Story Section - Only for logged in users */}
-      {isAuthenticated && (
-        <section className="py-20 bg-white">
-          <div className="container mx-auto px-4">
-            <div className="max-w-5xl mx-auto">
-              <div className="grid md:grid-cols-2 gap-12 items-start">
-                <div>
-                  <div className="space-y-6 text-lg text-gray-600 leading-relaxed">
-                    <p>
-                      BitBeheer is ontstaan uit de behoefte om mensen te helpen veilig en verstandig te investeren in Bitcoin. 
-                      Sinds 2017 hebben we gezien hoe de cryptomarkt groeide, maar ook hoe veel beginners hun geld kwijtraakten door gebrek aan kennis, 
-                      verkeerde keuzes en oplichting. Zonder de juiste begeleiding kan investeren in Bitcoin al snel overweldigend zijn.
-                    </p>
-                    <p>
-                      Steeds meer mensen willen investeren in Bitcoin, maar weten niet waar ze moeten beginnen. Er is veel informatie beschikbaar, 
-                      maar veel ervan is verwarrend, misleidend of gericht op hype. Veel beginners verliezen geld door niet te weten welke exchanges 
-                      betrouwbaar zijn, Bitcoin op exchanges te bewaren in plaats van eigen beheer, of te vallen voor scams en oplichting.
-                    </p>
-                  </div>
-                </div>
-                <div>
-                  <div className="space-y-6 text-lg text-gray-600 leading-relaxed">
-                    <p>
-                      <strong>Daarom hebben we BitBeheer opgericht.</strong> We willen mensen helpen die interesse hebben in Bitcoin, maar niet goed weten waar ze moeten beginnen. 
-                      Met persoonlijke 1-op-1 begeleiding, praktische kennis en echte voorbeelden helpen we je stap voor stap om veilig Bitcoin te kopen en in eigen beheer te houden.
-                    </p>
-                    <p className="text-orange-600 font-semibold">
-                      Ons doel is duidelijk: mensen helpen begrijpen hoe je veilig Bitcoin aankoopt en in eigen beheer bewaart, zonder poespas, zonder hype, gewoon eerlijk en duidelijk. 
-                      Bitcoin voor beginners in Nederland, met Nederlandse begeleiding.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Why We Started Section - Only for NOT logged in users */}
-      {!isAuthenticated && (
-        <>
-          <section className="py-20 bg-white">
-            <div className="container mx-auto px-4">
-              <div className="max-w-4xl mx-auto">
-                <div className="text-center mb-16">
-                  <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                    Waarom We Dit Platform Hebben Gestart
-                  </h2>
-                  <p className="text-xl text-gray-600 leading-relaxed max-w-3xl mx-auto">
-                    Bitcoin investeren kan overweldigend zijn. Wij helpen je stap voor stap om veilig te beginnen.
-                  </p>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
-                  <div>
-                    <h3 className="text-3xl font-bold text-gray-900 mb-6">
-                      De Uitdaging
-                    </h3>
-                    <div className="space-y-6 text-lg text-gray-600 leading-relaxed">
-                      <p>
-                        Steeds meer mensen willen investeren in Bitcoin, maar weten niet waar ze moeten beginnen. 
-                        Er is zoveel informatie beschikbaar, maar veel ervan is verwarrend, misleidend of gericht op hype.
-                      </p>
-                      <p>
-                        Veel beginners verliezen geld door:
-                      </p>
-                      <ul className="list-disc list-inside space-y-2 ml-4">
-                        <li>Niet weten welke exchanges betrouwbaar zijn</li>
-                        <li>Bitcoin bewaren op exchanges in plaats van eigen beheer</li>
-                        <li>Gevallen voor scams en oplichting</li>
-                        <li>Niet begrijpen van de risico's</li>
-                      </ul>
-                    </div>
-                  </div>
-                  <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8">
-                    <div className="flex items-center gap-4 mb-6">
-                      <div className="bg-orange-500 p-3 rounded-xl">
-                        <Target className="w-8 h-8 text-white" />
-                      </div>
-                      <h4 className="text-2xl font-bold text-gray-900">Onze Oplossing</h4>
-                    </div>
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                        <span className="text-gray-700">Persoonlijke 1-op-1 begeleiding</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                        <span className="text-gray-700">Veilig Bitcoin kopen en bewaren leren</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                        <span className="text-gray-700">Eigen beheer opzetten met hardware wallet</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                        <span className="text-gray-700">Portfolio monitoring en beheer tools</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Tools Preview Section */}
-          <section className="py-20 bg-gray-50">
-            <div className="container mx-auto px-4">
-              <div className="max-w-6xl mx-auto">
-                <div className="text-center mb-16">
-                  <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                    Wat We Je Bieden
-                  </h2>
-                  <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                    Een compleet platform om je Bitcoin reis te begeleiden en monitoren
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12">
-                  <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all">
-                    <div className="bg-orange-100 p-4 rounded-xl w-fit mb-6">
-                      <BarChart3 className="w-8 h-8 text-orange-600" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4">Portfolio Dashboard</h3>
-                    <p className="text-gray-600 leading-relaxed mb-4">
-                      Bekijk je Bitcoin portfolio, transacties en waarde ontwikkeling over tijd. Altijd up-to-date en veilig.
-                    </p>
-                    <div className="bg-gray-100 rounded-lg p-4 h-32 flex items-center justify-center">
-                      <Monitor className="w-12 h-12 text-gray-400" />
-                    </div>
-                  </div>
-
-                  <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all">
-                    <div className="bg-orange-100 p-4 rounded-xl w-fit mb-6">
-                      <Wallet className="w-8 h-8 text-orange-600" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4">Wallet Beheer</h3>
-                    <p className="text-gray-600 leading-relaxed mb-4">
-                      Voeg je Bitcoin wallets toe en volg ze automatisch. Zie je balans, transacties en geschiedenis.
-                    </p>
-                    <div className="bg-gray-100 rounded-lg p-4 h-32 flex items-center justify-center">
-                      <Lock className="w-12 h-12 text-gray-400" />
-                    </div>
-                  </div>
-
-                  <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all">
-                    <div className="bg-orange-100 p-4 rounded-xl w-fit mb-6">
-                      <TrendingUp className="w-8 h-8 text-orange-600" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4">Prijs Monitoring</h3>
-                    <p className="text-gray-600 leading-relaxed mb-4">
-                      Volg Bitcoin prijzen in real-time en bekijk historische data. Begrijp markt trends en cycles.
-                    </p>
-                    <div className="bg-gray-100 rounded-lg p-4 h-32 flex items-center justify-center">
-                      <BarChart3 className="w-12 h-12 text-gray-400" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-8">
-                  <div className="bg-white rounded-2xl p-8 shadow-lg">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="bg-blue-100 p-3 rounded-xl">
-                        <Smartphone className="w-6 h-6 text-blue-600" />
-                      </div>
-                      <h4 className="text-xl font-bold text-gray-900">Mobiel & Desktop</h4>
-                    </div>
-                    <p className="text-gray-600">
-                      Toegang tot je portfolio en tools vanaf elk apparaat. Responsive design voor optimale ervaring.
-                    </p>
-                  </div>
-
-                  <div className="bg-white rounded-2xl p-8 shadow-lg">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="bg-green-100 p-3 rounded-xl">
-                        <Database className="w-6 h-6 text-green-600" />
-                      </div>
-                      <h4 className="text-xl font-bold text-gray-900">Veilig & Privé</h4>
-                    </div>
-                    <p className="text-gray-600">
-                      Alle data wordt veilig opgeslagen. Jij houdt volledige controle over je informatie en wallets.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        </>
-      )}
-
-      {/* What We Offer Section - Replaced with Goals */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                Wat We Willen Bereiken
-              </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Onze missie: jou helpen Bitcoin veilig en met volledige controle te beheren
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8 hover:shadow-lg transition-all">
-                <div className="flex items-center gap-3 mb-4">
-                  <CheckCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
-                  <h3 className="text-xl font-bold text-gray-900">Bitcoin veilig kopen</h3>
-                </div>
-                <p className="text-gray-700 leading-relaxed">
-                  We leren je hoe je Bitcoin op een veilige manier koopt via betrouwbare exchanges en wat je vooraf moet weten.
-                </p>
-              </div>
-
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8 hover:shadow-lg transition-all">
-                <div className="flex items-center gap-3 mb-4">
-                  <CheckCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
-                  <h3 className="text-xl font-bold text-gray-900">Weten wanneer je het beste kan instappen</h3>
-                </div>
-                <p className="text-gray-700 leading-relaxed">
-                  Leer hoe je markttrends leest en ontdek waarom consistent investeren (DCA) een effectieve strategie is.
-                </p>
-              </div>
-
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8 hover:shadow-lg transition-all">
-                <div className="flex items-center gap-3 mb-4">
-                  <CheckCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
-                  <h3 className="text-xl font-bold text-gray-900">Versturen en ontvangen</h3>
-                </div>
-                <p className="text-gray-700 leading-relaxed">
-                  Beheers je Bitcoin transacties met vertrouwen. We leggen uit hoe je veilig Bitcoin stuurt en ontvangt.
-                </p>
-              </div>
-
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8 hover:shadow-lg transition-all">
-                <div className="flex items-center gap-3 mb-4">
-                  <CheckCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
-                  <h3 className="text-xl font-bold text-gray-900">Bewaren in eigen beheer</h3>
-                </div>
-                <p className="text-gray-700 leading-relaxed">
-                  Het belangrijkste: volledig eigenaarschap van je Bitcoin. Geen exchanges, geen risico's, alleen jij.
-                </p>
-              </div>
-
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8 hover:shadow-lg transition-all">
-                <div className="flex items-center gap-3 mb-4">
-                  <CheckCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
-                  <h3 className="text-xl font-bold text-gray-900">24/7 elke seconde je balans inzien</h3>
-                </div>
-                <p className="text-gray-700 leading-relaxed">
-                  Volg je portfolio real-time met ons dashboard. Altijd beschikbaar, altijd actueel, altijd veilig.
-                </p>
-              </div>
-
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8 hover:shadow-lg transition-all">
-                <div className="flex items-center gap-3 mb-4">
-                  <CheckCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
-                  <h3 className="text-xl font-bold text-gray-900">Altijd bij je geld kunnen</h3>
-                </div>
-                <p className="text-gray-700 leading-relaxed">
-                  Jouw Bitcoin, jouw controle, jouw keuzes. Geen instanties die je blokkeren, altijd volledige vrijheid.
-                </p>
-              </div>
-            </div>
-
+      {/* NAVBAR */}
+      <nav className="bg-orange-500 text-white px-6 py-4 flex items-center justify-between shadow-md">
+        <div className="flex items-center gap-3">
+          <div>
+            <div className="font-bold text-lg leading-tight">BitBeheer</div>
+            <div className="text-orange-100 text-xs">Persoonlijke Bitcoin begeleiding</div>
           </div>
         </div>
-      </section>
-
-      {/* Why Choose Us Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                Voor wie is dit bedoeld?
-              </h2>
-              <p className="text-xl text-gray-600">
-                We helpen mensen die serieus willen investeren in Bitcoin
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-              <div className="space-y-8">
-                <div className="flex items-start gap-4">
-                  <div className="bg-green-100 p-3 rounded-xl">
-                    <TrendingUp className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Mensen die Willen Investeren</h3>
-                    <p className="text-gray-600">
-                      We helpen mensen die al van plan zijn om te investeren of graag willen 
-                      investeren in Bitcoin. Je hoeft nog niet te weten hoe, dat leren we je.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="bg-blue-100 p-3 rounded-xl">
-                    <Users className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">1-op-1 Begeleiding</h3>
-                    <p className="text-gray-600">
-                      Geen groepslessen of online cursussen. Persoonlijke begeleiding 
-                      op jouw tempo en niveau, op afspraak.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="bg-purple-100 p-3 rounded-xl">
-                    <Shield className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Uitleg met Voorbeelden</h3>
-                    <p className="text-gray-600">
-                      We leggen alles uit met voorbeelden en echte data. Voordat je investeert, 
-                      begrijp je precies wat je doet en waarom.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-6">Onze Aanpak</h3>
-                <blockquote className="text-lg text-gray-700 italic mb-6">
-                  "We helpen mensen die willen investeren in Bitcoin om dit veilig en verstandig te doen. 
-                  Met voorbeelden en echte data, stap voor stap, zonder haast."
-                </blockquote>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-orange-500 p-2 rounded-full">
-                      <Bitcoin className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">Persoonlijke Begeleiding</p>
-                      <p className="text-gray-600 text-sm">1-op-1, op jouw tempo</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="bg-orange-500 p-2 rounded-full">
-                      <Shield className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">Veilig & Verstandig</p>
-                      <p className="text-gray-600 text-sm">risico beperken met kennis</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="flex items-center gap-4">
+          <Link to="/aanmelden" className="bg-white text-orange-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-orange-50 transition">
+            Inloggen
+          </Link>
         </div>
-      </section>
+      </nav>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-orange-500 to-orange-600 text-white mb-0">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              Wil Je Investeren in Bitcoin?
-            </h2>
-            <p className="text-xl text-orange-100 mb-8 max-w-2xl mx-auto">
-              Als je wilt investeren in Bitcoin en persoonlijke begeleiding wilt, 
-              dan zijn wij er voor je. Met voorbeelden en echte data, stap voor stap.
+      {/* HERO */}
+      <section className="min-h-[88vh] flex items-center px-6 py-16"
+        style={{ background: 'radial-gradient(ellipse at 80% 20%, rgba(249,115,22,0.08) 0%, transparent 60%)' }}>
+        <div className="max-w-6xl mx-auto w-full grid md:grid-cols-2 gap-12 items-center">
+
+          {/* Links */}
+          <div>
+            <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 text-orange-700 text-sm font-medium px-3 py-1.5 rounded-full mb-6">
+              <span className="w-2 h-2 bg-orange-500 rounded-full inline-block animate-pulse" />
+              Bitcoin staat nu in de accumulatiefase
+            </div>
+
+            <h1 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight mb-4">
+              Investeer in Bitcoin.<br />
+              <span className="text-orange-500">Verstandig.</span> In eigen beheer.
+            </h1>
+
+            <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+              Persoonlijke begeleiding voor Bitcoin beginners in Nederland.
+              Geen hype, geen exchanges, geen risico op verlies van je keys.
+              Jij hebt de controle.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to="/aanmelden"
-                className="bg-white text-orange-600 px-8 py-4 rounded-xl font-semibold hover:bg-orange-50 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
-              >
-                <BookOpen className="w-5 h-5" />
-                Aanmelden voor Begeleiding
+
+            {/* Live BTC prijs */}
+            <div className="inline-flex items-center gap-4 bg-gray-900 text-white px-5 py-3 rounded-2xl mb-8 shadow-lg">
+              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-sm font-bold">₿</div>
+              <div>
+                <div className="text-xs text-gray-400 uppercase tracking-wide">Live Bitcoin prijs</div>
+                <div className="text-xl font-bold">
+                  {price ? formatUsd(price) : '...'}
+                </div>
+              </div>
+              {change24h !== null && (
+                <div className={`text-sm font-semibold px-2 py-1 rounded-lg ${isPositive ? 'text-green-400 bg-green-400/10' : 'text-red-400 bg-red-400/10'}`}>
+                  {isPositive ? '▲' : '▼'} {Math.abs(change24h).toFixed(1)}%
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link to="/aanmelden"
+                className="bg-orange-500 hover:bg-orange-600 text-white px-7 py-4 rounded-xl font-bold text-lg transition shadow-lg hover:shadow-xl flex items-center gap-2">
+                Start mijn Bitcoin reis
                 <ArrowRight className="w-5 h-5" />
               </Link>
             </div>
+
+            <div className="flex items-center gap-6 mt-6 text-sm text-gray-500">
+              <span className="flex items-center gap-1.5">
+                <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                Gratis kennismaking
+              </span>
+              <span className="flex items-center gap-1.5">
+                <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                20 min gesprek
+              </span>
+              <span className="flex items-center gap-1.5">
+                <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                Geen spam
+              </span>
+            </div>
+          </div>
+
+          {/* Rechts: marktpositie */}
+          {price ? (
+            <MarktpositieBadge price={price} />
+          ) : (
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex items-center justify-center h-64">
+              <div className="text-gray-400 text-sm">Marktdata laden...</div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* SERVICE KAARTEN */}
+      <section className="bg-gray-50 py-16 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-black text-gray-900 mb-3">Hoe wij jou helpen</h2>
+            <p className="text-gray-600">Beweeg over een kaart voor meer uitleg</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+
+            {/* Kaart 1 */}
+            <div className="group cursor-default">
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition-all duration-300 group-hover:-translate-y-2 group-hover:border-orange-300 group-hover:shadow-lg">
+                <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-4 text-2xl">🤝</div>
+                <h3 className="font-bold text-lg text-gray-900 mb-2">1-op-1 begeleiding</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Persoonlijk gesprek zodat jij begrijpt wat je doet. Wij dragen kennis over, jij neemt zelf de beslissingen.
+                </p>
+                <ul className="mt-4 space-y-1.5 text-sm text-gray-400 max-h-0 overflow-hidden group-hover:max-h-40 transition-all duration-400">
+                  <li>✓ Jij leert hoe Bitcoin werkt</li>
+                  <li>✓ We kijken samen naar jouw situatie</li>
+                  <li>✓ Geen advies, wel inzicht</li>
+                  <li>✓ Gratis kennismakingsgesprek van 20 min</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Kaart 2 */}
+            <div className="group cursor-default">
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition-all duration-300 group-hover:-translate-y-2 group-hover:border-orange-300 group-hover:shadow-lg">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4 text-2xl">🔐</div>
+                <h3 className="font-bold text-lg text-gray-900 mb-2">Eigen beheer</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Jij houdt je eigen keys. Bitcoin op een exchange is niet jouw Bitcoin. Wij helpen je een hardware wallet instellen.
+                </p>
+                <ul className="mt-4 space-y-1.5 text-sm text-gray-400 max-h-0 overflow-hidden group-hover:max-h-40 transition-all duration-400">
+                  <li>✓ Geen exchange risico</li>
+                  <li>✓ Jij bent de enige eigenaar</li>
+                  <li>✓ Ledger hardware wallet setup</li>
+                  <li>✓ Stap voor stap begeleid</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Kaart 3 */}
+            <div className="group cursor-default">
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition-all duration-300 group-hover:-translate-y-2 group-hover:border-orange-300 group-hover:shadow-lg">
+                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4 text-2xl">📈</div>
+                <h3 className="font-bold text-lg text-gray-900 mb-2">Slimme instapstrategie</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Leer het juiste moment te herkennen. Rustig instappen, je inleg het werk laten doen en ontspannen achterover zitten.
+                </p>
+                <ul className="mt-4 space-y-1.5 text-sm text-gray-400 max-h-0 overflow-hidden group-hover:max-h-40 transition-all duration-400">
+                  <li>✓ DCA: maandelijks vast bedrag</li>
+                  <li>✓ Juiste instapmoment herkennen</li>
+                  <li>✓ Geen paniek bij dips</li>
+                  <li>✓ Lange termijn denken</li>
+                </ul>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
-      </div>
+
+      {/* AANMELDFORMULIER */}
+      <section className="py-16 px-6 bg-white">
+        <div className="max-w-xl mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-black text-gray-900 mb-3">Start je Bitcoin reis</h2>
+            <p className="text-gray-600">Vul je gegevens in voor een gratis kennismakingsgesprek van 20 minuten.</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+            <SignupForm />
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="bg-gray-900 text-gray-400 py-8 px-6 text-center text-sm">
+        <p>© {new Date().getFullYear()} BitBeheer. Persoonlijke begeleiding bij het investeren in Bitcoin.</p>
+        <p className="mt-1 text-xs text-gray-600">Deze site biedt educatieve informatie en geen financieel advies. Investeer verantwoord.</p>
+      </footer>
     </div>
+  );
+}
+
+function SignupForm() {
+  const [formData, setFormData] = useState({
+    voornaam: '',
+    achternaam: '',
+    email: '',
+    telefoon: '',
+    ervaring: '',
+  });
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (!formData.voornaam || !formData.email) {
+      setError('Vul minimaal je voornaam en e-mailadres in.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch('/api/create-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error || 'Er ging iets mis, probeer het opnieuw.');
+      }
+      setDone(true);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Er ging iets mis, probeer het opnieuw.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (done) {
+    return (
+      <div className="text-center py-6">
+        <div className="text-4xl mb-4">🎉</div>
+        <h3 className="text-xl font-bold text-gray-900 mb-2">Aanmelding ontvangen!</h3>
+        <p className="text-gray-600">We nemen zo snel mogelijk contact met je op voor een gratis kennismakingsgesprek.</p>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Voornaam *</label>
+          <input name="voornaam" type="text" placeholder="Jan" value={formData.voornaam} onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-sm transition" />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Achternaam</label>
+          <input name="achternaam" type="text" placeholder="Jansen" value={formData.achternaam} onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-sm transition" />
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">E-mailadres *</label>
+        <input name="email" type="email" placeholder="jan@voorbeeld.nl" value={formData.email} onChange={handleChange}
+          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-sm transition" />
+      </div>
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Telefoonnummer <span className="text-gray-400 font-normal">(optioneel)</span></label>
+        <input name="telefoon" type="tel" placeholder="+31 6 12345678" value={formData.telefoon} onChange={handleChange}
+          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-sm transition" />
+      </div>
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Ervaring met Bitcoin</label>
+        <select name="ervaring" value={formData.ervaring} onChange={handleChange}
+          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-sm text-gray-600 transition bg-white">
+          <option value="">Selecteer je niveau...</option>
+          <option value="beginner">Totaal beginner, ik weet nog niets</option>
+          <option value="gehoord">Ik heb er wel eens van gehoord</option>
+          <option value="onderzoek">Ik heb al een beetje onderzoek gedaan</option>
+          <option value="ervaren">Ik heb al eerder Bitcoin gekocht</option>
+        </select>
+      </div>
+
+      {error && <p className="text-red-500 text-sm">{error}</p>}
+
+      <button type="submit" disabled={loading}
+        className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white py-4 rounded-xl font-bold text-base transition shadow-lg hover:shadow-xl flex items-center justify-center gap-2 mt-2">
+        {loading ? 'Aanmelden...' : 'Meld me aan voor een gratis gesprek'}
+        {!loading && <ArrowRight className="w-5 h-5" />}
+      </button>
+
+      <div className="flex items-center justify-center gap-6 mt-2 text-xs text-gray-400">
+        <span>✓ Geen spam</span>
+        <span>✓ Gratis gesprek</span>
+        <span>✓ Je data is veilig</span>
+      </div>
+    </form>
   );
 }
