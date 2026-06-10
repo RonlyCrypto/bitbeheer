@@ -33,7 +33,9 @@ function useLiveBtcPrice() {
 function MarktpositieMini({ price }: { price: number }) {
   const pctVanLastATH = (price / LAST_ATH) * 100;
   const onderVorigATH = price < PREV_ATH;
-  const balPos = Math.min(Math.max(((price - PREV_ATH * 0.3) / (LAST_ATH - PREV_ATH * 0.3)) * 100, 2), 96);
+  const LOW = 20000;
+  const HIGH = LAST_ATH * 1.1;
+  const balPos = Math.min(Math.max(((price - LOW) / (HIGH - LOW)) * 100, 2), 96);
 
   let fase = 'Accumulatiefase';
   let faseKleur = 'green';

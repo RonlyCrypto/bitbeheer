@@ -44,7 +44,10 @@ function MarktpositieBadge({ price }: { price: number }) {
   const onderLaatsteATH = price < LAST_ATH;
 
   // Bereken positie op de balk (0% = diep dal, 100% = nieuwe ATH)
-  const balPos = Math.min(Math.max(((price - PREV_ATH * 0.3) / (LAST_ATH - PREV_ATH * 0.3)) * 100, 2), 96);
+  // Balk: $20k (links) → LAST_ATH * 1.1 (rechts), PREV_ATH valt op ~40% (groen/geel grens)
+  const LOW = 20000;
+  const HIGH = LAST_ATH * 1.1;
+  const balPos = Math.min(Math.max(((price - LOW) / (HIGH - LOW)) * 100, 2), 96);
 
   let fase = 'Accumulatiefase';
   let faseKleur = 'green';
