@@ -4,7 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import { bitcoinApiService } from '../services/bitcoinApiService';
 
 const PREV_ATH = 69000;   // Nov 2021
-const LAST_ATH = 108268;  // Jan 2025
+const LAST_ATH = 126080;  // Okt 2025
 
 function useLiveBtcPrice() {
   const [price, setPrice] = useState<number | null>(null);
@@ -86,23 +86,27 @@ function MarktpositieBadge({ price }: { price: number }) {
         </div>
       </div>
 
-      {/* ATH vergelijking */}
+      {/* ATH vergelijking — gesorteerd op prijs */}
       <div className="grid grid-cols-3 gap-3 mb-5 text-center">
-        <div className="bg-gray-50 rounded-xl p-3">
-          <div className="text-xs text-gray-500 mb-1">Vorige ATH</div>
-          <div className="font-bold text-gray-800 text-sm">{formatUsd(PREV_ATH)}</div>
-          <div className="text-xs text-gray-400">Nov 2021</div>
-        </div>
-        <div className="bg-orange-50 rounded-xl p-3 border border-orange-200">
-          <div className="text-xs text-orange-600 font-medium mb-1">Nu · Live</div>
-          <div className="font-bold text-orange-600 text-lg">{formatUsd(price)}</div>
-          <div className="text-xs text-gray-400">{pctVanLastATH.toFixed(0)}% van ATH</div>
-        </div>
-        <div className="bg-gray-50 rounded-xl p-3">
-          <div className="text-xs text-gray-500 mb-1">Laatste ATH</div>
-          <div className="font-bold text-gray-800 text-sm">{formatUsd(LAST_ATH)}</div>
-          <div className="text-xs text-gray-400">Jan 2025</div>
-        </div>
+        {[
+          { label: 'Vorige ATH', sub: 'Nov 2021', value: PREV_ATH, live: false },
+          { label: 'Nu · Live', sub: `${pctVanLastATH.toFixed(0)}% van ATH`, value: price, live: true },
+          { label: 'Laatste ATH', sub: 'Okt 2025', value: LAST_ATH, live: false },
+        ].sort((a, b) => a.value - b.value).map(item => (
+          item.live ? (
+            <div key="live" className="bg-orange-50 rounded-xl p-3 border border-orange-200">
+              <div className="text-xs text-orange-600 font-medium mb-1">{item.label}</div>
+              <div className="font-bold text-orange-600 text-lg">{formatUsd(item.value)}</div>
+              <div className="text-xs text-gray-400">{item.sub}</div>
+            </div>
+          ) : (
+            <div key={item.label} className="bg-gray-50 rounded-xl p-3">
+              <div className="text-xs text-gray-500 mb-1">{item.label}</div>
+              <div className="font-bold text-gray-800 text-sm">{formatUsd(item.value)}</div>
+              <div className="text-xs text-gray-400">{item.sub}</div>
+            </div>
+          )
+        ))}
       </div>
 
       {/* Positiebalk */}
