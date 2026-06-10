@@ -749,46 +749,47 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex">
       {/* SEO H1 Tag */}
       <h1 className="sr-only">BitBeheer Gebruikers Dashboard - Bitcoin Portfolio en Begeleiding</h1>
 
-      {/* Header — zelfde stijl als frontpage */}
-      <nav className="bg-orange-500 text-white px-6 py-4 flex items-center justify-between shadow-md">
-        <div>
-          <div className="font-bold text-lg leading-tight">BitBeheer</div>
-          <div className="text-orange-100 text-xs">
-            Welkom terug, {getDisplayName(user, isImpersonating, impersonatedUser, userProfile)}!
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <NotificationDropdown
-            unreadCount={unreadChatCount}
-            onNotificationClick={(notification) => {
-              if (notification.type === 'unread_message') setActiveTab('helpdesk');
-              else if (notification.type === 'appointment_approved') setActiveTab('overview');
-              else if (notification.type === 'goal_achieved') setActiveTab('goals');
-            }}
-          />
-          <NotificationSettings
-            onPhoneNumberSaved={(phone) => setUserProfile({ ...userProfile, phone })}
-          />
-        </div>
-      </nav>
+      {/* Sidebar */}
+      <UserSidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        accountApproved={accountApproved}
+        hasApprovedOneOnOne={hasApprovedOneOnOne}
+        unreadChatCount={unreadChatCount}
+      />
 
-      <div className="flex min-h-screen bg-gray-50">
-        {/* Sidebar */}
-        <UserSidebar
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          accountApproved={accountApproved}
-          hasApprovedOneOnOne={hasApprovedOneOnOne}
-          unreadChatCount={unreadChatCount}
-        />
+      {/* Right column: header + content */}
+      <div className="flex-1 flex flex-col min-h-screen overflow-auto">
+        {/* Header — zelfde stijl als frontpage */}
+        <nav className="bg-orange-500 text-white px-6 py-4 flex items-center justify-between shadow-md">
+          <div>
+            <div className="font-bold text-lg leading-tight">BitBeheer</div>
+            <div className="text-orange-100 text-xs">
+              Welkom terug, {getDisplayName(user, isImpersonating, impersonatedUser, userProfile)}!
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <NotificationDropdown
+              unreadCount={unreadChatCount}
+              onNotificationClick={(notification) => {
+                if (notification.type === 'unread_message') setActiveTab('helpdesk');
+                else if (notification.type === 'appointment_approved') setActiveTab('overview');
+                else if (notification.type === 'goal_achieved') setActiveTab('goals');
+              }}
+            />
+            <NotificationSettings
+              onPhoneNumberSaved={(phone) => setUserProfile({ ...userProfile, phone })}
+            />
+          </div>
+        </nav>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-auto pb-20 md:pb-0">
-          <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="flex-1 pb-20 md:pb-0">
+          <div className="px-6 py-8">
             {activeTab === 'overview' && <OverviewTab 
               userProfile={userProfile} 
               goals={goals} 
