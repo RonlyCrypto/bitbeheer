@@ -202,9 +202,11 @@ export default function FrontPage() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <a href="#aanmelden" className="bg-white text-orange-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-orange-50 transition">
+          <button
+            onClick={() => document.getElementById('aanmelden')?.scrollIntoView({ behavior: 'smooth' })}
+            className="bg-white text-orange-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-orange-50 transition">
             Inloggen
-          </a>
+          </button>
         </div>
       </nav>
 
