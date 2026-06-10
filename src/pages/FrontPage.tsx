@@ -142,7 +142,7 @@ function MarktpositieBadge({ price, ath, athDate }: { price: number; ath: number
       {/* Positiebalk */}
       <div className="mb-4">
         <div className="relative h-4 rounded-full overflow-hidden" style={{
-          background: 'linear-gradient(to right, #22c55e 0%, #86efac 25%, #fbbf24 50%, #f97316 75%, #ef4444 100%)'
+          background: 'linear-gradient(to right, #16a34a 0%, #22c55e 40%, #86efac 50%, #fbbf24 65%, #f97316 82%, #ef4444 100%)'
         }}>
           <div className="absolute top-0 bottom-0 flex items-center" style={{ left: `${balPos}%` }}>
             <div className="w-4 h-4 bg-white rounded-full border-2 border-gray-800 shadow-lg -translate-x-1/2" />
