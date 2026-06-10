@@ -24,38 +24,53 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showWalletBalanceChart, setShowWalletBalanceChart] = useState(false);
 
-  // Fetch price data function
+  // Fetch live price from CoinGecko (zelfde cache als frontpage)
   const fetchPriceData = async () => {
     try {
-      const latestPrice = await bitcoinPriceDataService.getLatestPrice();
-      if (latestPrice) {
-        const vsCurrency = currency.toLowerCase();
-        const priceKey = currency === 'EUR' ? 'price_eur' : 'price_usd';
-        
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toISOString().split('T')[0];
-        
-        const { data: yesterdayData } = await supabase
-          .from('bitcoin_price_data')
-          .select(priceKey)
-          .eq('date', yesterdayStr)
-          .single();
-        
-        const yesterdayPrice = yesterdayData?.[priceKey] || latestPrice.price;
-        const change24h = latestPrice.price - yesterdayPrice;
-        const changePercent24h = yesterdayPrice > 0 ? (change24h / yesterdayPrice) * 100 : 0;
-        
+      // 1. Gebruik gedeelde cache als startpunt
+      const cached = (() => { try { return JSON.parse(localStorage.getItem('btc_market_cache') || 'null'); } catch { return null; } })();
+      if (cached?.price) {
         setPriceData({
-          price: latestPrice.price,
-          change24h: change24h,
-          changePercent24h: changePercent24h,
-          marketCap: latestPrice.market_cap || 0,
+          price: cached.price,
+          change24h: cached.change24h ?? 0,
+          changePercent24h: cached.change24h ?? 0,
+          marketCap: 0,
           volume24h: 0
         });
       }
+
+      // 2. Haal live prijs op van CoinGecko
+      const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin', { signal: AbortSignal.timeout(8000) });
+      const [data] = await res.json();
+      const livePrice = data.current_price;
+      const change24h = data.price_change_percentage_24h ?? 0;
+
+      setPriceData({
+        price: livePrice,
+        change24h: change24h,
+        changePercent24h: change24h,
+        marketCap: data.market_cap || 0,
+        volume24h: data.total_volume || 0
+      });
+
+      // Update gedeelde cache
+      const athDate = data.ath_date ? new Date(data.ath_date).toLocaleDateString('nl-NL', { month: 'short', year: 'numeric' }) : null;
+      localStorage.setItem('btc_market_cache', JSON.stringify({ price: livePrice, change24h: change24h, ath: data.ath, athDate, cachedAt: Date.now() }));
+
+      // 3. Voeg vandaag toe aan chartData als het laatste punt
+      const todayStr = new Date().toISOString().split('T')[0];
+      setChartData(prev => {
+        if (prev.length === 0) return prev;
+        const last = prev[prev.length - 1];
+        // Vervang of voeg toe: als laatste punt = vandaag, update prijs; anders append
+        if (last.date === todayStr) {
+          return [...prev.slice(0, -1), { date: todayStr, price: livePrice }];
+        } else {
+          return [...prev, { date: todayStr, price: livePrice }];
+        }
+      });
     } catch (error) {
-      console.error('Error fetching price data:', error);
+      console.error('Error fetching live price:', error);
     }
   };
 
@@ -70,24 +85,30 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
   const loadHistoricalData = async () => {
     try {
       const summary = await bitcoinPriceDataService.getSummary();
-      
+
+      let data: PriceData[] = [];
       if (summary && summary.available_years && summary.available_years.length > 0) {
-        const data = await bitcoinPriceDataService.getDataForYears(
-          summary.available_years,
-          currency
-        );
-        
-        setChartData(data);
+        data = await bitcoinPriceDataService.getDataForYears(summary.available_years, currency);
       } else {
         const currentYear = new Date().getFullYear();
         const years = [];
-        for (let year = 2009; year <= currentYear; year++) {
-          years.push(year);
-        }
-        
-        const data = await bitcoinPriceDataService.getDataForYears(years, currency);
-        setChartData(data);
+        for (let year = 2009; year <= currentYear; year++) years.push(year);
+        data = await bitcoinPriceDataService.getDataForYears(years, currency);
       }
+
+      // Voeg vandaag toe met live prijs uit cache zodat chart altijd up-to-date eindigt
+      const todayStr = new Date().toISOString().split('T')[0];
+      const cached = (() => { try { return JSON.parse(localStorage.getItem('btc_market_cache') || 'null'); } catch { return null; } })();
+      if (cached?.price) {
+        const last = data[data.length - 1];
+        if (last && last.date === todayStr) {
+          data = [...data.slice(0, -1), { date: todayStr, price: cached.price }];
+        } else {
+          data = [...data, { date: todayStr, price: cached.price }];
+        }
+      }
+
+      setChartData(data);
     } catch (error) {
       console.error('Error loading historical data:', error);
       setChartData([]);
