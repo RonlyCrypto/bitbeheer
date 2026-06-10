@@ -892,7 +892,6 @@ export default function UserDashboard() {
             </div>
           </div>
         </div>
-      </div>
 
       {/* Mobile Bottom Navigation for User Dashboard */}
       <UserDashboardMobileNav
