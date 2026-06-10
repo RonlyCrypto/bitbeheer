@@ -1,70 +1,71 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import { bitcoinApiService } from '../services/bitcoinApiService';
+import { bitcoinApiService } from '../services/bitcoinApiService'; // fallback voor prijs
 
-const PREV_ATH = 69000;   // Nov 2021
-const LAST_ATH = 126080;  // Okt 2025
+const PREV_ATH = 69000; // Nov 2021 — historische referentie, blijft vast
 
-function useLiveBtcPrice() {
+function useLiveBtcData() {
   const [price, setPrice] = useState<number | null>(null);
   const [change24h, setChange24h] = useState<number | null>(null);
+  const [ath, setAth] = useState<number | null>(null);
+  const [athDate, setAthDate] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchPrice() {
+    async function fetchData() {
       try {
-        // Probeer live CoinGecko eerst
+        // markets endpoint geeft prijs + ATH in één call
         const res = await fetch(
-          'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true',
+          'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin',
           { signal: AbortSignal.timeout(5000) }
         );
-        const data = await res.json();
-        setPrice(data.bitcoin.usd);
-        setChange24h(data.bitcoin.usd_24h_change);
+        const [data] = await res.json();
+        setPrice(data.current_price);
+        setChange24h(data.price_change_percentage_24h);
+        setAth(data.ath);
+        setAthDate(data.ath_date
+          ? new Date(data.ath_date).toLocaleDateString('nl-NL', { month: 'short', year: 'numeric' })
+          : null);
       } catch {
-        // Fallback op database
+        // Fallback op database voor prijs
         const fallback = await bitcoinApiService.getCurrentPrice();
         setPrice(fallback);
       }
     }
-    fetchPrice();
+    fetchData();
   }, []);
 
-  return { price, change24h };
+  return { price, change24h, ath, athDate };
 }
 
 function formatUsd(n: number) {
   return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
 }
 
-function MarktpositieBadge({ price }: { price: number }) {
-  const pctVanPrevATH = (price / PREV_ATH) * 100;
-  const pctVanLastATH = (price / LAST_ATH) * 100;
+function MarktpositieBadge({ price, ath, athDate }: { price: number; ath: number; athDate: string | null }) {
+  const pctVanATH = (price / ath) * 100;
   const onderVorigATH = price < PREV_ATH;
-  const onderLaatsteATH = price < LAST_ATH;
 
-  // Bereken positie op de balk (0% = diep dal, 100% = nieuwe ATH)
-  // Balk: $20k (links) → LAST_ATH * 1.1 (rechts), PREV_ATH valt op ~40% (groen/geel grens)
   const LOW = 20000;
-  const HIGH = LAST_ATH * 1.1;
+  const HIGH = ath * 1.1;
   const balPos = Math.min(Math.max(((price - LOW) / (HIGH - LOW)) * 100, 2), 96);
 
   let fase = 'Accumulatiefase';
   let faseKleur = 'green';
   let uitleg = 'Bitcoin zit onder de vorige ATH. Historisch gezien een goede koopperiode.';
 
-  if (price > LAST_ATH) {
+  if (price > ath) {
     fase = 'Prijsontdekking';
     faseKleur = 'red';
     uitleg = 'Bitcoin staat op een nieuw all-time high. Wees voorzichtig.';
-  } else if (pctVanLastATH > 85) {
+  } else if (pctVanATH > 85) {
     fase = 'Hoog risico';
     faseKleur = 'orange';
-    uitleg = 'Bitcoin nadert het laatste all-time high. Pas op voor hype.';
-  } else if (pctVanPrevATH > 100) {
+    uitleg = 'Bitcoin nadert het all-time high. Pas op voor hype.';
+  } else if (price > PREV_ATH) {
     fase = 'Herstelfase';
     faseKleur = 'yellow';
-    uitleg = 'Bitcoin is boven de vorige ATH, maar nog onder het laatste record.';
+    uitleg = 'Bitcoin is boven de vorige ATH, maar nog onder het all-time high.';
   }
 
   const kleurMap: Record<string, string> = {
@@ -93,8 +94,8 @@ function MarktpositieBadge({ price }: { price: number }) {
       <div className="grid grid-cols-3 gap-3 mb-5 text-center">
         {[
           { label: 'Vorige ATH', sub: 'Nov 2021', value: PREV_ATH, live: false },
-          { label: 'Nu · Live', sub: `${pctVanLastATH.toFixed(0)}% van ATH`, value: price, live: true },
-          { label: 'Laatste ATH', sub: 'Okt 2025', value: LAST_ATH, live: false },
+          { label: 'Nu · Live', sub: `${pctVanATH.toFixed(0)}% van ATH`, value: price, live: true },
+          { label: 'Hoogste ooit', sub: athDate ?? '', value: ath, live: false },
         ].sort((a, b) => a.value - b.value).map(item => (
           item.live ? (
             <div key="live" className="bg-orange-50 rounded-xl p-3 border border-orange-200">
@@ -137,9 +138,9 @@ function MarktpositieBadge({ price }: { price: number }) {
             {((1 - price / PREV_ATH) * 100).toFixed(1)}% onder de vorige ATH van {formatUsd(PREV_ATH)}
           </p>
         )}
-        {!onderVorigATH && onderLaatsteATH && (
+        {!onderVorigATH && price < ath && (
           <p className="text-xs mt-1 font-medium">
-            {((1 - price / LAST_ATH) * 100).toFixed(1)}% onder het laatste ATH van {formatUsd(LAST_ATH)}
+            {((1 - price / ath) * 100).toFixed(1)}% onder het all-time high van {formatUsd(ath)}
           </p>
         )}
       </div>
@@ -160,7 +161,7 @@ function MarktpositieBadge({ price }: { price: number }) {
 }
 
 export default function FrontPage() {
-  const { price, change24h } = useLiveBtcPrice();
+  const { price, change24h, ath, athDate } = useLiveBtcData();
   const isPositive = (change24h ?? 0) >= 0;
 
   return (
@@ -251,8 +252,8 @@ export default function FrontPage() {
           </div>
 
           {/* Rechts: marktpositie */}
-          {price ? (
-            <MarktpositieBadge price={price} />
+          {price && ath ? (
+            <MarktpositieBadge price={price} ath={ath} athDate={athDate} />
           ) : (
             <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex items-center justify-center h-64">
               <div className="text-gray-400 text-sm">Marktdata laden...</div>
