@@ -749,52 +749,34 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" style={{ backgroundColor: '#f9fafb' }}>
+    <div className="min-h-screen bg-gray-50">
       {/* SEO H1 Tag */}
       <h1 className="sr-only">BitBeheer Gebruikers Dashboard - Bitcoin Portfolio en Begeleiding</h1>
-      
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center gap-4">
-              <div className="bg-orange-100 dark:bg-orange-900 p-3 rounded-xl">
-                <TrendingUp className="w-8 h-8 text-orange-600 dark:text-orange-400" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Mijn Dashboard</h2>
-                <p className="text-gray-600 dark:text-gray-400">Welkom terug, {getDisplayName(user, isImpersonating, impersonatedUser, userProfile)}!</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <NotificationDropdown 
-                unreadCount={unreadChatCount}
-                onNotificationClick={(notification) => {
-                  // Navigate based on notification type
-                  if (notification.type === 'unread_message') {
-                    setActiveTab('helpdesk');
-                  } else if (notification.type === 'appointment_approved') {
-                    setActiveTab('overview'); // Appointments tab is verborgen
-                  } else if (notification.type === 'goal_achieved') {
-                    setActiveTab('goals');
-                  }
-                }}
-              />
-              <NotificationSettings 
-                onPhoneNumberSaved={(phone) => {
-                  // Update userProfile with new phone number
-                  setUserProfile({
-                    ...userProfile,
-                    phone: phone
-                  });
-                }}
-              />
-            </div>
+
+      {/* Header — zelfde stijl als frontpage */}
+      <nav className="bg-orange-500 text-white px-6 py-4 flex items-center justify-between shadow-md">
+        <div>
+          <div className="font-bold text-lg leading-tight">BitBeheer</div>
+          <div className="text-orange-100 text-xs">
+            Welkom terug, {getDisplayName(user, isImpersonating, impersonatedUser, userProfile)}!
           </div>
         </div>
-      </div>
+        <div className="flex items-center gap-3">
+          <NotificationDropdown
+            unreadCount={unreadChatCount}
+            onNotificationClick={(notification) => {
+              if (notification.type === 'unread_message') setActiveTab('helpdesk');
+              else if (notification.type === 'appointment_approved') setActiveTab('overview');
+              else if (notification.type === 'goal_achieved') setActiveTab('goals');
+            }}
+          />
+          <NotificationSettings
+            onPhoneNumberSaved={(phone) => setUserProfile({ ...userProfile, phone })}
+          />
+        </div>
+      </nav>
 
-      <div className="min-h-screen bg-gray-100 flex">
+      <div className="min-h-screen bg-gray-50 flex">
         {/* User Sidebar - Hidden on mobile */}
         <UserSidebar 
           activeTab={activeTab}
@@ -2246,10 +2228,10 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           {/* Wallet Block - 2/3 breedte */}
           <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-6 border border-gray-200">
               {/* Wallet uitleg bovenaan */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
                 <div className="flex items-start gap-2">
-                  <Shield className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-blue-800 leading-relaxed">
+                  <Shield className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-orange-800 leading-relaxed">
                     Dit is je eigen wallet. <strong>Geef nooit je seed code aan iemand.</strong> Jij hebt alles in eigen beheer.
                   </p>
                 </div>
@@ -2258,8 +2240,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               {/* Wallet header met link naar portfolio */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3 flex-1">
-                  <div className="bg-blue-100 p-2 rounded-lg">
-                    <Wallet className="w-5 h-5 text-blue-600" />
+                  <div className="bg-orange-100 p-2 rounded-lg">
+                    <Wallet className="w-5 h-5 text-orange-600" />
             </div>
             <div className="flex-1">
                     <h3 className="text-base font-semibold text-gray-900 mb-1">
@@ -2275,7 +2257,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   onClick={() => {
                     navigator.clipboard.writeText(walletData.address);
                   }}
-                        className="text-blue-600 hover:text-blue-800"
+                        className="text-orange-600 hover:text-orange-800"
                   title="Kopieer adres"
                 >
                         <Copy className="w-3 h-3" />
@@ -2306,8 +2288,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                             </div>
                             {walletSyncProgress && walletSyncProgress.isSyncing && (
                               <div className="flex items-center gap-2 mt-1">
-                                <Loader2 className="w-3 h-3 text-blue-600 animate-spin" />
-                                <span className="text-xs text-blue-600">
+                                <Loader2 className="w-3 h-3 text-orange-600 animate-spin" />
+                                <span className="text-xs text-orange-600">
                                   {walletSyncProgress.loadedTransactions || 0}/{walletSyncProgress.totalTransactions || '?'} transacties
                                 </span>
                               </div>
@@ -2343,7 +2325,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   className={`text-sm font-medium flex items-center gap-1 flex-shrink-0 transition-colors ${
                     !hasWallet || (walletSyncProgress && walletSyncProgress.isSyncing && walletSyncProgress.loadedTransactions < 10)
                       ? 'text-gray-400 cursor-not-allowed'
-                      : 'text-blue-600 hover:text-blue-700 cursor-pointer'
+                      : 'text-orange-600 hover:text-orange-700 cursor-pointer'
                   }`}
                 >
                   Portfolio <ArrowRight className="w-4 h-4" />
@@ -2391,7 +2373,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                                 href={`https://blockstream.info/tx/${tx.hash}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-700 flex-shrink-0"
+                                className="text-orange-600 hover:text-orange-700 flex-shrink-0"
                                 title={isPending ? "Bekijk pending transactie" : "Bekijk transactie"}
                           >
                             <ExternalLink className="w-3 h-3" />
@@ -2407,7 +2389,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   {walletTransactions.length > 3 && (
             <button
               onClick={() => onNavigateToPortfolio?.()}
-                      className="w-full mt-3 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
+                      className="w-full mt-3 px-3 py-2 bg-orange-500 text-white rounded-lg text-xs font-medium hover:bg-orange-600 transition-colors"
             >
                       Alle transacties bekijken
             </button>
@@ -2433,7 +2415,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 </div>
                 <button
                   onClick={() => setShowExchangeWarningPopup(true)}
-                  className="text-xs text-blue-600 hover:text-blue-700 font-medium whitespace-nowrap"
+                  className="text-xs text-orange-600 hover:text-orange-700 font-medium whitespace-nowrap"
                 >
                   Waarom?
                 </button>
@@ -2479,9 +2461,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   {
                     id: 'common1',
                     content: (
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
                         <div className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                          <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
                           <p className="text-xs text-gray-700">Koop nooit via DM's</p>
                         </div>
                       </div>
@@ -2490,9 +2472,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   {
                     id: 'common2',
                     content: (
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
                         <div className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                          <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
                           <p className="text-xs text-gray-700">Deel nooit je seed</p>
                         </div>
                       </div>
@@ -2501,9 +2483,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   {
                     id: 'common3',
                     content: (
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
                         <div className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                          <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
                           <p className="text-xs text-gray-700">Laat BTC niet lang op exchanges</p>
                         </div>
                       </div>
@@ -2572,7 +2554,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               <h3 className="text-base font-semibold text-gray-900">📊 Fear & Greed Index</h3>
               <button
                 onClick={() => setShowFearGreedPopup(true)}
-                className="text-xs text-blue-600 hover:text-blue-700"
+                className="text-xs text-orange-600 hover:text-orange-700"
               >
                 Meer info &gt;
               </button>
@@ -2881,7 +2863,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                     window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'helpdesk' }));
                   }
                 }}
-                className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                className="w-full bg-orange-500 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
               >
                 <MessageSquare className="w-4 h-4" />
                 Stel je vraag
@@ -3122,8 +3104,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                     );
                   })}
                 </div>
-                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-xs text-blue-800">
+                <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <p className="text-xs text-orange-800">
                     <strong>Wat betekenen Historical Values?</strong><br />
                     Deze waarden tonen hoe het marktsentiment zich heeft ontwikkeld over tijd. Extreme Fear kan koopkansen betekenen, terwijl Extreme Greed waarschuwt voor mogelijke overwaardering.
                   </p>
@@ -3204,9 +3186,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                 </ul>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-semibold text-blue-900 mb-2">De oplossing: Self-custody</h4>
-                <p className="text-sm text-blue-800">
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <h4 className="font-semibold text-orange-900 mb-2">De oplossing: Self-custody</h4>
+                <p className="text-sm text-orange-800">
                   Met een eigen wallet (zoals een hardware wallet) heb je volledige controle. Alleen jij hebt de private keys, 
                   alleen jij hebt toegang, en niemand kan je wallet blokkeren of bevriezen.
                 </p>
@@ -3216,7 +3198,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             <div className="mt-6 flex justify-end">
               <button
                 onClick={() => setShowExchangeWarningPopup(false)}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                className="px-6 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors"
               >
                 Begrepen
               </button>
@@ -4368,8 +4350,8 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                   <span className="text-xs text-gray-500">maanden</span>
                 </div>
                 {analysis.isPaused && (
-                  <div className="flex items-center gap-2 px-2 sm:px-3 py-1 bg-blue-100 rounded-full">
-                    <span className="text-xs sm:text-sm font-semibold text-blue-700">⏸️ Gepauzeerd</span>
+                  <div className="flex items-center gap-2 px-2 sm:px-3 py-1 bg-orange-100 rounded-full">
+                    <span className="text-xs sm:text-sm font-semibold text-orange-700">⏸️ Gepauzeerd</span>
                   </div>
                 )}
                 {analysis.streakBroken && !analysis.isPaused && (
@@ -4445,9 +4427,9 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                   textColor = 'text-orange-900';
                   statusText = '↩';
                 } else if (month.status === 'extra') {
-                  bgColor = 'bg-blue-100';
-                  borderColor = 'border-blue-500';
-                  textColor = 'text-blue-900';
+                  bgColor = 'bg-orange-100';
+                  borderColor = 'border-orange-400';
+                  textColor = 'text-orange-900';
                   statusText = '⭐';
                 } else {
                   bgColor = 'bg-gray-100';
@@ -4465,7 +4447,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                     style={{ overflow: 'visible' }}
                   >
                     {month.isStartMonth && (
-                      <div className="absolute -top-3 -right-1 sm:-top-4 sm:-right-2 bg-blue-500 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-bold z-20 shadow-md">
+                      <div className="absolute -top-3 -right-1 sm:-top-4 sm:-right-2 bg-orange-500 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-bold z-20 shadow-md">
                         START
                       </div>
                     )}
@@ -4514,7 +4496,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
               <span>Goedgemaakt</span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-100 border-2 border-blue-500 rounded"></div>
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-orange-100 border-2 border-orange-400 rounded"></div>
               <span>Extra storting</span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2">
@@ -4537,7 +4519,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                         month.status === 'completed' ? 'bg-green-100 text-green-800' :
                         month.status === 'missed' ? 'bg-red-100 text-red-800' :
                         month.status === 'made_up' ? 'bg-orange-100 text-orange-800' :
-                        month.status === 'extra' ? 'bg-blue-100 text-blue-800' :
+                        month.status === 'extra' ? 'bg-orange-100 text-orange-800' :
                         'bg-gray-100 text-gray-800'
                       }`}>
                         {month.status === 'completed' && '✓ Voltooid'}
@@ -4548,7 +4530,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                     </div>
 
                     {month.status === 'extra' && (
-                      <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
+                      <div className="mb-3 p-2 bg-orange-50 border border-orange-200 rounded text-sm text-orange-800">
                         🎉 Goed van je dat je extra hebt gestort!
                         {month.madeUpMonths && month.madeUpMonths.length > 0 && (
                           <div className="mt-1">
@@ -4583,7 +4565,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                               month.status === 'completed' ? 'bg-green-500' :
                               month.status === 'made_up' ? 'bg-orange-500' :
-                              month.status === 'extra' ? 'bg-blue-500' :
+                              month.status === 'extra' ? 'bg-orange-500' :
                               'bg-gray-400'
                             }`}></div>
                             <div className="min-w-0 flex-1">
@@ -4604,7 +4586,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                             href={`https://blockstream.info/tx/${tx.txid || tx.hash || ''}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-700 flex-shrink-0"
+                            className="text-orange-600 hover:text-orange-700 flex-shrink-0"
                           >
                             <ExternalLink className="w-4 h-4" />
                           </a>
@@ -4625,7 +4607,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                         </span>
                       </div>
                       {month.totalAmount > month.targetAmount && (
-                        <div className="mt-1 text-xs text-blue-600 break-words">
+                        <div className="mt-1 text-xs text-orange-600 break-words">
                           +{(month.totalAmount - month.targetAmount).toFixed(4)} BTC extra
                           {month.avgPrice > 0 && (
                             <span className="ml-1">
@@ -4673,7 +4655,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
     <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-gray-900">🎯 Jouw Bitcoin Mijlpalen</h3>
-        <a href="#" className="text-sm text-blue-600 hover:text-blue-700">Wat betekent dit? &gt;</a>
+        <a href="#" className="text-sm text-orange-600 hover:text-orange-700">Wat betekent dit? &gt;</a>
       </div>
       
       {/* Bitcoin Milestones Section */}
@@ -4827,7 +4809,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
               {onNavigateToGoals && (
                 <button
                   onClick={onNavigateToGoals}
-                  className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                  className="text-xs text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1"
                 >
                   Bekijk alle doelen <ArrowRight className="w-3 h-3" />
                 </button>
@@ -4938,7 +4920,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                           <div className="mt-1.5 space-y-1 text-xs bg-gray-50 p-2 rounded border border-gray-200">
                             <div className="flex justify-between items-center">
                               <span className="text-gray-600">Per maand nodig:</span>
-                              <span className="font-semibold text-blue-600">{requiredPerMonth.toFixed(6)} BTC</span>
+                              <span className="font-semibold text-orange-600">{requiredPerMonth.toFixed(6)} BTC</span>
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="text-gray-600">Maanden verstreken:</span>
@@ -4987,7 +4969,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                             <span className="text-xs text-gray-500">📅 Laatste: {new Date(monthlyAnalysis.lastDepositDate).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                           )}
                           {isPaused && (
-                            <span className="text-xs text-blue-600 font-medium">⏸️ Gepauzeerd</span>
+                            <span className="text-xs text-orange-600 font-medium">⏸️ Gepauzeerd</span>
                           )}
                           {streakBroken && !isPaused && (
                             <span className="text-xs text-red-600 font-medium">⚠️ Verbroken</span>
@@ -5012,7 +4994,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                           e.stopPropagation();
                           handleEditGoal(goal);
                         }}
-                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                        className="p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors"
                         title="Bewerk doel"
                       >
                         <Edit className="w-4 h-4" />
@@ -5070,7 +5052,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                           window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'helpdesk' }));
                         }
                       }}
-                      className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                      className="w-full bg-orange-500 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
                     >
                       <MessageSquare className="w-4 h-4" />
                       Stel je vraag
@@ -5090,7 +5072,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
             </h3>
             <button
               onClick={() => setShowStrategyEditPopup(true)}
-              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              className="text-xs text-orange-600 hover:text-orange-700 font-medium"
             >
               Bewerk
             </button>
@@ -5730,31 +5712,31 @@ function ReferralBlocksWithHelp({ onBookAppointment }: { onBookAppointment?: () 
             return (
     <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Ledger - 1/2 */}
-      <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-6 rounded-xl relative">
-        <div className="absolute top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+      <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-orange-200 p-6 rounded-xl relative">
+        <div className="absolute top-4 right-4 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
           Stap 1
                   </div>
         <div className="flex items-start gap-4">
-          <div className="bg-blue-600 p-3 rounded-xl">
+          <div className="bg-orange-500 p-3 rounded-xl">
             <Shield className="w-8 h-8 text-white" />
                 </div>
           <div className="flex-1">
-            <h3 className="text-xl font-bold text-blue-900 mb-3">Ledger Hardware Wallet</h3>
-            <p className="text-blue-800 mb-4 leading-relaxed">
+            <h3 className="text-xl font-bold text-orange-900 mb-3">Ledger Hardware Wallet</h3>
+            <p className="text-orange-800 mb-4 leading-relaxed">
               Een Ledger is een hardware wallet die je Bitcoin offline bewaart. Het is de veiligste manier 
               om je Bitcoin op te slaan omdat het niet verbonden is met het internet. Je privésleutels blijven 
               altijd onder jouw controle en kunnen niet gehackt worden.
             </p>
             <div className="space-y-2 mb-4">
-              <div className="flex items-center gap-2 text-blue-700">
+              <div className="flex items-center gap-2 text-orange-700">
                 <CheckCircle className="w-4 h-4" />
                 <span className="text-sm">Offline opslag van je privésleutels</span>
                   </div>
-              <div className="flex items-center gap-2 text-blue-700">
+              <div className="flex items-center gap-2 text-orange-700">
                 <CheckCircle className="w-4 h-4" />
                 <span className="text-sm">Bescherming tegen hackers en malware</span>
                   </div>
-              <div className="flex items-center gap-2 text-blue-700">
+              <div className="flex items-center gap-2 text-orange-700">
                 <CheckCircle className="w-4 h-4" />
                 <span className="text-sm">Ondersteuning voor 1000+ cryptocurrencies</span>
                   </div>
@@ -5762,7 +5744,7 @@ function ReferralBlocksWithHelp({ onBookAppointment }: { onBookAppointment?: () 
           <button
               onClick={handleLedgerClick}
               disabled={!ledgerLink}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-orange-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ExternalLink className="w-4 h-4" />
               Koop een Ledger
@@ -6043,7 +6025,7 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
                        '❌ Geannuleerd'}
                     </span>
                     {apt.one_on_one_approved && (
-                      <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                      <span className="px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800 dark:bg-blue-900 dark:text-blue-200">
                         ✓ 1 op 1 Goedgekeurd
                       </span>
                     )}
@@ -6060,7 +6042,7 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
                         href={apt.teams_link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
                       >
                         <Video className="w-4 h-4" />
                         Open Microsoft Teams Link
@@ -6190,7 +6172,7 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
                            '❌ Geannuleerd'}
                         </span>
                         {apt.one_on_one_approved && (
-                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-blue-900 dark:text-blue-200">
                             ✓ 1 op 1 Goedgekeurd
                           </span>
                         )}
@@ -6233,7 +6215,7 @@ function AppointmentsTab({ appointments, setAppointments, onBookAppointment, isI
                         href={apt.teams_link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-1"
+                        className="text-xs px-3 py-1 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors flex items-center gap-1"
                       >
                         <Video className="w-3 h-3" />
                         Teams Link
@@ -6294,7 +6276,7 @@ function EducationTab() {
                 <h3 className="font-semibold text-gray-900">{course.title}</h3>
                 <p className="text-sm text-gray-600">{course.description}</p>
               </div>
-              <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+              <span className="text-xs px-2 py-1 bg-orange-100 text-orange-800 rounded-full">
                 {course.level}
               </span>
             </div>
