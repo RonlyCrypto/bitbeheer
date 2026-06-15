@@ -150,6 +150,170 @@ function MarktpositieMini({ price, ath, athDate }: { price: number; ath: number;
   );
 }
 
+function FearGreedWidget() {
+  const [data, setData] = useState<{ value: number; label: string; yesterday: number; week: number; month: number } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('https://api.alternative.me/fng/?limit=31')
+      .then(r => r.json())
+      .then(res => {
+        const d = res.data;
+        setData({
+          value: parseInt(d[0].value),
+          label: d[0].value_classification,
+          yesterday: parseInt(d[1].value),
+          week: parseInt(d[7].value),
+          month: parseInt(d[30].value),
+        });
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  function fgColor(val: number) {
+    if (val <= 24) return '#E24B4A';
+    if (val <= 44) return '#EF9F27';
+    if (val <= 55) return '#6B7280';
+    if (val <= 74) return '#639922';
+    return '#1D9E75';
+  }
+
+  function fgLabel(val: number) {
+    if (val <= 24) return 'Extreme angst';
+    if (val <= 44) return 'Angst';
+    if (val <= 55) return 'Neutraal';
+    if (val <= 74) return 'Hebzucht';
+    return 'Extreme hebzucht';
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-7 h-7 bg-orange-100 rounded-lg flex items-center justify-center">
+          <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </div>
+        <span className="font-bold text-gray-900 text-sm">Marktgevoel</span>
+        <span className="ml-auto text-xs text-gray-400">Fear & Greed Index</span>
+      </div>
+
+      {loading && <p className="text-sm text-gray-400">Laden...</p>}
+
+      {!loading && !data && <p className="text-sm text-gray-400">Data tijdelijk niet beschikbaar.</p>}
+
+      {data && (
+        <>
+          <div className="flex items-baseline gap-3 mb-1">
+            <span className="text-5xl font-black" style={{ color: fgColor(data.value) }}>{data.value}</span>
+            <span className="text-gray-400 text-sm">/ 100</span>
+          </div>
+          <p className="font-bold text-base mb-4" style={{ color: fgColor(data.value) }}>{fgLabel(data.value)}</p>
+
+          <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
+            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${data.value}%`, background: fgColor(data.value) }} />
+          </div>
+          <div className="flex justify-between text-xs text-gray-400 mb-5">
+            <span>Extreme angst</span>
+            <span>Extreme hebzucht</span>
+          </div>
+
+          <div className="border-t border-gray-100 pt-4 flex gap-6">
+            {[
+              { label: 'Gisteren', val: data.yesterday },
+              { label: 'Vorige week', val: data.week },
+              { label: 'Vorige maand', val: data.month },
+            ].map(item => (
+              <div key={item.label}>
+                <div className="text-xs text-gray-400 mb-0.5">{item.label}</div>
+                <div className="text-sm font-bold" style={{ color: fgColor(item.val) }}>{item.val}</div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function DCAWidget() {
+  const [amount, setAmount] = useState(100);
+  const [years, setYears] = useState(3);
+
+  const invested = amount * 12 * years;
+  let value = 0;
+  for (let m = 0; m < years * 12; m++) {
+    value = (value + amount) * (1 + 0.45 / 12);
+  }
+  value = Math.round(value / 100) * 100;
+
+  const fmt = (n: number) => '€' + n.toLocaleString('nl-NL');
+  const winst = value - invested;
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-7 h-7 bg-orange-100 rounded-lg flex items-center justify-center">
+          <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+        </div>
+        <span className="font-bold text-gray-900 text-sm">DCA Calculator</span>
+        <span className="ml-auto text-xs text-gray-400">Maandelijks inleggen</span>
+      </div>
+
+      <div className="space-y-5 mb-5">
+        <div>
+          <div className="flex justify-between text-xs text-gray-500 mb-2">
+            <span>Maandelijks bedrag</span>
+            <span className="font-bold text-gray-900">{fmt(amount)}</span>
+          </div>
+          <input type="range" min={25} max={500} step={25} value={amount}
+            onChange={e => setAmount(Number(e.target.value))}
+            className="w-full accent-orange-500" />
+          <div className="flex justify-between text-xs text-gray-300 mt-1">
+            <span>€25</span><span>€500</span>
+          </div>
+        </div>
+        <div>
+          <div className="flex justify-between text-xs text-gray-500 mb-2">
+            <span>Periode</span>
+            <span className="font-bold text-gray-900">{years} jaar</span>
+          </div>
+          <input type="range" min={1} max={10} step={1} value={years}
+            onChange={e => setYears(Number(e.target.value))}
+            className="w-full accent-orange-500" />
+          <div className="flex justify-between text-xs text-gray-300 mt-1">
+            <span>1 jaar</span><span>10 jaar</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="bg-gray-50 rounded-xl p-3 text-center">
+          <div className="text-xs text-gray-400 mb-1">Ingelegd</div>
+          <div className="text-sm font-bold text-gray-900">{fmt(invested)}</div>
+        </div>
+        <div className="bg-green-50 rounded-xl p-3 text-center">
+          <div className="text-xs text-green-600 mb-1">Winst*</div>
+          <div className="text-sm font-bold text-green-700">+{fmt(winst)}</div>
+        </div>
+        <div className="bg-orange-50 rounded-xl p-3 text-center">
+          <div className="text-xs text-orange-600 mb-1">Waarde*</div>
+          <div className="text-sm font-bold text-orange-700">{fmt(value)}</div>
+        </div>
+      </div>
+
+      <p className="text-xs text-gray-400 mb-4">* Gebaseerd op historisch gemiddeld BTC rendement ~45%/jaar. Geen garantie.</p>
+
+      <Link to="/aanmelden" className="block w-full text-center bg-orange-500 hover:bg-orange-600 text-white py-2.5 rounded-xl text-sm font-semibold transition">
+        Sla je berekening op — maak een account aan
+      </Link>
+    </div>
+  );
+}
+
 export default function SoonOnlinePage() {
   const { price, change24h, ath, athDate } = useLiveBtcData();
   const isPositive = (change24h ?? 0) >= 0;
@@ -350,6 +514,26 @@ export default function SoonOnlinePage() {
                 <span className="text-xs text-gray-400">BitBeheer</span>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* GRATIS TOOLS */}
+      <section className="py-16 px-6 bg-gray-50">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-black text-gray-900 mb-3">Gratis Bitcoin tools</h2>
+            <p className="text-gray-600">Gebruik ze zonder account. Maak een account aan om je data op te slaan.</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+
+            {/* Fear & Greed */}
+            <FearGreedWidget />
+
+            {/* DCA Calculator */}
+            <DCAWidget />
+
           </div>
         </div>
       </section>
