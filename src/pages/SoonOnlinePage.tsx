@@ -226,7 +226,7 @@ export default function SoonOnlinePage() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-gray-900" style={{ fontFamily: 'Inter, sans-serif' }}>
+    <div className="min-h-screen bg-white text-gray-900 overflow-x-hidden" style={{ fontFamily: 'Inter, sans-serif' }}>
 
       {/* NAVBAR */}
       <nav className="bg-orange-500 text-white px-6 py-4 flex items-center justify-between shadow-md">
@@ -258,7 +258,7 @@ export default function SoonOnlinePage() {
               We zijn bijna klaar
             </div>
 
-            <h1 className="text-5xl md:text-6xl font-black text-gray-900 leading-tight mb-5">
+            <h1 className="text-4xl md:text-6xl font-black text-gray-900 leading-tight mb-5">
               Binnenkort<br />
               <span className="text-orange-500">Online.</span>
             </h1>
@@ -298,7 +298,7 @@ export default function SoonOnlinePage() {
                 <p className="text-sm font-semibold text-gray-700 mb-3">
                   Meld je aan en wij laten je als eerste weten wanneer we live gaan:
                 </p>
-                <form onSubmit={handleQuickSubmit} className="flex gap-3">
+                <form onSubmit={handleQuickSubmit} className="flex flex-col sm:flex-row gap-3">
                   <input ref={honeypotRef as React.RefObject<HTMLInputElement>} type="text" name="website"
                     style={{ display: 'none' }} tabIndex={-1} autoComplete="off" aria-hidden="true" />
                   <input type="email" value={quickEmail} onChange={e => setQuickEmail(e.target.value)}
