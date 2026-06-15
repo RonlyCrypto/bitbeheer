@@ -749,7 +749,7 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex overflow-x-hidden">
       {/* SEO H1 Tag */}
       <h1 className="sr-only">BitBeheer Gebruikers Dashboard - Bitcoin Portfolio en Begeleiding</h1>
 
@@ -763,8 +763,8 @@ export default function UserDashboard() {
       />
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto pb-20 md:pb-0">
-        <div className="p-8">
+      <div className="flex-1 overflow-auto pb-20 md:pb-0 min-w-0">
+        <div className="p-4 md:p-8">
             {activeTab === 'overview' && <OverviewTab 
               userProfile={userProfile} 
               goals={goals} 

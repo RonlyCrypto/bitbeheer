@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Send, MessageSquare, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
@@ -27,6 +27,7 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
   // Get effective user email (impersonated user if impersonating, otherwise real user)
   const effectiveUserEmail = isImpersonating && impersonatedUser ? impersonatedUser : user?.email;
   const [userProfile, setUserProfile] = useState<{ first_name?: string; last_name?: string; name?: string } | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Calculate new message count (messages after last read)
   const newMessageCount = lastReadTime 
@@ -133,6 +134,11 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
     
     loadUserProfile();
   }, [effectiveUserEmail]);
+
+  // Auto-scroll naar beneden bij nieuwe berichten
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   useEffect(() => {
     if (!effectiveUserEmail) return;
@@ -293,6 +299,7 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
                 </div>
               );
             })}
+            <div ref={messagesEndRef} />
           </div>
         )}
       </div>

@@ -40,6 +40,7 @@ export default function AdminChat() {
   const [hideNewSeparator, setHideNewSeparator] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const getInitials = (email: string, isAdmin: boolean) => {
     if (isAdmin) return 'A';
@@ -282,10 +283,44 @@ export default function AdminChat() {
     selectedEmailRef.current = selectedEmail;
   }, [selectedEmail]);
   
-  useEffect(() => { 
+  // Auto-scroll naar beneden bij nieuwe berichten
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Real-time subscription + interval voor berichten van geselecteerde gebruiker
+  useEffect(() => {
     setEditingMessageId(null);
     setEditText('');
-    loadMessages(); 
+    if (!selectedEmail) return;
+
+    loadMessages();
+
+    // Real-time subscription op berichten van deze gebruiker
+    const channel = supabase
+      .channel(`admin_chat_${selectedEmail}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'support_messages',
+          filter: `email=eq.${selectedEmail}`
+        },
+        () => {
+          loadMessages();
+          loadCustomers(true);
+        }
+      )
+      .subscribe();
+
+    // Fallback poll elke 5s voor berichten
+    const interval = setInterval(loadMessages, 5000);
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, [selectedEmail]);
   
   const handleEditMessage = (message: SupportMessage) => {
@@ -562,6 +597,7 @@ export default function AdminChat() {
                   </React.Fragment>
                 );
               })}
+              <div ref={messagesEndRef} />
             </div>
           )}
         </div>
