@@ -3380,12 +3380,18 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
   const [showInfoPopup, setShowInfoPopup] = useState(false);
   const [infoPopupMessage, setInfoPopupMessage] = useState('');
   const [showStrategyEditPopup, setShowStrategyEditPopup] = useState(false);
-  const [strategy, setStrategy] = useState({
-    strategie: 'Lange termijn DCA',
-    tijdshorizon: '5+ jaar',
-    verkoopplan: 'Nog niet ingesteld',
-    risicoprofiel: 'Conservatief',
-    verkoopplanWaarde: '' // Voor "Bij specifieke prijs" of "Bij specifiek percentage winst"
+  const [strategy, setStrategy] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`bitbeheer_strategy_${user?.email}`);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
+      strategie: 'Lange termijn DCA',
+      tijdshorizon: '5+ jaar',
+      verkoopplan: 'Nog niet ingesteld',
+      risicoprofiel: 'Conservatief',
+      verkoopplanWaarde: '',
+    };
   });
 
   // Helper function to show info popup
@@ -3403,6 +3409,17 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
 
   // Calculate wallet balance in BTC
   const currentBalance = walletData?.balance || 0;
+
+  // Load strategy from database (overschrijft localStorage als DB record bestaat)
+  useEffect(() => {
+    if (!user?.email) return;
+    supabase.from('accounts').select('strategy').eq('email', user.email).maybeSingle().then(({ data }) => {
+      if (data?.strategy) {
+        setStrategy(data.strategy);
+        localStorage.setItem(`bitbeheer_strategy_${user.email}`, JSON.stringify(data.strategy));
+      }
+    }).catch(() => {});
+  }, [user?.email]);
 
   // Load current Bitcoin price
   useEffect(() => {
@@ -5287,8 +5304,11 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                 Annuleren
               </button>
               <button
-                onClick={() => {
-                  // TODO: Save strategy to database
+                onClick={async () => {
+                  try {
+                    localStorage.setItem(`bitbeheer_strategy_${user?.email}`, JSON.stringify(strategy));
+                    await supabase.from('accounts').update({ strategy: strategy }).eq('email', user?.email);
+                  } catch {}
                   showInfo('Strategie succesvol opgeslagen!');
                   setShowStrategyEditPopup(false);
                 }}
