@@ -354,8 +354,175 @@ export default function FrontPage() {
         </div>
       </section>
 
+      {/* DASHBOARD PREVIEW */}
+      <section className="py-20 px-6 bg-white">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <span className="inline-block bg-orange-100 text-orange-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-4">Jouw persoonlijk dashboard</span>
+            <h2 className="text-3xl font-black text-gray-900 mb-3">Alles wat je nodig hebt, op één plek</h2>
+            <p className="text-gray-500 max-w-xl mx-auto">Na aanmelding krijg je toegang tot je persoonlijk dashboard met live data, portfolio tracking en directe begeleiding.</p>
+          </div>
+
+          {/* Feature 1 — Portfolio */}
+          <div className="grid md:grid-cols-2 gap-10 items-center mb-20">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-orange-50 text-orange-700 text-xs font-semibold px-3 py-1 rounded-full mb-4">Portfolio</div>
+              <h3 className="text-2xl font-black text-gray-900 mb-3">Jouw Bitcoin altijd in beeld</h3>
+              <p className="text-gray-500 leading-relaxed mb-4">Koppel je wallet en zie direct hoeveel jouw Bitcoin waard is. Alle transacties worden automatisch gesynchroniseerd en overzichtelijk weergegeven.</p>
+              <ul className="space-y-2">
+                {['Live Bitcoin koers in euro', 'Automatische transactie sync', 'Totale waarde in één oogopslag'].map(t => (
+                  <li key={t} className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                    </div>
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-5 select-none">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Portfolio overzicht</span>
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold">Live</span>
+              </div>
+              <div className="flex items-end gap-3 mb-5">
+                <span className="text-4xl font-black text-gray-900">€14.820</span>
+                <span className="text-green-600 text-sm font-semibold mb-1">+12,4%</span>
+              </div>
+              <div className="space-y-2 mb-4">
+                {[
+                  { name: 'Hardware wallet', btc: '0.1842 BTC', eur: '€11.340' },
+                  { name: 'DCA wallet', btc: '0.0567 BTC', eur: '€3.480' },
+                ].map(w => (
+                  <div key={w.name} className="flex items-center gap-3 bg-gray-50 rounded-xl px-3 py-2.5">
+                    <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-semibold text-gray-700">{w.name}</div>
+                      <div className="text-xs text-gray-400">{w.btc}</div>
+                    </div>
+                    <div className="text-sm font-bold text-gray-900">{w.eur}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-orange-400 rounded-full" style={{ width: '77%' }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Feature 2 — Marktpositie */}
+          <div className="grid md:grid-cols-2 gap-10 items-center mb-20">
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-5 select-none order-2 md:order-1">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Marktpositie</span>
+                <span className="text-xs text-gray-400">Waar staat Bitcoin nu?</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-center text-xs mb-4">
+                <div className="bg-gray-50 rounded-xl p-2.5">
+                  <div className="text-gray-400 mb-1">Vorige ATH</div>
+                  <div className="font-bold text-gray-800">$69.000</div>
+                  <div className="text-gray-400">Nov 2021</div>
+                </div>
+                <div className="bg-orange-50 rounded-xl p-2.5 border border-orange-200">
+                  <div className="text-orange-600 font-medium mb-1">Nu · Live</div>
+                  <div className="font-bold text-orange-600 text-base">$66.445</div>
+                  <div className="text-gray-400">96% van ATH</div>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-2.5">
+                  <div className="text-gray-400 mb-1">Hoogste ooit</div>
+                  <div className="font-bold text-gray-800">$126.080</div>
+                  <div className="text-gray-400">okt 2025</div>
+                </div>
+              </div>
+              <div className="relative h-2 bg-gradient-to-r from-green-400 via-yellow-400 to-red-400 rounded-full mb-1">
+                <div className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-gray-800 rounded-full shadow" style={{ left: '76%' }} />
+              </div>
+              <div className="flex justify-between text-xs text-gray-400 mb-3">
+                <span>Accumulatie</span><span>Herstel</span><span>Hoog risico</span>
+              </div>
+              <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-xs text-green-700 font-medium">
+                ✓ Herstelfase — Bitcoin nadert het vorige ATH. Historisch gezien nog een interessante zone.
+              </div>
+            </div>
+            <div className="order-1 md:order-2">
+              <div className="inline-flex items-center gap-2 bg-orange-50 text-orange-700 text-xs font-semibold px-3 py-1 rounded-full mb-4">Marktanalyse</div>
+              <h3 className="text-2xl font-black text-gray-900 mb-3">Weet altijd waar Bitcoin staat</h3>
+              <p className="text-gray-500 leading-relaxed mb-4">Begrijp in één oogopslag of Bitcoin historisch hoog of laag staat. BitBeheer vertaalt de markt naar begrijpelijke taal — geen ruis, gewoon duidelijkheid.</p>
+              <ul className="space-y-2">
+                {['Live prijs vs. historische ATH', 'Duidelijke marktfase indicator', 'Persoonlijk advies van je begeleider'].map(t => (
+                  <li key={t} className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                    </div>
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Feature 3 — Chat */}
+          <div className="grid md:grid-cols-2 gap-10 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-orange-50 text-orange-700 text-xs font-semibold px-3 py-1 rounded-full mb-4">Persoonlijke begeleiding</div>
+              <h3 className="text-2xl font-black text-gray-900 mb-3">Altijd iemand om op terug te vallen</h3>
+              <p className="text-gray-500 leading-relaxed mb-4">Via de ingebouwde chat heb je direct contact met je begeleider. Geen forums, geen chatbots — gewoon een eerlijk antwoord van een mens die Bitcoin begrijpt.</p>
+              <ul className="space-y-2">
+                {['Persoonlijke begeleider toegewezen', 'Directe chat in je dashboard', 'Reactie binnen 24 uur gegarandeerd'].map(t => (
+                  <li key={t} className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                    </div>
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-5 select-none">
+              <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
+                <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-bold">BB</div>
+                <div>
+                  <div className="text-sm font-semibold text-gray-900">BitBeheer begeleider</div>
+                  <div className="flex items-center gap-1"><span className="w-1.5 h-1.5 bg-green-500 rounded-full inline-block"></span><span className="text-xs text-gray-400">Online</span></div>
+                </div>
+              </div>
+              <div className="space-y-3 mb-3">
+                <div className="flex gap-2">
+                  <div className="w-7 h-7 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">BB</div>
+                  <div className="bg-gray-100 rounded-2xl rounded-tl-none px-3 py-2 text-xs text-gray-700 max-w-[75%]">Hoi! Is er iets waar ik je mee kan helpen? Geen vraag is te klein.</div>
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <div className="bg-orange-500 rounded-2xl rounded-tr-none px-3 py-2 text-xs text-white max-w-[75%]">Moet ik nu kopen of nog even wachten?</div>
+                  <div className="w-7 h-7 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 text-xs font-bold flex-shrink-0">JJ</div>
+                </div>
+                <div className="flex gap-2">
+                  <div className="w-7 h-7 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">BB</div>
+                  <div className="bg-gray-100 rounded-2xl rounded-tl-none px-3 py-2 text-xs text-gray-700 max-w-[75%]">Goede vraag. Bitcoin zit nu nog onder het vorige ATH — historisch een interessante zone. Laten we jouw situatie even doornemen.</div>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-2">
+                <div className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-400">Stel je vraag...</div>
+                <div className="w-8 h-8 bg-orange-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center mt-16">
+            <Link to="/aanmelden" className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-xl font-bold text-base transition shadow-lg hover:shadow-xl">
+              Start mijn Bitcoin reis
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+            <p className="text-xs text-gray-400 mt-3">Gratis aanmelden · Geen creditcard nodig</p>
+          </div>
+        </div>
+      </section>
+
       {/* AANMELDFORMULIER */}
-      <section id="aanmelden" className="py-16 px-6 bg-white">
+      <section id="aanmelden" className="py-16 px-6 bg-gray-50">
         <div className="max-w-xl mx-auto">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-black text-gray-900 mb-3">Start je Bitcoin reis</h2>
