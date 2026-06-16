@@ -40,6 +40,8 @@ export default function AdminChat() {
   const [hideNewSeparator, setHideNewSeparator] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  const [chatError, setChatError] = useState<string | null>(null);
+  const showError = (msg: string) => { setChatError(msg); setTimeout(() => setChatError(null), 4000); };
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const getInitials = (email: string, isAdmin: boolean) => {
@@ -345,12 +347,12 @@ export default function AdminChat() {
       await loadMessages();
     } catch (e: any) {
       console.error('Error updating message:', e);
-      alert(`Bericht bijwerken mislukt: ${e.message}`);
+      showError(`Bericht bijwerken mislukt: ${e.message}`);
     }
   };
   
   const handleDeleteMessage = async (messageId: string) => {
-    if (!confirm('Weet je zeker dat je dit bericht wilt verwijderen?')) return;
+    if (!window.confirm('Weet je zeker dat je dit bericht wilt verwijderen?')) return;
     
     try {
       const { error } = await supabase
@@ -368,7 +370,7 @@ export default function AdminChat() {
       }
     } catch (e: any) {
       console.error('Error deleting message:', e);
-      alert(`Bericht verwijderen mislukt: ${e.message}`);
+      showError(`Bericht verwijderen mislukt: ${e.message}`);
     }
   };
 
@@ -423,11 +425,18 @@ export default function AdminChat() {
       }
     } catch (e: any) {
       console.error('Reply send error', e);
-      alert(`Antwoord verzenden mislukt: ${e.message || 'Controleer of de support_messages tabel bestaat in Supabase'}`);
+      showError(`Antwoord verzenden mislukt: ${e.message || 'Probeer het opnieuw'}`);
     }
   };
 
   return (
+    <div className="space-y-3">
+      {chatError && (
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm font-medium">
+          <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
+          {chatError}
+        </div>
+      )}
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div className="md:col-span-1 border rounded-xl p-4 bg-white">
         <div className="flex items-center gap-2 mb-3">
@@ -616,7 +625,6 @@ export default function AdminChat() {
         </div>
       </div>
     </div>
+    </div>
   );
 }
-
-

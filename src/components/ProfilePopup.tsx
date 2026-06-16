@@ -24,6 +24,8 @@ export default function ProfilePopup({
 }: ProfilePopupProps) {
   // ProfilePopup logging removed (no sensitive data in console)
   const [isEditing, setIsEditing] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Block body scroll when popup is open
   useEffect(() => {
@@ -188,9 +190,12 @@ export default function ProfilePopup({
       });
 
       setIsEditing(false);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
       console.error('Error saving profile:', error);
-      alert('Fout bij het opslaan van profiel');
+      setSaveError('Fout bij het opslaan van profiel. Probeer het opnieuw.');
+      setTimeout(() => setSaveError(null), 4000);
     }
   };
 
@@ -278,6 +283,19 @@ export default function ProfilePopup({
             </button>
           </div>
         </div>
+
+        {/* Feedback banners */}
+        {saveSuccess && (
+          <div className="mx-6 mt-3 px-4 py-2.5 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm font-medium flex items-center gap-2">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+            Profiel succesvol opgeslagen!
+          </div>
+        )}
+        {saveError && (
+          <div className="mx-6 mt-3 px-4 py-2.5 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm font-medium">
+            {saveError}
+          </div>
+        )}
 
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">

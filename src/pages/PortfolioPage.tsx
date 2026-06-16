@@ -74,6 +74,11 @@ export default function PortfolioPage() {
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [transactionFilter, setTransactionFilter] = useState<'all' | 'buy' | 'sell' | 'active'>('all');
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+  const showToast = (message: string, type: 'error' | 'success' = 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
   
   // Calculate which buys are fully sold (FIFO)
   const calculateBuySoldStatus = useMemo(() => {
@@ -596,7 +601,7 @@ export default function PortfolioPage() {
       console.log('✅ All transactions refreshed with latest prices from blockchain');
     } catch (error) {
       console.error('Error refreshing transactions:', error);
-      alert('Kon transacties niet verversen. Probeer het later opnieuw.');
+      showToast('Kon transacties niet verversen. Probeer het later opnieuw.');
     } finally {
       setLoadingWallets(false);
     }
@@ -607,7 +612,7 @@ export default function PortfolioPage() {
       // Valideer Bitcoin adres — trim whitespace eerst
       const trimmedAddress = newWalletAddress.trim();
       if (!bitcoinApiService.validateBitcoinAddress(trimmedAddress)) {
-        alert(`Ongeldig Bitcoin adres: "${trimmedAddress}"\n\nVerwacht: begint met 1, 3 of bc1`);
+        showToast(`Ongeldig Bitcoin adres. Verwacht: begint met 1, 3 of bc1.`);
         return;
       }
 
@@ -617,7 +622,7 @@ export default function PortfolioPage() {
         const insertEmail = user?.email;
         const insertUserId = user?.id;
         if (!insertEmail) {
-          alert('Niet ingelogd. Log opnieuw in en probeer het opnieuw.');
+          showToast('Niet ingelogd. Log opnieuw in en probeer het opnieuw.');
           return;
         }
 
@@ -642,7 +647,7 @@ export default function PortfolioPage() {
 
         if (insertError) {
           console.error('Insert error details:', JSON.stringify(insertError));
-          alert(`Kon wallet niet toevoegen:\n${insertError.message}\n\nCode: ${insertError.code}`);
+          showToast(`Kon wallet niet toevoegen: ${insertError.message}`);
           return;
         }
 
@@ -713,7 +718,7 @@ export default function PortfolioPage() {
         }, 500);
       } catch (error) {
         console.error('Error adding wallet:', error);
-        alert('Kon wallet niet toevoegen. Probeer opnieuw.');
+        showToast('Kon wallet niet toevoegen. Probeer opnieuw.');
       } finally {
         setLoading(false);
       }
@@ -757,7 +762,7 @@ export default function PortfolioPage() {
       setEditWalletName('');
     } catch (error) {
       console.error('Error updating wallet name:', error);
-      alert('Er is een fout opgetreden bij het bijwerken van de wallet naam.');
+      showToast('Fout bij het bijwerken van de wallet naam.');
     }
   };
 
@@ -812,7 +817,7 @@ export default function PortfolioPage() {
       setWalletToDelete(null);
     } catch (error) {
       console.error('Error removing wallet:', error);
-      alert('Fout bij het verwijderen van wallet');
+      showToast('Fout bij het verwijderen van wallet.');
     }
   };
 
@@ -866,6 +871,23 @@ export default function PortfolioPage() {
     <div className="min-h-screen pb-20 md:pb-0">
       {/* H1 Tag for SEO */}
       <h1 className="sr-only">Bitcoin Portfolio Beheer - Bewaar en Monitor Je Bitcoin Wallets</h1>
+
+      {/* Toast notificatie */}
+      {toast && (
+        <div className={`fixed top-6 right-6 z-[100] flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium transition-all ${
+          toast.type === 'error'
+            ? 'bg-red-50 border-red-200 text-red-700'
+            : 'bg-green-50 border-green-200 text-green-700'
+        }`}>
+          {toast.type === 'error'
+            ? <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            : <Check className="w-4 h-4 flex-shrink-0" />}
+          {toast.message}
+          <button onClick={() => setToast(null)} className="ml-2 opacity-60 hover:opacity-100">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
       <div className="container mx-auto px-4 py-0 md:py-0 pb-20 md:pb-12">
         <div className="max-w-7xl mx-auto">
           {/* Stats Cards */}
