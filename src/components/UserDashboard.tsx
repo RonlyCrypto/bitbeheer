@@ -2633,30 +2633,22 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         </div>
       )}
 
-      {/* Leer & Waarschuwingen en Beginnersdoelen - 1 rij (2/3 1/3) - Volledige breedte */}
-      {/* Alleen zichtbaar vanaf stap 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Beginnersdoelen - 2/3 breedte */}
-        {(accountApproved || hasApprovedOneOnOne) && (
-          <div className="lg:col-span-2">
-            <BeginnersGoals 
-              walletData={walletData} 
-              walletTransactions={walletTransactions} 
-              onBookAppointment={onBookAppointment} 
-              onNavigateToGoals={onNavigateToGoals}
-              goals={goals}
-              setGoals={(newGoals) => {
-                // Update goals in parent component via setGoals prop
-                if (setGoals) {
-                  setGoals(newGoals);
-                }
-              }}
-            />
-                  </div>
-        )}
-        
-        {/* Fear and Greed Index + Hulp nodig - 1/3 breedte */}
-        <div className="space-y-4">
+      {/* Beginnersdoelen - volledige breedte */}
+      {(accountApproved || hasApprovedOneOnOne) && (
+        <BeginnersGoals
+          walletData={walletData}
+          walletTransactions={walletTransactions}
+          onBookAppointment={onBookAppointment}
+          onNavigateToGoals={onNavigateToGoals}
+          goals={goals}
+          setGoals={(newGoals) => {
+            if (setGoals) setGoals(newGoals);
+          }}
+        />
+      )}
+
+      {/* Fear and Greed + Marktpositie — volledige breedte, onder Beginnersdoelen */}
+      <div className="space-y-4">
           {/* Fear and Greed Index — alleen zichtbaar vanaf stap 2 */}
           {journeyStep >= 2 && !hideFearGreed && (
             <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
@@ -2961,7 +2953,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         )}
 
         </div>
-      </div>
 
       {/* Actie voor vandaag */}
       {(accountApproved || hasApprovedOneOnOne) && goals && goals.length > 0 && (() => {
