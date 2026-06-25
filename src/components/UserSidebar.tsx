@@ -98,7 +98,7 @@ export default function UserSidebar({
                 )}
                 {/* Tooltip — links van de sidebar (sidebar zit rechts) */}
                 {!isExpanded && (
-                  <span className="absolute right-full mr-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                  <span className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
                     {item.label}
                   </span>
                 )}
