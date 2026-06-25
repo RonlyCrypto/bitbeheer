@@ -1042,7 +1042,7 @@ export default function UserDashboard() {
 
       {/* Main Content — flex-1, content + sidebar samen gecentreerd */}
       <div className="flex-1 min-w-0 py-5 pb-24 md:pb-5 px-4 md:px-6">
-        <div className="max-w-4xl mx-auto flex items-start gap-3">
+        <div className="max-w-6xl mx-auto flex items-start gap-3">
           {/* Sidebar — links naast content */}
           <div className="hidden md:block sticky top-5 self-start shrink-0">
             <UserSidebar
