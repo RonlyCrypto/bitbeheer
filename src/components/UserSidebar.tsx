@@ -104,16 +104,16 @@ export default function UserSidebar({
   ];
 
   return (
-    <div className={`bg-white border-r border-gray-200 flex flex-col h-full transition-all duration-300 ml-12 mt-8 hidden md:flex ${
-      isExpanded ? 'w-56' : 'w-20'
+    <div className={`bg-white border-r border-gray-200 flex flex-col h-full transition-all duration-300 hidden md:flex ${
+      isExpanded ? 'w-56' : 'w-16'
     }`}>
       {/* Menu Items */}
       <nav className="flex-1 overflow-y-auto flex flex-col">
-        <div className={`flex flex-col gap-2 ${isExpanded ? 'p-3' : 'p-2'}`}>
+        <div className={`flex flex-col gap-0.5 ${isExpanded ? 'p-2' : 'p-2'} pt-4`}>
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isEnabled = item.alwaysEnabled || accountApproved || hasApprovedOneOnOne;
-            const tooltipText = !isEnabled 
+            const tooltipText = !isEnabled
               ? "Je moet eerst een 20-minuten afspraak maken. Na deze afspraak bepalen we of we verder met elkaar gaan en dan kan de admin je account volledig open stellen."
               : null;
 
@@ -126,7 +126,7 @@ export default function UserSidebar({
                   }
                 }}
                 disabled={!isEnabled}
-                className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-colors relative group ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors relative group ${
                   !isEnabled
                     ? 'text-gray-400 cursor-not-allowed opacity-50'
                     : activeTab === item.id
@@ -160,42 +160,45 @@ export default function UserSidebar({
         </div>
       </nav>
 
-      {/* Milestone Stars - 3 sterren onderin */}
-      <div className={`border-t border-gray-200 ${isExpanded ? 'p-3' : 'p-2'}`}>
-        <div className="flex items-center justify-center gap-2 mb-2">
-          {milestones.map((milestone, index) => {
-            const isReached = reachedMilestones.includes(milestone);
-            const isCelebrated = celebratedMilestones.includes(milestone);
-            
-            return (
-              <div
-                key={milestone}
-                className="relative"
-                title={isExpanded ? undefined : `${milestone} BTC ${isReached ? 'behaald' : ''}`}
-              >
-                <Star
-                  className={`w-5 h-5 transition-all ${
-                    isCelebrated && isReached
-                      ? 'text-yellow-500 fill-yellow-500'
-                      : isReached
-                      ? 'text-yellow-300 fill-yellow-300'
-                      : 'text-gray-300'
-                  }`}
-                />
-                {isExpanded && (
-                  <span className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 whitespace-nowrap">
-                    {milestone}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        {isExpanded && (
-          <div className="text-xs text-center text-gray-500 mt-4">
-            {reachedMilestones.length} van {milestones.length} mijlpalen behaald
+      {/* Milestone Stars - fade to white */}
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white pointer-events-none z-10" />
+        <div className={`${isExpanded ? 'p-3' : 'p-2'} opacity-40`}>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            {milestones.map((milestone) => {
+              const isReached = reachedMilestones.includes(milestone);
+              const isCelebrated = celebratedMilestones.includes(milestone);
+              return (
+                <div key={milestone} className="relative">
+                  <Star
+                    className={`w-4 h-4 transition-all ${
+                      isCelebrated && isReached
+                        ? 'text-yellow-500 fill-yellow-500'
+                        : isReached
+                        ? 'text-yellow-300 fill-yellow-300'
+                        : 'text-gray-300'
+                    }`}
+                  />
+                  {isExpanded && (
+                    <span className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 whitespace-nowrap">
+                      {milestone}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        )}
+          {isExpanded && (
+            <div className="text-xs text-center text-gray-500 mt-4">
+              {reachedMilestones.length} van {milestones.length} mijlpalen behaald
+            </div>
+          )}
+          {!isExpanded && (
+            <div className="text-[10px] text-center text-gray-400 mt-1">
+              0 van 3 mijlpalen behaald
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Chevron Toggle Button */}
