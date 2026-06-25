@@ -749,26 +749,24 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="bg-gray-50 overflow-x-hidden">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden flex">
       {/* SEO H1 Tag */}
       <h1 className="sr-only">BitBeheer Gebruikers Dashboard - Bitcoin Portfolio en Begeleiding</h1>
 
-      {/* Centered layout met padding links en rechts */}
-      <div className="max-w-6xl mx-auto px-6 md:px-10 flex items-start gap-4">
+      {/* Sidebar — sticky, stopt met content hoogte */}
+      <div className="hidden md:block sticky top-0 self-start shrink-0 py-5 pl-4">
+        <UserSidebar
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          accountApproved={accountApproved}
+          hasApprovedOneOnOne={hasApprovedOneOnOne}
+          unreadChatCount={unreadChatCount}
+        />
+      </div>
 
-        {/* Sidebar — sticky, stopt met de content */}
-        <div className="sticky top-0 self-start shrink-0 py-5">
-          <UserSidebar
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            accountApproved={accountApproved}
-            hasApprovedOneOnOne={hasApprovedOneOnOne}
-            unreadChatCount={unreadChatCount}
-          />
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 min-w-0 py-5 pb-24 md:pb-5">
+      {/* Main Content — flex-1 met content gecentreerd binnenin */}
+      <div className="flex-1 min-w-0 py-5 pb-24 md:pb-5 px-4 md:px-6">
+        <div className="max-w-4xl mx-auto">
             {activeTab === 'overview' && <OverviewTab 
               userProfile={userProfile} 
               goals={goals} 
@@ -869,9 +867,8 @@ export default function UserDashboard() {
                 }}
               />
             )}
-          </div>{/* einde flex-1 main content */}
-        </div>{/* einde flex items-start */}
-      </div>{/* einde max-w-6xl centered container */}
+        </div>{/* einde max-w-4xl mx-auto */}
+      </div>{/* einde flex-1 main content */}
 
       {/* Mobile Bottom Navigation for User Dashboard */}
       <UserDashboardMobileNav
