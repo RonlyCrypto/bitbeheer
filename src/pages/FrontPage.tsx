@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { bitcoinApiService } from '../services/bitcoinApiService'; // fallback voor prijs
-import LoginRegister from '../components/LoginRegister';
 
 const PREV_ATH = 69000; // Nov 2021 — historische referentie, blijft vast
 
@@ -194,20 +193,6 @@ export default function FrontPage() {
   return (
     <div className="min-h-screen bg-white text-gray-900" style={{ fontFamily: 'Inter, sans-serif', scrollBehavior: 'smooth' }}>
 
-      {/* NAVBAR */}
-      <nav className="bg-orange-500 text-white px-6 py-4 flex items-center justify-between shadow-md">
-        <div className="flex items-center gap-3">
-          <div>
-            <div className="font-bold text-lg leading-tight">BitBeheer</div>
-            <div className="text-orange-100 text-xs">Persoonlijke Bitcoin begeleiding</div>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="[&>button]:bg-white [&>button]:text-orange-600 [&>button]:hover:bg-orange-50">
-            <LoginRegister />
-          </div>
-        </div>
-      </nav>
 
       {/* HERO */}
       <section className="min-h-[88vh] flex items-center px-6 py-16"

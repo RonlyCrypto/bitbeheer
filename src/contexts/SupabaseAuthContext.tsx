@@ -59,10 +59,9 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     testSupabaseConnection();
     getInitialSession();
 
-    // Listen for impersonation events
+    // Listen for impersonation events (admin doesn't need loading screen)
     const handleImpersonationStarted = () => {
-      console.log('🔐 Impersonation started, showing account status loader');
-      setShowAccountStatusLoader(true);
+      console.log('🔐 Impersonation started');
     };
 
     const handleImpersonationStopped = () => {
@@ -80,9 +79,8 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
                   setUser(session?.user ?? null);
                   setLoading(false);
                   
-                  // Show account status loader on sign in or admin impersonation
-                  // This is just a quick connection check, not a full data load wait
-                  if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user?.email) {
+                  // Show account status loader on sign in (not for admin)
+                  if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user?.email && session.user.email !== 'admin@bitbeheer.nl') {
                     console.log('🔐 Showing account status loader for:', session.user.email);
                     setShowAccountStatusLoader(true);
                   }
