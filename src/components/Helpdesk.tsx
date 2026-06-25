@@ -215,7 +215,6 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
       };
       setMessages((prev) => [...prev, optimistic]);
       setNewMessage('');
-      isAtBottomRef.current = true;
 
       // Get user info from users or accounts table (use effective email for impersonation)
       const { data: userData } = await supabase
