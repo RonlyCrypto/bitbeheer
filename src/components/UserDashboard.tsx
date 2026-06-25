@@ -135,6 +135,51 @@ interface Portfolio {
   }>;
 }
 
+function HulpNodigWidget({ onBookAppointment, onOpenHelpdesk, visible }: {
+  onBookAppointment: () => void;
+  onOpenHelpdesk: () => void;
+  visible: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  if (!visible) return null;
+  return (
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
+      {open && (
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-4 w-56 animate-fade-in">
+          <h3 className="text-sm font-semibold text-gray-900 mb-1">Hulp nodig?</h3>
+          <p className="text-xs text-gray-500 mb-3">Twijfel of vragen? Wij helpen je persoonlijk.</p>
+          <div className="space-y-2">
+            <button
+              onClick={() => { setOpen(false); onBookAppointment(); }}
+              className="w-full bg-orange-600 text-white px-3 py-2.5 rounded-xl text-sm font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <Calendar className="w-4 h-4" />
+              Plan gesprek
+            </button>
+            <button
+              onClick={() => { setOpen(false); onOpenHelpdesk(); }}
+              className="w-full bg-orange-100 text-orange-700 px-3 py-2.5 rounded-xl text-sm font-semibold hover:bg-orange-200 transition-colors flex items-center justify-center gap-2"
+            >
+              <MessageSquare className="w-4 h-4" />
+              Stel je vraag
+            </button>
+          </div>
+        </div>
+      )}
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-14 h-14 bg-orange-600 hover:bg-orange-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+        title="Hulp nodig?"
+      >
+        {open
+          ? <X className="w-6 h-6" />
+          : <MessageSquare className="w-6 h-6" />
+        }
+      </button>
+    </div>
+  );
+}
+
 export default function UserDashboard() {
   const { user } = useSupabaseAuth();
   const { theme } = useTheme();
@@ -753,17 +798,6 @@ export default function UserDashboard() {
       {/* SEO H1 Tag */}
       <h1 className="sr-only">BitBeheer Gebruikers Dashboard - Bitcoin Portfolio en Begeleiding</h1>
 
-      {/* Sidebar — sticky, stopt met content hoogte */}
-      <div className="hidden md:block sticky top-0 self-start shrink-0 py-5 pl-4">
-        <UserSidebar
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          accountApproved={accountApproved}
-          hasApprovedOneOnOne={hasApprovedOneOnOne}
-          unreadChatCount={unreadChatCount}
-        />
-      </div>
-
       {/* Main Content — flex-1 met content gecentreerd binnenin */}
       <div className="flex-1 min-w-0 py-5 pb-24 md:pb-5 px-4 md:px-6">
         <div className="max-w-4xl mx-auto">
@@ -869,6 +903,25 @@ export default function UserDashboard() {
             )}
         </div>{/* einde max-w-4xl mx-auto */}
       </div>{/* einde flex-1 main content */}
+
+      {/* Sidebar — rechts, sticky */}
+      <div className="hidden md:block sticky top-0 self-start shrink-0 py-5 pr-4">
+        <UserSidebar
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          accountApproved={accountApproved}
+          hasApprovedOneOnOne={hasApprovedOneOnOne}
+          hasWallet={hasWallet}
+          unreadChatCount={unreadChatCount}
+        />
+      </div>
+
+      {/* Floating "Hulp nodig?" widget — rechtsonder, fixed */}
+      <HulpNodigWidget
+        onBookAppointment={() => setShowAppointmentPopup(true)}
+        onOpenHelpdesk={() => setActiveTab('helpdesk')}
+        visible={accountApproved || hasApprovedOneOnOne}
+      />
 
       {/* Mobile Bottom Navigation for User Dashboard */}
       <UserDashboardMobileNav
@@ -2905,35 +2958,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           </button>
         )}
 
-        {/* Hulp nodig? - Eigen blok */}
-        {(accountApproved || hasApprovedOneOnOne) && (
-          <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200 mt-6">
-            <h3 className="text-base font-semibold text-gray-900 mb-2">Hulp nodig?</h3>
-            <p className="text-xs text-gray-700 mb-3">
-              Twijfel of vragen? Wij helpen je persoonlijk.
-            </p>
-            <div className="space-y-2">
-              <button
-                onClick={() => onBookAppointment && onBookAppointment()}
-                className="w-full bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
-              >
-                <Calendar className="w-4 h-4" />
-                Plan gesprek
-              </button>
-              <button
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'helpdesk' }));
-                  }
-                }}
-                className="w-full bg-orange-500 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
-              >
-                <MessageSquare className="w-4 h-4" />
-                Stel je vraag
-              </button>
-            </div>
-          </div>
-        )}
         </div>
       </div>
 
