@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -52,9 +52,15 @@ function AppContent() {
 
           <Routes>
                 {/* Root route: show dashboard if logged in, otherwise show front page */}
-                <Route 
-                  path="/" 
-                  element={user ? <UserDashboard /> : <FrontPage />}
+                <Route
+                  path="/"
+                  element={
+                    user
+                      ? user.email === 'admin@bitbeheer.nl'
+                        ? <Navigate to="/admin" replace />
+                        : <UserDashboard />
+                      : <FrontPage />
+                  }
                 />
                 {/* Dedicated front page route - accessible even when logged in */}
                 <Route path="/home" element={<FrontPage />} />
