@@ -36,7 +36,14 @@ export default function UserSidebar({
   hasBitcoin = false,
   unreadChatCount
 }: UserSidebarProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(() => {
+    try { return localStorage.getItem('sidebar_expanded') === 'true'; } catch { return false; }
+  });
+
+  const toggleExpanded = (val: boolean) => {
+    setIsExpanded(val);
+    try { localStorage.setItem('sidebar_expanded', String(val)); } catch {}
+  };
 
   const isUnlocked = accountApproved || hasApprovedOneOnOne;
 
@@ -67,7 +74,7 @@ export default function UserSidebar({
       >
         {/* Uitklap-knop — pijl wijst naar links (uitklappen = naar links) */}
         <button
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={() => toggleExpanded(!isExpanded)}
           title={isExpanded ? 'Inklappen' : 'Uitklappen'}
           className="flex items-center justify-end h-9 border-b border-gray-100 text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition-colors shrink-0"
         >
@@ -84,7 +91,7 @@ export default function UserSidebar({
             return (
               <button
                 key={item.id}
-                onClick={() => { if (isEnabled) { onTabChange(item.id); setIsExpanded(false); } }}
+                onClick={() => { if (isEnabled) onTabChange(item.id); }}
                 disabled={!isEnabled}
                 title={!isExpanded ? item.label : undefined}
                 className={`relative flex items-center flex-row-reverse h-10 rounded-lg transition-colors overflow-hidden w-full ${
