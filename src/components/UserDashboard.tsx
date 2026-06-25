@@ -142,6 +142,7 @@ function RightInfoColumn({ currentPrice, previousATH, latestATH }: {
 }) {
   const [fearGreedIndex, setFearGreedIndex] = useState<number | null>(null);
   const [fearGreedLoading, setFearGreedLoading] = useState(true);
+  const [hypotheticalInvestment, setHypotheticalInvestment] = useState<number>(500);
 
   useEffect(() => {
     const load = async () => {
@@ -157,27 +158,35 @@ function RightInfoColumn({ currentPrice, previousATH, latestATH }: {
     return () => clearInterval(interval);
   }, []);
 
-  const getFGInfo = (i: number) => {
-    if (i < 25) return { label: 'Extreme Fear', text: 'text-red-700', bg: 'bg-red-50' };
-    if (i < 45) return { label: 'Fear', text: 'text-orange-700', bg: 'bg-orange-50' };
-    if (i < 55) return { label: 'Neutral', text: 'text-gray-700', bg: 'bg-gray-50' };
-    if (i < 75) return { label: 'Greed', text: 'text-green-700', bg: 'bg-green-50' };
-    return { label: 'Extreme Greed', text: 'text-emerald-700', bg: 'bg-emerald-50' };
-  };
-
-  const fmt = (n: number) => '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
-
-  let fase = 'Accumulatiefase';
-  let faseStyle = 'text-green-700 bg-green-50 border-green-200';
-  if (currentPrice > latestATH) { fase = 'Prijsontdekking'; faseStyle = 'text-red-700 bg-red-50 border-red-200'; }
-  else if (latestATH > 0 && currentPrice / latestATH > 0.85) { fase = 'Hoog risico'; faseStyle = 'text-orange-700 bg-orange-50 border-orange-200'; }
-  else if (currentPrice > previousATH) { fase = 'Herstelfase'; faseStyle = 'text-yellow-700 bg-yellow-50 border-yellow-200'; }
-  const pct = previousATH > 0 ? ((currentPrice / previousATH) * 100).toFixed(0) : null;
+  const marketPositionData = (() => {
+    const prevATH = previousATH;
+    const lastATH = latestATH;
+    const percentBelowPrevious = prevATH > 0 ? ((prevATH - currentPrice) / prevATH) * 100 : 0;
+    const percentBelowLatest = lastATH > 0 ? ((lastATH - currentPrice) / lastATH) * 100 : 0;
+    const percentAbovePrevious = currentPrice > prevATH ? ((currentPrice - prevATH) / prevATH) * 100 : 0;
+    let statusLabel = 'Herstelgebied';
+    let statusColor = 'bg-orange-100 border-orange-300 text-orange-800';
+    if (currentPrice < prevATH) { statusLabel = 'Historisch lage zone'; statusColor = 'bg-yellow-100 border-yellow-300 text-yellow-800'; }
+    else if (currentPrice >= lastATH) { statusLabel = 'Dicht bij euforie'; statusColor = 'bg-red-100 border-red-300 text-red-800'; }
+    const minPrice = Math.min(prevATH, currentPrice, lastATH);
+    const maxPrice = Math.max(prevATH, currentPrice, lastATH);
+    const priceRange = maxPrice - minPrice;
+    const prevATHPosition = priceRange > 0 ? ((prevATH - minPrice) / priceRange) * 100 : 0;
+    const currentPosition = priceRange > 0 ? ((currentPrice - minPrice) / priceRange) * 100 : 50;
+    const lastATHPosition = priceRange > 0 ? ((lastATH - minPrice) / priceRange) * 100 : 100;
+    const btcAtCurrentPrice = currentPrice > 0 ? hypotheticalInvestment / currentPrice : 0;
+    const valueAtPreviousATH = btcAtCurrentPrice * prevATH;
+    const valueAtLatestATH = btcAtCurrentPrice * lastATH;
+    const profitAtPrevious = hypotheticalInvestment > 0 ? ((valueAtPreviousATH - hypotheticalInvestment) / hypotheticalInvestment) * 100 : 0;
+    const profitAtLatest = hypotheticalInvestment > 0 ? ((valueAtLatestATH - hypotheticalInvestment) / hypotheticalInvestment) * 100 : 0;
+    return { currentPrice, prevATH, lastATH, percentBelowPrevious, percentBelowLatest, percentAbovePrevious, statusLabel, statusColor, prevATHPosition, currentPosition, lastATHPosition, valueAtPreviousATH, valueAtLatestATH, profitAtPrevious, profitAtLatest };
+  })();
 
   return (
-    <div className="space-y-3">
-      {/* 1. Belangrijke Waarschuwingen — bovenaan */}
-      <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+
+      {/* 1. Belangrijke Waarschuwingen */}
+      <div className="p-4 border-b border-gray-100">
         <h3 className="text-sm font-semibold text-gray-900 mb-3">⚠️ Belangrijke Waarschuwingen</h3>
         <div className="space-y-2">
           <div className="bg-red-50 border border-red-200 rounded-lg p-2.5 flex items-start gap-2">
@@ -195,43 +204,156 @@ function RightInfoColumn({ currentPrice, previousATH, latestATH }: {
         </div>
       </div>
 
-      {/* 2. Fear & Greed Index */}
-      <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">📊 Fear &amp; Greed</h3>
+      {/* 2. Fear & Greed Index — volledige gauge */}
+      <div className="p-4 border-b border-gray-100">
+        <h3 className="text-sm font-semibold text-gray-900 mb-2">📊 Fear &amp; Greed Index</h3>
         {fearGreedLoading ? (
           <div className="flex justify-center py-4">
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-orange-600" />
           </div>
-        ) : fearGreedIndex !== null ? (() => {
-          const fg = getFGInfo(fearGreedIndex);
-          return (
-            <div>
-              <div className={`${fg.bg} rounded-lg p-3 text-center mb-3`}>
-                <div className={`text-3xl font-bold ${fg.text}`}>{fearGreedIndex}</div>
-                <div className={`text-xs font-medium ${fg.text}`}>{fg.label}</div>
-              </div>
-              <div className="relative h-2 rounded-full overflow-hidden" style={{ background: 'linear-gradient(to right,#ef4444,#f97316,#eab308,#22c55e)' }}>
-                <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 border-gray-500 rounded-full" style={{ left: `calc(${fearGreedIndex}% - 6px)` }} />
-              </div>
-              <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                <span>Fear</span><span>Greed</span>
-              </div>
-            </div>
-          );
-        })() : <p className="text-xs text-gray-400 text-center py-2">Niet beschikbaar</p>}
+        ) : fearGreedIndex !== null ? (
+          <div>
+            {(() => {
+              const getFearGreedLabel = (index: number) => {
+                if (index < 25) return { label: 'Extreme Fear', color: 'red' };
+                if (index < 45) return { label: 'Fear', color: 'orange' };
+                if (index < 55) return { label: 'Neutral', color: 'gray' };
+                if (index < 75) return { label: 'Greed', color: 'green' };
+                return { label: 'Extreme Greed', color: 'emerald' };
+              };
+              const fg = getFearGreedLabel(fearGreedIndex);
+              const angle = (fearGreedIndex / 100) * 180;
+              return (
+                <div>
+                  <div className="relative w-full h-24 mb-2">
+                    <svg className="w-full h-full" viewBox="0 0 200 120" style={{ overflow: 'visible' }}>
+                      <defs>
+                        <linearGradient id="fgGradientRight" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#ef4444" />
+                          <stop offset="25%" stopColor="#f97316" />
+                          <stop offset="50%" stopColor="#eab308" />
+                          <stop offset="75%" stopColor="#84cc16" />
+                          <stop offset="100%" stopColor="#22c55e" />
+                        </linearGradient>
+                      </defs>
+                      <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#e5e7eb" strokeWidth="8" strokeLinecap="round" />
+                      <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#fgGradientRight)" strokeWidth="8" strokeLinecap="round" className="transition-all duration-1000" />
+                      <g transform={`translate(100, 100) rotate(${angle - 90})`}>
+                        <line x1="0" y1="0" x2="0" y2="-70" stroke="#6b7280" strokeWidth="3" strokeLinecap="round" />
+                        <circle cx="0" cy="0" r="6" fill="#6b7280" />
+                      </g>
+                      <g transform={`translate(100, 100) rotate(${angle - 90}) translate(0, -70)`}>
+                        <ellipse cx="0" cy="0" rx="18" ry="12"
+                          fill={fg.color === 'red' ? '#ef4444' : fg.color === 'orange' ? '#f97316' : fg.color === 'green' ? '#22c55e' : fg.color === 'emerald' ? '#10b981' : '#6b7280'}
+                        />
+                        <text x="0" y="4" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">{fearGreedIndex}</text>
+                      </g>
+                    </svg>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-600">Nu: <span className={`font-semibold ${
+                      fg.color === 'red' ? 'text-red-600' : fg.color === 'orange' ? 'text-orange-600' :
+                      fg.color === 'green' ? 'text-green-600' : fg.color === 'emerald' ? 'text-emerald-600' : 'text-gray-600'
+                    }`}>{fg.label}</span></p>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        ) : (
+          <div className="text-center py-4 text-gray-500 text-xs">Kon Fear &amp; Greed Index niet laden</div>
+        )}
       </div>
 
-      {/* 3. Marktpositie */}
+      {/* 3. Marktpositie — volledige versie met calculator */}
       {currentPrice > 0 && (
-        <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">📈 Marktpositie</h3>
-          <div className="space-y-2 text-xs">
-            <div className="flex justify-between"><span className="text-gray-500">Vorige ATH</span><span className="font-medium">{fmt(previousATH)}</span></div>
-            <div className="flex justify-between"><span className="text-gray-500">Nu · live</span><span className="font-medium text-orange-600">{fmt(currentPrice)}</span></div>
-            <div className="flex justify-between"><span className="text-gray-500">Hoogste ooit</span><span className="font-medium">{fmt(latestATH)}</span></div>
+        <div className="p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <BarChart3 className="w-4 h-4 text-orange-600" />
+            <h3 className="text-sm font-semibold text-gray-900">Marktpositie</h3>
           </div>
-          <div className={`mt-3 text-xs font-medium border rounded-lg px-2.5 py-1.5 ${faseStyle}`}>
-            {fase}{pct && <span className="ml-1 opacity-70">· {pct}% van vorige ATH</span>}
+          <p className="text-xs text-gray-600 mb-4">Huidige prijs t.o.v. eerdere pieken.</p>
+
+          <div className="space-y-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <div className="text-left">
+                  <div className="font-semibold text-gray-700">Vorige ATH</div>
+                  <div className="text-gray-600">${marketPositionData.prevATH.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+                </div>
+                <div className="text-center flex-1 mx-2">
+                  <div className="text-base font-bold text-gray-900 mb-1">${marketPositionData.currentPrice.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+                  <div className={`inline-block px-2 py-1 rounded text-[10px] font-semibold border ${marketPositionData.statusColor}`}>{marketPositionData.statusLabel}</div>
+                </div>
+                <div className="text-right">
+                  <div className="font-semibold text-gray-700">Laatste ATH</div>
+                  <div className="text-gray-600">${marketPositionData.lastATH.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+                </div>
+              </div>
+
+              <div className="relative h-6 bg-gradient-to-r from-yellow-200 via-orange-200 to-green-200 rounded-lg overflow-hidden mt-5">
+                <div className="absolute top-0 bottom-0 w-0.5 bg-gray-600" style={{ left: `${Math.min(100, Math.max(0, marketPositionData.prevATHPosition))}%` }}>
+                  <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 text-[10px] font-semibold text-gray-700 whitespace-nowrap">Vorige ATH</div>
+                </div>
+                <div className="absolute top-0 bottom-0 w-1 bg-orange-600 rounded-full shadow-md" style={{ left: `${Math.min(100, Math.max(0, marketPositionData.currentPosition))}%`, transform: 'translateX(-50%)' }}>
+                  <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 text-[10px] font-semibold text-orange-700 whitespace-nowrap">Nu</div>
+                </div>
+                <div className="absolute top-0 bottom-0 w-0.5 bg-gray-600" style={{ left: `${Math.min(100, Math.max(0, marketPositionData.lastATHPosition))}%` }}>
+                  <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 text-[10px] font-semibold text-gray-700 whitespace-nowrap">Laatste ATH</div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1 text-gray-600">
+                  {marketPositionData.currentPrice >= marketPositionData.prevATH ? (
+                    <><TrendingUp className="w-3 h-3 text-green-600" /><span>{marketPositionData.percentAbovePrevious.toFixed(0)}% boven vorige</span></>
+                  ) : (
+                    <><TrendingDown className="w-3 h-3" /><span>{marketPositionData.percentBelowPrevious.toFixed(0)}% onder vorige</span></>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 text-gray-600">
+                  {marketPositionData.currentPrice >= marketPositionData.lastATH ? (
+                    <><TrendingUp className="w-3 h-3 text-green-600" /><span>{((marketPositionData.currentPrice - marketPositionData.lastATH) / marketPositionData.lastATH * 100).toFixed(0)}% boven laatste</span></>
+                  ) : (
+                    <><TrendingDown className="w-3 h-3" /><span>{marketPositionData.percentBelowLatest.toFixed(0)}% onder laatste</span></>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-gray-200">
+              <label className="block text-xs font-semibold text-gray-700 mb-2">Stel: ik koop nu voor</label>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-sm text-gray-600">$</span>
+                <input
+                  type="number"
+                  value={hypotheticalInvestment}
+                  onChange={(e) => setHypotheticalInvestment(parseFloat(e.target.value) || 0)}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  min="0"
+                  step="50"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-gradient-to-br from-orange-50 to-yellow-50 border border-orange-200 rounded-lg p-2">
+                  <div className="text-[10px] font-semibold text-gray-700 mb-1">Naar vorige ATH</div>
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <span className="text-sm font-bold text-gray-900">${marketPositionData.valueAtPreviousATH.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+                    <Trophy className="w-3 h-3 text-yellow-600" />
+                  </div>
+                  <div className="text-[10px] text-green-700 font-semibold">+{marketPositionData.profitAtPrevious.toFixed(0)}%</div>
+                </div>
+                <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-2">
+                  <div className="text-[10px] font-semibold text-gray-700 mb-1">Naar laatste ATH</div>
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <span className="text-sm font-bold text-gray-900">${marketPositionData.valueAtLatestATH.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+                    <TrendingUp className="w-3 h-3 text-green-600" />
+                  </div>
+                  <div className="text-[10px] text-green-700 font-semibold">+{marketPositionData.profitAtLatest.toFixed(0)}%</div>
+                </div>
+              </div>
+              <p className="text-[10px] text-gray-500 italic mt-2 text-center">Geen voorspelling, enkel een rekenvoorbeeld.</p>
+            </div>
           </div>
         </div>
       )}
@@ -2780,8 +2902,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         />
       )}
 
-      {/* Fear and Greed + Marktpositie — volledige breedte, onder Beginnersdoelen */}
-      <div className="space-y-4">
+      {/* Fear and Greed + Marktpositie — verborgen op xl (staan in rechterkolom) */}
+      <div className="xl:hidden space-y-4">
           {/* Fear and Greed Index — alleen zichtbaar vanaf stap 2 */}
           {journeyStep >= 2 && !hideFearGreed && (
             <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
