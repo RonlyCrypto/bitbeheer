@@ -2534,11 +2534,10 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             </div>
                     </div>
             
-      {/* Wallet en Waarschuwingen Blok - Naast elkaar - Volledige breedte */}
+      {/* Wallet Blok - volledige breedte (Waarschuwingen staan in rechterkolom) */}
       {hasWallet && walletData && !showSuccessMessage && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Wallet Block - 2/3 breedte */}
-          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+        <div>
+          <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
               {/* Wallet uitleg bovenaan */}
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
                 <div className="flex items-start gap-2">
@@ -2708,131 +2707,6 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           )}
           </div>
           
-          {/* Waarschuwingen Blok - 1/3 breedte */}
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">⚠️ Belangrijke Waarschuwingen</h3>
-          
-          <div className="space-y-3">
-            {/* Eerste 2 blokken - Blijven staan */}
-            {/* Waarschuwing 1: Laat crypto niet op exchanges */}
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-2 flex-1">
-                  <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs font-semibold text-red-900">
-                      Laat je crypto niet op exchanges
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowExchangeWarningPopup(true)}
-                  className="text-xs text-orange-600 hover:text-orange-700 font-medium whitespace-nowrap"
-                >
-                  Waarom?
-                </button>
-              </div>
-            </div>
-
-            {/* Waarschuwing 2: Bitcoin in eigen wallet */}
-            {hasWallet && walletData && (
-            <div 
-                className={`border rounded-lg p-3 cursor-pointer transition-colors ${
-                walletData?.balance > 0 
-                  ? 'bg-green-50 border-green-200 hover:bg-green-100' 
-                  : 'bg-yellow-50 border-yellow-200 hover:bg-yellow-100'
-              }`}
-              onClick={() => setShowSelfCustodyPopup(true)}
-            >
-              <div className="flex items-start gap-2">
-                {walletData?.balance > 0 ? (
-                    <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                ) : (
-                    <Lock className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
-                )}
-                <div className="flex-1">
-                    <p className={`text-xs font-semibold ${
-                    walletData?.balance > 0 ? 'text-green-900' : 'text-yellow-900'
-                  }`}>
-                    Bitcoin staat in eigen wallet veilig
-                  </p>
-                  {walletData?.balance > 0 && (
-                      <p className="text-[10px] text-green-700 mt-0.5">
-                      ✓ Je hebt Bitcoin in je eigen wallet
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-            )}
-
-            {/* Veelgemaakte fouten - Roteert met blur effect */}
-            <div className="relative min-h-[50px]">
-              {(() => {
-                const commonMistakes = [
-                  {
-                    id: 'common1',
-                    content: (
-                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                        <div className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
-                          <p className="text-xs text-gray-700">Koop nooit via DM's</p>
-                        </div>
-                      </div>
-                    )
-                  },
-                  {
-                    id: 'common2',
-                    content: (
-                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                        <div className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
-                          <p className="text-xs text-gray-700">Deel nooit je seed</p>
-                        </div>
-                      </div>
-                    )
-                  },
-                  {
-                    id: 'common3',
-                    content: (
-                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                        <div className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
-                          <p className="text-xs text-gray-700">Laat BTC niet lang op exchanges</p>
-                        </div>
-                      </div>
-                    )
-                  }
-                ];
-                
-                return commonMistakes.map((mistake, index) => (
-                  <div
-                    key={mistake.id}
-                    className={`absolute inset-0 transition-all duration-1000 ${
-                      index === currentWarningIndex % commonMistakes.length
-                        ? 'opacity-100 blur-0'
-                        : 'opacity-0 blur-sm pointer-events-none'
-                    }`}
-                  >
-                    {mistake.content}
-                  </div>
-                ));
-              })()}
-            </div>
-
-            {/* Tip van vandaag - Blijft staan */}
-            <div className="relative bg-orange-50 border border-orange-200 rounded-lg p-3">
-              {/* Lintje in rechterbovenhoek */}
-              <div className="absolute -top-2 -right-2 bg-orange-600 text-white text-[10px] font-bold px-2 py-1 rounded-tl-lg rounded-tr-lg rounded-br-lg shadow-md z-10">
-                TIP VAN DE DAG
-              </div>
-              <p className="text-xs font-semibold text-orange-900 mb-1">💡 Niet je keys = niet je Bitcoin</p>
-              <p className="text-[10px] text-orange-800">
-                Gebruik altijd alleen je eigen wallet om zeker te weten dat jij je Bitcoin bezit.
-              </p>
-            </div>
-          </div>
-          </div>
         </div>
       )}
 
