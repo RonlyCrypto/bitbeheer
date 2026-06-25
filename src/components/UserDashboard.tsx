@@ -764,8 +764,8 @@ export default function UserDashboard() {
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto pb-20 md:pb-0 min-w-0">
-        <div className="p-4 md:p-6">
-        <div className="max-w-6xl mx-auto">
+        <div className="p-4 md:p-5">
+        <div className="max-w-5xl">
             {activeTab === 'overview' && <OverviewTab 
               userProfile={userProfile} 
               goals={goals} 
@@ -939,6 +939,15 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
   const [showInfoPopup, setShowInfoPopup] = useState(false);
   const [infoPopupMessage, setInfoPopupMessage] = useState('');
   const [fearGreedIndex, setFearGreedIndex] = useState<number | null>(null);
+  const [hideFearGreed, setHideFearGreed] = useState(() => {
+    try { return localStorage.getItem('hide_fear_greed') === 'true'; } catch { return false; }
+  });
+
+  const toggleFearGreed = () => {
+    const next = !hideFearGreed;
+    setHideFearGreed(next);
+    try { localStorage.setItem('hide_fear_greed', String(next)); } catch {}
+  };
 
   // Helper function to show info popup
   const showInfo = (message: string) => {
@@ -1810,6 +1819,31 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
   return (
     <div className="space-y-3">
 
+      {/* STAP 0: Welkomstblok — alleen zichtbaar vóór het eerste gesprek */}
+      {journeyStep === 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <h2 className="text-base font-semibold text-gray-900 mb-1">Welkom bij BitBeheer 👋</h2>
+          <p className="text-sm text-gray-600 mb-4">Persoonlijke begeleiding bij het investeren in Bitcoin. Dit is wat we voor je doen:</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            {[
+              { icon: '💬', title: '1-op-1 begeleiding', desc: 'Persoonlijk gesprek over jouw doelen en situatie' },
+              { icon: '🔐', title: 'Veilig Bitcoin kopen', desc: 'Stap voor stap: account, wallet en eerste aankoop' },
+              { icon: '📊', title: 'Portfolio bijhouden', desc: '24/7 inzicht in je walletwaarde en voortgang' },
+              { icon: '🎓', title: 'Van beginner naar ervaren', desc: 'Leer alles over DCA, eigen beheer en lange termijn' },
+            ].map((item) => (
+              <div key={item.title} className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg">
+                <span className="text-lg flex-shrink-0">{item.icon}</span>
+                <div>
+                  <p className="text-xs font-semibold text-gray-800">{item.title}</p>
+                  <p className="text-xs text-gray-500">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-gray-500">Na je eerste gesprek openen we je volledige dashboard met tools en inzichten.</p>
+        </div>
+      )}
+
       {/* Jouw Bitcoin Reis - Journey Progress (alleen voor goedgekeurde gebruikers) */}
       {(accountApproved || hasApprovedOneOnOne) && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
@@ -2494,7 +2528,58 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         </div>
       )}
 
+      {/* STAP 1 TIP: Hardware wallet uitleg — zichtbaar als goedgekeurd maar nog geen wallet */}
+      {journeyStep === 1 && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl flex-shrink-0">🔐</span>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">Bestel een hardware wallet</h3>
+              <p className="text-xs text-gray-600 mb-3">
+                Een hardware wallet (zoals de Ledger Nano S Plus) bewaart je Bitcoin veilig offline. Je hebt de volledige controle — niemand anders kan bij jouw Bitcoin.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <a href="https://www.ledger.com" target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 bg-gray-900 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-700 transition-colors">
+                  <ExternalLink className="w-3 h-3" /> Ledger.com
+                </a>
+                <a href="https://trezor.io" target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 bg-gray-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-600 transition-colors">
+                  <ExternalLink className="w-3 h-3" /> Trezor.io
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* STAP 2 TIP: Bitcoin kopen uitleg — zichtbaar als wallet is toegevoegd maar nog geen BTC */}
+      {journeyStep === 2 && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl flex-shrink-0">₿</span>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">Koop je eerste Bitcoin</h3>
+              <p className="text-xs text-gray-600 mb-3">
+                Je wallet is klaar. Nu kun je Bitcoin kopen via een exchange en direct overzetten naar je eigen wallet. Gebruik DCA (periodiek kleine bedragen) om risico te spreiden.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <a href="https://www.coinbase.com" target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors">
+                  <ExternalLink className="w-3 h-3" /> Coinbase
+                </a>
+                <a href="https://www.bitvavo.com" target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-blue-600 transition-colors">
+                  <ExternalLink className="w-3 h-3" /> Bitvavo
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Leer & Waarschuwingen en Beginnersdoelen - 1 rij (2/3 1/3) - Volledige breedte */}
+      {/* Alleen zichtbaar vanaf stap 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Beginnersdoelen - 2/3 breedte */}
         {(accountApproved || hasApprovedOneOnOne) && (
@@ -2517,17 +2602,15 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         
         {/* Fear and Greed Index + Hulp nodig - 1/3 breedte */}
         <div className="space-y-4">
-          {/* Fear and Greed Index */}
-          {(accountApproved || hasApprovedOneOnOne) && (
+          {/* Fear and Greed Index — alleen zichtbaar vanaf stap 2 */}
+          {journeyStep >= 2 && !hideFearGreed && (
             <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base font-semibold text-gray-900">📊 Fear & Greed Index</h3>
-              <button
-                onClick={() => setShowFearGreedPopup(true)}
-                className="text-xs text-orange-600 hover:text-orange-700"
-              >
-                Meer info &gt;
-              </button>
+              <h3 className="text-sm font-semibold text-gray-900">📊 Fear & Greed</h3>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setShowFearGreedPopup(true)} className="text-xs text-orange-600 hover:text-orange-700">Info</button>
+                <button onClick={toggleFearGreed} className="text-xs text-gray-400 hover:text-gray-600">Verbergen</button>
+              </div>
           </div>
 
             {fearGreedLoading ? (
@@ -2644,8 +2727,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           </div>
         )}
         
-        {/* Marktpositie – Bitcoin in context */}
-        {(accountApproved || hasApprovedOneOnOne) && (
+        {/* Marktpositie – Bitcoin in context — alleen zichtbaar vanaf stap 2 */}
+        {journeyStep >= 2 && (
           <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
             <div className="flex items-center gap-2 mb-2">
               <BarChart3 className="w-4 h-4 text-orange-600" />
@@ -2810,6 +2893,16 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
               </div>
             </div>
           </div>
+        )}
+
+        {/* Toon Fear & Greed knop als verborgen */}
+        {journeyStep >= 2 && hideFearGreed && (
+          <button
+            onClick={toggleFearGreed}
+            className="w-full text-xs text-gray-400 hover:text-orange-600 border border-dashed border-gray-200 rounded-lg py-2 transition-colors"
+          >
+            📊 Fear & Greed tonen
+          </button>
         )}
 
         {/* Hulp nodig? - Eigen blok */}
