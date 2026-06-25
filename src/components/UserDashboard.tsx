@@ -183,10 +183,10 @@ function RightInfoColumn({ currentPrice, previousATH, latestATH }: {
   })();
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div className="space-y-2">
 
       {/* 1. Belangrijke Waarschuwingen */}
-      <div className="p-4 border-b border-gray-100">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
         <h3 className="text-sm font-semibold text-gray-900 mb-3">⚠️ Belangrijke Waarschuwingen</h3>
         <div className="space-y-2">
           <div className="bg-red-50 border border-red-200 rounded-lg p-2.5 flex items-start gap-2">
@@ -205,7 +205,7 @@ function RightInfoColumn({ currentPrice, previousATH, latestATH }: {
       </div>
 
       {/* 2. Fear & Greed Index — volledige gauge */}
-      <div className="p-4 border-b border-gray-100">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
         <h3 className="text-sm font-semibold text-gray-900 mb-2">📊 Fear &amp; Greed Index</h3>
         {fearGreedLoading ? (
           <div className="flex justify-center py-4">
@@ -267,7 +267,7 @@ function RightInfoColumn({ currentPrice, previousATH, latestATH }: {
 
       {/* 3. Marktpositie — volledige versie met calculator */}
       {currentPrice > 0 && (
-        <div className="p-4">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
           <div className="flex items-center gap-2 mb-2">
             <BarChart3 className="w-4 h-4 text-orange-600" />
             <h3 className="text-sm font-semibold text-gray-900">Marktpositie</h3>
