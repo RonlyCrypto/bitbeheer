@@ -146,8 +146,16 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
     isAtBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
   };
 
-  // Alleen scrollen als het aantal berichten toeneemt én gebruiker al onderaan zat
+  // Eerste load: direct naar beneden (nieuwste berichten zichtbaar)
+  // Daarna: niet meer scrollen tenzij gebruiker onderaan is én nieuw bericht komt
+  const firstScrollDoneRef = useRef(false);
   useEffect(() => {
+    if (!firstScrollDoneRef.current && messages.length > 0) {
+      firstScrollDoneRef.current = true;
+      messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+      prevMessageCountRef.current = messages.length;
+      return;
+    }
     const hasNew = messages.length > prevMessageCountRef.current;
     prevMessageCountRef.current = messages.length;
     if (hasNew && isAtBottomRef.current) {
@@ -267,8 +275,8 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
   };
 
   return (
-    <div className="space-y-4">
-      <div ref={messagesContainerRef} onScroll={handleScroll} className="border rounded-xl p-4 bg-white max-h-96 overflow-y-auto">
+    <div className="flex flex-col" style={{ height: 'calc(100vh - 220px)' }}>
+      <div ref={messagesContainerRef} onScroll={handleScroll} className="border rounded-xl p-4 bg-white flex-1 overflow-y-auto">
         {messages.length === 0 ? (
           <p className="text-gray-500">Nog geen berichten. Stel je vraag hieronder.</p>
         ) : (
