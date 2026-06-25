@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import LoginRegister from '../components/LoginRegister';
 import { createUser } from '../lib/supabase';
 import { DirectEmailService } from '../services/directEmailService';
 import { checkHoneypot, checkFormTiming, generateMathChallenge, verifyMathChallenge } from '../utils/botProtection';
@@ -241,9 +242,9 @@ export default function SoonOnlinePage() {
             <span className="w-2 h-2 bg-white rounded-full inline-block animate-pulse" />
             Binnenkort live
           </div>
-          <Link to="/aanmelden" className="bg-white text-orange-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-orange-50 transition">
-            Inloggen
-          </Link>
+          <div className="[&>button]:bg-white [&>button]:text-orange-600 [&>button]:hover:bg-orange-50">
+            <LoginRegister />
+          </div>
         </div>
       </nav>
 
