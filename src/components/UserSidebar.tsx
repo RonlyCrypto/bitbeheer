@@ -55,29 +55,28 @@ export default function UserSidebar({
   ];
 
   return (
-    /* Wrapper neemt altijd 56px in de layout; de kaart zelf klapt uit als overlay */
+    /* Wrapper neemt altijd 56px in de layout; kaart klapt naar LINKS uit */
     <div style={{ position: 'relative', width: '56px', flexShrink: 0 }}>
       <div
-        className="absolute top-0 left-0 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col"
+        className="absolute top-0 right-0 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col"
         style={{
           width: isExpanded ? '200px' : '56px',
           transition: 'width 220ms ease',
           zIndex: 30,
         }}
       >
-        {/* Uitklap-knop */}
+        {/* Uitklap-knop — pijl wijst naar links (uitklappen = naar links) */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           title={isExpanded ? 'Inklappen' : 'Uitklappen'}
-          className="flex items-center h-9 border-b border-gray-100 text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition-colors shrink-0 overflow-hidden"
-          style={{ minWidth: '56px' }}
+          className="flex items-center justify-end h-9 border-b border-gray-100 text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition-colors shrink-0"
         >
           <span className="flex items-center justify-center w-14 shrink-0">
-            {isExpanded ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            {isExpanded ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </span>
         </button>
 
-        {/* Menu items — icoon altijd zichtbaar, label schuift erbij */}
+        {/* Menu items — label links, icoon rechts */}
         <nav className="flex flex-col gap-0.5 px-1.5 pt-2 pb-1">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -88,27 +87,26 @@ export default function UserSidebar({
                 onClick={() => { if (isEnabled) { onTabChange(item.id); setIsExpanded(false); } }}
                 disabled={!isEnabled}
                 title={!isExpanded ? item.label : undefined}
-                className={`relative flex items-center h-10 rounded-lg transition-colors overflow-hidden ${
+                className={`relative flex items-center flex-row-reverse h-10 rounded-lg transition-colors overflow-hidden w-full ${
                   !isEnabled
                     ? 'text-gray-300 cursor-not-allowed'
                     : activeTab === item.id
                     ? 'bg-orange-100 text-orange-700'
                     : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
                 }`}
-                style={{ minWidth: '40px' }}
               >
-                {/* Icoon — vaste breedte, altijd zichtbaar */}
+                {/* Icoon — altijd rechts, vaste breedte */}
                 <span className="flex items-center justify-center w-10 shrink-0">
                   <Icon className="w-5 h-5" />
                   {item.badge && (
-                    <span className="absolute top-1 left-6 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                    <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
                       {item.badge > 9 ? '9+' : item.badge}
                     </span>
                   )}
                 </span>
-                {/* Label — schuift in */}
+                {/* Label — schuift in vanuit links */}
                 <span
-                  className="text-sm font-medium whitespace-nowrap overflow-hidden"
+                  className="text-sm font-medium whitespace-nowrap overflow-hidden text-left pl-3"
                   style={{
                     maxWidth: isExpanded ? '140px' : '0px',
                     opacity: isExpanded ? 1 : 0,
@@ -125,15 +123,17 @@ export default function UserSidebar({
         {/* Sterren / voortgang */}
         <div className="border-t border-gray-100 pt-2 pb-3 flex flex-col gap-1.5 overflow-hidden">
           {milestones.map((m, i) => (
-            <div key={i} className="flex items-center" style={{ minWidth: '56px' }}>
+            <div key={i} className="flex items-center flex-row-reverse">
+              {/* Ster rechts */}
               <span className="flex items-center justify-center w-10 shrink-0">
                 <Star
                   title={!isExpanded ? m.label : undefined}
                   className={`w-4 h-4 ${m.achieved ? 'text-orange-400 fill-orange-400' : 'text-gray-200 fill-gray-200'}`}
                 />
               </span>
+              {/* Label links */}
               <span
-                className="text-xs whitespace-nowrap overflow-hidden"
+                className="text-xs whitespace-nowrap overflow-hidden pl-3"
                 style={{
                   maxWidth: isExpanded ? '140px' : '0px',
                   opacity: isExpanded ? 1 : 0,
