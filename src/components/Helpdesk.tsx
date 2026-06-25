@@ -31,6 +31,7 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const isAtBottomRef = useRef(true);
+  const initialLoadDoneRef = useRef(false);
   
   // Calculate new message count (messages after last read)
   const newMessageCount = lastReadTime 
@@ -145,8 +146,12 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
     isAtBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
   };
 
-  // Alleen scrollen als gebruiker al onderaan was
+  // Alleen scrollen als gebruiker al onderaan was én eerste lading voorbij is
   useEffect(() => {
+    if (!initialLoadDoneRef.current) {
+      initialLoadDoneRef.current = true;
+      return;
+    }
     if (isAtBottomRef.current) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
