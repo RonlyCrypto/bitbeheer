@@ -798,9 +798,10 @@ export default function UserDashboard() {
       {/* SEO H1 Tag */}
       <h1 className="sr-only">BitBeheer Gebruikers Dashboard - Bitcoin Portfolio en Begeleiding</h1>
 
-      {/* Main Content — flex-1 met content gecentreerd binnenin */}
+      {/* Main Content — flex-1, content + sidebar samen gecentreerd */}
       <div className="flex-1 min-w-0 py-5 pb-24 md:pb-5 px-4 md:px-6">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto flex items-start gap-3">
+        <div className="flex-1 min-w-0">
             {activeTab === 'overview' && <OverviewTab 
               userProfile={userProfile} 
               goals={goals} 
@@ -901,20 +902,22 @@ export default function UserDashboard() {
                 }}
               />
             )}
-        </div>{/* einde max-w-4xl mx-auto */}
-      </div>{/* einde flex-1 main content */}
+        </div>{/* einde content kolom */}
 
-      {/* Sidebar — rechts, sticky */}
-      <div className="hidden md:block sticky top-0 self-start shrink-0 py-5 pr-4">
-        <UserSidebar
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          accountApproved={accountApproved}
-          hasApprovedOneOnOne={hasApprovedOneOnOne}
-          hasWallet={hasWallet}
-          unreadChatCount={unreadChatCount}
-        />
-      </div>
+          {/* Sidebar — rechts naast content, binnen max-w-4xl */}
+          <div className="hidden md:block sticky top-5 self-start shrink-0">
+            <UserSidebar
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              accountApproved={accountApproved}
+              hasApprovedOneOnOne={hasApprovedOneOnOne}
+              hasWallet={hasWallet}
+              unreadChatCount={unreadChatCount}
+            />
+          </div>
+
+        </div>{/* einde max-w-4xl flex */}
+      </div>{/* einde flex-1 main content */}
 
       {/* Floating "Hulp nodig?" widget — rechtsonder, fixed */}
       <HulpNodigWidget
