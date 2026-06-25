@@ -57,7 +57,7 @@ export default function WelcomePopup({ userName, onClose }: WelcomePopupProps) {
                 <span className="text-orange-500 text-xl">💡</span>
                 <div>
                   <h5 className="font-medium text-gray-800">Persoonlijke 1-op-1 Begeleiding</h5>
-                  <p className="text-sm text-gray-600">Direct contact met Giovanni voor al je Bitcoin vragen</p>
+                  <p className="text-sm text-gray-600">Direct contact met ons team voor al je Bitcoin vragen</p>
                 </div>
               </div>
               <div className="flex items-start space-x-3">
@@ -91,7 +91,7 @@ export default function WelcomePopup({ userName, onClose }: WelcomePopupProps) {
             </h4>
             <ol className="list-decimal list-inside space-y-2 text-sm text-orange-700">
               <li>Verken je dashboard en de beschikbare tools</li>
-              <li>Plan een kennismakingsgesprek met Giovanni</li>
+              <li>Plan een kennismakingsgesprek met ons team</li>
               <li>Stel je Bitcoin investeringsdoelen vast</li>
               <li>Begin met veilig Bitcoin kopen en bewaren</li>
             </ol>
@@ -101,7 +101,7 @@ export default function WelcomePopup({ userName, onClose }: WelcomePopupProps) {
           <div className="text-center bg-gray-100 rounded-lg p-4">
             <h4 className="font-semibold text-gray-800 mb-2">💬 Direct Contact</h4>
             <p className="text-sm text-gray-600 mb-2">
-              Heb je vragen? Giovanni staat klaar om je te helpen!
+              Heb je vragen? Wij staan klaar om je te helpen!
             </p>
             <div className="flex justify-center space-x-4 text-sm">
               <span className="text-orange-600 font-medium">📧 info@bitbeheer.nl</span>

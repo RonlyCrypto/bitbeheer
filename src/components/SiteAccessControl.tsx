@@ -1,6 +1,6 @@
 import { useAuth } from '../contexts/AuthContext';
+import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import SoonOnlinePage from '../pages/SoonOnlinePage';
-import FrontPage from '../pages/FrontPage';
 
 interface SiteAccessControlProps {
   children: React.ReactNode;
@@ -8,15 +8,13 @@ interface SiteAccessControlProps {
 
 export default function SiteAccessControl({ children }: SiteAccessControlProps) {
   const { isSiteAccessible, isAuthenticated } = useAuth();
+  const { user: supabaseUser } = useSupabaseAuth();
 
-  if (!isSiteAccessible()) {
-    // If admin is logged in, show FrontPage (full site)
-    if (isAuthenticated) {
-      return <FrontPage />;
-    }
-    // Non-authenticated users see SoonOnlinePage
-    return <SoonOnlinePage />;
+  // Ingelogde gebruikers (zowel oude auth als Supabase) krijgen altijd toegang tot de echte site
+  if (isSiteAccessible() || isAuthenticated || supabaseUser) {
+    return <>{children}</>;
   }
 
-  return <>{children}</>;
+  // Niet-ingelogde bezoekers zien SoonOnlinePage
+  return <SoonOnlinePage />;
 }

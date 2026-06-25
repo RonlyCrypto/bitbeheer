@@ -1799,7 +1799,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
     : 3;
 
   const journeySteps = [
-    { label: 'Kennismaking', icon: '🤝', description: 'Eerste gesprek met Giovanni' },
+    { label: 'Kennismaking', icon: '🤝', description: 'Eerste gesprek met ons team' },
     { label: 'Hardware Wallet', icon: '🔐', description: 'Bestel een Ledger' },
     { label: 'Bitcoin kopen', icon: '₿', description: 'Je eerste aankoop' },
     { label: 'Eigen beheer', icon: '🏆', description: 'Bitcoin in je eigen wallet' },
