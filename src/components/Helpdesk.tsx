@@ -29,6 +29,8 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
   const effectiveUserEmail = isImpersonating && impersonatedUser ? impersonatedUser : user?.email;
   const [userProfile, setUserProfile] = useState<{ first_name?: string; last_name?: string; name?: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const isAtBottomRef = useRef(true);
   
   // Calculate new message count (messages after last read)
   const newMessageCount = lastReadTime 
@@ -136,9 +138,18 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
     loadUserProfile();
   }, [effectiveUserEmail]);
 
-  // Auto-scroll naar beneden bij nieuwe berichten
+  // Bijhouden of gebruiker onderaan is
+  const handleScroll = () => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    isAtBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+  };
+
+  // Alleen scrollen als gebruiker al onderaan was
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (isAtBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -201,6 +212,7 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
       };
       setMessages((prev) => [...prev, optimistic]);
       setNewMessage('');
+      isAtBottomRef.current = true;
 
       // Get user info from users or accounts table (use effective email for impersonation)
       const { data: userData } = await supabase
@@ -254,7 +266,7 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
 
   return (
     <div className="space-y-4">
-      <div className="border rounded-xl p-4 bg-white max-h-96 overflow-y-auto">
+      <div ref={messagesContainerRef} onScroll={handleScroll} className="border rounded-xl p-4 bg-white max-h-96 overflow-y-auto">
         {messages.length === 0 ? (
           <p className="text-gray-500">Nog geen berichten. Stel je vraag hieronder.</p>
         ) : (
