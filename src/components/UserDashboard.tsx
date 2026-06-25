@@ -764,7 +764,8 @@ export default function UserDashboard() {
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto pb-20 md:pb-0 min-w-0">
-        <div className="p-4 md:p-8">
+        <div className="p-4 md:p-6">
+        <div className="max-w-6xl mx-auto">
             {activeTab === 'overview' && <OverviewTab 
               userProfile={userProfile} 
               goals={goals} 
@@ -867,6 +868,7 @@ export default function UserDashboard() {
             )}
             </div>
           </div>
+        </div>
 
       {/* Mobile Bottom Navigation for User Dashboard */}
       <UserDashboardMobileNav
@@ -1806,11 +1808,11 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
 
       {/* Jouw Bitcoin Reis - Journey Progress (alleen voor goedgekeurde gebruikers) */}
       {(accountApproved || hasApprovedOneOnOne) && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-lg">🗺️</span>
             <h3 className="text-base font-semibold text-gray-900">Jouw Bitcoin Reis</h3>
@@ -1873,81 +1875,54 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           </div>
         ) : !userAppointment ? (
         // No appointment - show prompt to book
-        <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-xl shadow-lg">
-          <div className="flex items-start gap-4">
-            <div className="bg-white bg-opacity-20 p-3 rounded-xl">
-              <Calendar className="w-8 h-8" />
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-xl shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="bg-white bg-opacity-20 p-2 rounded-lg flex-shrink-0">
+              <Calendar className="w-5 h-5" />
             </div>
-            <div className="flex-1">
-              <h3 className="text-xl font-bold mb-2">Maak je eerste afspraak! 🎯</h3>
-              <p className="text-orange-100 mb-4">
-                Dit is een 20-minuten gesprek om te kijken wat ik voor je kan betekenen. 
-                We bespreken je doelen, risicoprofiel en maken een persoonlijk plan voor jouw Bitcoin reis.
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold mb-0.5">Maak je eerste afspraak 🎯</h3>
+              <p className="text-orange-100 text-xs">
+                20-minuten kennismaking — we bespreken je doelen en maken een persoonlijk plan.
               </p>
-              <button 
-                onClick={() => {
-                  if (onBookAppointment) {
-                    onBookAppointment();
-                  }
-                }}
-                className="bg-white text-orange-600 px-6 py-3 rounded-lg font-semibold hover:bg-orange-50 transition-colors"
-              >
-                Plan je afspraak in
-              </button>
             </div>
+            <button
+              onClick={() => { if (onBookAppointment) onBookAppointment(); }}
+              className="bg-white text-orange-600 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-orange-50 transition-colors flex-shrink-0"
+            >
+              Inplannen
+            </button>
           </div>
         </div>
       ) : (
         // Any appointment (pending or confirmed)
         userAppointment.status === 'pending' ? (
         // Pending appointment - waiting for confirmation (orange block)
-        <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-xl shadow-lg">
-          <div className="flex items-start gap-4">
-            <div className="bg-white bg-opacity-20 p-3 rounded-xl">
-              <Clock className="w-8 h-8" />
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-xl shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="bg-white bg-opacity-20 p-2 rounded-lg flex-shrink-0">
+              <Clock className="w-5 h-5" />
             </div>
-            <div className="flex-1">
-              <h3 className="text-xl font-bold mb-2">Afspraak ingepland ⏳</h3>
-              <div className="bg-white bg-opacity-10 rounded-lg p-3 mb-3 text-sm">
-                <p className="font-semibold mb-1">ℹ️ Over dit gesprek:</p>
-                <p className="text-orange-50">
-                  Dit is een 20-minuten kennismaking waarbij we bespreken wie jij bent en wie ik ben, wat je doel is en of dat mogelijk is.
-                </p>
-              </div>
-              <div className="space-y-2 text-orange-100 mb-4">
-                <p>
-                  <strong>Datum:</strong> {new Date(userAppointment.date).toLocaleDateString('nl-NL', { 
-                    weekday: 'long', 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
-                  })}
-                </p>
-                <p>
-                  <strong>Tijd:</strong> {userAppointment.start_time} - {userAppointment.end_time}
-                </p>
-              </div>
-              <button 
-                disabled
-                className="bg-white bg-opacity-30 text-white px-6 py-3 rounded-lg font-semibold cursor-not-allowed opacity-75"
-              >
-                Wacht op goedkeuring
-              </button>
-              <p className="bg-white bg-opacity-20 rounded-lg p-3 mt-3 text-orange-50 text-sm">
-                📬 Wacht tot dit bevestigd is door de admin. Je ontvangt een bevestigingsmail zodra de afspraak is goedgekeurd.
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold mb-0.5">Afspraak ingepland ⏳</h3>
+              <p className="text-orange-100 text-xs">
+                <strong>{new Date(userAppointment.date).toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' })}</strong> om {userAppointment.start_time} — {userAppointment.end_time}
               </p>
             </div>
+            <span className="bg-white bg-opacity-30 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex-shrink-0">
+              Wacht op bevestiging
+            </span>
           </div>
         </div>
         ) : (
         // Confirmed appointment - show info and questions form
-        <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-xl shadow-lg">
-          <div className="flex items-start gap-4">
-            <div className="bg-white bg-opacity-20 p-3 rounded-xl">
-              <CheckCircle className="w-8 h-8" />
+        <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-xl shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="bg-white bg-opacity-20 p-2 rounded-lg flex-shrink-0">
+              <CheckCircle className="w-5 h-5" />
             </div>
             <div className="flex-1">
-              <h3 className="text-xl font-bold mb-2">Afspraak Bevestigd! ✅</h3>
+              <h3 className="text-sm font-semibold mb-1">Afspraak Bevestigd! ✅</h3>
               <div className="bg-white bg-opacity-10 rounded-lg p-3 mb-3 text-sm">
                 <p className="font-semibold mb-1">ℹ️ Over dit gesprek:</p>
                 <p className="text-green-50">
@@ -2146,72 +2121,66 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 
       {/* Actiebalk - Wallet toevoegen (altijd bovenaan, volle breedte) */}
       {(accountApproved || hasApprovedOneOnOne) && !hasWallet && (
-        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-xl p-6 mb-6 shadow-lg">
-          <div className="flex items-start gap-4">
-            <div className="bg-yellow-100 p-3 rounded-xl">
-              <Wallet className="w-8 h-8 text-yellow-600" />
+        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4">
+          <div className="flex items-center gap-3">
+            <div className="bg-yellow-100 p-2 rounded-lg flex-shrink-0">
+              <Wallet className="w-5 h-5 text-yellow-600" />
             </div>
-            <div className="flex-1">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">🔐 Voeg je BTC wallet toe</h3>
-              <p className="text-gray-700 mb-4">
-                Beheer je Bitcoin veilig in eigen handen
-              </p>
-              {!showWalletForm ? (
-                <button 
-                  onClick={() => setShowWalletForm(true)}
-                  className="bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors shadow-md hover:shadow-lg flex items-center gap-2"
-                >
-                    <Plus className="w-5 h-5" />
-                    Wallet toevoegen
-                </button>
-              ) : (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-800 mb-2">Wallet Naam</label>
-                    <input
-                      type="text"
-                      value={walletForm.name}
-                      onChange={(e) => setWalletForm({ ...walletForm, name: e.target.value })}
-                      placeholder="Bijv. Mijn Bitcoin Wallet"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-800 mb-2">Bitcoin Adres</label>
-                    <input
-                      type="text"
-                      value={walletForm.address}
-                      onChange={(e) => setWalletForm({ ...walletForm, address: e.target.value })}
-                      placeholder="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                  </div>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={handleAddWallet}
-                      disabled={isAddingWallet}
-                      className="bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                      {isAddingWallet ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          Toevoegen...
-                        </>
-                      ) : (
-                        'Toevoegen'
-                      )}
-                    </button>
-                    <button
-                      onClick={() => setShowWalletForm(false)}
-                      className="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
-                    >
-                      Annuleren
-                    </button>
-                  </div>
-                </div>
-              )}
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold text-gray-900">🔐 Voeg je BTC wallet toe</h3>
+              <p className="text-gray-600 text-xs">Beheer je Bitcoin veilig in eigen handen</p>
             </div>
+            {!showWalletForm && (
+              <button
+                onClick={() => setShowWalletForm(true)}
+                className="bg-orange-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-orange-700 transition-colors flex items-center gap-1.5 flex-shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                Wallet toevoegen
+              </button>
+            )}
           </div>
+          {showWalletForm && (
+            <div className="mt-3 pt-3 border-t border-yellow-200 space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Wallet Naam</label>
+                <input
+                  type="text"
+                  value={walletForm.name}
+                  onChange={(e) => setWalletForm({ ...walletForm, name: e.target.value })}
+                  placeholder="Bijv. Mijn Bitcoin Wallet"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Bitcoin Adres</label>
+                <input
+                  type="text"
+                  value={walletForm.address}
+                  onChange={(e) => setWalletForm({ ...walletForm, address: e.target.value })}
+                  placeholder="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAddWallet}
+                  disabled={isAddingWallet}
+                  className="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-orange-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isAddingWallet ? (
+                    <><div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white"></div>Toevoegen...</>
+                  ) : 'Toevoegen'}
+                </button>
+                <button
+                  onClick={() => setShowWalletForm(false)}
+                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors"
+                >
+                  Annuleren
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -2225,9 +2194,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             
       {/* Wallet en Waarschuwingen Blok - Naast elkaar - Volledige breedte */}
       {hasWallet && walletData && !showSuccessMessage && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Wallet Block - 2/3 breedte */}
-          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-4 border border-gray-200">
               {/* Wallet uitleg bovenaan */}
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
                 <div className="flex items-start gap-2">
@@ -2526,7 +2495,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
       )}
 
       {/* Leer & Waarschuwingen en Beginnersdoelen - 1 rij (2/3 1/3) - Volledige breedte */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Beginnersdoelen - 2/3 breedte */}
         {(accountApproved || hasApprovedOneOnOne) && (
           <div className="lg:col-span-2">
@@ -2547,7 +2516,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         )}
         
         {/* Fear and Greed Index + Hulp nodig - 1/3 breedte */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Fear and Greed Index */}
           {(accountApproved || hasApprovedOneOnOne) && (
             <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
