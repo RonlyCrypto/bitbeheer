@@ -22,6 +22,7 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
   const [messages, setMessages] = useState<SupportMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [lastReadTime, setLastReadTime] = useState<string | null>(null);
   
   // Get effective user email (impersonated user if impersonating, otherwise real user)
@@ -243,7 +244,9 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
       setNewMessage(body); // Restore message
       
       const errorMsg = e.message || e.error?.message || JSON.stringify(e);
-      alert(`Bericht verzenden mislukt: ${errorMsg}\n\nControleer:\n1. Is de support_messages tabel aangemaakt?\n2. Zijn de RLS policies correct ingesteld?\n3. Is de gebruiker ingelogd?`);
+      setSendError(errorMsg.includes('row-level security') || errorMsg.includes('policy')
+        ? 'Bericht kon niet worden verzonden. Neem contact op via admin@bitbeheer.nl.'
+        : 'Bericht verzenden mislukt. Probeer het opnieuw.');
     } finally {
       setLoading(false);
     }
@@ -303,11 +306,18 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
           </div>
         )}
       </div>
+      {sendError && (
+        <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">
+          <span className="shrink-0">⚠️</span>
+          <span className="flex-1">{sendError}</span>
+          <button onClick={() => setSendError(null)} className="text-red-400 hover:text-red-600 shrink-0 text-xs">✕</button>
+        </div>
+      )}
       <div className="flex gap-2">
         <input
           type="text"
           value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
+          onChange={(e) => { setNewMessage(e.target.value); if (sendError) setSendError(null); }}
           onKeyDown={(e) => { if (e.key === 'Enter' && !loading && newMessage.trim()) sendMessage(); }}
           placeholder="Schrijf je bericht..."
           className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
