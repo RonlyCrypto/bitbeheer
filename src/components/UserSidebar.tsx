@@ -114,11 +114,19 @@ export default function UserSidebar({
       </div>
 
       {/* Overlay panel — verschijnt rechts van de icon bar bij uitklappen */}
-      {isExpanded && (
-        <div
-          className="absolute bg-white border border-gray-200 rounded-xl shadow-xl z-30 overflow-hidden"
-          style={{ left: '60px', top: 0, width: '168px' }}
-        >
+      <div
+        className="absolute bg-white border border-gray-200 rounded-xl shadow-xl z-30 overflow-hidden"
+        style={{
+          left: '60px',
+          top: 0,
+          width: '168px',
+          transformOrigin: 'left center',
+          transform: isExpanded ? 'scaleX(1)' : 'scaleX(0)',
+          opacity: isExpanded ? 1 : 0,
+          transition: 'transform 220ms ease, opacity 180ms ease',
+          pointerEvents: isExpanded ? 'auto' : 'none',
+        }}
+      >
           {/* Lege ruimte ter hoogte van de knop */}
           <div style={{ height: '36px', borderBottom: '1px solid #f3f4f6' }} />
 
@@ -156,7 +164,6 @@ export default function UserSidebar({
             ))}
           </div>
         </div>
-      )}
     </div>
   );
 }
