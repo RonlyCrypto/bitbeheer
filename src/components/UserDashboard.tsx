@@ -1157,21 +1157,19 @@ export default function UserDashboard() {
             )}
         </div>{/* einde content kolom */}
 
+          {/* Rechterkolom — binnen max-w-4xl, naast content */}
+          {(accountApproved || hasApprovedOneOnOne) && !hideRightColumn && (
+            <div className="hidden xl:block w-56 shrink-0 self-start sticky top-5">
+              <RightInfoColumn
+                currentPrice={currentPrice}
+                previousATH={previousATH}
+                latestATH={latestATH}
+              />
+            </div>
+          )}
+
         </div>{/* einde max-w-4xl flex */}
       </div>{/* einde flex-1 main content */}
-
-      {/* Rechterkolom — Waarschuwingen + Fear & Greed + Marktpositie */}
-      {(accountApproved || hasApprovedOneOnOne) && !hideRightColumn && (
-        <div className="hidden xl:block w-56 shrink-0 py-5 pr-4">
-          <div className="sticky top-5">
-            <RightInfoColumn
-              currentPrice={currentPrice}
-              previousATH={previousATH}
-              latestATH={latestATH}
-            />
-          </div>
-        </div>
-      )}
 
       {/* Floating "Hulp nodig?" widget — rechtsonder, fixed */}
       <HulpNodigWidget
