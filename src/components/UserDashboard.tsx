@@ -749,23 +749,26 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex overflow-x-hidden">
+    <div className="bg-gray-50 overflow-x-hidden">
       {/* SEO H1 Tag */}
       <h1 className="sr-only">BitBeheer Gebruikers Dashboard - Bitcoin Portfolio en Begeleiding</h1>
 
-      {/* Sidebar */}
-      <UserSidebar
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        accountApproved={accountApproved}
-        hasApprovedOneOnOne={hasApprovedOneOnOne}
-        unreadChatCount={unreadChatCount}
-      />
+      {/* Centered layout met padding links en rechts */}
+      <div className="max-w-6xl mx-auto px-6 md:px-10 flex items-start gap-4">
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto pb-20 md:pb-0 min-w-0">
-        <div className="p-4 md:p-5">
-        <div className="max-w-5xl">
+        {/* Sidebar — sticky, stopt met de content */}
+        <div className="sticky top-0 self-start shrink-0 py-5">
+          <UserSidebar
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            accountApproved={accountApproved}
+            hasApprovedOneOnOne={hasApprovedOneOnOne}
+            unreadChatCount={unreadChatCount}
+          />
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 min-w-0 py-5 pb-24 md:pb-5">
             {activeTab === 'overview' && <OverviewTab 
               userProfile={userProfile} 
               goals={goals} 
@@ -866,9 +869,9 @@ export default function UserDashboard() {
                 }}
               />
             )}
-            </div>
-          </div>
-        </div>
+          </div>{/* einde flex-1 main content */}
+        </div>{/* einde flex items-start */}
+      </div>{/* einde max-w-6xl centered container */}
 
       {/* Mobile Bottom Navigation for User Dashboard */}
       <UserDashboardMobileNav

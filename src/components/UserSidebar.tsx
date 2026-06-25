@@ -38,7 +38,7 @@ export default function UserSidebar({
   ];
 
   return (
-    <div className="bg-white border-r border-gray-200 flex flex-col hidden md:flex w-14 flex-shrink-0">
+    <div className="bg-white border border-gray-200 rounded-xl flex flex-col hidden md:flex w-14 flex-shrink-0 shadow-sm">
       <nav className="flex-1 flex flex-col pt-3">
         <div className="flex flex-col gap-0.5 px-2">
           {menuItems.map((item) => {
