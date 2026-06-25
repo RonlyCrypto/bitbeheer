@@ -139,7 +139,6 @@ export default function UserSidebar({
                       : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
                   }`}
                 >
-                  <item.icon className="w-5 h-5 shrink-0" />
                   <span className="truncate">{item.label}</span>
                 </button>
               );
