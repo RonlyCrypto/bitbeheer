@@ -135,6 +135,110 @@ interface Portfolio {
   }>;
 }
 
+function RightInfoColumn({ currentPrice, previousATH, latestATH }: {
+  currentPrice: number;
+  previousATH: number;
+  latestATH: number;
+}) {
+  const [fearGreedIndex, setFearGreedIndex] = useState<number | null>(null);
+  const [fearGreedLoading, setFearGreedLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch('https://api.alternative.me/fng/?limit=1');
+        const data = await res.json();
+        setFearGreedIndex(parseInt(data.data[0].value));
+      } catch {}
+      setFearGreedLoading(false);
+    };
+    load();
+    const interval = setInterval(load, 300000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const getFGInfo = (i: number) => {
+    if (i < 25) return { label: 'Extreme Fear', text: 'text-red-700', bg: 'bg-red-50' };
+    if (i < 45) return { label: 'Fear', text: 'text-orange-700', bg: 'bg-orange-50' };
+    if (i < 55) return { label: 'Neutral', text: 'text-gray-700', bg: 'bg-gray-50' };
+    if (i < 75) return { label: 'Greed', text: 'text-green-700', bg: 'bg-green-50' };
+    return { label: 'Extreme Greed', text: 'text-emerald-700', bg: 'bg-emerald-50' };
+  };
+
+  const fmt = (n: number) => '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+
+  let fase = 'Accumulatiefase';
+  let faseStyle = 'text-green-700 bg-green-50 border-green-200';
+  if (currentPrice > latestATH) { fase = 'Prijsontdekking'; faseStyle = 'text-red-700 bg-red-50 border-red-200'; }
+  else if (latestATH > 0 && currentPrice / latestATH > 0.85) { fase = 'Hoog risico'; faseStyle = 'text-orange-700 bg-orange-50 border-orange-200'; }
+  else if (currentPrice > previousATH) { fase = 'Herstelfase'; faseStyle = 'text-yellow-700 bg-yellow-50 border-yellow-200'; }
+  const pct = previousATH > 0 ? ((currentPrice / previousATH) * 100).toFixed(0) : null;
+
+  return (
+    <div className="space-y-3">
+      {/* 1. Belangrijke Waarschuwingen — bovenaan */}
+      <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">⚠️ Belangrijke Waarschuwingen</h3>
+        <div className="space-y-2">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-2.5 flex items-start gap-2">
+            <AlertCircle className="w-3.5 h-3.5 text-red-600 shrink-0 mt-0.5" />
+            <p className="text-xs font-medium text-red-900 leading-tight">Laat je crypto niet op exchanges staan</p>
+          </div>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2.5 flex items-start gap-2">
+            <Lock className="w-3.5 h-3.5 text-yellow-600 shrink-0 mt-0.5" />
+            <p className="text-xs font-medium text-yellow-900 leading-tight">Bitcoin staat veiliger in eigen wallet</p>
+          </div>
+          <div className="bg-green-50 border border-green-200 rounded-lg p-2.5 flex items-start gap-2">
+            <CheckCircle className="w-3.5 h-3.5 text-green-600 shrink-0 mt-0.5" />
+            <p className="text-xs font-medium text-green-900 leading-tight">Laat BTC niet lang op exchanges staan</p>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Fear & Greed Index */}
+      <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">📊 Fear &amp; Greed</h3>
+        {fearGreedLoading ? (
+          <div className="flex justify-center py-4">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-orange-600" />
+          </div>
+        ) : fearGreedIndex !== null ? (() => {
+          const fg = getFGInfo(fearGreedIndex);
+          return (
+            <div>
+              <div className={`${fg.bg} rounded-lg p-3 text-center mb-3`}>
+                <div className={`text-3xl font-bold ${fg.text}`}>{fearGreedIndex}</div>
+                <div className={`text-xs font-medium ${fg.text}`}>{fg.label}</div>
+              </div>
+              <div className="relative h-2 rounded-full overflow-hidden" style={{ background: 'linear-gradient(to right,#ef4444,#f97316,#eab308,#22c55e)' }}>
+                <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 border-gray-500 rounded-full" style={{ left: `calc(${fearGreedIndex}% - 6px)` }} />
+              </div>
+              <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+                <span>Fear</span><span>Greed</span>
+              </div>
+            </div>
+          );
+        })() : <p className="text-xs text-gray-400 text-center py-2">Niet beschikbaar</p>}
+      </div>
+
+      {/* 3. Marktpositie */}
+      {currentPrice > 0 && (
+        <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+          <h3 className="text-sm font-semibold text-gray-900 mb-3">📈 Marktpositie</h3>
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between"><span className="text-gray-500">Vorige ATH</span><span className="font-medium">{fmt(previousATH)}</span></div>
+            <div className="flex justify-between"><span className="text-gray-500">Nu · live</span><span className="font-medium text-orange-600">{fmt(currentPrice)}</span></div>
+            <div className="flex justify-between"><span className="text-gray-500">Hoogste ooit</span><span className="font-medium">{fmt(latestATH)}</span></div>
+          </div>
+          <div className={`mt-3 text-xs font-medium border rounded-lg px-2.5 py-1.5 ${faseStyle}`}>
+            {fase}{pct && <span className="ml-1 opacity-70">· {pct}% van vorige ATH</span>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function HulpNodigWidget({ onBookAppointment, onOpenHelpdesk, visible }: {
   onBookAppointment: () => void;
   onOpenHelpdesk: () => void;
@@ -194,11 +298,27 @@ export default function UserDashboard() {
   const [hasWallet, setHasWallet] = useState(false);
   const [showFirstAppointmentPrompt, setShowFirstAppointmentPrompt] = useState(false);
   const [showBitcoinCalculator, setShowBitcoinCalculator] = useState(false);
+  const [hideRightColumn, setHideRightColumn] = useState(() => {
+    try { return localStorage.getItem('hide_right_column') === 'true'; } catch { return false; }
+  });
   const [bitcoinPrice, setBitcoinPrice] = useState<any>(null);
   const [currentPrice, setCurrentPrice] = useState<number>(0);
   const [previousATH, setPreviousATH] = useState<number>(69000);
   const [latestATH, setLatestATH] = useState<number>(124753);
   const [showMarketStatusPanel, setShowMarketStatusPanel] = useState(false);
+
+  // Toggle rechterkolom via custom event vanuit Header
+  useEffect(() => {
+    const handler = () => {
+      setHideRightColumn(prev => {
+        const next = !prev;
+        try { localStorage.setItem('hide_right_column', String(next)); } catch {}
+        return next;
+      });
+    };
+    window.addEventListener('toggleRightColumn', handler);
+    return () => window.removeEventListener('toggleRightColumn', handler);
+  }, []);
 
   // Load current price data
   useEffect(() => {
@@ -917,6 +1037,19 @@ export default function UserDashboard() {
 
         </div>{/* einde max-w-4xl flex */}
       </div>{/* einde flex-1 main content */}
+
+      {/* Rechterkolom — Waarschuwingen + Fear & Greed + Marktpositie */}
+      {(accountApproved || hasApprovedOneOnOne) && !hideRightColumn && (
+        <div className="hidden xl:block w-56 shrink-0 py-5 pr-4">
+          <div className="sticky top-5">
+            <RightInfoColumn
+              currentPrice={currentPrice}
+              previousATH={previousATH}
+              latestATH={latestATH}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Floating "Hulp nodig?" widget — rechtsonder, fixed */}
       <HulpNodigWidget
