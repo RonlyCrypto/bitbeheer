@@ -2583,52 +2583,47 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                     {(() => {
                       const balance = walletData.balance || 0;
                       const isSyncing = walletSyncProgress?.isSyncing || false;
-                      const hasNoTransactions = walletTransactions.length === 0;
-                      const isLoading = (balance === 0 || balance === null) && (isSyncing || hasNoTransactions);
-                      
-                      if (isLoading) {
+                      const loaded = walletSyncProgress?.loadedTransactions || 0;
+                      const total = walletSyncProgress?.totalTransactions || 0;
+                      const pct = total > 0 ? Math.round((loaded / total) * 100) : 0;
+                      const firstBatchDone = loaded >= 25 || (!isSyncing && loaded > 0);
+
+                      // Eerste batch nog bezig → spinner zonder balance
+                      if (isSyncing && !firstBatchDone) {
                         return (
-                          <div className="flex flex-col items-center gap-2">
-                    <span className="text-sm font-semibold text-gray-700">
-                              0.0000 BTC
-                            </span>
-                            <div className="flex flex-col items-center gap-1">
-                              <span className="text-xs text-orange-600 font-medium animate-pulse">
-                                ⏳ We hebben even tijd nodig om alle data op te halen
-                              </span>
-                              <span className="text-xs text-gray-500 animate-pulse">
-                                Kom later terug wanneer je wallet geladen is
-                    </span>
+                          <div className="flex flex-col items-center gap-1.5">
+                            <div className="flex items-center gap-1.5">
+                              <Loader2 className="w-3.5 h-3.5 text-orange-500 animate-spin" />
+                              <span className="text-xs font-medium text-gray-600">Wallet laden...</span>
                             </div>
-                            {walletSyncProgress && walletSyncProgress.isSyncing && (
-                              <div className="flex items-center gap-2 mt-1">
-                                <Loader2 className="w-3 h-3 text-orange-600 animate-spin" />
-                                <span className="text-xs text-orange-600">
-                                  {walletSyncProgress.loadedTransactions || 0}/{walletSyncProgress.totalTransactions || '?'} transacties
-                                </span>
-                              </div>
+                            {total > 0 && (
+                              <>
+                                <div className="w-28 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                  <div className="h-full bg-orange-400 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                                </div>
+                                <span className="text-[10px] text-gray-400">{loaded} van {total} transacties</span>
+                              </>
                             )}
                           </div>
                         );
                       }
-                      
-                      if (walletSyncProgress && walletSyncProgress.isSyncing && walletSyncProgress.loadedTransactions >= 10) {
-                        return (
-                          <div className="flex flex-col items-center gap-1">
-                            <span className="text-sm font-semibold text-gray-700">
-                              {balance.toFixed(4)} BTC
-                            </span>
-                            <span className="text-xs text-green-600 font-medium">
-                              Je kan je eerste paar tx zien in je portfolio
-                            </span>
-                          </div>
-                        );
-                      }
-                      
+
+                      // Balance beschikbaar — toon altijd, sync-voortgang eronder
                       return (
-                        <span className="text-sm font-semibold text-gray-700">
-                          {balance.toFixed(4)} BTC
-                        </span>
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-sm font-semibold text-gray-700">{balance.toFixed(4)} BTC</span>
+                          {isSyncing && (
+                            <div className="flex flex-col items-center gap-0.5">
+                              <div className="w-24 h-1 bg-gray-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-orange-300 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                              </div>
+                              <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                                <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                                {loaded}/{total} tx geladen
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       );
                     })()}
                   </div>
