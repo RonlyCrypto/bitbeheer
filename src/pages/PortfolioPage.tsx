@@ -134,6 +134,7 @@ export default function PortfolioPage() {
   const [editWalletName, setEditWalletName] = useState('');
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
+  const wasSyncingRef = useRef(false);
   const [walletSyncProgress, setWalletSyncProgress] = useState<Map<string, WalletSyncProgress>>(new Map());
   const [walletChartIntegration, setWalletChartIntegration] = useState<Map<string, boolean>>(new Map());
   const [walletRefreshing, setWalletRefreshing] = useState<Map<string, boolean>>(new Map());
@@ -440,13 +441,13 @@ export default function PortfolioPage() {
     return () => clearInterval(intervalId);
   }, [wallets, effectiveUserEmail]);
 
-  // Reload wallets ALLEEN wanneer sync 100% compleet is - dit is de enige keer dat data wordt getoond
+  // Reload wallets wanneer sync 100% compleet is
   useEffect(() => {
-    const wasSyncing = Array.from(walletSyncProgress.values()).some(p => p.isSyncing);
-    const isNowComplete = !Array.from(walletSyncProgress.values()).some(p => p.isSyncing);
-    
-    // Als sync net compleet is geworden (100%), update wallets en toon alle data
-    if (wasSyncing && isNowComplete) {
+    const isSyncing = Array.from(walletSyncProgress.values()).some(p => p.isSyncing);
+    const justCompleted = wasSyncingRef.current && !isSyncing;
+    wasSyncingRef.current = isSyncing;
+
+    if (justCompleted) {
       // Wacht even zodat database update compleet is
       setTimeout(async () => {
         if (!effectiveUserEmail) return;
