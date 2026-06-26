@@ -65,16 +65,17 @@ function MarktpositieBadge({ price, ath, athDate }: { price: number; ath: number
   const pctVanATH = (price / ath) * 100;
   const onderVorigATH = price < PREV_ATH;
 
-  // Fase-gestuurd: PREV_ATH = 50% (grens groen/geel), ATH = 85% (grens oranje/rood)
+  // Fase-gestuurd: Accumulatie 0-35%, Herstel 35-78%, Hoog risico 78-96%
+  // Zo zit Accumulatiefase duidelijk in het groen
   let balPos: number;
   if (price <= PREV_ATH) {
-    balPos = (price / PREV_ATH) * 50;            // 0–50% = groen
+    balPos = (price / PREV_ATH) * 35;                           // 0–35% = groen
   } else if (price <= ath) {
-    balPos = 50 + ((price - PREV_ATH) / (ath - PREV_ATH)) * 35; // 50–85% = geel/oranje
+    balPos = 35 + ((price - PREV_ATH) / (ath - PREV_ATH)) * 43; // 35–78% = geel/oranje
   } else {
-    balPos = 85 + Math.min(((price - ath) / ath) * 15, 11); // 85–96% = rood
+    balPos = 78 + Math.min(((price - ath) / ath) * 18, 14);     // 78–92% = rood
   }
-  balPos = Math.min(Math.max(balPos, 2), 96);
+  balPos = Math.min(Math.max(balPos, 2), 94);
 
   let fase = 'Accumulatiefase';
   let faseKleur = 'green';
@@ -191,9 +192,9 @@ function MarktpositieBadge({ price, ath, athDate }: { price: number; ath: number
 }
 
 const DEMO_SCENARIOS = [
-  { price: 52000, label: 'Onder vorige ATH', balPos: 37, fase: 'Accumulatiefase', faseKleur: 'green', uitleg: 'Bitcoin zit onder de vorige ATH — historisch een goede koopperiode.' },
-  { price: 85000, label: 'Tussen ATHs', balPos: 63, fase: 'Herstelfase', faseKleur: 'yellow', uitleg: 'Bitcoin is boven de vorige ATH, maar nog onder het all-time high.' },
-  { price: 135000, label: 'Boven ATH', balPos: 91, fase: 'Prijsontdekking', faseKleur: 'red', uitleg: 'Bitcoin staat op een nieuw all-time high. Wees voorzichtig.' },
+  { price: 52000, label: 'Onder vorige ATH', balPos: 27, fase: 'Accumulatiefase', faseKleur: 'green', uitleg: 'Bitcoin zit onder de vorige ATH — historisch een goede koopperiode.' },
+  { price: 85000, label: 'Tussen ATHs', balPos: 47, fase: 'Herstelfase', faseKleur: 'yellow', uitleg: 'Bitcoin is boven de vorige ATH, maar nog onder het all-time high.' },
+  { price: 135000, label: 'Boven ATH', balPos: 88, fase: 'Prijsontdekking', faseKleur: 'red', uitleg: 'Bitcoin staat op een nieuw all-time high. Wees voorzichtig.' },
 ];
 const PREV_ATH_DEMO = 69000;
 const LATEST_ATH_DEMO = 126080;
@@ -209,7 +210,7 @@ function MarktpositieDemoWidget() {
         setIdx(i => (i + 1) % DEMO_SCENARIOS.length);
         setVisible(true);
       }, 350);
-    }, 3000);
+    }, 5500);
     return () => clearInterval(t);
   }, []);
 
