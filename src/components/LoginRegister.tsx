@@ -123,15 +123,15 @@ export default function LoginRegister() {
 
   if (isAuthenticated && user) {
     return (
-      <div className="flex items-center space-x-4">
-        <span className="text-gray-700 font-medium">
+      <div className="flex flex-col items-end gap-1">
+        <span className="text-sm font-medium opacity-90">
           Welkom, {user.user_metadata?.name || user.email}
         </span>
         <button
           onClick={handleLogout}
-          className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 transition-colors flex items-center space-x-2"
+          className="bg-white text-orange-600 px-3 py-1.5 rounded-md hover:bg-orange-50 transition-colors flex items-center space-x-1.5 text-sm font-semibold"
         >
-          <LogIn size={16} />
+          <LogIn size={14} />
           <span>Uitloggen</span>
         </button>
       </div>
