@@ -146,20 +146,28 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
     isAtBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
   };
 
-  // Eerste load: direct naar beneden (nieuwste berichten zichtbaar)
-  // Daarna: niet meer scrollen tenzij gebruiker onderaan is én nieuw bericht komt
+  const scrollToBottom = (smooth = false) => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    if (smooth) {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    } else {
+      el.scrollTop = el.scrollHeight;
+    }
+  };
+
   const firstScrollDoneRef = useRef(false);
   useEffect(() => {
     if (!firstScrollDoneRef.current && messages.length > 0) {
       firstScrollDoneRef.current = true;
-      messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
       prevMessageCountRef.current = messages.length;
+      scrollToBottom(false);
       return;
     }
     const hasNew = messages.length > prevMessageCountRef.current;
     prevMessageCountRef.current = messages.length;
     if (hasNew && isAtBottomRef.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      scrollToBottom(true);
     }
   }, [messages]);
 
