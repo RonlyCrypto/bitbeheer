@@ -103,6 +103,7 @@ function MarktpositieBadge({ price, ath, athDate }: { price: number; ath: number
 
   return (
     <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+      <style>{`@keyframes slideIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }`}</style>
       {/* Header */}
       <div className="flex items-center gap-2 mb-5">
         <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -124,7 +125,10 @@ function MarktpositieBadge({ price, ath, athDate }: { price: number; ath: number
           { label: 'Hoogste ooit', sub: athDate ?? '', value: ath, live: false },
         ].sort((a, b) => a.value - b.value).map(item => (
           item.live ? (
-            <div key="live" className="bg-orange-50 rounded-xl p-3 border border-orange-200">
+            <div key="live"
+              className="bg-orange-50 rounded-xl p-3 border border-orange-200"
+              style={{ animation: 'slideIn 0.5s ease' }}
+            >
               <div className="text-xs text-orange-600 font-medium mb-1">{item.label}</div>
               <div className="font-bold text-orange-600 text-lg">{formatUsd(item.value)}</div>
               <div className="text-xs text-gray-400">{item.sub}</div>
@@ -398,37 +402,12 @@ export default function FrontPage() {
 
           {/* Feature 2 — Marktpositie */}
           <div className="grid md:grid-cols-2 gap-10 items-center mb-20">
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-5 select-none order-2 md:order-1">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Marktpositie</span>
-                <span className="text-xs text-gray-400">Waar staat Bitcoin nu?</span>
-              </div>
-              <div className="grid grid-cols-3 gap-2 text-center text-xs mb-4">
-                <div className="bg-gray-50 rounded-xl p-2.5">
-                  <div className="text-gray-400 mb-1">Vorige ATH</div>
-                  <div className="font-bold text-gray-800">$69.000</div>
-                  <div className="text-gray-400">Nov 2021</div>
-                </div>
-                <div className="bg-orange-50 rounded-xl p-2.5 border border-orange-200">
-                  <div className="text-orange-600 font-medium mb-1">Nu · Live</div>
-                  <div className="font-bold text-orange-600 text-base">$66.445</div>
-                  <div className="text-gray-400">96% van ATH</div>
-                </div>
-                <div className="bg-gray-50 rounded-xl p-2.5">
-                  <div className="text-gray-400 mb-1">Hoogste ooit</div>
-                  <div className="font-bold text-gray-800">$126.080</div>
-                  <div className="text-gray-400">okt 2025</div>
-                </div>
-              </div>
-              <div className="relative h-2 bg-gradient-to-r from-green-400 via-yellow-400 to-red-400 rounded-full mb-1">
-                <div className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-gray-800 rounded-full shadow" style={{ left: '76%' }} />
-              </div>
-              <div className="flex justify-between text-xs text-gray-400 mb-3">
-                <span>Accumulatie</span><span>Herstel</span><span>Hoog risico</span>
-              </div>
-              <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-xs text-green-700 font-medium">
-                ✓ Herstelfase — Bitcoin nadert het vorige ATH. Historisch gezien nog een interessante zone.
-              </div>
+            <div className="order-2 md:order-1 select-none">
+              <MarktpositieBadge
+                price={price ?? 66445}
+                ath={ath ?? 126080}
+                athDate={athDate}
+              />
             </div>
             <div className="order-1 md:order-2">
               <div className="inline-flex items-center gap-2 bg-orange-50 text-orange-700 text-xs font-semibold px-3 py-1 rounded-full mb-4">Marktanalyse</div>
