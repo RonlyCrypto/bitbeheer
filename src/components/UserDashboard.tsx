@@ -979,14 +979,15 @@ export default function UserDashboard() {
     }
 
     setIsAddingWallet(true);
+    const walletEmail = (isImpersonating && impersonatedUser) ? impersonatedUser : user?.email;
     try {
-      if (!user?.email) throw new Error('Geen gebruiker bekend');
+      if (!walletEmail) throw new Error('Geen gebruiker bekend');
 
       // Check again server-side for existing wallet
       const { data: existing, error: checkErr } = await supabase
         .from('wallets')
         .select('id')
-        .eq('email', user.email)
+        .eq('email', walletEmail)
         .limit(1);
       if (checkErr) throw checkErr;
       if (existing && existing.length > 0) {
@@ -1001,7 +1002,7 @@ export default function UserDashboard() {
         .from('wallets')
         .insert([
           {
-            email: user.email,
+            email: walletEmail,
             address: walletForm.address.trim(),
             name: walletForm.name?.trim() || null,
             type: walletForm.type,
