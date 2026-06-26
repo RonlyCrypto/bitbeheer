@@ -65,19 +65,19 @@ function MarktpositieBadge({ price, ath, athDate }: { price: number; ath: number
   const pctVanATH = (price / ath) * 100;    // % van de LAATSTE ATH
 
   // Fase gebaseerd op % t.o.v. LAATSTE ATH
-  // < 50% van ATH  → Accumulatiefase  (0–35% balk, groen)
-  // 50–80% van ATH → Herstelfase      (35–78% balk, geel/oranje)
-  // 80–100% van ATH→ Hoog risico      (78–92% balk, oranje)
+  // < 65% van ATH  → Accumulatiefase  (0–35% balk, groen)
+  // 65–85% van ATH → Herstelfase      (35–78% balk, geel/oranje)
+  // 85–100% van ATH→ Hoog risico      (78–92% balk, oranje)
   // > 100% van ATH → Prijsontdekking  (92%+ balk, rood)
   let balPos: number;
   if (price >= ath) {
     balPos = 92 + Math.min(((price - ath) / ath) * 10, 5);
-  } else if (pctVanATH >= 80) {
-    balPos = 78 + ((pctVanATH - 80) / 20) * 14;
-  } else if (pctVanATH >= 50) {
-    balPos = 35 + ((pctVanATH - 50) / 30) * 43;
+  } else if (pctVanATH >= 85) {
+    balPos = 78 + ((pctVanATH - 85) / 15) * 14;
+  } else if (pctVanATH >= 65) {
+    balPos = 35 + ((pctVanATH - 65) / 20) * 43;
   } else {
-    balPos = (pctVanATH / 50) * 35;
+    balPos = (pctVanATH / 65) * 35;
   }
   balPos = Math.min(Math.max(balPos, 2), 96);
 
@@ -89,11 +89,11 @@ function MarktpositieBadge({ price, ath, athDate }: { price: number; ath: number
     fase = 'Prijsontdekking';
     faseKleur = 'red';
     uitleg = 'Bitcoin staat op een nieuw all-time high. Wees voorzichtig en neem winst.';
-  } else if (pctVanATH >= 80) {
+  } else if (pctVanATH >= 85) {
     fase = 'Hoog risico zone';
     faseKleur = 'orange';
     uitleg = `Bitcoin staat op ${pctVanATH.toFixed(0)}% van het all-time high. Markt loopt warm — pas op voor hype.`;
-  } else if (pctVanATH >= 50) {
+  } else if (pctVanATH >= 65) {
     fase = 'Herstelfase';
     faseKleur = 'yellow';
     uitleg = `Bitcoin staat op ${pctVanATH.toFixed(0)}% van het all-time high. De markt herstelt zich van de bodem.`;
@@ -190,10 +190,13 @@ function MarktpositieBadge({ price, ath, athDate }: { price: number; ath: number
   );
 }
 
+// Demo: $52k = 41% van ATH → balPos (41/65)*35 ≈ 22 (diep groen)
+//        $85k = 67% van ATH → balPos 35+((67-65)/20)*43 ≈ 39 (herstel)
+//       $135k = 107% van ATH → boven ATH → balPos 93 (rood)
 const DEMO_SCENARIOS = [
-  { price: 52000, label: 'Onder vorige ATH', balPos: 27, fase: 'Accumulatiefase', faseKleur: 'green', uitleg: 'Bitcoin zit onder de vorige ATH — historisch een goede koopperiode.' },
-  { price: 85000, label: 'Tussen ATHs', balPos: 47, fase: 'Herstelfase', faseKleur: 'yellow', uitleg: 'Bitcoin is boven de vorige ATH, maar nog onder het all-time high.' },
-  { price: 135000, label: 'Boven ATH', balPos: 88, fase: 'Prijsontdekking', faseKleur: 'red', uitleg: 'Bitcoin staat op een nieuw all-time high. Wees voorzichtig.' },
+  { price: 52000, label: 'Accumulatiefase', balPos: 22, fase: 'Accumulatiefase', faseKleur: 'green', uitleg: 'Bitcoin staat 59% onder het all-time high — historisch een uitstekende accumulatieperiode.' },
+  { price: 85000, label: 'Herstelfase', balPos: 39, fase: 'Herstelfase', faseKleur: 'yellow', uitleg: 'Bitcoin staat op 67% van het all-time high. De markt herstelt zich van de bodem.' },
+  { price: 135000, label: 'Prijsontdekking', balPos: 93, fase: 'Prijsontdekking', faseKleur: 'red', uitleg: 'Bitcoin staat op een nieuw all-time high. Wees voorzichtig en neem winst.' },
 ];
 const PREV_ATH_DEMO = 69000;
 const LATEST_ATH_DEMO = 126080;

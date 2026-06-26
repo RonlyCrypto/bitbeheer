@@ -167,8 +167,8 @@ function RightInfoColumn({ currentPrice, previousATH, latestATH }: {
     const pctVanLastATH = lastATH > 0 ? (currentPrice / lastATH) * 100 : 0;
     let statusLabel = 'Herstelfase';
     let statusColor = 'bg-yellow-100 border-yellow-300 text-yellow-800';
-    if (pctVanLastATH < 50) { statusLabel = 'Accumulatiefase'; statusColor = 'bg-green-100 border-green-300 text-green-800'; }
-    else if (pctVanLastATH >= 80) { statusLabel = 'Hoog risico zone'; statusColor = 'bg-orange-100 border-orange-300 text-orange-800'; }
+    if (pctVanLastATH < 65) { statusLabel = 'Accumulatiefase'; statusColor = 'bg-green-100 border-green-300 text-green-800'; }
+    else if (pctVanLastATH >= 85) { statusLabel = 'Hoog risico zone'; statusColor = 'bg-orange-100 border-orange-300 text-orange-800'; }
     if (currentPrice >= lastATH) { statusLabel = 'Prijsontdekking'; statusColor = 'bg-red-100 border-red-300 text-red-800'; }
     const minPrice = Math.min(prevATH, currentPrice, lastATH);
     const maxPrice = Math.max(prevATH, currentPrice, lastATH);
