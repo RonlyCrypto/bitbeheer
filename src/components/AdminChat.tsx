@@ -492,7 +492,7 @@ export default function AdminChat() {
           <h3 className="font-semibold">Chat met {selectedEmail || '—'}</h3>
           <button onClick={loadMessages} className="ml-auto text-gray-500 hover:text-gray-700"><RefreshCw className="w-4 h-4"/></button>
         </div>
-        <div className="max-h-96 overflow-y-auto border rounded-lg p-3 bg-gray-50">
+        <div className="overflow-y-auto border rounded-lg p-3 bg-gray-50" style={{ height: 'calc(100vh - 280px)' }}>
           {messages.length === 0 ? (
             <p className="text-gray-500">Geen berichten voor deze gebruiker.</p>
           ) : (
