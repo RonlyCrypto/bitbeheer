@@ -62,37 +62,41 @@ function formatUsd(n: number) {
 }
 
 function MarktpositieBadge({ price, ath, athDate }: { price: number; ath: number; athDate: string | null }) {
-  const pctVanATH = (price / ath) * 100;
-  const onderVorigATH = price < PREV_ATH;
+  const pctVanATH = (price / ath) * 100;    // % van de LAATSTE ATH
 
-  // Fase-gestuurd: Accumulatie 0-35%, Herstel 35-78%, Hoog risico 78-96%
-  // Zo zit Accumulatiefase duidelijk in het groen
+  // Fase gebaseerd op % t.o.v. LAATSTE ATH
+  // < 50% van ATH  → Accumulatiefase  (0–35% balk, groen)
+  // 50–80% van ATH → Herstelfase      (35–78% balk, geel/oranje)
+  // 80–100% van ATH→ Hoog risico      (78–92% balk, oranje)
+  // > 100% van ATH → Prijsontdekking  (92%+ balk, rood)
   let balPos: number;
-  if (price <= PREV_ATH) {
-    balPos = (price / PREV_ATH) * 35;                           // 0–35% = groen
-  } else if (price <= ath) {
-    balPos = 35 + ((price - PREV_ATH) / (ath - PREV_ATH)) * 43; // 35–78% = geel/oranje
+  if (price >= ath) {
+    balPos = 92 + Math.min(((price - ath) / ath) * 10, 5);
+  } else if (pctVanATH >= 80) {
+    balPos = 78 + ((pctVanATH - 80) / 20) * 14;
+  } else if (pctVanATH >= 50) {
+    balPos = 35 + ((pctVanATH - 50) / 30) * 43;
   } else {
-    balPos = 78 + Math.min(((price - ath) / ath) * 18, 14);     // 78–92% = rood
+    balPos = (pctVanATH / 50) * 35;
   }
-  balPos = Math.min(Math.max(balPos, 2), 94);
+  balPos = Math.min(Math.max(balPos, 2), 96);
 
   let fase = 'Accumulatiefase';
   let faseKleur = 'green';
-  let uitleg = 'Bitcoin zit onder de vorige ATH. Historisch gezien een goede koopperiode.';
+  let uitleg = `Bitcoin staat ${((1 - price / ath) * 100).toFixed(0)}% onder het all-time high. Historisch gezien een uitstekende accumulatieperiode.`;
 
-  if (price > ath) {
+  if (price >= ath) {
     fase = 'Prijsontdekking';
     faseKleur = 'red';
-    uitleg = 'Bitcoin staat op een nieuw all-time high. Wees voorzichtig.';
-  } else if (pctVanATH > 85) {
-    fase = 'Hoog risico';
+    uitleg = 'Bitcoin staat op een nieuw all-time high. Wees voorzichtig en neem winst.';
+  } else if (pctVanATH >= 80) {
+    fase = 'Hoog risico zone';
     faseKleur = 'orange';
-    uitleg = 'Bitcoin nadert het all-time high. Pas op voor hype.';
-  } else if (price > PREV_ATH) {
+    uitleg = `Bitcoin staat op ${pctVanATH.toFixed(0)}% van het all-time high. Markt loopt warm — pas op voor hype.`;
+  } else if (pctVanATH >= 50) {
     fase = 'Herstelfase';
     faseKleur = 'yellow';
-    uitleg = 'Bitcoin is boven de vorige ATH, maar nog onder het all-time high.';
+    uitleg = `Bitcoin staat op ${pctVanATH.toFixed(0)}% van het all-time high. De markt herstelt zich van de bodem.`;
   }
 
   const kleurMap: Record<string, string> = {
@@ -164,12 +168,7 @@ function MarktpositieBadge({ price, ath, athDate }: { price: number; ath: number
       <div className={`border rounded-xl p-3 mb-4 ${kleurMap[faseKleur]}`}>
         <div className="font-bold text-sm">✓ {fase}</div>
         <p className="text-xs mt-1">{uitleg}</p>
-        {onderVorigATH && (
-          <p className="text-xs mt-1 font-medium">
-            {((1 - price / PREV_ATH) * 100).toFixed(1)}% onder de vorige ATH van {formatUsd(PREV_ATH)}
-          </p>
-        )}
-        {!onderVorigATH && price < ath && (
+        {price < ath && (
           <p className="text-xs mt-1 font-medium">
             {((1 - price / ath) * 100).toFixed(1)}% onder het all-time high van {formatUsd(ath)}
           </p>
