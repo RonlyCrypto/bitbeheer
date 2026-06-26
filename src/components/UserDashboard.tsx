@@ -1012,7 +1012,8 @@ export default function UserDashboard() {
       if (insertErr) throw insertErr;
 
       setHasWallet(true);
-      
+      setWalletReloadTrigger(t => t + 1); // herlaad wallet data
+
       // Close form after success
       setTimeout(() => {
         setShowWalletForm(false);
@@ -1467,6 +1468,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
   });
   const [isAddingWallet, setIsAddingWallet] = useState(false);
   const [walletData, setWalletData] = useState<any>(null);
+  const [walletReloadTrigger, setWalletReloadTrigger] = useState(0);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [bitcoinPrice, setBitcoinPrice] = useState<number>(() => {
     try { const c = JSON.parse(localStorage.getItem('btc_market_cache') || 'null'); return c?.price || 96640; } catch { return 96640; }
@@ -1818,7 +1820,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
     return () => {
       window.removeEventListener('walletUpdated', handleWalletUpdate);
     };
-  }, [isImpersonating, impersonatedUser, currentBitcoinPrice]);
+  }, [isImpersonating, impersonatedUser, currentBitcoinPrice, walletReloadTrigger]);
 
   // Reload wallet data wanneer sync compleet is
   useEffect(() => {
