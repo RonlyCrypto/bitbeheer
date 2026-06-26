@@ -514,14 +514,6 @@ export default function SoonOnlinePage() {
             </div>
           </div>
 
-          {/* CTA */}
-          <div className="text-center mt-16">
-            <Link to="/aanmelden" className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-xl font-bold text-base transition shadow-lg hover:shadow-xl">
-              Meld je aan en krijg toegang
-              <ArrowRight className="w-5 h-5" />
-            </Link>
-            <p className="text-xs text-gray-400 mt-3">Gratis aanmelden · Geen creditcard nodig</p>
-          </div>
         </div>
       </section>
 
