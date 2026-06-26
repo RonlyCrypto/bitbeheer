@@ -190,6 +190,92 @@ function MarktpositieBadge({ price, ath, athDate }: { price: number; ath: number
   );
 }
 
+const DEMO_SCENARIOS = [
+  { price: 52000, label: 'Onder vorige ATH', balPos: 37, fase: 'Accumulatiefase', faseKleur: 'green', uitleg: 'Bitcoin zit onder de vorige ATH — historisch een goede koopperiode.' },
+  { price: 85000, label: 'Tussen ATHs', balPos: 63, fase: 'Herstelfase', faseKleur: 'yellow', uitleg: 'Bitcoin is boven de vorige ATH, maar nog onder het all-time high.' },
+  { price: 135000, label: 'Boven ATH', balPos: 91, fase: 'Prijsontdekking', faseKleur: 'red', uitleg: 'Bitcoin staat op een nieuw all-time high. Wees voorzichtig.' },
+];
+const PREV_ATH_DEMO = 69000;
+const LATEST_ATH_DEMO = 126080;
+
+function MarktpositieDemoWidget() {
+  const [idx, setIdx] = useState(0);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setIdx(i => (i + 1) % DEMO_SCENARIOS.length);
+        setVisible(true);
+      }, 350);
+    }, 3000);
+    return () => clearInterval(t);
+  }, []);
+
+  const s = DEMO_SCENARIOS[idx];
+  const kleurMap: Record<string, string> = {
+    green: 'bg-green-50 border-green-200 text-green-700',
+    yellow: 'bg-yellow-50 border-yellow-200 text-yellow-700',
+    red: 'bg-red-50 border-red-200 text-red-700',
+  };
+
+  const cards = [
+    { label: 'Vorige ATH', sub: 'Nov 2021', value: PREV_ATH_DEMO, live: false },
+    { label: 'Nu · Live', sub: `${((s.price / LATEST_ATH_DEMO) * 100).toFixed(0)}% van ATH`, value: s.price, live: true },
+    { label: 'Hoogste ooit', sub: 'okt 2025', value: LATEST_ATH_DEMO, live: false },
+  ].sort((a, b) => a.value - b.value);
+
+  return (
+    <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-5 select-none">
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Marktpositie</span>
+        <span className="text-xs text-orange-500 font-medium animate-pulse">● Voorbeeld</span>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 text-center text-xs mb-4">
+        {cards.map(item => (
+          item.live ? (
+            <div key="live"
+              className="bg-orange-50 rounded-xl p-2.5 border border-orange-200"
+              style={{
+                opacity: visible ? 1 : 0,
+                transform: visible ? 'translateY(0)' : 'translateY(-6px)',
+                transition: 'opacity 350ms ease, transform 350ms ease',
+              }}
+            >
+              <div className="text-orange-600 font-medium mb-1">{item.label}</div>
+              <div className="font-bold text-orange-600 text-base">{formatUsd(item.value)}</div>
+              <div className="text-gray-400">{item.sub}</div>
+            </div>
+          ) : (
+            <div key={item.label} className="bg-gray-50 rounded-xl p-2.5">
+              <div className="text-gray-400 mb-1">{item.label}</div>
+              <div className="font-bold text-gray-800">{formatUsd(item.value)}</div>
+              <div className="text-gray-400">{item.sub}</div>
+            </div>
+          )
+        ))}
+      </div>
+
+      <div className="relative h-2 bg-gradient-to-r from-green-400 via-yellow-400 to-red-400 rounded-full mb-1">
+        <div
+          className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-gray-800 rounded-full shadow"
+          style={{ left: `${s.balPos}%`, transition: 'left 600ms ease' }}
+        />
+      </div>
+      <div className="flex justify-between text-xs text-gray-400 mb-3">
+        <span>Accumulatie</span><span>Herstel</span><span>Hoog risico</span>
+      </div>
+
+      <div className={`border rounded-xl p-3 text-xs font-medium ${kleurMap[s.faseKleur]}`}
+        style={{ transition: 'all 350ms ease' }}>
+        ✓ {s.fase} — {s.uitleg}
+      </div>
+    </div>
+  );
+}
+
 export default function FrontPage() {
   const { price, change24h, ath, athDate } = useLiveBtcData();
   const isPositive = (change24h ?? 0) >= 0;
@@ -400,14 +486,10 @@ export default function FrontPage() {
             </div>
           </div>
 
-          {/* Feature 2 — Marktpositie */}
+          {/* Feature 2 — Marktpositie demo */}
           <div className="grid md:grid-cols-2 gap-10 items-center mb-20">
             <div className="order-2 md:order-1 select-none">
-              <MarktpositieBadge
-                price={price ?? 66445}
-                ath={ath ?? 126080}
-                athDate={athDate}
-              />
+              <MarktpositieDemoWidget />
             </div>
             <div className="order-1 md:order-2">
               <div className="inline-flex items-center gap-2 bg-orange-50 text-orange-700 text-xs font-semibold px-3 py-1 rounded-full mb-4">Marktanalyse</div>
