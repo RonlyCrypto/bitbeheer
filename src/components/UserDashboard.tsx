@@ -2588,8 +2588,9 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                       const loaded = walletSyncProgress?.loadedTransactions || 0;
                       const total = walletSyncProgress?.totalTransactions || 0;
                       const pct = total > 0 ? Math.round((loaded / total) * 100) : 0;
-                      // Toon spinner alleen als: nog aan het laden EN nog geen balance EN minder dan 25 tx geladen EN totaal ook ≥ 25
-                      const stillWaiting = isSyncing && balance === 0 && loaded < 25 && (total >= 25 || total === 0);
+                      // Toon spinner alleen als we écht nog niets hebben (geen tx in state, geen balance)
+                      const hasAnyData = walletTransactions.length > 0 || balance > 0;
+                      const stillWaiting = !hasAnyData && isSyncing && loaded < 25 && (total >= 25 || total === 0);
 
                       // Eerste batch nog bezig → spinner zonder balance
                       if (stillWaiting) {
