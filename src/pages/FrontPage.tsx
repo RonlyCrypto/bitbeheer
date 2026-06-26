@@ -126,7 +126,7 @@ function MarktpositieBadge({ price, ath, athDate }: { price: number; ath: number
       <div className="grid grid-cols-3 gap-3 mb-5 text-center">
         {[
           { label: 'Vorige ATH', sub: 'Nov 2021', value: PREV_ATH, live: false },
-          { label: 'Nu · Live', sub: `${pctVanATH.toFixed(0)}% van ATH`, value: price, live: true },
+          { label: 'Nu · Live', sub: price < ath ? `${((1 - price / ath) * 100).toFixed(0)}% onder ATH` : 'Nieuw all-time high!', value: price, live: true },
           { label: 'Hoogste ooit', sub: athDate ?? '', value: ath, live: false },
         ].sort((a, b) => a.value - b.value).map(item => (
           item.live ? (
@@ -225,7 +225,7 @@ function MarktpositieDemoWidget() {
 
   const cards = [
     { label: 'Vorige ATH', sub: 'Nov 2021', value: PREV_ATH_DEMO, live: false },
-    { label: 'Nu · Live', sub: `${((s.price / LATEST_ATH_DEMO) * 100).toFixed(0)}% van ATH`, value: s.price, live: true },
+    { label: 'Nu · Live', sub: s.price < LATEST_ATH_DEMO ? `${((1 - s.price / LATEST_ATH_DEMO) * 100).toFixed(0)}% onder ATH` : 'Nieuw all-time high!', value: s.price, live: true },
     { label: 'Hoogste ooit', sub: 'okt 2025', value: LATEST_ATH_DEMO, live: false },
   ].sort((a, b) => a.value - b.value);
 
