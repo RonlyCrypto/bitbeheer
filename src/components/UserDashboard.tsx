@@ -2586,10 +2586,11 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                       const loaded = walletSyncProgress?.loadedTransactions || 0;
                       const total = walletSyncProgress?.totalTransactions || 0;
                       const pct = total > 0 ? Math.round((loaded / total) * 100) : 0;
-                      const firstBatchDone = loaded >= 25 || (!isSyncing && loaded > 0);
+                      // Toon spinner alleen als: nog aan het laden EN nog geen balance EN minder dan 25 tx geladen EN totaal ook ≥ 25
+                      const stillWaiting = isSyncing && balance === 0 && loaded < 25 && (total >= 25 || total === 0);
 
                       // Eerste batch nog bezig → spinner zonder balance
-                      if (isSyncing && !firstBatchDone) {
+                      if (stillWaiting) {
                         return (
                           <div className="flex flex-col items-center gap-1.5">
                             <div className="flex items-center gap-1.5">
