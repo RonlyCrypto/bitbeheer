@@ -362,174 +362,133 @@ export default function AdminDashboard() {
       />
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        {/* Mobile tab bar — scrollable horizontaal */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Mobile tab bar — buiten overflow-auto zodat sticky werkt */}
         <AdminMobileTabBar
           activeTab={activeTab}
           onTabChange={setActiveTab}
           unreadChatCount={metrics.newChats}
         />
+        <div className="flex-1 overflow-auto">
         <div className="p-4 md:p-8">
 
           {/* Overview Tab */}
           {activeTab === 'overview' && (
-            <div className="space-y-8">
+            <div className="space-y-4 md:space-y-8">
               {/* Site Status Toggle */}
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-xl ${isSoonOnlineMode ? 'bg-orange-100' : 'bg-green-100'}`}>
-                      {isSoonOnlineMode ? <Lock className="w-8 h-8 text-orange-600" /> : <Globe className="w-8 h-8 text-green-600" />}
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900">
-                        {isSoonOnlineMode ? 'Website in "Soon Online" Modus' : 'Website Live'}
-                      </h3>
-                      <p className="text-gray-600">
-                        {isSoonOnlineMode 
-                          ? 'Alleen admin en test gebruikers kunnen de site zien' 
-                          : 'Alle bezoekers kunnen de site zien'
-                        }
-                      </p>
-                    </div>
+              <div className="bg-white rounded-xl p-4 shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2.5 rounded-xl flex-shrink-0 ${isSoonOnlineMode ? 'bg-orange-100' : 'bg-green-100'}`}>
+                    {isSoonOnlineMode ? <Lock className="w-5 h-5 text-orange-600" /> : <Globe className="w-5 h-5 text-green-600" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-bold text-gray-900 leading-tight">
+                      {isSoonOnlineMode ? 'Website in "Soon Online" modus' : 'Website Live'}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-0.5 leading-tight">
+                      {isSoonOnlineMode
+                        ? 'Alleen admin en test gebruikers zien de site'
+                        : 'Alle bezoekers kunnen de site zien'}
+                    </p>
                   </div>
                   <button
                     onClick={toggleSoonOnlineMode}
-                    className={`flex items-center gap-3 px-6 py-3 rounded-lg font-semibold transition-all ${
+                    className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
                       isSoonOnlineMode
                         ? 'bg-orange-600 text-white hover:bg-orange-700'
                         : 'bg-green-600 text-white hover:bg-green-700'
                     }`}
                   >
                     {isSoonOnlineMode ? (
-                      <>
-                        <ToggleRight className="w-5 h-5" />
-                        Site Live Maken
-                      </>
+                      <><ToggleRight className="w-4 h-4" /><span className="hidden sm:inline">Site Live</span><span className="sm:hidden">Live</span></>
                     ) : (
-                      <>
-                        <ToggleLeft className="w-5 h-5" />
-                        Terug naar Soon Online
-                      </>
+                      <><ToggleLeft className="w-4 h-4" /><span className="hidden sm:inline">Soon Online</span><span className="sm:hidden">Soon</span></>
                     )}
                   </button>
                 </div>
               </div>
 
-                          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
-                            <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg border-2 border-orange-200">
-                              <div className="flex items-center gap-3 md:gap-4">
-                                <div className="bg-orange-100 p-2 md:p-3 rounded-xl flex-shrink-0">
-                                  <MessageSquare className="w-6 h-6 md:w-8 md:h-8 text-orange-600" />
+                          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                            {/* Nieuwe Chats */}
+                            <div className="bg-white rounded-2xl p-3 md:p-5 shadow-sm border border-orange-100">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="bg-orange-100 p-2 rounded-xl flex-shrink-0">
+                                  <MessageSquare className="w-4 h-4 text-orange-600" />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="text-xl md:text-2xl font-bold text-gray-900">{metrics.newChats}</h3>
-                                  <p className="text-xs md:text-sm text-gray-600 truncate">Nieuwe Chats</p>
-                                </div>
+                                <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Chats</span>
                               </div>
+                              <p className="text-2xl font-bold text-gray-900">{metrics.newChats}</p>
+                              <p className="text-xs text-gray-400 mt-0.5">Nieuwe berichten</p>
                               {metrics.newChats > 0 && (
-                                <button
-                                  onClick={() => setActiveTab('chat')}
-                                  className="mt-4 w-full text-sm text-orange-600 hover:text-orange-700 font-medium"
-                                >
-                                  Bekijk chats →
+                                <button onClick={() => setActiveTab('chat')} className="mt-2 text-xs text-orange-600 font-medium">
+                                  Bekijk →
                                 </button>
                               )}
                             </div>
 
-                            <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg border-2 border-orange-200">
-                              <div className="flex items-center gap-3 md:gap-4">
-                                <div className="bg-orange-100 p-2 md:p-3 rounded-xl flex-shrink-0">
-                                  <Calendar className="w-6 h-6 md:w-8 md:h-8 text-orange-600" />
+                            {/* Afspraken */}
+                            <div className="bg-white rounded-2xl p-3 md:p-5 shadow-sm border border-orange-100">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="bg-orange-100 p-2 rounded-xl flex-shrink-0">
+                                  <Calendar className="w-4 h-4 text-orange-600" />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="text-xl md:text-2xl font-bold text-gray-900">{metrics.pendingAppointments}</h3>
-                                  <p className="text-xs md:text-sm text-gray-600 truncate">Afspraken in Afwachting</p>
-                                </div>
+                                <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Afspraken</span>
                               </div>
+                              <p className="text-2xl font-bold text-gray-900">{metrics.pendingAppointments}</p>
+                              <p className="text-xs text-gray-400 mt-0.5">In afwachting</p>
                               {metrics.pendingAppointments > 0 && (
-                                <button
-                                  onClick={() => setActiveTab('appointments')}
-                                  className="mt-4 w-full text-sm text-orange-600 hover:text-orange-700 font-medium"
-                                >
-                                  Bekijk afspraken →
+                                <button onClick={() => setActiveTab('appointments')} className="mt-2 text-xs text-orange-600 font-medium">
+                                  Bekijk →
                                 </button>
                               )}
                             </div>
 
-                            <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg border-2 border-green-200">
-                              <div className="flex items-center gap-3 md:gap-4">
-                                <div className="bg-green-100 p-2 md:p-3 rounded-xl flex-shrink-0">
-                                  <Users className="w-6 h-6 md:w-8 md:h-8 text-green-600" />
+                            {/* Accounts */}
+                            <div className="bg-white rounded-2xl p-3 md:p-5 shadow-sm border border-green-100">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="bg-green-100 p-2 rounded-xl flex-shrink-0">
+                                  <Users className="w-4 h-4 text-green-600" />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="text-xl md:text-2xl font-bold text-gray-900">{metrics.newAccounts}</h3>
-                                  <p className="text-xs md:text-sm text-gray-600 truncate">Accounts die aandacht nodig hebben</p>
-                                </div>
+                                <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Accounts</span>
                               </div>
+                              <p className="text-2xl font-bold text-gray-900">{metrics.newAccounts}</p>
+                              <p className="text-xs text-gray-400 mt-0.5">Aandacht nodig</p>
                               {metrics.newAccounts > 0 && (
-                                <button
-                                  onClick={() => setActiveTab('accounts')}
-                                  className="mt-4 w-full text-sm text-green-600 hover:text-green-700 font-medium"
-                                >
-                                  Bekijk accounts →
+                                <button onClick={() => setActiveTab('accounts')} className="mt-2 text-xs text-green-600 font-medium">
+                                  Bekijk →
                                 </button>
                               )}
                             </div>
 
-                            <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg border-2 border-blue-200">
-                              <div className="flex items-center gap-3 md:gap-4">
-                                <div className="bg-blue-100 p-2 md:p-3 rounded-xl flex-shrink-0">
-                                  <Clock className="w-6 h-6 md:w-8 md:h-8 text-blue-600" />
+                            {/* Volgende afspraak */}
+                            <div className="bg-white rounded-2xl p-3 md:p-5 shadow-sm border border-blue-100">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="bg-blue-100 p-2 rounded-xl flex-shrink-0">
+                                  <Clock className="w-4 h-4 text-blue-600" />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="text-base md:text-lg font-bold text-gray-900">
-                                    {metrics.upcomingAppointment ? (
-                                      (() => {
-                                        try {
-                                          const aptDate = new Date(`${metrics.upcomingAppointment.date}T${metrics.upcomingAppointment.start_time || '00:00:00'}`);
-                                          const hoursUntil = (aptDate.getTime() - new Date().getTime()) / (1000 * 60 * 60);
-                                          if (hoursUntil <= 48) {
-                                            return 'Binnenkort';
-                                          } else {
-                                            return 'Volgende afspraak';
-                                          }
-                                        } catch (e) {
-                                          return 'Volgende afspraak';
-                                        }
-                                      })()
-                                    ) : 'Geen'}
-                                  </h3>
-                                  <p className="text-xs md:text-sm text-gray-600 truncate">
-                                    {metrics.upcomingAppointment 
-                                      ? (() => {
-                                          try {
-                                            const aptDate = new Date(metrics.upcomingAppointment.date);
-                                            if (isNaN(aptDate.getTime())) {
-                                              return 'Volgende afspraak';
-                                            }
-                                            return `${aptDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })} ${metrics.upcomingAppointment.start_time || ''}`;
-                                          } catch (e) {
-                                            return 'Volgende afspraak';
-                                          }
-                                        })()
-                                      : 'Volgende afspraak'
-                                    }
-                                  </p>
-                                </div>
+                                <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Afspraak</span>
                               </div>
+                              <p className="text-2xl font-bold text-gray-900 leading-none">
+                                {metrics.upcomingAppointment ? (() => {
+                                  try {
+                                    const aptDate = new Date(`${metrics.upcomingAppointment.date}T${metrics.upcomingAppointment.start_time || '00:00:00'}`);
+                                    const hoursUntil = (aptDate.getTime() - new Date().getTime()) / (1000 * 60 * 60);
+                                    return hoursUntil <= 48 ? 'Snel' : aptDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' });
+                                  } catch { return '?'; }
+                                })() : 'Geen'}
+                              </p>
+                              <p className="text-xs text-gray-400 mt-0.5 truncate">
+                                {metrics.upcomingAppointment
+                                  ? metrics.upcomingAppointment.user_name || metrics.upcomingAppointment.user_email
+                                  : 'Volgende afspraak'}
+                              </p>
                               {metrics.upcomingAppointment && (
-                                <div className="mt-4 space-y-2">
-                                  <p className="text-sm text-gray-700">
-                                    <strong>Met:</strong> {metrics.upcomingAppointment.user_name || metrics.upcomingAppointment.user_email}
-                                  </p>
-                                  <Link
-                                    to={`/admin?tab=accounts&email=${encodeURIComponent(metrics.upcomingAppointment.user_email)}`}
-                                    className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
-                                  >
-                                    Bekijk account <ExternalLink className="w-3 h-3" />
-                                  </Link>
-                                </div>
+                                <Link
+                                  to={`/admin?tab=accounts&email=${encodeURIComponent(metrics.upcomingAppointment.user_email)}`}
+                                  className="mt-2 inline-flex items-center gap-1 text-xs text-blue-600 font-medium"
+                                >
+                                  Bekijk <ExternalLink className="w-3 h-3" />
+                                </Link>
                               )}
                             </div>
                           </div>
@@ -608,7 +567,7 @@ export default function AdminDashboard() {
                       <Mail className="w-6 h-6 md:w-8 md:h-8 text-purple-600" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-lg md:text-xl font-bold text-gray-900">E-mail Beheer</h3>
+                      <h3 className="text-base font-bold text-gray-900">E-mail Beheer</h3>
                       <p className="text-xs md:text-sm text-gray-600 break-words">Beheer notificatie e-mails en verstuur bulk berichten</p>
                     </div>
                   </div>
@@ -643,7 +602,7 @@ export default function AdminDashboard() {
               </div>
 
                     <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg">
-                      <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-4">Recente Activiteit</h3>
+                      <h3 className="text-base font-bold text-gray-900 mb-3">Recente Activiteit</h3>
                       <div className="space-y-2 md:space-y-3">
                         {users.length > 0 ? (
                           users.slice(0, 5).map((user, index) => (
@@ -827,7 +786,8 @@ export default function AdminDashboard() {
             </div>
           )}
         </div>
-      </div>
+        </div>{/* einde overflow-auto */}
+      </div>{/* einde flex-1 flex-col */}
 
       {/* Profile Popup */}
       <ProfilePopup
