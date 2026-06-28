@@ -892,76 +892,79 @@ export default function PortfolioPage() {
       <div className="container mx-auto px-4 py-0 md:py-0 pb-20 md:pb-12">
         <div className="max-w-7xl mx-auto">
           {/* Stats Cards */}
-          <div className="grid grid-cols-4 gap-2 md:gap-4 mb-6">
-            <div className="bg-white rounded-xl p-3 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="bg-green-100 p-1.5 rounded-lg">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            {/* BTC Saldo */}
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="bg-green-100 p-2 rounded-xl">
                   <TrendingUp className="w-4 h-4 text-green-600" />
                 </div>
-                <h3 className="text-sm font-semibold text-gray-900">Totaal BTC</h3>
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">BTC Saldo</span>
               </div>
-              <p className="text-xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-gray-900 leading-none">
                 {showBalances ? totalBalance.toFixed(4) : '••••'}
               </p>
-              <p className="text-xs text-gray-600">Bitcoin saldo</p>
+              <p className="text-xs text-gray-400 mt-1">Bitcoin saldo</p>
             </div>
 
-            <div className="bg-white rounded-xl p-3 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="bg-orange-100 p-1.5 rounded-lg">
+            {/* Transacties */}
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="bg-orange-100 p-2 rounded-xl">
                   <Shield className="w-4 h-4 text-orange-600" />
                 </div>
-                <h3 className="text-sm font-semibold text-gray-900">Transacties</h3>
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Transacties</span>
                 {hasActiveSync && (
                   <div className="ml-auto">
                     <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
-              </div>
+                  </div>
                 )}
               </div>
-              <p className="text-xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-gray-900 leading-none">
                 {totalTransactionsOnBlockchain > 0 ? totalTransactionsOnBlockchain : loadedTransactions > 0 ? loadedTransactions : totalTransactions}
               </p>
-              <p className="text-xs text-gray-600 flex items-center gap-1">
+              <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
                 {hasActiveSync ? (
-                  <>
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    Syncing...
-                  </>
+                  <><Loader2 className="w-3 h-3 animate-spin" />Syncing...</>
                 ) : 'Totaal aantal'}
               </p>
             </div>
 
-            <div className="bg-white rounded-xl p-3 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="bg-yellow-100 p-1.5 rounded-lg">
+            {/* Inleg */}
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="bg-yellow-100 p-2 rounded-xl">
                   <TrendingUp className="w-4 h-4 text-yellow-600" />
                 </div>
-                <h3 className="text-sm font-semibold text-gray-900">Inleg</h3>
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Inleg</span>
               </div>
               <div className="flex items-baseline gap-1">
-                <p className="text-xl font-bold text-gray-900">
-                  {showBalances ? `$${totalInvestment.toLocaleString('en-US', { maximumFractionDigits: 2 })}` : '••••'}
+                <p className="text-2xl font-bold text-gray-900 leading-none">
+                  {showBalances ? `$${totalInvestment.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '••••'}
                 </p>
-                {showBalances && profitPercentage !== 0 && (
-                  <span className={`text-xs font-medium ${profitPercentage >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    ({profitPercentage >= 0 ? '+' : ''}{profitPercentage.toFixed(1)}%)
-                  </span>
-                )}
               </div>
-              <p className="text-xs text-gray-600">Totale inleg</p>
+              {showBalances && profitPercentage !== 0 && (
+                <p className={`text-xs font-semibold mt-1 ${profitPercentage >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {profitPercentage >= 0 ? '+' : ''}{profitPercentage.toFixed(1)}%
+                </p>
+              )}
+              {!(showBalances && profitPercentage !== 0) && (
+                <p className="text-xs text-gray-400 mt-1">Totale inleg</p>
+              )}
             </div>
 
-            <div className="bg-white rounded-xl p-3 shadow-lg">
-              <div className="flex items-center gap-2 mb-2 min-w-0">
-                <div className="bg-purple-100 p-1.5 rounded-lg flex-shrink-0">
+            {/* Huidige waarde */}
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="bg-purple-100 p-2 rounded-xl">
                   <ExternalLink className="w-4 h-4 text-purple-600" />
                 </div>
-                <h3 className="text-sm font-semibold text-gray-900 truncate">Waarde</h3>
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Waarde</span>
               </div>
-              <p className="text-xl font-bold text-gray-900 break-words">
-                {showBalances ? `$${totalValue.toLocaleString('en-US', { maximumFractionDigits: 2 })}` : '••••'}
+              <p className="text-2xl font-bold text-gray-900 leading-none">
+                {showBalances ? `$${totalValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '••••'}
               </p>
-              <p className="text-xs text-gray-600">Huidige waarde</p>
+              <p className="text-xs text-gray-400 mt-1">Huidige waarde</p>
             </div>
           </div>
 
