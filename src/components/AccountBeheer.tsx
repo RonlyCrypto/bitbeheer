@@ -587,7 +587,7 @@ export default function AccountBeheer() {
                   <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all min-w-[180px]"
+                    className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all w-full"
                   >
                     {categories.map(category => (
                       <option key={category} value={category}>
@@ -601,7 +601,7 @@ export default function AccountBeheer() {
                 <select
                   value={verificationFilter}
                   onChange={(e) => setVerificationFilter(e.target.value)}
-                  className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all min-w-[180px]"
+                  className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all w-full"
                 >
                   <option value="all">🔍 Alle Status</option>
                   <option value="verified">✅ Geverifieerd ({users.filter(u => u.email_verified || u.isAdmin || u.isTest).length})</option>

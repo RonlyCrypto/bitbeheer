@@ -39,6 +39,7 @@ import { useProfilePopup } from '../contexts/ProfilePopupContext';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import AdminSidebar from './AdminSidebar';
+import AdminMobileTabBar from './AdminMobileTabBar';
 // import PageManagement from './PageManagement';
 
 export default function AdminDashboard() {
@@ -353,8 +354,8 @@ export default function AdminDashboard() {
       {/* SEO H1 Tag */}
       <h1 className="sr-only">BitBeheer Admin Dashboard - Beheer Bitcoin Begeleiding Platform</h1>
       
-      {/* Sidebar */}
-      <AdminSidebar 
+      {/* Sidebar — desktop only */}
+      <AdminSidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
         unreadChatCount={metrics.newChats}
@@ -362,6 +363,12 @@ export default function AdminDashboard() {
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
+        {/* Mobile tab bar — scrollable horizontaal */}
+        <AdminMobileTabBar
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          unreadChatCount={metrics.newChats}
+        />
         <div className="p-4 md:p-8">
 
           {/* Overview Tab */}
