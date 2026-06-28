@@ -41,7 +41,7 @@ function AppContent() {
   return (
     <>
       <SiteAccessControl>
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100" style={{ backgroundColor: '#f9fafb' }}>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 main-content-mobile" style={{ backgroundColor: '#f9fafb' }}>
       <Header />
 
           {/* Global Impersonation Banner - Show on all routes when impersonating */}

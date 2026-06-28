@@ -13,6 +13,32 @@ html, body {
   }
 }
 
+/* PWA safe area insets voor notch/home-bar telefoons */
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+
+/* Native app-style bottom nav met safe area */
+.mobile-bottom-nav {
+  height: calc(4rem + var(--sab));
+  padding-bottom: var(--sab);
+}
+
+/* Header safe area voor notch */
+.header-safe-top {
+  padding-top: var(--sat);
+}
+
+/* Content padding voor bottom nav op mobiel */
+@media (max-width: 767px) {
+  .main-content-mobile {
+    padding-bottom: calc(4rem + var(--sab));
+  }
+}
+
 /* Hide scrollbar for mobile horizontal scroll */
 .scrollbar-hide {
   -ms-overflow-style: none;

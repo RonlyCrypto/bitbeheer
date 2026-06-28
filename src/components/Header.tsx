@@ -42,8 +42,8 @@ export default function Header() {
   
   return (
     <>
-    <header className="bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg">
-      <div className="w-full px-4 pt-6 pb-2">
+    <header className="bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg header-safe-top">
+      <div className="w-full px-4 py-2 md:pt-6 md:pb-2">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           {/* Logo - Left - Goes to home page */}
           <Link to="/home" className="flex items-center gap-2 md:gap-4 flex-shrink-0">
