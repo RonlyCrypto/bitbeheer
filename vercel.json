@@ -26,8 +26,14 @@
   ],
   "functions": {
     "api/*.js": {
-      "maxDuration": 30
+      "maxDuration": 60
     }
   },
+  "crons": [
+    {
+      "path": "/api/daily-bitcoin-sync",
+      "schedule": "0 2 * * *"
+    }
+  ],
   "regions": ["fra1"]
 }

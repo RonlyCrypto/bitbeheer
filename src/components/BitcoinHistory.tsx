@@ -165,12 +165,38 @@ const bitcoinCycles = [
     name: '4e Cycle',
     startYear: 2022,
     endYear: 2026,
-    description: 'Accumulatie: 2023–2024 | Bull Run: 2024–2025 | Bear: 2026 (verwacht)',
+    description: 'Accumulatie: 2023–2024 | Bull Run: 2024–2025 | Bear: 2025–2026',
     halving: '2024-04-20',
     phases: {
       accumulation: { start: '2022-12-31', end: '2024-04-20', priceRange: '$16,000 → $30,000', type: 'accumulation' },
-      bullRun: { start: '2024-04-20', end: '2025-06-30', priceRange: 'Bull Run richting top', type: 'bullRun' },
-      bearMarket: { start: '2025-07-01', end: '2026-12-31', priceRange: 'Bear Market fase', type: 'bearMarket' }
+      bullRun:      { start: '2024-04-20', end: '2025-06-30', priceRange: '$30,000 → $126,000', type: 'bullRun' },
+      bearMarket:   { start: '2025-07-01', end: '2026-12-31', priceRange: '$126,000 → ~$60,000', type: 'bearMarket' }
+    }
+  },
+  {
+    id: 'cycle5',
+    name: '5e Cycle',
+    startYear: 2027,
+    endYear: 2031,
+    description: 'Accumulatie: 2027–2028 | Bull Run: 2028–2029 | Bear: 2030–2031 (verwacht)',
+    halving: '2028-03-01',
+    phases: {
+      accumulation: { start: '2027-01-01', end: '2028-03-01', priceRange: 'Verwacht accumulatiefase', type: 'accumulation' },
+      bullRun:      { start: '2028-03-01', end: '2029-06-30', priceRange: 'Verwachte bull run', type: 'bullRun' },
+      bearMarket:   { start: '2029-07-01', end: '2030-12-31', priceRange: 'Verwachte bear markt', type: 'bearMarket' }
+    }
+  },
+  {
+    id: 'cycle6',
+    name: '6e Cycle',
+    startYear: 2031,
+    endYear: 2035,
+    description: 'Toekomstige cycle — halving verwacht rond 2032',
+    halving: '2032-01-01',
+    phases: {
+      accumulation: { start: '2031-01-01', end: '2032-01-01', priceRange: 'Toekomstige accumulatiefase', type: 'accumulation' },
+      bullRun:      { start: '2032-01-01', end: '2033-06-30', priceRange: 'Toekomstige bull run', type: 'bullRun' },
+      bearMarket:   { start: '2033-07-01', end: '2034-12-31', priceRange: 'Toekomstige bear markt', type: 'bearMarket' }
     }
   }
 ];

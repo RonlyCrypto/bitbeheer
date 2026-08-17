@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, Download, Upload, Database, AlertCircle, CheckCircle } from 'lucide-react';
+import { RefreshCw, Download, Upload, Database, AlertCircle, CheckCircle, CloudDownload } from 'lucide-react';
 import { dataManager } from '../services/dataManager';
 
 interface DataStats {
@@ -57,6 +57,30 @@ export default function DataManagement() {
       }
     } catch (error) {
       console.error(`Error exporting ${coin} data:`, error);
+    }
+  };
+
+  const [backfillStatus, setBackfillStatus] = useState<string | null>(null);
+  const [backfillLoading, setBackfillLoading] = useState(false);
+
+  const runBackfill = async (from: string) => {
+    setBackfillLoading(true);
+    setBackfillStatus('Backfill gestart...');
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const adminToken = import.meta.env.VITE_ADMIN_SYNC_TOKEN || '';
+      const url = `/api/daily-bitcoin-sync?action=backfill&from=${from}&to=${today}&admin=${adminToken}`;
+      const res = await fetch(url);
+      const json = await res.json();
+      if (json.success) {
+        setBackfillStatus(`✅ ${json.message} (${json.saved} opgeslagen, ${json.existing} al aanwezig)`);
+      } else {
+        setBackfillStatus(`❌ Fout: ${json.error}`);
+      }
+    } catch (e: any) {
+      setBackfillStatus(`❌ ${e.message}`);
+    } finally {
+      setBackfillLoading(false);
     }
   };
 
@@ -180,13 +204,58 @@ export default function DataManagement() {
         </div>
       </div>
 
+      {/* Backfill sectie */}
+      <div className="mt-6 p-5 bg-orange-50 border border-orange-200 rounded-xl">
+        <div className="flex items-center gap-3 mb-3">
+          <CloudDownload className="w-5 h-5 text-orange-600" />
+          <h4 className="font-semibold text-orange-900">Ontbrekende data terugvullen (Backfill)</h4>
+        </div>
+        <p className="text-sm text-orange-800 mb-4">
+          Haalt ontbrekende dagprijzen op van CoinGecko en slaat ze op in Supabase. Bestaande data wordt overgeslagen.
+        </p>
+
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={() => runBackfill('2025-12-01')}
+            disabled={backfillLoading}
+            className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-all text-sm font-medium"
+          >
+            <RefreshCw className={`w-4 h-4 ${backfillLoading ? 'animate-spin' : ''}`} />
+            {backfillLoading ? 'Bezig...' : 'Backfill dec 2025 → nu'}
+          </button>
+          <button
+            onClick={() => runBackfill('2024-01-01')}
+            disabled={backfillLoading}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-all text-sm font-medium"
+          >
+            <RefreshCw className={`w-4 h-4 ${backfillLoading ? 'animate-spin' : ''}`} />
+            {backfillLoading ? 'Bezig...' : 'Backfill 2024 → nu'}
+          </button>
+        </div>
+
+        {backfillStatus && (
+          <div className={`mt-3 p-3 rounded-lg text-sm font-medium ${
+            backfillStatus.startsWith('✅')
+              ? 'bg-green-100 text-green-800'
+              : backfillStatus.startsWith('❌')
+              ? 'bg-red-100 text-red-800'
+              : 'bg-blue-100 text-blue-800'
+          }`}>
+            {backfillStatus}
+          </div>
+        )}
+
+        <p className="text-xs text-orange-600 mt-3">
+          ⏰ Automatisch: elke dag om 02:00 UTC wordt de prijs opgeslagen via Vercel cron.
+        </p>
+      </div>
+
       <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-xl">
         <h4 className="font-semibold text-gray-900 mb-2">Automatische Updates</h4>
         <div className="text-sm text-gray-700 space-y-1">
-          <p>• Data wordt automatisch bijgewerkt wanneer nieuwe datums worden opgevraagd</p>
+          <p>• <strong>Vercel cron:</strong> Elke dag om 02:00 UTC wordt de dagelijkse Bitcoin prijs opgeslagen</p>
           <p>• Alleen ontbrekende data wordt opgehaald (incrementele updates)</p>
-          <p>• Updates worden meerdere keren per dag uitgevoerd</p>
-          <p>• Gebruik "Force Update" voor volledige hernieuwing van data</p>
+          <p>• Gebruik "Backfill" om historische hiaten handmatig op te vullen</p>
         </div>
       </div>
     </div>
