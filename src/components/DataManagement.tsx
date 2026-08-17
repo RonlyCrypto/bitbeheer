@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, Download, Upload, Database, AlertCircle, CheckCircle, CloudDownload } from 'lucide-react';
+import { RefreshCw, Download, Upload, Database, AlertCircle, CheckCircle } from 'lucide-react';
 import { dataManager } from '../services/dataManager';
 
 interface DataStats {
@@ -207,7 +207,7 @@ export default function DataManagement() {
       {/* Backfill sectie */}
       <div className="mt-6 p-5 bg-orange-50 border border-orange-200 rounded-xl">
         <div className="flex items-center gap-3 mb-3">
-          <CloudDownload className="w-5 h-5 text-orange-600" />
+          <Download className="w-5 h-5 text-orange-600" />
           <h4 className="font-semibold text-orange-900">Ontbrekende data terugvullen (Backfill)</h4>
         </div>
         <p className="text-sm text-orange-800 mb-4">
