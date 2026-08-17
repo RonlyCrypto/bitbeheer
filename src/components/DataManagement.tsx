@@ -69,7 +69,7 @@ export default function DataManagement() {
     try {
       const today = new Date().toISOString().split('T')[0];
       const adminToken = import.meta.env.VITE_ADMIN_SYNC_TOKEN || '';
-      const url = `/api/daily-bitcoin-sync?action=backfill&from=${from}&to=${today}&admin=${adminToken}`;
+      const url = `/api/bitcoin-price-data?action=backfill&from=${from}&to=${today}&admin=${adminToken}`;
       const res = await fetch(url);
       const json = await res.json();
       if (json.success) {

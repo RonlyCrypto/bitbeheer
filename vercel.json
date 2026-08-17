@@ -31,7 +31,7 @@
   },
   "crons": [
     {
-      "path": "/api/daily-bitcoin-sync",
+      "path": "/api/bitcoin-price-data?action=sync",
       "schedule": "0 2 * * *"
     }
   ],
