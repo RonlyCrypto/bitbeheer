@@ -152,7 +152,8 @@ class BitcoinDataManager {
   private async loadFromServer(currency: 'EUR' | 'USD' = 'USD'): Promise<BitcoinDataStructure | null> {
     try {
       // Load data from Supabase using the new service
-      const years = [2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
+      const currentYear = new Date().getFullYear();
+      const years = Array.from({ length: currentYear - 2009 + 1 }, (_, i) => 2009 + i);
       
       // Get all data for all years from Supabase with currency
       const allData = await bitcoinPriceDataService.getDataForYears(years, currency);

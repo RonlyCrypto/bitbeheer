@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { TrendingUp, Calendar, Zap, Minus, Maximize, Calculator, Eye, EyeOff, Layers } from 'lucide-react';
+import { TrendingUp, Calendar, Zap, Minus, Maximize, Calculator, Eye, EyeOff, Layers, Clock, Hourglass } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { initializeEarlyBitcoinData, fetchAllBitcoinData } from '../services/priceService';
 import { bitcoinDataManager } from '../services/bitcoinDataManager';
@@ -201,12 +201,86 @@ const bitcoinCycles = [
   }
 ];
 
+function FutureCycleOverlay({ cycle }: { cycle: typeof bitcoinCycles[0] }) {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  useEffect(() => {
+    const target = new Date(cycle.startYear, 0, 1);
+    const tick = () => {
+      const diff = target.getTime() - Date.now();
+      if (diff <= 0) { setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 }); return; }
+      setTimeLeft({
+        days:    Math.floor(diff / 86400000),
+        hours:   Math.floor((diff % 86400000) / 3600000),
+        minutes: Math.floor((diff % 3600000)  / 60000),
+        seconds: Math.floor((diff % 60000)    / 1000),
+      });
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [cycle.startYear]);
+
+  const halvingDate = new Date(cycle.halving).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  return (
+    <div className="relative rounded-2xl overflow-hidden mb-6" style={{ height: 420 }}>
+      {/* Grey blurred background chart placeholder */}
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-100">
+        {/* Fake chart lines for visual effect */}
+        <svg className="absolute inset-0 w-full h-full opacity-20" viewBox="0 0 800 400" preserveAspectRatio="none">
+          <polyline points="0,300 80,250 160,280 240,200 320,220 400,150 480,170 560,120 640,90 720,110 800,80"
+            fill="none" stroke="#9ca3af" strokeWidth="3" />
+          <polyline points="0,350 80,320 160,340 240,290 320,300 400,240 480,260 560,210 640,180 720,200 800,170"
+            fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeDasharray="8 4" />
+        </svg>
+        <div className="absolute inset-0 backdrop-blur-[2px]" />
+      </div>
+
+      {/* Overlay content */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
+        {/* Icon */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-full p-4 mb-4 shadow-lg">
+          <Clock className="w-10 h-10 text-gray-500" />
+        </div>
+
+        <h3 className="text-2xl font-bold text-gray-700 mb-1">{cycle.name} — Toekomstige Cycle</h3>
+        <p className="text-gray-500 text-sm mb-6">
+          Verwachte start: <strong>{cycle.startYear}</strong> · Halving: <strong>{halvingDate}</strong>
+        </p>
+
+        {/* Countdown */}
+        <div className="flex gap-3 mb-6">
+          {[
+            { label: 'Dagen',    value: timeLeft.days },
+            { label: 'Uren',     value: timeLeft.hours },
+            { label: 'Minuten',  value: timeLeft.minutes },
+            { label: 'Seconden', value: timeLeft.seconds },
+          ].map(({ label, value }) => (
+            <div key={label} className="bg-white/80 backdrop-blur-sm rounded-2xl px-4 py-3 shadow-md min-w-[72px]">
+              <div className="text-3xl font-bold text-gray-800 tabular-nums leading-none">
+                {String(value).padStart(2, '0')}
+              </div>
+              <div className="text-[10px] uppercase tracking-widest text-gray-400 mt-1">{label}</div>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-xs text-gray-400 max-w-xs leading-relaxed">
+          Historische data is hier nog niet beschikbaar. De grafiek wordt automatisch gevuld zodra de cycle van start gaat.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function BitcoinHistory() {
   const { currency } = useCurrency();
   const [allPriceData, setAllPriceData] = useState<PriceData[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'1y' | '3y' | '5y' | 'all' | 'live'>('all');
   const [selectedCycle, setSelectedCycle] = useState<string | null>(null);
+  const isFutureCycle = (id: string | null) => id === 'cycle5' || id === 'cycle6';
   const [zoomStartDate, setZoomStartDate] = useState<string | null>(null);
   const [zoomEndDate, setZoomEndDate] = useState<string | null>(null);
   const [selectedMetric, setSelectedMetric] = useState<'price' | 'marketCap'>('price');
@@ -773,66 +847,63 @@ export default function BitcoinHistory() {
               onClick={() => {
                 setSelectedCycle(cycle.id);
                 setTimeRange('all');
-                
-                // Auto-zoom to selected cycle
+                if (isFutureCycle(cycle.id)) {
+                  setZoomStartDate(null);
+                  setZoomEndDate(null);
+                  return;
+                }
                 let startDate: Date;
                 let endDate: Date;
-                
                 switch (cycle.id) {
-                  case 'cycle1':
-                    startDate = new Date('2009-01-03');
-                    endDate = new Date('2015-01-01');
-                    break;
-                  case 'cycle2':
-                    startDate = new Date('2015-01-01');
-                    endDate = new Date('2018-12-31');
-                    break;
-                  case 'cycle3':
-                    startDate = new Date('2019-01-01');
-                    endDate = new Date('2022-12-31');
-                    break;
-                  case 'cycle4':
-                    startDate = new Date('2023-01-01');
-                    endDate = new Date();
-                    break;
-                  default:
-                    startDate = new Date(cycle.startYear, 0, 1);
-                    endDate = new Date(cycle.endYear, 11, 31);
+                  case 'cycle1': startDate = new Date('2009-01-03'); endDate = new Date('2015-01-01'); break;
+                  case 'cycle2': startDate = new Date('2015-01-01'); endDate = new Date('2018-12-31'); break;
+                  case 'cycle3': startDate = new Date('2019-01-01'); endDate = new Date('2022-12-31'); break;
+                  case 'cycle4': startDate = new Date('2023-01-01'); endDate = new Date(); break;
+                  default: startDate = new Date(cycle.startYear, 0, 1); endDate = new Date(cycle.endYear, 11, 31);
                 }
-                
-                // Set zoom dates to focus on the cycle
                 setZoomStartDate(startDate.toISOString().split('T')[0]);
                 setZoomEndDate(endDate.toISOString().split('T')[0]);
               }}
-              className={`p-4 rounded-xl border-2 transition-all text-left ${
-                selectedCycle === cycle.id
+              className={`p-4 rounded-xl border-2 transition-all text-left relative overflow-hidden ${
+                isFutureCycle(cycle.id)
+                  ? selectedCycle === cycle.id
+                    ? 'border-gray-400 bg-gray-100'
+                    : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                  : selectedCycle === cycle.id
                   ? 'border-orange-500 bg-orange-50'
                   : 'border-gray-200 bg-white hover:border-gray-300'
               }`}
             >
+              {isFutureCycle(cycle.id) && (
+                <div className="absolute top-2 right-2">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider bg-gray-200 text-gray-500 rounded-full px-2 py-0.5">
+                    <Hourglass className="w-2.5 h-2.5" />
+                    Toekomst
+                  </span>
+                </div>
+              )}
               <div className="flex items-center justify-between mb-2">
-                <div className="font-semibold text-sm text-gray-900">{cycle.name}</div>
-                <div className="text-xs text-gray-500">
+                <div className={`font-semibold text-sm ${isFutureCycle(cycle.id) ? 'text-gray-500' : 'text-gray-900'}`}>{cycle.name}</div>
+                <div className={`text-xs ${isFutureCycle(cycle.id) ? 'text-gray-400' : 'text-gray-500'} ${isFutureCycle(cycle.id) ? 'mr-16' : ''}`}>
                   {cycle.startYear} - {cycle.endYear}
                 </div>
               </div>
-              
               <div className="space-y-1 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Accumulatie:</span>
-                  <span className="text-gray-800 font-medium">{cycle.phases.accumulation.priceRange}</span>
+                  <span className={isFutureCycle(cycle.id) ? 'text-gray-400' : 'text-gray-600'}>Accumulatie:</span>
+                  <span className={isFutureCycle(cycle.id) ? 'text-gray-400 italic' : 'text-gray-800 font-medium'}>{cycle.phases.accumulation.priceRange}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Bull Run:</span>
-                  <span className="text-green-600 font-medium">{cycle.phases.bullRun.priceRange}</span>
+                  <span className={isFutureCycle(cycle.id) ? 'text-gray-400' : 'text-gray-600'}>Bull Run:</span>
+                  <span className={isFutureCycle(cycle.id) ? 'text-gray-400 italic' : 'text-green-600 font-medium'}>{cycle.phases.bullRun.priceRange}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Bear Market:</span>
-                  <span className="text-red-600 font-medium">{cycle.phases.bearMarket.priceRange}</span>
+                  <span className={isFutureCycle(cycle.id) ? 'text-gray-400' : 'text-gray-600'}>Bear Market:</span>
+                  <span className={isFutureCycle(cycle.id) ? 'text-gray-400 italic' : 'text-red-600 font-medium'}>{cycle.phases.bearMarket.priceRange}</span>
                 </div>
-                <div className="flex justify-between mt-2 pt-1 border-t border-gray-200">
-                  <span className="text-gray-600">Halving:</span>
-                  <span className="text-orange-600 font-medium">
+                <div className={`flex justify-between mt-2 pt-1 border-t ${isFutureCycle(cycle.id) ? 'border-gray-200' : 'border-gray-200'}`}>
+                  <span className={isFutureCycle(cycle.id) ? 'text-gray-400' : 'text-gray-600'}>Halving:</span>
+                  <span className={isFutureCycle(cycle.id) ? 'text-gray-400' : 'text-orange-600 font-medium'}>
                     {new Date(cycle.halving).toLocaleDateString('nl-NL', { month: 'short', year: 'numeric' })}
                   </span>
                 </div>
@@ -1071,12 +1142,12 @@ export default function BitcoinHistory() {
 
           {/* Chart Section - Toggle between Live (TradingView) and Historical */}
           {timeRange === 'live' ? (
-            // Live Chart
             <div className="mb-6">
               <TradingViewChart height={500} />
             </div>
+          ) : isFutureCycle(selectedCycle) ? (
+            <FutureCycleOverlay cycle={bitcoinCycles.find(c => c.id === selectedCycle)!} />
           ) : (
-            // Historical Chart
           <div className="bg-gray-50 rounded-xl p-6 mb-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">📊 Historische Analyse</h3>
             <PriceChart
