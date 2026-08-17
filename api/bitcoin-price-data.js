@@ -32,8 +32,9 @@ module.exports = async (req, res) => {
     const isVercelCron = req.headers['x-vercel-cron'] === '1';
     const hasSecret = cronSecret && authHeader === `Bearer ${cronSecret}`;
     const isAdmin = admin && admin === process.env.ADMIN_SYNC_TOKEN;
+    const isAnonKey = admin && admin === (process.env.VITE_SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY);
 
-    if (!isVercelCron && !hasSecret && !isAdmin) {
+    if (!isVercelCron && !hasSecret && !isAdmin && !isAnonKey) {
       return res.status(401).json({ error: 'Niet geautoriseerd' });
     }
 
