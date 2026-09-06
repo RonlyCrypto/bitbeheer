@@ -1,24 +1,27 @@
-// API endpoint for sending account deletion warnings
-// POST /api/send-deletion-warnings - Send warnings to unverified accounts
+// Daily job (Vercel cron, see vercel.json) that enforces the 5-day account
+// activation window promised in the verification email:
+// GET  /api/send-deletion-warnings - warn accounts expiring within 2 days,
+//                                     deactivate accounts already past their
+//                                     verification_expires
 
 const { createClient } = require('@supabase/supabase-js');
 
 module.exports = async (req, res) => {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  if (req.method !== 'POST') {
+  if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
   try {
-    console.log('Sending deletion warnings...');
+    console.log('Processing account activation deadlines...');
 
     const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -30,11 +33,15 @@ module.exports = async (req, res) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get all unverified accounts
+    // accounts is the canonical table (auth_user_id, deactivated_at, etc. all
+    // live here) -- users only holds secondary signup-form data.
     const { data: unverifiedAccounts, error: fetchError } = await supabase
-      .from('users')
-      .select('*')
+      .from('accounts')
+      .select('id, email, name, auth_user_id, verification_expires')
       .eq('email_verified', false)
+      .eq('is_admin', false)
+      .eq('is_test', false)
+      .is('deactivated_at', null)
       .not('verification_expires', 'is', null);
 
     if (fetchError) {
@@ -42,9 +49,10 @@ module.exports = async (req, res) => {
       return res.status(500).json({ success: false, error: 'Failed to fetch accounts' });
     }
 
-    console.log(`Found ${unverifiedAccounts.length} unverified accounts`);
+    console.log(`Found ${unverifiedAccounts.length} unverified accounts with a pending deadline`);
 
     let warningsSent = 0;
+    let deactivated = 0;
     let errors = 0;
 
     for (const account of unverifiedAccounts) {
@@ -53,8 +61,39 @@ module.exports = async (req, res) => {
         const expires = new Date(account.verification_expires);
         const daysRemaining = Math.ceil((expires - now) / (1000 * 60 * 60 * 24));
 
-        // Only send warning if account expires within 2 days
-        if (daysRemaining <= 2 && daysRemaining > 0) {
+        if (daysRemaining <= 0) {
+          // Past the 5-day deadline: this is the automatic deletion the
+          // verification email promises. Soft-delete like a manual admin
+          // deactivation -- revoke any auth identity (an unverified account
+          // normally never got one, but check for safety) and mark the row
+          // deactivated so it keeps its signup history under "Gedeactiveerd".
+          console.log(`Account ${account.email} passed its 5-day deadline, deactivating`);
+
+          if (account.auth_user_id) {
+            const { error: deleteAuthError } = await supabase.auth.admin.deleteUser(account.auth_user_id);
+            if (deleteAuthError) {
+              console.error(`Error deleting auth user for ${account.email}:`, deleteAuthError);
+            }
+          }
+
+          const { error: deactivateError } = await supabase
+            .from('accounts')
+            .update({
+              deactivated_at: new Date().toISOString(),
+              auth_user_id: null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', account.id);
+
+          if (deactivateError) {
+            console.error(`Failed to deactivate account ${account.email}:`, deactivateError);
+            errors++;
+          } else {
+            deactivated++;
+            console.log(`Account ${account.email} deactivated`);
+          }
+        } else if (daysRemaining <= 2) {
+          // Expires within 2 days: send a reminder.
           console.log(`Sending warning to ${account.email} - ${daysRemaining} days remaining`);
 
           const response = await fetch('https://clqbnkvnydlxtimiazqf.supabase.co/functions/v1/send-account-deletion-warning', {
@@ -72,30 +111,9 @@ module.exports = async (req, res) => {
 
           if (response.ok) {
             warningsSent++;
-            console.log(`Warning sent to ${account.email}`);
           } else {
             errors++;
             console.error(`Failed to send warning to ${account.email}`);
-          }
-        } else if (daysRemaining <= 0) {
-          // Account has expired, mark for deletion
-          console.log(`Account ${account.email} has expired, marking for deletion`);
-          
-          const { error: deleteError } = await supabase
-            .from('users')
-            .update({ 
-              email_verified: false,
-              verification_token: null,
-              verification_expires: null,
-              // Add a flag to mark as expired
-              status: 'expired'
-            })
-            .eq('id', account.id);
-
-          if (deleteError) {
-            console.error(`Failed to mark account ${account.email} as expired:`, deleteError);
-          } else {
-            console.log(`Account ${account.email} marked as expired`);
           }
         }
       } catch (accountError) {
@@ -106,8 +124,9 @@ module.exports = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: `Deletion warnings processed`,
+      message: 'Account activation deadlines processed',
       warningsSent,
+      deactivated,
       errors,
       totalAccounts: unverifiedAccounts.length
     });
