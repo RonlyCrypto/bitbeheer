@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Clock, User, Trash2, CheckCircle, XCircle, Edit, Search, Filter, Download, Copy, RefreshCw, ChevronDown, ChevronUp, Video, AlertCircle, FileText, UserCheck } from 'lucide-react';
+import { Calendar, Plus, Clock, User, Trash2, CheckCircle, XCircle, Edit, Search, Filter, Download, Copy, RefreshCw, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Video, AlertCircle, FileText, UserCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import TeamsLinkPopup from './TeamsLinkPopup';
 import AgendaView from './AgendaView';
@@ -39,6 +39,14 @@ type ViewMode = 'single' | 'recurring' | 'calendar';
 
 export default function AdminAppointmentManagement() {
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
+  // Monday of the first of the two weeks shown in "Beschikbare Tijden".
+  const [slotsViewWeekStart, setSlotsViewWeekStart] = useState<Date>(() => {
+    const d = new Date();
+    const day = d.getDay();
+    d.setDate(d.getDate() + (day === 0 ? -6 : 1) - day);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('single');
@@ -955,12 +963,32 @@ export default function AdminAppointmentManagement() {
 
       {/* Available Slots */}
       <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-1 flex-wrap gap-3">
           <h3 className="text-xl font-semibold flex items-center gap-2">
             <Clock className="w-5 h-5 text-orange-600" />
             Beschikbare Tijden ({availableSlots.length})
           </h3>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSlotsViewWeekStart(d => { const n = new Date(d); n.setDate(n.getDate() - 14); return n; })}
+              className="flex items-center gap-1 px-3 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-orange-400 hover:text-orange-600 transition-colors"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" /> Vorige
+            </button>
+            <button
+              onClick={() => setSlotsViewWeekStart(d => { const n = new Date(d); n.setDate(n.getDate() + 14); return n; })}
+              className="flex items-center gap-1 px-3 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-orange-400 hover:text-orange-600 transition-colors"
+            >
+              Volgende <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
+
+        <div className="text-xs mb-4 flex items-center gap-4 text-gray-500 dark:text-gray-400">
+          <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-blue-50 border-[1.5px] border-blue-300 inline-block" /> Beschikbaar</span>
+          <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-green-50 border-[1.5px] border-green-300 inline-block" /> Geboekt (naam zichtbaar)</span>
+        </div>
+
         {loading ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
@@ -968,96 +996,102 @@ export default function AdminAppointmentManagement() {
         ) : availableSlots.length === 0 ? (
           <p className="text-gray-500 text-center py-8">Nog geen beschikbare tijden. Voeg er een toe hierboven.</p>
         ) : (
-          <>
-          <div className="text-xs mb-2 flex items-center gap-3 text-gray-500 dark:text-gray-400">
-            <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-white border border-gray-300 inline-block" /> Vrij</span>
-            <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-green-100 border border-green-300 inline-block" /> Geboekt (naam zichtbaar)</span>
-          </div>
-          <table className="w-full border-collapse text-sm">
-            <tbody>
-              {(() => {
-                // Monday-start week key, purely to insert a slim divider row
-                // between weeks -- no per-week box, so there's nothing left
-                // to leave dead white space around when a week is sparse.
-                const getWeekStart = (dateStr: string) => {
-                  const d = new Date(dateStr + 'T00:00:00');
-                  const day = d.getDay();
-                  const diff = (day === 0 ? -6 : 1) - day;
-                  d.setDate(d.getDate() + diff);
-                  return d.toISOString().split('T')[0];
-                };
+          <div className="space-y-5">
+            {(() => {
+              const todayWeekStart = (() => {
+                const d = new Date();
+                const day = d.getDay();
+                d.setDate(d.getDate() + (day === 0 ? -6 : 1) - day);
+                d.setHours(0, 0, 0, 0);
+                return d;
+              })();
 
-                const sortedDates = Array.from(new Set(availableSlots.map(s => s.date))).sort();
-                let lastWeekStart: string | null = null;
-                const rows: React.ReactNode[] = [];
+              return [0, 1].map((weekIndex) => {
+                const weekStart = new Date(slotsViewWeekStart);
+                weekStart.setDate(weekStart.getDate() + weekIndex * 7);
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekEnd.getDate() + 6);
+                const isCurrentWeek = weekStart.getTime() === todayWeekStart.getTime();
 
-                sortedDates.forEach((date) => {
-                  const weekStart = getWeekStart(date);
-                  if (weekStart !== lastWeekStart) {
-                    lastWeekStart = weekStart;
-                    const weekStartDate = new Date(weekStart + 'T00:00:00');
-                    const weekEndDate = new Date(weekStartDate);
-                    weekEndDate.setDate(weekEndDate.getDate() + 6);
-                    rows.push(
-                      <tr key={`week-${weekStart}`}>
-                        <td colSpan={2} className="pt-3 pb-1 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
-                          Week {weekStartDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })} – {weekEndDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}
-                        </td>
-                      </tr>
-                    );
-                  }
-
-                  const dateObj = new Date(date + 'T00:00:00');
-                  const slotsForDate = availableSlots
-                    .filter(s => s.date === date)
-                    .sort((a, b) => a.start_time.localeCompare(b.start_time));
-
-                  rows.push(
-                    <tr key={date} className="border-b border-gray-100 dark:border-gray-800 last:border-b-0">
-                      <td className="py-1.5 pr-3 align-top whitespace-nowrap text-xs font-medium text-gray-500 dark:text-gray-400 w-24">
-                        {dayNames[dateObj.getDay()]} {dateObj.getDate()}/{dateObj.getMonth() + 1}
-                      </td>
-                      <td className="py-1.5">
-                        <div className="flex flex-wrap gap-1">
-                          {slotsForDate.map((slot) => {
-                            const appointment = getSlotAppointmentForSlot(slot);
-                            const isBooked = isSlotBooked(slot);
-                            const bookerName = appointment
-                              ? (appointment.user_name?.trim().split(' ')[0] || appointment.user_email?.split('@')[0])
-                              : null;
-
-                            return (
-                              <button
-                                key={slot.id}
-                                onClick={() => deleteSlot(slot.id)}
-                                title={
-                                  appointment
-                                    ? `${appointment.user_name || appointment.user_email} — ${appointment.status === 'pending' ? 'In afwachting' : 'Bevestigd'} (klik om te verwijderen)`
-                                    : 'Klik om te verwijderen'
-                                }
-                                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium border transition-colors ${
-                                  isBooked
-                                    ? 'border-green-300 bg-green-100 text-green-800 hover:border-red-300 hover:bg-red-50 hover:text-red-700 dark:bg-green-900/30 dark:text-green-300'
-                                    : 'border-gray-200 bg-white text-gray-600 hover:border-red-300 hover:bg-red-50 hover:text-red-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300'
-                                }`}
-                              >
-                                {isBooked && <CheckCircle className="w-2.5 h-2.5 flex-shrink-0" />}
-                                {slot.start_time.slice(0, 5)}
-                                {isBooked && bookerName && <span className="font-semibold">· {bookerName}</span>}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </td>
-                    </tr>
-                  );
+                const days = Array.from({ length: 7 }, (_, i) => {
+                  const d = new Date(weekStart);
+                  d.setDate(d.getDate() + i);
+                  return d;
                 });
 
-                return rows;
-              })()}
-            </tbody>
-          </table>
-          </>
+                return (
+                  <div key={weekIndex}>
+                    <div className="flex items-baseline gap-2 mb-2">
+                      {isCurrentWeek ? (
+                        <span className="text-[10px] font-bold uppercase tracking-wide bg-orange-600 text-white px-2 py-0.5 rounded-full">Huidige week</span>
+                      ) : (
+                        <span className="text-xs font-medium text-gray-400 dark:text-gray-500">Volgende week</span>
+                      )}
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">
+                        {weekStart.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })} – {weekEnd.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-7 gap-2">
+                      {days.map((dateObj) => {
+                        const dateStr = dateObj.toISOString().split('T')[0];
+                        const slotsForDate = availableSlots
+                          .filter(s => s.date === dateStr)
+                          .sort((a, b) => a.start_time.localeCompare(b.start_time));
+                        const hasSlots = slotsForDate.length > 0;
+
+                        return (
+                          <div
+                            key={dateStr}
+                            className={`rounded-lg border p-2 min-h-[84px] border-gray-200 dark:border-gray-700 ${
+                              hasSlots ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900/30'
+                            }`}
+                          >
+                            <div className="text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-1.5">
+                              {dayNames[dateObj.getDay()]} <span className="font-normal text-gray-400 dark:text-gray-600">{dateObj.getDate()}</span>
+                            </div>
+                            {hasSlots ? (
+                              <div className="flex flex-col gap-1">
+                                {slotsForDate.map((slot) => {
+                                  const appointment = getSlotAppointmentForSlot(slot);
+                                  const isBooked = isSlotBooked(slot);
+                                  const bookerName = appointment
+                                    ? (appointment.user_name?.trim().split(' ')[0] || appointment.user_email?.split('@')[0])
+                                    : null;
+
+                                  return (
+                                    <button
+                                      key={slot.id}
+                                      onClick={() => deleteSlot(slot.id)}
+                                      title={
+                                        appointment
+                                          ? `${appointment.user_name || appointment.user_email} — ${appointment.status === 'pending' ? 'In afwachting' : 'Bevestigd'} (klik om te verwijderen)`
+                                          : 'Klik om te verwijderen'
+                                      }
+                                      className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold border-[1.5px] text-left transition-colors ${
+                                        isBooked
+                                          ? 'border-green-300 bg-green-50 text-green-700 hover:border-red-300 hover:bg-red-50 hover:text-red-700 dark:bg-green-900/20 dark:text-green-300'
+                                          : 'border-blue-300 bg-blue-50 text-blue-700 hover:border-red-300 hover:bg-red-50 hover:text-red-700 dark:bg-blue-900/20 dark:text-blue-300'
+                                      }`}
+                                    >
+                                      {isBooked && <CheckCircle className="w-2.5 h-2.5 flex-shrink-0" />}
+                                      {slot.start_time.slice(0, 5)}
+                                      {isBooked && bookerName && <span>· {bookerName}</span>}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <div className="text-[11px] text-gray-300 dark:text-gray-600">—</div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
         )}
       </div>
 
