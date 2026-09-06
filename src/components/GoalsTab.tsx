@@ -70,6 +70,35 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
   const [showMonthlyGoalPopup, setShowMonthlyGoalPopup] = useState(false);
   const [selectedMonthlyGoal, setSelectedMonthlyGoal] = useState<any>(null);
 
+  // Opt-in voor de "Jouw Bitcoin Mijlpalen" en "Ritme & Discipline" widgets op het dashboard
+  const [milestonesOptIn, setMilestonesOptIn] = useState(false);
+  const [ritmeDisciplineOptIn, setRitmeDisciplineOptIn] = useState(false);
+
+  useEffect(() => {
+    const loadOptIns = async () => {
+      if (!effectiveUserEmail) return;
+      const { data } = await supabase
+        .from('accounts')
+        .select('milestones_opt_in, ritme_discipline_opt_in')
+        .eq('email', effectiveUserEmail)
+        .maybeSingle();
+      if (data) {
+        setMilestonesOptIn(data.milestones_opt_in || false);
+        setRitmeDisciplineOptIn(data.ritme_discipline_opt_in || false);
+      }
+    };
+    loadOptIns();
+  }, [effectiveUserEmail]);
+
+  const toggleOptIn = async (field: 'milestones_opt_in' | 'ritme_discipline_opt_in', value: boolean) => {
+    if (!effectiveUserEmail) return;
+    if (field === 'milestones_opt_in') setMilestonesOptIn(value);
+    else setRitmeDisciplineOptIn(value);
+    await supabase.from('accounts').update({ [field]: value }).eq('email', effectiveUserEmail);
+    // Laat het dashboard (UserDashboard) weten dat de opt-in flags veranderd zijn
+    window.dispatchEvent(new Event('refreshAccountStatus'));
+  };
+
   // Load Bitcoin price and wallet balance
   useEffect(() => {
     const loadData = async () => {
@@ -985,6 +1014,40 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
           <Plus className="w-4 h-4" />
           Nieuw Doel
         </button>
+      </div>
+
+      {/* Opt-in voor extra dashboard-widgets */}
+      <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+        <h3 className="text-sm font-semibold text-gray-900 mb-1">Doe je mee met deze doelen?</h3>
+        <p className="text-xs text-gray-600 mb-3">
+          Vink aan wat je op je dashboard wilt zien. Je kan dit altijd weer aan- of uitzetten.
+        </p>
+        <div className="space-y-2">
+          <label className="flex items-start gap-3 bg-white rounded-lg p-3 border border-gray-200 cursor-pointer hover:border-orange-300 transition-colors">
+            <input
+              type="checkbox"
+              checked={milestonesOptIn}
+              onChange={(e) => toggleOptIn('milestones_opt_in', e.target.checked)}
+              className="mt-0.5 w-4 h-4 text-orange-600 rounded border-gray-300 focus:ring-orange-500"
+            />
+            <div>
+              <p className="text-sm font-medium text-gray-900">🎯 Bitcoin Mijlpalen</p>
+              <p className="text-xs text-gray-500">Volg je voortgang naar 0.01, 0.1 en 1 BTC op je dashboard.</p>
+            </div>
+          </label>
+          <label className="flex items-start gap-3 bg-white rounded-lg p-3 border border-gray-200 cursor-pointer hover:border-orange-300 transition-colors">
+            <input
+              type="checkbox"
+              checked={ritmeDisciplineOptIn}
+              onChange={(e) => toggleOptIn('ritme_discipline_opt_in', e.target.checked)}
+              className="mt-0.5 w-4 h-4 text-orange-600 rounded border-gray-300 focus:ring-orange-500"
+            />
+            <div>
+              <p className="text-sm font-medium text-gray-900">🔁 Ritme &amp; Discipline</p>
+              <p className="text-xs text-gray-500">Houd je maandelijkse stort-streak bij op je dashboard.</p>
+            </div>
+          </label>
+        </div>
       </div>
 
       {/* Create Goal Modal */}

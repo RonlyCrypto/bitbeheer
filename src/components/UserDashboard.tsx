@@ -517,6 +517,8 @@ export default function UserDashboard() {
   const [accountApproved, setAccountApproved] = useState(false);
   const [firstAppointmentCompleted, setFirstAppointmentCompleted] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
+  const [milestonesOptIn, setMilestonesOptIn] = useState(false);
+  const [ritmeDisciplineOptIn, setRitmeDisciplineOptIn] = useState(false);
   const [hasApprovedOneOnOne, setHasApprovedOneOnOne] = useState(false);
   const [allUserAppointments, setAllUserAppointments] = useState<any[]>([]);
   const [bitcoinGoal, setBitcoinGoal] = useState({
@@ -532,10 +534,10 @@ export default function UserDashboard() {
     try {
       const { data: userData, error: userError } = await supabase
         .from('accounts')
-        .select('account_approved, first_appointment_completed, email_verified')
+        .select('account_approved, first_appointment_completed, email_verified, milestones_opt_in, ritme_discipline_opt_in')
         .eq('email', user.email)
         .maybeSingle();
-      
+
       if (!userError && userData) {
         console.log('🔄 Refreshed account status:', {
           first_appointment_completed: userData.first_appointment_completed,
@@ -544,6 +546,8 @@ export default function UserDashboard() {
         setAccountApproved(userData.account_approved || false);
         setFirstAppointmentCompleted(userData.first_appointment_completed || false);
         setEmailVerified(userData.email_verified || false);
+        setMilestonesOptIn(userData.milestones_opt_in || false);
+        setRitmeDisciplineOptIn(userData.ritme_discipline_opt_in || false);
       }
     } catch (error) {
       console.error('Error refreshing account status:', error);
@@ -703,14 +707,14 @@ export default function UserDashboard() {
             // Use maybeSingle() instead of single() to handle missing records gracefully
             const { data: userData, error: userError } = await supabase
               .from('accounts')
-              .select('account_approved, first_appointment_completed, email_verified')
+              .select('account_approved, first_appointment_completed, email_verified, milestones_opt_in, ritme_discipline_opt_in')
               .eq('email', user.email)
               .maybeSingle();
-            
+
             if (userError) {
               console.error('🔍 Error loading from users table:', userError);
             }
-            
+
             if (userData && !userError) {
               console.log('🔍 UserDashboard - Loaded from accounts table:', {
                 account_approved: userData.account_approved,
@@ -720,6 +724,8 @@ export default function UserDashboard() {
               setAccountApproved(userData.account_approved || false);
               setFirstAppointmentCompleted(userData.first_appointment_completed || false);
               setEmailVerified(userData.email_verified || false);
+              setMilestonesOptIn(userData.milestones_opt_in || false);
+              setRitmeDisciplineOptIn(userData.ritme_discipline_opt_in || false);
             } else {
               // Default to false if no data found
               console.warn('🔍 No account data found in accounts table');
@@ -835,14 +841,16 @@ export default function UserDashboard() {
           
           const { data: accountData, error: accountError } = await supabase
             .from('accounts')
-            .select('account_approved, first_appointment_completed, email_verified')
+            .select('account_approved, first_appointment_completed, email_verified, milestones_opt_in, ritme_discipline_opt_in')
             .eq('email', effectiveEmail)
             .maybeSingle();
-          
+
           if (accountData && !accountError) {
             setAccountApproved(accountData.account_approved || false);
             setFirstAppointmentCompleted(accountData.first_appointment_completed || false);
             setEmailVerified(accountData.email_verified || false);
+            setMilestonesOptIn(accountData.milestones_opt_in || false);
+            setRitmeDisciplineOptIn(accountData.ritme_discipline_opt_in || false);
           } else if (accountError?.code === 'PGRST204' || accountError?.code === 'PGRST116') {
             // No data found, use defaults
             setAccountApproved(false);
@@ -1074,6 +1082,8 @@ export default function UserDashboard() {
               user={user}
               emailVerified={emailVerified}
               firstAppointmentCompleted={firstAppointmentCompleted}
+              milestonesOptIn={milestonesOptIn}
+              ritmeDisciplineOptIn={ritmeDisciplineOptIn}
               isLoading={isLoading}
               onMilestoneUpdate={(milestoneProgress, celebratedMilestones) => {
                 // Update UserSidebar with milestone info
@@ -1216,7 +1226,7 @@ export default function UserDashboard() {
           if (user?.email) {
             supabase
               .from('accounts')
-              .select('account_approved, first_appointment_completed, email_verified')
+              .select('account_approved, first_appointment_completed, email_verified, milestones_opt_in, ritme_discipline_opt_in')
               .eq('email', user.email)
               .maybeSingle()
               .then(({ data: accountData, error: accountError }) => {
@@ -1224,6 +1234,8 @@ export default function UserDashboard() {
                   setAccountApproved(accountData.account_approved || false);
                 setFirstAppointmentCompleted(accountData.first_appointment_completed || false);
                   setEmailVerified(accountData.email_verified || false);
+                  setMilestonesOptIn(accountData.milestones_opt_in || false);
+                  setRitmeDisciplineOptIn(accountData.ritme_discipline_opt_in || false);
                 } else if (accountError?.code === 'PGRST204' || accountError?.code === 'PGRST116') {
                   // No data found, use defaults
                   setAccountApproved(false);
@@ -1245,7 +1257,7 @@ export default function UserDashboard() {
 }
 
 // Overview Tab Component
-function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppointment, accountApproved, isImpersonating, impersonatedUser, hasApprovedOneOnOne, onNavigateToPortfolio, onNavigateToGoals, user, emailVerified, firstAppointmentCompleted, isLoading = false }: any) {
+function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppointment, accountApproved, isImpersonating, impersonatedUser, hasApprovedOneOnOne, onNavigateToPortfolio, onNavigateToGoals, user, emailVerified, firstAppointmentCompleted, milestonesOptIn, ritmeDisciplineOptIn, isLoading = false }: any) {
   const [showExchangeWarningPopup, setShowExchangeWarningPopup] = useState(false);
   const [showSelfCustodyPopup, setShowSelfCustodyPopup] = useState(false);
   const [showInfoPopup, setShowInfoPopup] = useState(false);
@@ -2848,6 +2860,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
           setGoals={(newGoals) => {
             if (setGoals) setGoals(newGoals);
           }}
+          milestonesOptIn={milestonesOptIn}
+          ritmeDisciplineOptIn={ritmeDisciplineOptIn}
         />
       )}
 
@@ -3639,7 +3653,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
 }
 
 // BeginnersGoals Component
-const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onNavigateToGoals, goals: externalGoals, setGoals: setExternalGoals }: BeginnersGoalsProps & { onNavigateToGoals?: () => void; goals?: any[]; setGoals?: (goals: any[]) => void }): JSX.Element => {
+const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onNavigateToGoals, goals: externalGoals, setGoals: setExternalGoals, milestonesOptIn, ritmeDisciplineOptIn }: BeginnersGoalsProps & { onNavigateToGoals?: () => void; goals?: any[]; setGoals?: (goals: any[]) => void; milestonesOptIn?: boolean; ritmeDisciplineOptIn?: boolean }): JSX.Element => {
   const { user } = useSupabaseAuth();
   const [showAddGoalPopup, setShowAddGoalPopup] = useState(false);
   const [customGoals, setCustomGoals] = useState<any[]>([]);
@@ -4953,6 +4967,8 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
 
                     return (
                       <>
+    {/* Jouw Bitcoin Mijlpalen - alleen als de gebruiker hiervoor koos in Mijn Doelen */}
+    {milestonesOptIn && (
     <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-gray-900">🎯 Jouw Bitcoin Mijlpalen</h3>
@@ -5096,11 +5112,12 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
         )}
       </div>
     </div>
+    )}
 
       {/* Ritme & Discipline en Mijn Bitcoin Strategie - Naast elkaar onder Jouw Bitcoin Mijlpalen */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-        {/* Ritme & Discipline - Eigen blok */}
-        {allGoals.length > 0 && (
+        {/* Ritme & Discipline - Eigen blok (alleen als de gebruiker hiervoor koos in Mijn Doelen) */}
+        {ritmeDisciplineOptIn && allGoals.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
           <div className="mb-4">
               <div className="mb-4 flex items-center justify-between">
