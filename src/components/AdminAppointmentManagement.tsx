@@ -308,13 +308,24 @@ export default function AdminAppointmentManagement() {
       const interval = recurringPattern.interval || 1;
 
       let currentDate = new Date(startDate);
+      const msPerDay = 1000 * 60 * 60 * 24;
 
       while (currentDate <= endDate) {
         const dayOfWeek = currentDate.getDay();
-        
-        // Check if this day matches the pattern
-        const shouldAdd = recurringPattern.repeat_type === 'daily' || 
-                         (recurringPattern.repeat_type === 'weekly' && recurringPattern.repeat_days.includes(dayOfWeek));
+
+        // Check if this day matches the pattern. For weekly, walk day by day
+        // (below) so every selected weekday gets checked, and only count a
+        // week "in" the pattern every `interval` weeks from the start date.
+        let shouldAdd = false;
+        if (recurringPattern.repeat_type === 'daily') {
+          shouldAdd = true;
+        } else if (recurringPattern.repeat_type === 'weekly' && recurringPattern.repeat_days.includes(dayOfWeek)) {
+          const daysSinceStart = Math.round((currentDate.getTime() - startDate.getTime()) / msPerDay);
+          const weeksSinceStart = Math.floor(daysSinceStart / 7);
+          shouldAdd = weeksSinceStart % interval === 0;
+        } else if (recurringPattern.repeat_type === 'monthly') {
+          shouldAdd = true;
+        }
 
         if (shouldAdd) {
           // Generate slots for this day from start_time to end_time
@@ -338,11 +349,14 @@ export default function AdminAppointmentManagement() {
           }
         }
 
-        // Move to next interval
+        // Move to next candidate date. Weekly walks one day at a time so
+        // every selected weekday within the range gets checked -- jumping
+        // straight by 7*interval days (the old behavior) would only ever
+        // land on the single weekday start_date itself falls on.
         if (recurringPattern.repeat_type === 'daily') {
           currentDate.setDate(currentDate.getDate() + interval);
         } else if (recurringPattern.repeat_type === 'weekly') {
-          currentDate.setDate(currentDate.getDate() + (7 * interval));
+          currentDate.setDate(currentDate.getDate() + 1);
         } else if (recurringPattern.repeat_type === 'monthly') {
           currentDate.setMonth(currentDate.getMonth() + interval);
         }
