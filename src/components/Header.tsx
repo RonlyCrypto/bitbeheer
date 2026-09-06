@@ -158,10 +158,10 @@ export default function Header() {
                     <>
                       <Link
                         to="/user-dashboard"
-                        className={`flex items-center gap-2 px-3 md:px-4 py-2 md:py-3 transition-all duration-300 ${
+                        className={`flex items-center gap-2 px-3 md:px-4 py-2 md:py-3 border-b-2 transition-all duration-300 ${
                           location.pathname === '/user-dashboard'
-                            ? 'bg-white bg-opacity-20'
-                            : 'hover:bg-white hover:bg-opacity-10'
+                            ? 'border-white'
+                            : 'border-transparent hover:bg-white hover:bg-opacity-10'
                         }`}
                       >
                         <BarChart3 className="w-4 h-4 md:w-5 md:h-5" />

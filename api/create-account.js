@@ -97,7 +97,7 @@ module.exports = async (req, res) => {
     // Check for existing account with same email to avoid unique constraint violation
     const { data: existingAccount, error: existingError } = await supabase
       .from('accounts')
-      .select('id, email, category, verified, active')
+      .select('id, email, category, verified, active, deactivated_at')
       .eq('email', email.toLowerCase().trim())
       .maybeSingle();
 
@@ -105,13 +105,53 @@ module.exports = async (req, res) => {
       console.error('Error checking existing account:', existingError);
     }
 
-    if (existingAccount) {
+    if (existingAccount && !existingAccount.deactivated_at) {
       console.warn('Account already exists for email:', email);
       return res.status(409).json({
         success: false,
         error: 'Account bestaat al met dit e-mailadres',
         details: 'duplicate_email'
       });
+    }
+
+    // A previously deleted account keeps its row for history, but its email
+    // is free to reuse. Move the old row aside as email+1@domain (or the
+    // next free suffix) so the new signup can have the clean email, and we
+    // can still see this person's full signup history by email later.
+    if (existingAccount && existingAccount.deactivated_at) {
+      const [localPart, domain] = existingAccount.email.split('@');
+      let suffix = 1;
+      let archivedEmail = `${localPart}+${suffix}@${domain}`;
+      while (true) {
+        const { data: taken } = await supabase
+          .from('accounts')
+          .select('id')
+          .eq('email', archivedEmail)
+          .maybeSingle();
+        if (!taken) break;
+        suffix += 1;
+        archivedEmail = `${localPart}+${suffix}@${domain}`;
+      }
+
+      const { error: archiveError } = await supabase
+        .from('accounts')
+        .update({ email: archivedEmail, updated_at: new Date().toISOString() })
+        .eq('id', existingAccount.id);
+
+      if (archiveError) {
+        console.error('Error archiving deactivated account email:', archiveError);
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to process re-registration'
+        });
+      }
+
+      // Best-effort: keep the users table (secondary signup-history record)
+      // in sync with the same archived address.
+      await supabase
+        .from('users')
+        .update({ email: archivedEmail })
+        .eq('email', existingAccount.email);
     }
 
     // Create account in accounts table (this is where user accounts are stored)

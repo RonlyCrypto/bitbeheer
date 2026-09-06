@@ -28,6 +28,7 @@ interface UserAccount {
   bevestigd?: boolean;
   account_approved?: boolean;
   first_appointment_completed?: boolean;
+  deactivated_at?: string | null;
 }
 
 export default function AccountBeheer() {
@@ -42,6 +43,7 @@ export default function AccountBeheer() {
   const [isSendingEmail, setIsSendingEmail] = useState<string | null>(null);
   const [isActivating, setIsActivating] = useState<string | null>(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
+  const [isDeletingAccount, setIsDeletingAccount] = useState<string | null>(null);
   const [showStatusTab, setShowStatusTab] = useState(false);
 
   // Calculate remaining time for verification
@@ -109,13 +111,13 @@ export default function AccountBeheer() {
               
               const { data: accountData } = await supabase
                 .from('accounts')
-                .select('email_verified, verified_at, actief, account_approved, first_appointment_completed, created_at')
+                .select('email_verified, verified_at, actief, account_approved, first_appointment_completed, created_at, deactivated_at')
                 .eq('email', account.email)
                 .maybeSingle();
-              
+
             // Prefer data from accounts table, fallback to users table
             const finalData: any = accountData || userData || {};
-            
+
             return {
               ...account,
               // Use verified status from database (accounts or users table)
@@ -126,7 +128,8 @@ export default function AccountBeheer() {
               first_appointment_completed: finalData.first_appointment_completed || false,
               verification_token_created: userData?.verification_token_created || account.verification_token_created,
               email_sent_date: userData?.email_sent_date || account.emailSentDate || account.email_sent_date,
-              created_at: finalData.created_at || account.created_at || account.timestamp || account.registrationDate
+              created_at: finalData.created_at || account.created_at || account.timestamp || account.registrationDate,
+              deactivated_at: accountData?.deactivated_at ?? null
             };
             } catch (error) {
               // If columns don't exist, default to false
@@ -135,7 +138,8 @@ export default function AccountBeheer() {
                 email_verified: account.email_verified || false,
                 actief: account.actief !== undefined ? account.actief : true,
                 account_approved: false,
-                first_appointment_completed: false
+                first_appointment_completed: false,
+                deactivated_at: null
               };
             }
           }));
@@ -226,13 +230,13 @@ export default function AccountBeheer() {
             
             const { data: accountData } = await supabase
               .from('accounts')
-              .select('email_verified, verified_at, actief, account_approved, first_appointment_completed')
+              .select('email_verified, verified_at, actief, account_approved, first_appointment_completed, deactivated_at')
               .eq('email', account.email)
               .maybeSingle();
-            
+
             // Prefer data from accounts table, fallback to users table
             const finalData: any = accountData || userData || {};
-            
+
             return {
               ...account,
               // Use verified status from database (accounts or users table)
@@ -240,7 +244,8 @@ export default function AccountBeheer() {
               verified_at: finalData.verified_at ?? account.verified_at,
               actief: finalData.actief !== undefined ? finalData.actief : (account.actief !== undefined ? account.actief : true),
               account_approved: finalData.account_approved || false,
-              first_appointment_completed: finalData.first_appointment_completed || false
+              first_appointment_completed: finalData.first_appointment_completed || false,
+              deactivated_at: accountData?.deactivated_at ?? null
             };
           } catch (error) {
             // If columns don't exist, default to false
@@ -249,7 +254,8 @@ export default function AccountBeheer() {
               email_verified: account.email_verified || false,
               actief: account.actief !== undefined ? account.actief : true,
               account_approved: false,
-              first_appointment_completed: false
+              first_appointment_completed: false,
+              deactivated_at: null
             };
           }
         }));
@@ -281,10 +287,11 @@ export default function AccountBeheer() {
                          user.message.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || user.category === selectedCategory;
     
-    const matchesVerification = verificationFilter === 'all' || 
-      (verificationFilter === 'verified' && user.email_verified) ||
-      (verificationFilter === 'pending' && !user.email_verified && !isAccountExpired(user)) ||
-      (verificationFilter === 'expired' && isAccountExpired(user)) ||
+    const matchesVerification = verificationFilter === 'all' ||
+      (verificationFilter === 'verified' && user.email_verified && !user.deactivated_at) ||
+      (verificationFilter === 'pending' && !user.email_verified && !isAccountExpired(user) && !user.deactivated_at) ||
+      (verificationFilter === 'expired' && isAccountExpired(user) && !user.deactivated_at) ||
+      (verificationFilter === 'deactivated' && !!user.deactivated_at) ||
       (verificationFilter === 'admin' && user.isAdmin) ||
       (verificationFilter === 'test' && user.isTest) ||
       (verificationFilter === 'no_email' && !user.emailSent);
@@ -488,6 +495,45 @@ export default function AccountBeheer() {
     }
   };
 
+  // Soft-delete an account: revokes the login (Supabase Auth identity) and
+  // marks the row deactivated, but keeps it around for history under the
+  // "Gedeactiveerd" section instead of hard-deleting it.
+  const handleDeactivateAccount = async (user: UserAccount) => {
+    if (!confirm(`Weet je zeker dat je het account van ${user.email} wilt verwijderen? De gebruiker kan hierna niet meer inloggen. De aanmeldgeschiedenis blijft bewaard onder "Gedeactiveerd".`)) {
+      return;
+    }
+
+    setIsDeletingAccount(user.id);
+
+    try {
+      const response = await fetch('https://clqbnkvnydlxtimiazqf.supabase.co/functions/v1/deactivate-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      if (response.ok) {
+        setUsers(users.map(u =>
+          u.id === user.id
+            ? { ...u, deactivated_at: new Date().toISOString() }
+            : u
+        ));
+        alert('Account verwijderd. Je vindt het terug onder "Gedeactiveerd".');
+      } else {
+        const result = await response.json().catch(() => ({}));
+        alert(result.error || 'Fout bij het verwijderen van het account');
+      }
+    } catch (error) {
+      console.error('Error deactivating account:', error);
+      alert('Fout bij het verwijderen van het account');
+    } finally {
+      setIsDeletingAccount(null);
+    }
+  };
+
   const handleImpersonateUser = async (user: UserAccount) => {
     if (user.isAdmin || user.isTest) {
       alert('Je kunt geen admin of test accounts impersoneren');
@@ -604,9 +650,10 @@ export default function AccountBeheer() {
                   className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all w-full"
                 >
                   <option value="all">🔍 Alle Status</option>
-                  <option value="verified">✅ Geverifieerd ({users.filter(u => u.email_verified || u.isAdmin || u.isTest).length})</option>
-                  <option value="pending">⏳ In Behandeling ({users.filter(u => !u.email_verified && !isAccountExpired(u) && !u.isAdmin && !u.isTest).length})</option>
-                  <option value="expired">❌ Verlopen ({users.filter(u => isAccountExpired(u) && !u.isAdmin && !u.isTest).length})</option>
+                  <option value="verified">✅ Geverifieerd ({users.filter(u => u.email_verified && !u.deactivated_at || u.isAdmin || u.isTest).length})</option>
+                  <option value="pending">⏳ In Behandeling ({users.filter(u => !u.email_verified && !isAccountExpired(u) && !u.isAdmin && !u.isTest && !u.deactivated_at).length})</option>
+                  <option value="expired">❌ Verlopen ({users.filter(u => isAccountExpired(u) && !u.isAdmin && !u.isTest && !u.deactivated_at).length})</option>
+                  <option value="deactivated">🗑️ Gedeactiveerd ({users.filter(u => !!u.deactivated_at).length})</option>
                   <option value="admin">👑 Admin Accounts ({users.filter(u => u.isAdmin).length})</option>
                   <option value="test">🧪 Test Accounts ({users.filter(u => u.isTest).length})</option>
                   <option value="no_email">📧 Geen Email Verzonden ({users.filter(u => !u.emailSent).length})</option>
@@ -624,7 +671,7 @@ export default function AccountBeheer() {
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">Actieve Accounts</h2>
                   <p className="text-gray-600 mt-1">
-                    {filteredUsers.filter(user => (user.account_approved === true) || user.isAdmin || user.isTest).length} van {users.filter(user => (user.account_approved === true) || user.isAdmin || user.isTest).length} actieve accounts (Dashboard 100% actief)
+                    {filteredUsers.filter(user => !user.deactivated_at && ((user.account_approved === true) || user.isAdmin || user.isTest)).length} van {users.filter(user => !user.deactivated_at && ((user.account_approved === true) || user.isAdmin || user.isTest)).length} actieve accounts (Dashboard 100% actief)
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -636,7 +683,7 @@ export default function AccountBeheer() {
             </div>
 
             <div className="divide-y divide-gray-200">
-              {filteredUsers.filter(user => (user.account_approved === true) || user.isAdmin || user.isTest).length === 0 ? (
+              {filteredUsers.filter(user => !user.deactivated_at && ((user.account_approved === true) || user.isAdmin || user.isTest)).length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
                   <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-300" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Geen volledig actieve accounts</h3>
@@ -644,7 +691,7 @@ export default function AccountBeheer() {
                 </div>
               ) : (
                 filteredUsers
-                  .filter(user => (user.account_approved === true) || user.isAdmin || user.isTest)
+                  .filter(user => !user.deactivated_at && ((user.account_approved === true) || user.isAdmin || user.isTest))
                   .map((user) => (
                     <div key={user.id} className="p-3 md:p-6 hover:bg-gray-50 transition-colors">
                       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -750,6 +797,17 @@ export default function AccountBeheer() {
                             <span className="hidden sm:inline">Inloggen als</span>
                             <span className="sm:hidden">Login</span>
                           </button>
+                          {!user.isAdmin && !user.isTest && (
+                            <button
+                              onClick={() => handleDeactivateAccount(user)}
+                              disabled={isDeletingAccount === user.id}
+                              className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-xs md:text-sm disabled:opacity-50"
+                            >
+                              <XCircle className="w-3 h-3 md:w-4 md:h-4" />
+                              <span className="hidden sm:inline">Verwijderen</span>
+                              <span className="sm:hidden">Verwijder</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -766,12 +824,13 @@ export default function AccountBeheer() {
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">Geverifieerd - Wachtend op 20min Gesprek</h2>
                   <p className="text-gray-600 mt-1">
-                    {filteredUsers.filter(user => 
-                      (user.email_verified || user.isAdmin || user.isTest) && 
-                      !user.first_appointment_completed && 
-                      !user.account_approved && 
-                      !user.isAdmin && 
-                      !user.isTest
+                    {filteredUsers.filter(user =>
+                      (user.email_verified || user.isAdmin || user.isTest) &&
+                      !user.first_appointment_completed &&
+                      !user.account_approved &&
+                      !user.isAdmin &&
+                      !user.isTest &&
+                      !user.deactivated_at
                     ).length} accounts hebben email bevestigd maar nog geen eerste afspraak gehad
                   </p>
                 </div>
@@ -779,12 +838,13 @@ export default function AccountBeheer() {
             </div>
 
             <div className="divide-y divide-gray-200">
-              {filteredUsers.filter(user => 
-                (user.email_verified || user.isAdmin || user.isTest) && 
-                !user.first_appointment_completed && 
-                !user.account_approved && 
-                !user.isAdmin && 
-                !user.isTest
+              {filteredUsers.filter(user =>
+                (user.email_verified || user.isAdmin || user.isTest) &&
+                !user.first_appointment_completed &&
+                !user.account_approved &&
+                !user.isAdmin &&
+                !user.isTest &&
+                !user.deactivated_at
               ).length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
                   <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-300" />
@@ -793,12 +853,13 @@ export default function AccountBeheer() {
                 </div>
               ) : (
                 filteredUsers
-                  .filter(user => 
-                    (user.email_verified || user.isAdmin || user.isTest) && 
-                    !user.first_appointment_completed && 
-                    !user.account_approved && 
-                    !user.isAdmin && 
-                    !user.isTest
+                  .filter(user =>
+                    (user.email_verified || user.isAdmin || user.isTest) &&
+                    !user.first_appointment_completed &&
+                    !user.account_approved &&
+                    !user.isAdmin &&
+                    !user.isTest &&
+                    !user.deactivated_at
                   )
                   .map((user) => (
                     <div key={user.id} className="p-6 hover:bg-gray-50 transition-colors">
@@ -867,6 +928,14 @@ export default function AccountBeheer() {
                             <LogIn className="w-4 h-4" />
                             Inloggen als
                           </button>
+                          <button
+                            onClick={() => handleDeactivateAccount(user)}
+                            disabled={isDeletingAccount === user.id}
+                            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                          >
+                            <XCircle className="w-4 h-4" />
+                            Verwijderen
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -883,14 +952,14 @@ export default function AccountBeheer() {
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">Wachtend op Verificatie</h2>
                   <p className="text-gray-600 mt-1">
-                    {filteredUsers.filter(user => !user.email_verified && !isAccountExpired(user) && !user.isAdmin && !user.isTest).length} accounts wachten op email bevestiging
+                    {filteredUsers.filter(user => !user.email_verified && !isAccountExpired(user) && !user.isAdmin && !user.isTest && !user.deactivated_at).length} accounts wachten op email bevestiging
                   </p>
                 </div>
               </div>
             </div>
 
             <div className="divide-y divide-gray-200">
-              {filteredUsers.filter(user => !user.email_verified && !isAccountExpired(user) && !user.isAdmin && !user.isTest).length === 0 ? (
+              {filteredUsers.filter(user => !user.email_verified && !isAccountExpired(user) && !user.isAdmin && !user.isTest && !user.deactivated_at).length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
                   <Clock className="w-12 h-12 mx-auto mb-4 text-orange-300" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Geen accounts in behandeling</h3>
@@ -898,7 +967,7 @@ export default function AccountBeheer() {
                 </div>
               ) : (
                 filteredUsers
-                  .filter(user => !user.email_verified && !isAccountExpired(user) && !user.isAdmin && !user.isTest)
+                  .filter(user => !user.email_verified && !isAccountExpired(user) && !user.isAdmin && !user.isTest && !user.deactivated_at)
                   .map((user) => (
                     <div key={user.id} className="p-6 hover:bg-gray-50 transition-colors">
                       <div className="flex items-center justify-between">
@@ -998,6 +1067,14 @@ export default function AccountBeheer() {
                             <LogIn className="w-4 h-4" />
                             Inloggen als
                           </button>
+                          <button
+                            onClick={() => handleDeactivateAccount(user)}
+                            disabled={isDeletingAccount === user.id}
+                            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                          >
+                            <XCircle className="w-4 h-4" />
+                            Verwijderen
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -1014,14 +1091,14 @@ export default function AccountBeheer() {
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">Verlopen Accounts</h2>
                   <p className="text-gray-600 mt-1">
-                    {filteredUsers.filter(user => isAccountExpired(user) && !user.isAdmin && !user.isTest).length} accounts zijn verlopen (5+ dagen niet bevestigd)
+                    {filteredUsers.filter(user => isAccountExpired(user) && !user.isAdmin && !user.isTest && !user.deactivated_at).length} accounts zijn verlopen (5+ dagen niet bevestigd)
                   </p>
                 </div>
               </div>
             </div>
 
             <div className="divide-y divide-gray-200">
-              {filteredUsers.filter(user => isAccountExpired(user) && !user.isAdmin && !user.isTest).length === 0 ? (
+              {filteredUsers.filter(user => isAccountExpired(user) && !user.isAdmin && !user.isTest && !user.deactivated_at).length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
                   <XCircle className="w-12 h-12 mx-auto mb-4 text-red-300" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Geen verlopen accounts</h3>
@@ -1029,7 +1106,7 @@ export default function AccountBeheer() {
                 </div>
               ) : (
                 filteredUsers
-                  .filter(user => isAccountExpired(user) && !user.isAdmin && !user.isTest)
+                  .filter(user => isAccountExpired(user) && !user.isAdmin && !user.isTest && !user.deactivated_at)
                   .map((user) => (
                     <div key={user.id} className="p-6 bg-gray-100 opacity-75 hover:bg-gray-200 transition-colors">
                       <div className="flex items-center justify-between">
@@ -1073,17 +1150,88 @@ export default function AccountBeheer() {
                                   Nieuw Account Aanmaken
                                 </button>
                                 <button
-                                  onClick={() => {
-                                    if (confirm(`Weet je zeker dat je dit verlopen account wilt verwijderen?`)) {
-                                      // TODO: Implement account deletion
-                                      alert('Functie wordt binnenkort toegevoegd');
-                                    }
-                                  }}
-                                  className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full hover:bg-red-200 transition-colors"
+                                  onClick={() => handleDeactivateAccount(user)}
+                                  disabled={isDeletingAccount === user.id}
+                                  className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full hover:bg-red-200 transition-colors disabled:opacity-50"
                                 >
                                   Verwijderen
                                 </button>
                               </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleViewUser(user)}
+                            className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                            Bekijken
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+              )}
+            </div>
+          </div>
+
+          {/* Deactivated (soft-deleted) Accounts Section */}
+          <div className="bg-white rounded-lg shadow-lg mb-6">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <XCircle className="w-6 h-6 text-gray-500" />
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Gedeactiveerd</h2>
+                  <p className="text-gray-600 mt-1">
+                    {filteredUsers.filter(user => !!user.deactivated_at).length} accounts zijn verwijderd door een gebruiker of admin. Ze kunnen niet meer inloggen; hun geschiedenis blijft bewaard.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="divide-y divide-gray-200">
+              {filteredUsers.filter(user => !!user.deactivated_at).length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  <XCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Geen gedeactiveerde accounts</h3>
+                  <p className="text-gray-600">Verwijderde accounts verschijnen hier</p>
+                </div>
+              ) : (
+                filteredUsers
+                  .filter(user => !!user.deactivated_at)
+                  .map((user) => (
+                    <div key={user.id} className="p-6 bg-gray-100 opacity-75 hover:bg-gray-200 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="font-medium text-gray-600 line-through">{user.email}</span>
+                              <span className="text-sm text-gray-500">•</span>
+                              <span className="text-sm text-gray-500">{user.name}</span>
+                              {user.category && (
+                                <>
+                                  <span className="text-sm text-gray-500">•</span>
+                                  <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">
+                                    {user.category}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                            {user.message && user.message !== 'Geen bericht' && (
+                              <p className="text-sm text-gray-500 mb-2">{user.message}</p>
+                            )}
+                            <div className="flex items-center gap-4 text-xs text-gray-400">
+                              <span>Aangemeld: {user.registrationDate || user.date}</span>
+                              <span className="text-gray-500 font-medium">
+                                Verwijderd op: {user.deactivated_at ? new Date(user.deactivated_at).toLocaleDateString('nl-NL') : '-'}
+                              </span>
+                            </div>
+                            <div className="mt-2 flex items-center gap-2">
+                              <span className="inline-flex items-center gap-1 text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">
+                                <XCircle className="w-3 h-3" />
+                                Gedeactiveerd
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -1115,7 +1263,7 @@ export default function AccountBeheer() {
               </div>
             </div>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div className="bg-white rounded-lg p-4 text-center shadow-sm border border-blue-100">
                 <div className="flex items-center justify-center mb-2">
                   <Users className="w-5 h-5 text-blue-600" />
@@ -1124,35 +1272,44 @@ export default function AccountBeheer() {
                 <p className="text-2xl font-bold text-blue-900">{users.length}</p>
                 <p className="text-xs text-blue-500 mt-1">Alle aangemelde accounts</p>
               </div>
-              
+
               <div className="bg-white rounded-lg p-4 text-center shadow-sm border border-green-100">
                 <div className="flex items-center justify-center mb-2">
                   <CheckCircle className="w-5 h-5 text-green-600" />
                 </div>
                 <p className="text-xs text-green-600 font-medium mb-1">Geverifieerd</p>
-                <p className="text-2xl font-bold text-green-900">{users.filter(u => u.email_verified || u.isAdmin || u.isTest).length}</p>
+                <p className="text-2xl font-bold text-green-900">{users.filter(u => (u.email_verified && !u.deactivated_at) || u.isAdmin || u.isTest).length}</p>
                 <p className="text-xs text-green-500 mt-1">Actief & Bevestigd</p>
               </div>
-              
+
               <div className="bg-white rounded-lg p-4 text-center shadow-sm border border-orange-100">
                 <div className="flex items-center justify-center mb-2">
                   <Clock className="w-5 h-5 text-orange-600" />
                 </div>
                 <p className="text-xs text-orange-600 font-medium mb-1">In Behandeling</p>
-                <p className="text-2xl font-bold text-orange-900">{users.filter(u => !u.email_verified && !isAccountExpired(u) && !u.isAdmin && !u.isTest).length}</p>
+                <p className="text-2xl font-bold text-orange-900">{users.filter(u => !u.email_verified && !isAccountExpired(u) && !u.isAdmin && !u.isTest && !u.deactivated_at).length}</p>
                 <p className="text-xs text-orange-500 mt-1">Wacht op bevestiging</p>
               </div>
-              
+
               <div className="bg-white rounded-lg p-4 text-center shadow-sm border border-red-100">
                 <div className="flex items-center justify-center mb-2">
                   <XCircle className="w-5 h-5 text-red-600" />
                 </div>
                 <p className="text-xs text-red-600 font-medium mb-1">Verlopen</p>
-                <p className="text-2xl font-bold text-red-900">{users.filter(u => isAccountExpired(u) && !u.isAdmin && !u.isTest).length}</p>
+                <p className="text-2xl font-bold text-red-900">{users.filter(u => isAccountExpired(u) && !u.isAdmin && !u.isTest && !u.deactivated_at).length}</p>
                 <p className="text-xs text-red-500 mt-1">5+ dagen niet bevestigd</p>
               </div>
+
+              <div className="bg-white rounded-lg p-4 text-center shadow-sm border border-gray-200">
+                <div className="flex items-center justify-center mb-2">
+                  <XCircle className="w-5 h-5 text-gray-500" />
+                </div>
+                <p className="text-xs text-gray-600 font-medium mb-1">Gedeactiveerd</p>
+                <p className="text-2xl font-bold text-gray-900">{users.filter(u => !!u.deactivated_at).length}</p>
+                <p className="text-xs text-gray-500 mt-1">Verwijderd, kan niet inloggen</p>
+              </div>
             </div>
-            
+
             {/* Quick Actions */}
             <div className="mt-6 flex flex-wrap gap-3">
               <button
@@ -1160,14 +1317,21 @@ export default function AccountBeheer() {
                 className="flex items-center gap-2 px-4 py-2 bg-orange-100 text-orange-800 rounded-lg hover:bg-orange-200 transition-colors text-sm font-medium"
               >
                 <Clock className="w-4 h-4" />
-                Bekijk In Behandeling ({users.filter(u => !u.email_verified && !isAccountExpired(u) && !u.isAdmin && !u.isTest).length})
+                Bekijk In Behandeling ({users.filter(u => !u.email_verified && !isAccountExpired(u) && !u.isAdmin && !u.isTest && !u.deactivated_at).length})
               </button>
               <button
                 onClick={() => setVerificationFilter('expired')}
                 className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
               >
                 <XCircle className="w-4 h-4" />
-                Bekijk Verlopen ({users.filter(u => isAccountExpired(u) && !u.isAdmin && !u.isTest).length})
+                Bekijk Verlopen ({users.filter(u => isAccountExpired(u) && !u.isAdmin && !u.isTest && !u.deactivated_at).length})
+              </button>
+              <button
+                onClick={() => setVerificationFilter('deactivated')}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+              >
+                <XCircle className="w-4 h-4" />
+                Bekijk Gedeactiveerd ({users.filter(u => !!u.deactivated_at).length})
               </button>
               <button
                 onClick={() => setVerificationFilter('all')}
