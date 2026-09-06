@@ -2688,7 +2688,37 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                   Portfolio <ArrowRight className="w-4 h-4" />
                 </button>
                 </div>
-              
+
+              {/* All-time ingekocht/verkocht + huidige waarde */}
+              {walletTransactions.length > 0 && (() => {
+                let totalBuyUSD = 0;
+                let totalSellUSD = 0;
+                walletTransactions.forEach((tx) => {
+                  const btcAmount = Math.abs(tx.value) / 100000000;
+                  const usdAtTime = btcAmount * (tx.price || 0);
+                  if (tx.value > 0) totalBuyUSD += usdAtTime;
+                  else totalSellUSD += usdAtTime;
+                });
+                const walletValueNow = (walletData.balance || 0) * currentBitcoinPrice;
+                const fmt = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
+                return (
+                  <div className="grid grid-cols-3 gap-2 mb-4 pt-3 pb-3 border-t border-b border-gray-100">
+                    <div className="text-center">
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wide">Totaal ingekocht</p>
+                      <p className="text-sm font-semibold text-gray-900">{fmt(totalBuyUSD)}</p>
+                    </div>
+                    <div className="text-center border-x border-gray-100">
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wide">Totaal verkocht</p>
+                      <p className="text-sm font-semibold text-gray-900">{fmt(totalSellUSD)}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wide">Waarde nu</p>
+                      <p className="text-sm font-semibold text-orange-600">{fmt(walletValueNow)}</p>
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Laatste transacties */}
               {walletTransactions.length > 0 && (
                 <div>
@@ -2715,6 +2745,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                           <div className="flex items-center gap-2 flex-1">
                             <div className={`w-2 h-2 rounded-full ${isPending ? 'bg-yellow-500 animate-pulse' : (isIncoming ? 'bg-green-500' : 'bg-red-500')}`}></div>
                             <span className="text-xs font-medium text-gray-900">{btcAmount.toFixed(4)} BTC</span>
+                            <span className="text-xs text-gray-500">(${Math.round(btcAmount * (tx.price || 0)).toLocaleString('en-US')})</span>
                             <span className="text-xs text-gray-500">({txType})</span>
                             {isPending && (
                               <span className="text-xs text-yellow-600 font-medium">⏳ Pending</span>
