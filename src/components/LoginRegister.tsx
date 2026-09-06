@@ -18,6 +18,7 @@ export default function LoginRegister() {
     naam: '',
     email: '',
     telefoon: '',
+    leeftijd: '',
     spaargeld: '',
     ervaring: '',
     motivatie: '',
@@ -58,6 +59,13 @@ export default function LoginRegister() {
           setMessage({ type: 'error', text: result.error || 'Onjuiste e-mail of wachtwoord' });
         }
       } else if (mode === 'register') {
+        const leeftijdNum = Number(formData.leeftijd);
+        if (!formData.leeftijd || !Number.isInteger(leeftijdNum) || leeftijdNum < 1 || leeftijdNum > 120) {
+          setMessage({ type: 'error', text: 'Vul een geldige leeftijd in.' });
+          setIsLoading(false);
+          return;
+        }
+
         // Use the same API as the aanmeldformulier
         const accountResponse = await fetch('/api/create-account', {
           method: 'POST',
@@ -68,6 +76,7 @@ export default function LoginRegister() {
             email: formData.email,
             naam: formData.naam,
             telefoon: formData.telefoon,
+            leeftijd: formData.leeftijd,
             spaargeld: formData.spaargeld,
             ervaring: formData.ervaring,
             motivatie: formData.motivatie,
@@ -87,6 +96,7 @@ export default function LoginRegister() {
               naam: '',
               email: '',
               telefoon: '',
+              leeftijd: '',
               spaargeld: '',
               ervaring: '',
               motivatie: '',
@@ -324,6 +334,23 @@ export default function LoginRegister() {
                             placeholder="06-12345678"
                           />
                         </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Leeftijd *
+                        </label>
+                        <input
+                          type="number"
+                          name="leeftijd"
+                          value={formData.leeftijd}
+                          onChange={handleChange}
+                          min={1}
+                          max={120}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
+                          placeholder="30"
+                          required
+                        />
                       </div>
 
                       <div>

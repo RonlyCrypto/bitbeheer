@@ -597,6 +597,7 @@ function SignupForm() {
     achternaam: '',
     email: '',
     telefoon: '',
+    leeftijd: '',
     ervaring: '',
   });
   const [loading, setLoading] = useState(false);
@@ -612,6 +613,11 @@ function SignupForm() {
     setError('');
     if (!formData.voornaam || !formData.email) {
       setError('Vul minimaal je voornaam en e-mailadres in.');
+      return;
+    }
+    const leeftijdNum = Number(formData.leeftijd);
+    if (!formData.leeftijd || !Number.isInteger(leeftijdNum) || leeftijdNum < 1 || leeftijdNum > 120) {
+      setError('Vul een geldige leeftijd in.');
       return;
     }
     setLoading(true);
@@ -665,6 +671,11 @@ function SignupForm() {
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-1.5">Telefoonnummer <span className="text-gray-400 font-normal">(optioneel)</span></label>
         <input name="telefoon" type="tel" placeholder="+31 6 12345678" value={formData.telefoon} onChange={handleChange}
+          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-sm transition" />
+      </div>
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Leeftijd *</label>
+        <input name="leeftijd" type="number" min={1} max={120} placeholder="30" value={formData.leeftijd} onChange={handleChange}
           className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-sm transition" />
       </div>
       <div>
