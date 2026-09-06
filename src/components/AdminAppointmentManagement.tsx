@@ -968,84 +968,96 @@ export default function AdminAppointmentManagement() {
         ) : availableSlots.length === 0 ? (
           <p className="text-gray-500 text-center py-8">Nog geen beschikbare tijden. Voeg er een toe hierboven.</p>
         ) : (
-          <div className="space-y-2">
-            {(() => {
-              // Monday-start week key, so each card covers one calendar week.
-              const getWeekStart = (dateStr: string) => {
-                const d = new Date(dateStr + 'T00:00:00');
-                const day = d.getDay();
-                const diff = (day === 0 ? -6 : 1) - day;
-                d.setDate(d.getDate() + diff);
-                return d.toISOString().split('T')[0];
-              };
-
-              const weekMap = new Map<string, AvailableSlot[]>();
-              for (const slot of availableSlots) {
-                const weekStart = getWeekStart(slot.date);
-                if (!weekMap.has(weekStart)) weekMap.set(weekStart, []);
-                weekMap.get(weekStart)!.push(slot);
-              }
-              const sortedWeekStarts = Array.from(weekMap.keys()).sort();
-
-              return sortedWeekStarts.map((weekStart) => {
-                const weekSlots = weekMap.get(weekStart)!;
-                const weekStartDate = new Date(weekStart + 'T00:00:00');
-                const weekEndDate = new Date(weekStartDate);
-                weekEndDate.setDate(weekEndDate.getDate() + 6);
-                const datesInWeek = Array.from(new Set(weekSlots.map(s => s.date))).sort();
-
-                return (
-                  <div key={weekStart} className="border border-gray-200 dark:border-gray-700 rounded-lg p-2.5">
-                    <div className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5">
-                      {weekStartDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })} – {weekEndDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {datesInWeek.map((date) => {
-                        const dateObj = new Date(date + 'T00:00:00');
-                        const slotsForDate = weekSlots
-                          .filter(s => s.date === date)
-                          .sort((a, b) => a.start_time.localeCompare(b.start_time));
-
-                        return (
-                          <div key={date} className="min-w-[100px] bg-gray-50 dark:bg-gray-900/40 rounded-md px-2 py-1.5">
-                            <div className="text-[11px] font-medium text-gray-600 dark:text-gray-400 mb-1">
-                              {dayNames[dateObj.getDay()]} {dateObj.getDate()}/{dateObj.getMonth() + 1}
-                            </div>
-                            <div className="flex flex-wrap gap-1">
-                              {slotsForDate.map((slot) => {
-                                const appointment = getSlotAppointmentForSlot(slot);
-                                const isBooked = isSlotBooked(slot);
-
-                                return (
-                                  <button
-                                    key={slot.id}
-                                    onClick={() => deleteSlot(slot.id)}
-                                    title={
-                                      appointment
-                                        ? `${appointment.user_name || appointment.user_email} — ${appointment.status === 'pending' ? 'In afwachting' : 'Bevestigd'} (klik om te verwijderen)`
-                                        : 'Klik om te verwijderen'
-                                    }
-                                    className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-medium border transition-colors ${
-                                      isBooked
-                                        ? 'border-green-300 bg-green-100 text-green-800 hover:border-red-300 hover:bg-red-50 hover:text-red-700 dark:bg-green-900/30 dark:text-green-300'
-                                        : 'border-gray-200 bg-white text-gray-700 hover:border-red-300 hover:bg-red-50 hover:text-red-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300'
-                                    }`}
-                                  >
-                                    {isBooked && <CheckCircle className="w-2.5 h-2.5" />}
-                                    {slot.start_time.slice(0, 5)}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              });
-            })()}
+          <>
+          <div className="text-xs mb-2 flex items-center gap-3 text-gray-500 dark:text-gray-400">
+            <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-white border border-gray-300 inline-block" /> Vrij</span>
+            <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-green-100 border border-green-300 inline-block" /> Geboekt (naam zichtbaar)</span>
           </div>
+          <table className="w-full border-collapse text-sm">
+            <tbody>
+              {(() => {
+                // Monday-start week key, purely to insert a slim divider row
+                // between weeks -- no per-week box, so there's nothing left
+                // to leave dead white space around when a week is sparse.
+                const getWeekStart = (dateStr: string) => {
+                  const d = new Date(dateStr + 'T00:00:00');
+                  const day = d.getDay();
+                  const diff = (day === 0 ? -6 : 1) - day;
+                  d.setDate(d.getDate() + diff);
+                  return d.toISOString().split('T')[0];
+                };
+
+                const sortedDates = Array.from(new Set(availableSlots.map(s => s.date))).sort();
+                let lastWeekStart: string | null = null;
+                const rows: React.ReactNode[] = [];
+
+                sortedDates.forEach((date) => {
+                  const weekStart = getWeekStart(date);
+                  if (weekStart !== lastWeekStart) {
+                    lastWeekStart = weekStart;
+                    const weekStartDate = new Date(weekStart + 'T00:00:00');
+                    const weekEndDate = new Date(weekStartDate);
+                    weekEndDate.setDate(weekEndDate.getDate() + 6);
+                    rows.push(
+                      <tr key={`week-${weekStart}`}>
+                        <td colSpan={2} className="pt-3 pb-1 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+                          Week {weekStartDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })} – {weekEndDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </td>
+                      </tr>
+                    );
+                  }
+
+                  const dateObj = new Date(date + 'T00:00:00');
+                  const slotsForDate = availableSlots
+                    .filter(s => s.date === date)
+                    .sort((a, b) => a.start_time.localeCompare(b.start_time));
+
+                  rows.push(
+                    <tr key={date} className="border-b border-gray-100 dark:border-gray-800 last:border-b-0">
+                      <td className="py-1.5 pr-3 align-top whitespace-nowrap text-xs font-medium text-gray-500 dark:text-gray-400 w-24">
+                        {dayNames[dateObj.getDay()]} {dateObj.getDate()}/{dateObj.getMonth() + 1}
+                      </td>
+                      <td className="py-1.5">
+                        <div className="flex flex-wrap gap-1">
+                          {slotsForDate.map((slot) => {
+                            const appointment = getSlotAppointmentForSlot(slot);
+                            const isBooked = isSlotBooked(slot);
+                            const bookerName = appointment
+                              ? (appointment.user_name?.trim().split(' ')[0] || appointment.user_email?.split('@')[0])
+                              : null;
+
+                            return (
+                              <button
+                                key={slot.id}
+                                onClick={() => deleteSlot(slot.id)}
+                                title={
+                                  appointment
+                                    ? `${appointment.user_name || appointment.user_email} — ${appointment.status === 'pending' ? 'In afwachting' : 'Bevestigd'} (klik om te verwijderen)`
+                                    : 'Klik om te verwijderen'
+                                }
+                                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium border transition-colors ${
+                                  isBooked
+                                    ? 'border-green-300 bg-green-100 text-green-800 hover:border-red-300 hover:bg-red-50 hover:text-red-700 dark:bg-green-900/30 dark:text-green-300'
+                                    : 'border-gray-200 bg-white text-gray-600 hover:border-red-300 hover:bg-red-50 hover:text-red-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300'
+                                }`}
+                              >
+                                {isBooked && <CheckCircle className="w-2.5 h-2.5 flex-shrink-0" />}
+                                {slot.start_time.slice(0, 5)}
+                                {isBooked && bookerName && <span className="font-semibold">· {bookerName}</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                });
+
+                return rows;
+              })()}
+            </tbody>
+          </table>
+          </>
         )}
       </div>
 
