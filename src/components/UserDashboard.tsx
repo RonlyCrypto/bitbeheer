@@ -2671,7 +2671,7 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                       // Balance beschikbaar — toon altijd, sync-voortgang eronder
                       return (
                         <div className="flex flex-col items-center gap-1">
-                          <span className="text-sm font-semibold text-gray-700">{balance.toFixed(4)} BTC</span>
+                          <span className="text-sm font-semibold text-gray-700">{balance.toFixed(8)} BTC</span>
                           {isSyncing && (
                             <div className="flex flex-col items-center gap-0.5">
                               <div className="w-24 h-1 bg-gray-100 rounded-full overflow-hidden">
@@ -2756,8 +2756,8 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
                         <div key={tx.hash || index} className={`flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 transition-colors ${isPending ? 'bg-yellow-50 border border-yellow-200' : 'bg-gray-50'}`}>
                           <div className="flex items-center gap-2 flex-1">
                             <div className={`w-2 h-2 rounded-full ${isPending ? 'bg-yellow-500 animate-pulse' : (isIncoming ? 'bg-green-500' : 'bg-red-500')}`}></div>
-                            <span className="text-xs font-medium text-gray-900">{btcAmount.toFixed(4)} BTC</span>
-                            <span className="text-xs text-gray-500">(${Math.round(btcAmount * (tx.price || 0)).toLocaleString('en-US')})</span>
+                            <span className="text-xs font-medium text-gray-900">{btcAmount.toFixed(8)} BTC</span>
+                            <span className="text-xs text-gray-500">(${(btcAmount * (tx.price || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
                             <span className="text-xs text-gray-500">({txType})</span>
                             {isPending && (
                               <span className="text-xs text-yellow-600 font-medium">⏳ Pending</span>

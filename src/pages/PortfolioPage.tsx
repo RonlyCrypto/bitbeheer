@@ -990,7 +990,7 @@ export default function PortfolioPage() {
                 <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">BTC Saldo</span>
               </div>
               <p className="text-2xl font-bold text-gray-900 leading-none">
-                {showBalances ? totalBalance.toFixed(4) : '••••'}
+                {showBalances ? totalBalance.toFixed(8) : '••••'}
               </p>
               <p className="text-xs text-gray-400 mt-1">
                 Bitcoin saldo
@@ -1050,7 +1050,7 @@ export default function PortfolioPage() {
                     {showBalances ? `$${totalSoldValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '••••'}
                   </p>
                   <p className="text-[10px] text-gray-400 mt-1">
-                    Verkocht{totalSoldBtc > 0 ? ` · ${totalSoldBtc.toFixed(4)} BTC` : ''}
+                    Verkocht{totalSoldBtc > 0 ? ` · ${totalSoldBtc.toFixed(8)} BTC` : ''}
                   </p>
                 </div>
               </div>
@@ -1275,7 +1275,7 @@ export default function PortfolioPage() {
                               </button>
                               <span className="text-xs text-gray-500">•</span>
                               <span className="text-xs font-semibold text-gray-900">
-                                {showBalances ? `${(wallet.balance || 0).toFixed(4)} BTC` : '•••• BTC'}
+                                {showBalances ? `${(wallet.balance || 0).toFixed(8)} BTC` : '•••• BTC'}
                               </span>
                             </div>
                     </div>
@@ -1465,7 +1465,7 @@ export default function PortfolioPage() {
                       ? 'bg-green-100 text-green-700' 
                       : 'bg-red-100 text-red-700'
                   }`}>
-                    {totalProfit >= 0 ? '+' : ''}${totalProfit.toLocaleString('en-US')} totaal
+                    {totalProfit >= 0 ? '+' : ''}${totalProfit.toLocaleString('en-US', { maximumFractionDigits: 0 })} totaal
                   </div>
                 </div>
               </div>
@@ -1859,7 +1859,7 @@ export default function PortfolioPage() {
                         {walletToDelete.address.slice(0, 12)}...{walletToDelete.address.slice(-12)}
                       </p>
                       <p className="text-sm text-red-700">
-                        Saldo: <span className="font-semibold">{walletToDelete.balance.toFixed(4)} BTC</span>
+                        Saldo: <span className="font-semibold">{walletToDelete.balance.toFixed(8)} BTC</span>
                       </p>
                     </div>
                   </div>

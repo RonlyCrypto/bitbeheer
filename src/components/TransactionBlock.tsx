@@ -531,7 +531,7 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
             Gekocht
           </p>
             <p className="text-[10px] text-gray-500 mt-0.5">
-              {transaction.valueInBTC?.toFixed(4) || (transaction.value / 100000000).toFixed(4)} BTC
+              {transaction.valueInBTC?.toFixed(8) || (transaction.value / 100000000).toFixed(8)} BTC
             </p>
         </div>
       </div>
@@ -588,7 +588,7 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
               Verkocht
             </p>
             <p className="text-[10px] text-gray-500 mt-0.5">
-              Wallet na verkoop: {balanceAfter.toFixed(4)} BTC
+              Wallet na verkoop: {balanceAfter.toFixed(8)} BTC
             </p>
           </div>
         </div>
