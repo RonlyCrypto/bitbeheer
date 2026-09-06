@@ -20,6 +20,7 @@ import { Link } from 'react-router-dom';
 import PortfolioChart from '../components/PortfolioChart';
 import TransactionBlock from '../components/TransactionBlock';
 import TransactionDetailsPopup from '../components/TransactionDetailsPopup';
+import TransactionOverrideModal from '../components/TransactionOverrideModal';
 import CurrencyToggle from '../components/CurrencyToggle';
 import CycleAdvisorWidget from '../components/CycleAdvisorWidget';
 import BitcoinMilestones from '../components/BitcoinMilestones';
@@ -29,6 +30,7 @@ import { supabase } from '../lib/supabase';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { computeFifoMatches, txKey } from '../utils/fifoMatching';
+import { getOverridesForWallet, saveTransactionOverride, TransactionOverride } from '../services/transactionOverrideService';
 
 interface WalletData {
   id: string;
@@ -70,6 +72,7 @@ export default function PortfolioPage() {
     });
   };
   const [selectedTransaction, setSelectedTransaction] = useState<BitcoinTransaction | null>(null);
+  const [editingOverrideTx, setEditingOverrideTx] = useState<BitcoinTransaction | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -106,9 +109,81 @@ export default function PortfolioPage() {
   const [walletRefreshing, setWalletRefreshing] = useState<Map<string, boolean>>(new Map());
 
   // Get effective user email (considering impersonation)
-  const effectiveUserEmail = (isImpersonating && impersonatedUser) 
-    ? impersonatedUser 
+  const effectiveUserEmail = (isImpersonating && impersonatedUser)
+    ? impersonatedUser
     : user?.email;
+
+  // Manual per-transaction overrides (exchange label / price / note), see
+  // src/services/transactionOverrideService.ts. Kept in a ref so the merge
+  // helper below can be called from stale closures (background sync, "load
+  // more") without becoming a dependency of every effect that touches it.
+  const overridesMapRef = useRef<Map<string, TransactionOverride>>(new Map());
+
+  const applyTransactionOverrides = (transactions: BitcoinTransaction[]): BitcoinTransaction[] => {
+    if (overridesMapRef.current.size === 0) return transactions;
+    return transactions.map(tx => {
+      const override = overridesMapRef.current.get(txKey(tx));
+      if (!override) return tx;
+
+      const valueInBTC = Math.abs(tx.value) / 100000000;
+      const isSend = tx.value < 0;
+      const price = override.priceOverride ?? tx.price;
+      const currentValueUSD = valueInBTC * currentPrice;
+      const profit = isSend
+        ? -(currentValueUSD - valueInBTC * price)
+        : currentValueUSD - valueInBTC * price;
+      const profitPercent = price > 0 ? ((currentPrice - price) / price) * 100 : 0;
+
+      return {
+        ...tx,
+        price,
+        currentValue: isSend ? -currentValueUSD : currentValueUSD,
+        profit,
+        profitPercent,
+        priceOverridden: override.priceOverride != null,
+        exchangeLabel: override.exchangeLabel,
+        note: override.note,
+      };
+    });
+  };
+
+  // Load overrides whenever the wallet list changes, then re-apply them to
+  // whatever transactions are already loaded.
+  useEffect(() => {
+    const loadOverrides = async () => {
+      if (!effectiveUserEmail || wallets.length === 0) {
+        overridesMapRef.current = new Map();
+        return;
+      }
+      const map = new Map<string, TransactionOverride>();
+      for (const wallet of wallets) {
+        if (!wallet.address) continue;
+        const walletOverrides = await getOverridesForWallet(effectiveUserEmail, wallet.address);
+        walletOverrides.forEach((value, key) => map.set(key, value));
+      }
+      overridesMapRef.current = map;
+      setAllTransactions(prev => applyTransactionOverrides(prev));
+    };
+    loadOverrides();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveUserEmail, wallets.map(w => w.address).join(',')]);
+
+  const handleSaveOverride = async (data: { exchangeLabel?: string; priceOverride?: number; note?: string }) => {
+    if (!editingOverrideTx || !effectiveUserEmail) return;
+    const wallet = wallets.find(w =>
+      w.realData?.transactions?.some(t => t.hash === editingOverrideTx.hash && t.time === editingOverrideTx.time)
+    );
+    if (!wallet?.address) return;
+
+    const ok = await saveTransactionOverride(effectiveUserEmail, wallet.address, editingOverrideTx.hash, editingOverrideTx.time, data);
+    if (ok) {
+      overridesMapRef.current.set(txKey(editingOverrideTx), data);
+      setAllTransactions(prev => applyTransactionOverrides(prev));
+      showToast('Transactie bijgewerkt', 'success');
+    } else {
+      showToast('Opslaan mislukt, probeer het opnieuw', 'error');
+    }
+  };
 
   // Close filter dropdown when clicking outside
   useEffect(() => {
@@ -326,7 +401,7 @@ export default function PortfolioPage() {
       }
       const unique = removeDuplicateTransactions(allTx);
       console.log(`📊 Totaal unieke transacties: ${unique.length} van ${allTx.length} totaal`);
-      setAllTransactions(unique);
+      setAllTransactions(applyTransactionOverrides(unique));
     };
 
     updateTransactions();
@@ -485,8 +560,8 @@ export default function PortfolioPage() {
                 confirmations: tx.confirmations
               })) as BitcoinTransaction[]);
             });
-            setAllTransactions(removeDuplicateTransactions(allTx));
-            
+            setAllTransactions(applyTransactionOverrides(removeDuplicateTransactions(allTx)));
+
             console.log(`✅ Sync compleet: ${allTx.length} transacties geladen en getoond`);
           }
         } catch (error) {
@@ -513,7 +588,7 @@ export default function PortfolioPage() {
               const moreData = await bitcoinApiService.getTransactionsPage(wallet.realData.address, nextPage, itemsPerPage);
               
               if (moreData.length > 0) {
-                setAllTransactions(prev => removeDuplicateTransactions([...prev, ...moreData]));
+                setAllTransactions(prev => applyTransactionOverrides(removeDuplicateTransactions([...prev, ...moreData])));
                 console.log(`✅ Loaded ${moreData.length} more transactions`);
               } else {
                 console.log('✓ No more transactions to load');
@@ -1602,6 +1677,7 @@ export default function PortfolioPage() {
                       allTransactions={allTransactions}
                           buyFifo={buyFifo}
                           sellFifo={sellFifo}
+                          onEditOverride={setEditingOverrideTx}
                     />
                       );
                     });
@@ -1769,6 +1845,14 @@ export default function PortfolioPage() {
             buyFifo={fifoMatches.buys.get(txKey(selectedTransaction))}
             sellFifo={fifoMatches.sells.get(txKey(selectedTransaction))}
           />
+          )}
+
+          {editingOverrideTx && (
+            <TransactionOverrideModal
+              transaction={editingOverrideTx}
+              onClose={() => setEditingOverrideTx(null)}
+              onSave={handleSaveOverride}
+            />
           )}
         </div>
       </div>

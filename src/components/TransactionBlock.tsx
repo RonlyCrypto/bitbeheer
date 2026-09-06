@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TrendingUp, TrendingDown, Calendar, Hash, Coins, DollarSign, CheckCircle, Copy, Check, ExternalLink } from 'lucide-react';
+import { TrendingUp, TrendingDown, Calendar, Hash, Coins, DollarSign, CheckCircle, Copy, Check, ExternalLink, Pencil } from 'lucide-react';
 import { BitcoinTransaction } from '../services/bitcoinApiService';
 import { BuyFifoSummary, SellFifoSummary } from '../utils/fifoMatching';
 
@@ -10,9 +10,10 @@ interface TransactionBlockProps {
   allTransactions?: BitcoinTransaction[]; // Alle transacties voor balance tracking
   buyFifo?: BuyFifoSummary; // FIFO-matched sold/held breakdown, only set when this is a buy
   sellFifo?: SellFifoSummary; // FIFO-matched cost basis, only set when this is a sell
+  onEditOverride?: (transaction: BitcoinTransaction) => void; // Open the exchange/prijs/notitie-editor
 }
 
-export default function TransactionBlock({ transaction, index, onTransactionClick, allTransactions = [], buyFifo, sellFifo }: TransactionBlockProps) {
+export default function TransactionBlock({ transaction, index, onTransactionClick, allTransactions = [], buyFifo, sellFifo, onEditOverride }: TransactionBlockProps) {
   const [copiedHash, setCopiedHash] = useState(false);
 
   // Determine if this is a buy or sell
@@ -266,8 +267,37 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
               >
                 <ExternalLink className="w-4 h-4" />
               </button>
+              {onEditOverride && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditOverride(transaction);
+                  }}
+                  className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Exchange / prijs / notitie toevoegen"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
+          {(transaction.exchangeLabel || transaction.note || transaction.priceOverridden) && (
+            <div className="flex flex-wrap items-center gap-1.5 mt-1">
+              {transaction.exchangeLabel && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 font-medium">
+                  {transaction.exchangeLabel}
+                </span>
+              )}
+              {transaction.priceOverridden && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700 font-medium">
+                  Prijs handmatig aangepast
+                </span>
+              )}
+              {transaction.note && (
+                <span className="text-[10px] text-gray-500 italic">{transaction.note}</span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

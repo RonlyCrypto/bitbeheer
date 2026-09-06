@@ -15,6 +15,9 @@ export interface BitcoinTransaction {
   confirmations?: number; // Number of confirmations
   toAddresses?: string[]; // Outgoing (sent) tx only: external addresses the BTC went to
   fromAddresses?: string[]; // Incoming (received) tx only: external addresses the BTC came from
+  exchangeLabel?: string; // User-set label, e.g. "Bitvavo" -- informational only
+  priceOverridden?: boolean; // True when `price` was manually set instead of looked up
+  note?: string; // User-set note
 }
 
 export interface BitcoinWallet {
