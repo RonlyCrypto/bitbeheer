@@ -25,7 +25,6 @@ import { PermissionsProvider } from './contexts/PermissionsContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { ProfilePopupProvider } from './contexts/ProfilePopupContext';
 import ImpersonationBanner from './components/ImpersonationBanner';
-import SystemStatusDebug from './components/SystemStatusDebug';
 import MobileBottomNav from './components/MobileBottomNav';
 import { initVisitorTracking } from './utils/visitorTracking';
 import { initBitcoinPriceTracking } from './lib/initPriceTracking';
@@ -47,9 +46,6 @@ function AppContent() {
 
           {/* Global Impersonation Banner - Show on all routes when impersonating */}
           <ImpersonationBanner />
-          
-          {/* System Status Debug */}
-          <SystemStatusDebug />
 
           <Routes>
                 {/* Root route: show dashboard if logged in, otherwise show front page */}
