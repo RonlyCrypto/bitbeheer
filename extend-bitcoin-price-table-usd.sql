@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS public.bitcoin_price_history (
 
 -- Create indexes for fast queries
 CREATE INDEX IF NOT EXISTS idx_bitcoin_price_history_timestamp ON public.bitcoin_price_history(timestamp);
-CREATE INDEX IF NOT EXISTS idx_bitcoin_price_history_date ON public.bitcoin_price_history(DATE(timestamp));
+CREATE INDEX IF NOT EXISTS idx_bitcoin_price_history_date ON public.bitcoin_price_history(((timestamp AT TIME ZONE 'UTC')::date));
 
 -- Enable RLS
 ALTER TABLE public.bitcoin_price_history ENABLE ROW LEVEL SECURITY;

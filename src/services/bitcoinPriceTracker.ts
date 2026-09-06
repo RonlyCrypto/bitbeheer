@@ -81,18 +81,11 @@ class BitcoinPriceTracker {
    */
   async saveHourlyPrice(priceData: PriceData): Promise<boolean> {
     try {
-      const { error } = await supabase
-        .from('bitcoin_price_history')
-        .insert([
-          {
-            timestamp: new Date().toISOString(),
-            price_usd: priceData.price_usd,
-            price_eur: priceData.price_eur,
-            volume_24h: priceData.volume_24h,
-            market_cap: priceData.market_cap,
-            price_change_24h: priceData.price_change_24h
-          }
-        ]);
+      // Writes go through an Edge Function (service role) — the browser only has
+      // read access to bitcoin_price_history via RLS.
+      const { error } = await supabase.functions.invoke('save-bitcoin-price', {
+        body: { type: 'hourly', priceData }
+      });
 
       if (error) {
         console.error('❌ Error saving hourly price:', error);
@@ -112,25 +105,11 @@ class BitcoinPriceTracker {
    */
   async saveDailyPrice(date: string, priceData: PriceData): Promise<boolean> {
     try {
-      const { error } = await supabase
-        .from('bitcoin_price_data')
-        .upsert(
-          [
-            {
-              date: date,
-              timestamp: new Date(date).getTime() / 1000,
-              price_usd: priceData.price_usd,
-              price_eur: priceData.price_eur,
-              volume: priceData.volume_24h,
-              market_cap: priceData.market_cap,
-              volume_usd: priceData.volume_24h,
-              market_cap_usd: priceData.market_cap,
-              price_change_24h: priceData.price_change_24h,
-              year: new Date(date).getFullYear()
-            }
-          ],
-          { onConflict: 'date' }
-        );
+      // Writes go through an Edge Function (service role) — the browser only has
+      // read access to bitcoin_price_data via RLS.
+      const { error } = await supabase.functions.invoke('save-bitcoin-price', {
+        body: { type: 'daily', date, priceData }
+      });
 
       if (error) {
         console.error(`❌ Error saving daily price for ${date}:`, error);
