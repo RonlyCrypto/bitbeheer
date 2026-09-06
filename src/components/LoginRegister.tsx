@@ -102,8 +102,17 @@ export default function LoginRegister() {
           });
         }
       } else if (mode === 'reset') {
-        // Password reset functionality will be implemented
-        setMessage({ type: 'success', text: 'Wachtwoord reset functionaliteit wordt binnenkort toegevoegd.' });
+        const resetResponse = await fetch('/api/request-password-reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const result = await resetResponse.json();
+        setMessage({
+          type: 'success',
+          text: result.message || 'Als dit e-mailadres bekend is, ontvang je een e-mail met instructies.'
+        });
+        setEmail('');
       }
     } catch (error) {
       console.error('Form submission error:', error);
@@ -249,6 +258,13 @@ export default function LoginRegister() {
                           {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                         </button>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => { setMode('reset'); setMessage(null); }}
+                        className="mt-2 text-sm text-orange-600 hover:text-orange-700"
+                      >
+                        Wachtwoord vergeten?
+                      </button>
                     </div>
                   </>
                 ) : mode === 'register' ? (
@@ -383,6 +399,9 @@ export default function LoginRegister() {
                 ) : (
                   // Password Reset Form
                   <>
+                    <p className="text-sm text-gray-600">
+                      Vul je e-mailadres in. Als er een account bestaat, sturen we een link om je wachtwoord opnieuw in te stellen.
+                    </p>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         E-mailadres
@@ -400,6 +419,13 @@ export default function LoginRegister() {
                         />
                       </div>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => { setMode('login'); setMessage(null); }}
+                      className="text-sm text-orange-600 hover:text-orange-700"
+                    >
+                      ← Terug naar inloggen
+                    </button>
                   </>
                 )}
 

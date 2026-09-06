@@ -13,6 +13,7 @@ import AdminDashboard from './components/AdminDashboard';
 import UserDashboard from './components/UserDashboard';
 import DatabaseTest from './components/DatabaseTest';
 import VerifyEmailPage from './pages/VerifyEmailPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import WelcomePopup from './components/WelcomePopup';
 import ProtectedRoute from './components/ProtectedRoute';
 import SiteAccessControl from './components/SiteAccessControl';
@@ -113,9 +114,13 @@ function AppContent() {
                           path="/database-test" 
                           element={<DatabaseTest />}
                         />
-                        <Route 
-                          path="/verify-email" 
+                        <Route
+                          path="/verify-email"
                           element={<VerifyEmailPage />}
+                        />
+                        <Route
+                          path="/reset-password"
+                          element={<ResetPasswordPage />}
                         />
                         {/* Catch-all route for 404 handling */}
                         <Route 

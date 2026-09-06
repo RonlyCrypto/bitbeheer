@@ -1,62 +1,69 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 
 export default function VerifyEmailPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'expired'>('loading');
-  const [message, setMessage] = useState('');
+  const token = searchParams.get('token');
+  const email = searchParams.get('email');
 
-  useEffect(() => {
-    const verifyEmail = async () => {
-      const token = searchParams.get('token');
-      const email = searchParams.get('email');
+  const [status, setStatus] = useState<'form' | 'submitting' | 'success' | 'error' | 'expired'>(
+    token && email ? 'form' : 'error'
+  );
+  const [message, setMessage] = useState(
+    token && email ? '' : 'Ongeldige verificatie link'
+  );
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [formError, setFormError] = useState('');
 
-      if (!token || !email) {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError('');
+
+    if (password.length < 8) {
+      setFormError('Je wachtwoord moet minstens 8 tekens lang zijn.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setFormError('De wachtwoorden komen niet overeen.');
+      return;
+    }
+
+    setStatus('submitting');
+
+    try {
+      const response = await fetch('/api/verify-email-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, email, password }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setStatus('success');
+        setMessage('Je account is succesvol geactiveerd! Je kunt nu inloggen met je nieuwe wachtwoord.');
+        setTimeout(() => {
+          navigate('/');
+        }, 3000);
+      } else if (result.expired) {
+        setStatus('expired');
+        setMessage('De verificatie link is verlopen. Neem contact op voor een nieuwe link.');
+      } else {
         setStatus('error');
-        setMessage('Ongeldige verificatie link');
-        return;
+        setMessage(result.error || 'Er is een fout opgetreden bij het verifiëren van je account.');
       }
-
-      try {
-        const response = await fetch('/api/verify-email-token', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ token, email }),
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          setStatus('success');
-          setMessage('Je account is succesvol geactiveerd! Je kunt nu inloggen.');
-          
-          // Redirect to login after 3 seconds
-          setTimeout(() => {
-            navigate('/');
-          }, 3000);
-        } else if (result.expired) {
-          setStatus('expired');
-          setMessage('De verificatie link is verlopen. Neem contact op voor een nieuwe link.');
-        } else {
-          setStatus('error');
-          setMessage(result.error || 'Er is een fout opgetreden bij het verifiëren van je account.');
-        }
-      } catch (error) {
-        console.error('Verification error:', error);
-        setStatus('error');
-        setMessage('Er is een onverwachte fout opgetreden.');
-      }
-    };
-
-    verifyEmail();
-  }, [searchParams, navigate]);
+    } catch (error) {
+      console.error('Verification error:', error);
+      setStatus('error');
+      setMessage('Er is een onverwachte fout opgetreden.');
+    }
+  };
 
   const getStatusIcon = () => {
     switch (status) {
-      case 'loading':
+      case 'submitting':
         return '⏳';
       case 'success':
         return '✅';
@@ -65,13 +72,13 @@ export default function VerifyEmailPage() {
       case 'expired':
         return '⏰';
       default:
-        return '⏳';
+        return '🔐';
     }
   };
 
   const getStatusColor = () => {
     switch (status) {
-      case 'loading':
+      case 'submitting':
         return 'text-blue-600';
       case 'success':
         return 'text-green-600';
@@ -80,7 +87,7 @@ export default function VerifyEmailPage() {
       case 'expired':
         return 'text-orange-600';
       default:
-        return 'text-blue-600';
+        return 'text-gray-900';
     }
   };
 
@@ -90,18 +97,57 @@ export default function VerifyEmailPage() {
         <div className="text-center">
           <div className="text-6xl mb-4">{getStatusIcon()}</div>
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            Email Verificatie
+            Account activeren
           </h2>
-          <p className={`mt-2 text-lg ${getStatusColor()}`}>
-            {message}
-          </p>
+          {message && (
+            <p className={`mt-2 text-lg ${getStatusColor()}`}>
+              {message}
+            </p>
+          )}
         </div>
 
-        {status === 'loading' && (
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
-            <p className="mt-2 text-sm text-gray-600">Je account wordt geactiveerd...</p>
-          </div>
+        {(status === 'form' || status === 'submitting') && (
+          <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-4">
+            <p className="text-sm text-gray-600">
+              Kies een wachtwoord om je account te activeren en direct in te kunnen loggen.
+            </p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Wachtwoord</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                minLength={8}
+                required
+                autoComplete="new-password"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="Minstens 8 tekens"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Bevestig wachtwoord</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                minLength={8}
+                required
+                autoComplete="new-password"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="Herhaal je wachtwoord"
+              />
+            </div>
+            {formError && (
+              <p className="text-sm text-red-600">{formError}</p>
+            )}
+            <button
+              type="submit"
+              disabled={status === 'submitting'}
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50"
+            >
+              {status === 'submitting' ? 'Bezig met activeren...' : 'Account activeren'}
+            </button>
+          </form>
         )}
 
         {status === 'success' && (

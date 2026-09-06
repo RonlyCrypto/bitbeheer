@@ -135,7 +135,12 @@ module.exports = async (req, res) => {
       last_login: null,
       login_count: 0,
       is_admin: false,
-      is_test: false
+      is_test: false,
+      // Without these, /api/verify-email-token can never find a matching
+      // row -- it queries accounts.verification_token, not users.verification_token.
+      verification_token: verificationToken,
+      verification_token_created: new Date().toISOString(),
+      verification_expires: verificationExpires.toISOString()
     };
 
     console.log('Creating account in accounts table:', accountData);

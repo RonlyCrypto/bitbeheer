@@ -18,12 +18,19 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { token, email } = req.body;
+    const { token, email, password } = req.body;
 
     if (!token || !email) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Token en email zijn verplicht' 
+      return res.status(400).json({
+        success: false,
+        error: 'Token en email zijn verplicht'
+      });
+    }
+
+    if (!password || password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        error: 'Kies een wachtwoord van minstens 8 tekens'
       });
     }
 
@@ -81,6 +88,37 @@ module.exports = async (req, res) => {
       });
     }
 
+    // Create the real login account. Until now nothing created a Supabase
+    // Auth identity for self-registered users -- they had no way to ever
+    // log in, since sign-in only checks Supabase Auth, not accounts.password_hash.
+    let authUserId = account.auth_user_id || null;
+    if (!authUserId) {
+      const { data: authData, error: authCreateError } = await supabase.auth.admin.createUser({
+        email: account.email,
+        password,
+        email_confirm: true,
+        user_metadata: { name: account.name }
+      });
+
+      if (authCreateError) {
+        // If a Supabase Auth user with this email already exists (e.g. a
+        // retried activation), look it up instead of failing the whole flow.
+        if (authCreateError.message?.toLowerCase().includes('already') ) {
+          const { data: existingUsers } = await supabase.auth.admin.listUsers();
+          const existing = existingUsers?.users?.find(u => u.email?.toLowerCase() === account.email.toLowerCase());
+          authUserId = existing?.id || null;
+        } else {
+          console.error('Error creating auth user:', authCreateError);
+          return res.status(500).json({
+            success: false,
+            error: 'Kon geen inlog-account aanmaken. Probeer het opnieuw of neem contact op.'
+          });
+        }
+      } else {
+        authUserId = authData.user.id;
+      }
+    }
+
     // Update account to verified and set status to actief
     const { error: updateError } = await supabase
       .from('accounts')
@@ -88,7 +126,8 @@ module.exports = async (req, res) => {
         email_verified: true,
         verified_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        actief: true // Set status to actief when email is verified
+        actief: true, // Set status to actief when email is verified
+        auth_user_id: authUserId
       })
       .eq('id', account.id);
 
