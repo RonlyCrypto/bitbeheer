@@ -1033,7 +1033,11 @@ export default function AdminAppointmentManagement() {
                     </div>
                     <div className="grid grid-cols-7 gap-2">
                       {days.map((dateObj) => {
-                        const dateStr = dateObj.toISOString().split('T')[0];
+                        // Not toISOString() -- these Date objects are anchored
+                        // to local midnight, and toISOString() converts to
+                        // UTC, which shifts the date back a day in any
+                        // timezone ahead of UTC (e.g. NL in summer, UTC+2).
+                        const dateStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
                         const slotsForDate = availableSlots
                           .filter(s => s.date === dateStr)
                           .sort((a, b) => a.start_time.localeCompare(b.start_time));
