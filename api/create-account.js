@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
       achternaam: achternaamRaw,
       naam,
       telefoon,
-      leeftijd,
+      geboortejaar,
       locatie,
       spaargeld,
       ervaring,
@@ -163,7 +163,11 @@ module.exports = async (req, res) => {
       first_name: voornaam.trim(),
       last_name: achternaam.trim(),
       phone: telefoon || null,
-      age: Number.isInteger(Number(leeftijd)) && Number(leeftijd) > 0 ? Number(leeftijd) : null,
+      birth_year: (() => {
+        const year = Number(geboortejaar);
+        const currentYear = new Date().getFullYear();
+        return Number.isInteger(year) && year >= 1900 && year <= currentYear ? year : null;
+      })(),
       location: locatie || null,
       company: bedrijf || null,
       experience_level: ervaring || null,

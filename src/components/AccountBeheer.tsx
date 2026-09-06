@@ -29,8 +29,13 @@ interface UserAccount {
   account_approved?: boolean;
   first_appointment_completed?: boolean;
   deactivated_at?: string | null;
-  age?: number | null;
+  birth_year?: number | null;
 }
+
+const calculateAge = (birthYear?: number | null): number | null => {
+  if (birthYear == null) return null;
+  return new Date().getFullYear() - birthYear;
+};
 
 export default function AccountBeheer() {
   const [users, setUsers] = useState<UserAccount[]>([]);
@@ -729,7 +734,7 @@ export default function AccountBeheer() {
                           )}
                           <div className="flex items-center gap-2 md:gap-4 text-[10px] md:text-xs text-gray-400 flex-wrap">
                             <span>Aangemeld: {user.registrationDate || user.date}</span>
-                            {user.age != null && <span>Leeftijd: {user.age}</span>}
+                            {user.birth_year != null && <span>Leeftijd: {calculateAge(user.birth_year)} ({user.birth_year})</span>}
                             {user.lastLogin && (
                               <span>Laatste login: {user.lastLogin}</span>
                             )}
@@ -886,7 +891,7 @@ export default function AccountBeheer() {
                             )}
                             <div className="flex items-center gap-4 text-xs text-gray-400">
                               <span>Aangemeld: {user.registrationDate || user.date}</span>
-                            {user.age != null && <span>Leeftijd: {user.age}</span>}
+                            {user.birth_year != null && <span>Leeftijd: {calculateAge(user.birth_year)} ({user.birth_year})</span>}
                               {user.lastLogin && (
                                 <span>Laatste login: {user.lastLogin}</span>
                               )}
@@ -994,7 +999,7 @@ export default function AccountBeheer() {
                             )}
                             <div className="flex items-center gap-4 text-xs text-gray-400">
                               <span>Aangemeld: {user.registrationDate || user.date}</span>
-                            {user.age != null && <span>Leeftijd: {user.age}</span>}
+                            {user.birth_year != null && <span>Leeftijd: {calculateAge(user.birth_year)} ({user.birth_year})</span>}
                               {user.lastLogin && (
                                 <span>Laatste login: {user.lastLogin}</span>
                               )}
@@ -1134,7 +1139,7 @@ export default function AccountBeheer() {
                             )}
                             <div className="flex items-center gap-4 text-xs text-gray-400">
                               <span>Aangemeld: {user.registrationDate || user.date}</span>
-                            {user.age != null && <span>Leeftijd: {user.age}</span>}
+                            {user.birth_year != null && <span>Leeftijd: {calculateAge(user.birth_year)} ({user.birth_year})</span>}
                               <span className="text-red-500 font-medium">Verlopen op: {new Date(new Date(user.created_at || user.timestamp || user.registrationDate || Date.now()).getTime() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('nl-NL')}</span>
                             </div>
                             <div className="mt-2 flex items-center gap-2">
@@ -1228,7 +1233,7 @@ export default function AccountBeheer() {
                             )}
                             <div className="flex items-center gap-4 text-xs text-gray-400">
                               <span>Aangemeld: {user.registrationDate || user.date}</span>
-                            {user.age != null && <span>Leeftijd: {user.age}</span>}
+                            {user.birth_year != null && <span>Leeftijd: {calculateAge(user.birth_year)} ({user.birth_year})</span>}
                               <span className="text-gray-500 font-medium">
                                 Verwijderd op: {user.deactivated_at ? new Date(user.deactivated_at).toLocaleDateString('nl-NL') : '-'}
                               </span>
@@ -1414,7 +1419,9 @@ export default function AccountBeheer() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Leeftijd</label>
-                      <p className="text-gray-900">{selectedUser.age != null ? selectedUser.age : '-'}</p>
+                      <p className="text-gray-900">
+                        {selectedUser.birth_year != null ? `${calculateAge(selectedUser.birth_year)} (${selectedUser.birth_year})` : '-'}
+                      </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Categorie</label>

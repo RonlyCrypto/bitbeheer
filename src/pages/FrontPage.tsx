@@ -597,7 +597,7 @@ function SignupForm() {
     achternaam: '',
     email: '',
     telefoon: '',
-    leeftijd: '',
+    geboortejaar: '',
     ervaring: '',
   });
   const [loading, setLoading] = useState(false);
@@ -615,9 +615,10 @@ function SignupForm() {
       setError('Vul minimaal je voornaam en e-mailadres in.');
       return;
     }
-    const leeftijdNum = Number(formData.leeftijd);
-    if (!formData.leeftijd || !Number.isInteger(leeftijdNum) || leeftijdNum < 1 || leeftijdNum > 120) {
-      setError('Vul een geldige leeftijd in.');
+    const geboortejaarNum = Number(formData.geboortejaar);
+    const currentYear = new Date().getFullYear();
+    if (!formData.geboortejaar || !Number.isInteger(geboortejaarNum) || geboortejaarNum < 1900 || geboortejaarNum > currentYear) {
+      setError('Vul een geldig geboortejaar in.');
       return;
     }
     setLoading(true);
@@ -674,8 +675,8 @@ function SignupForm() {
           className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-sm transition" />
       </div>
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Leeftijd *</label>
-        <input name="leeftijd" type="number" min={1} max={120} placeholder="30" value={formData.leeftijd} onChange={handleChange}
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Geboortejaar *</label>
+        <input name="geboortejaar" type="number" min={1900} max={new Date().getFullYear()} placeholder="1990" value={formData.geboortejaar} onChange={handleChange}
           className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-sm transition" />
       </div>
       <div>

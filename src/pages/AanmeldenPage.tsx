@@ -9,7 +9,7 @@ export default function AanmeldenPage() {
     achternaam: '',
     email: '',
     telefoon: '',
-    leeftijd: '',
+    geboortejaar: '',
     locatie: '',
     spaargeld: '',
     ervaring: '',
@@ -49,11 +49,11 @@ export default function AanmeldenPage() {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!formData.voornaam?.trim()) newErrors.voornaam = true;
       if (!formData.achternaam?.trim()) newErrors.achternaam = true;
-      if (!formData.locatie?.trim()) newErrors.locatie = true;
       if (!formData.email?.trim() || !emailRegex.test(formData.email)) newErrors.email = true;
       if (!formData.telefoon?.trim()) newErrors.telefoon = true;
-      const leeftijdNum = Number(formData.leeftijd);
-      if (!formData.leeftijd?.trim() || !Number.isInteger(leeftijdNum) || leeftijdNum < 1 || leeftijdNum > 120) newErrors.leeftijd = true;
+      const geboortejaarNum = Number(formData.geboortejaar);
+      const currentYear = new Date().getFullYear();
+      if (!formData.geboortejaar?.trim() || !Number.isInteger(geboortejaarNum) || geboortejaarNum < 1900 || geboortejaarNum > currentYear) newErrors.geboortejaar = true;
 
       if (Object.keys(newErrors).length > 0) {
         setFieldErrors(newErrors);
@@ -78,7 +78,7 @@ export default function AanmeldenPage() {
           voornaam: formData.voornaam,
           achternaam: formData.achternaam,
           telefoon: formData.telefoon,
-          leeftijd: formData.leeftijd,
+          geboortejaar: formData.geboortejaar,
           locatie: formData.locatie,
           spaargeld: formData.spaargeld,
           ervaring: formData.ervaring,
@@ -271,14 +271,13 @@ export default function AanmeldenPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Locatie *
+                      Locatie <span className="text-gray-400 font-normal">(optioneel)</span>
                     </label>
                     <input
                       type="text"
                       name="locatie"
                       value={formData.locatie}
                       onChange={handleChange}
-                      required
                       list="nl-cities"
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${fieldErrors.locatie ? 'bb-error-field' : 'border-gray-300'}`}
                       placeholder="Stad, Land"
@@ -314,18 +313,18 @@ export default function AanmeldenPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Leeftijd *
+                      Geboortejaar *
                     </label>
                     <input
                       type="number"
-                      name="leeftijd"
-                      value={formData.leeftijd}
+                      name="geboortejaar"
+                      value={formData.geboortejaar}
                       onChange={handleChange}
                       required
-                      min={1}
-                      max={120}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${fieldErrors.leeftijd ? 'bb-error-field' : 'border-gray-300'}`}
-                      placeholder="30"
+                      min={1900}
+                      max={new Date().getFullYear()}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${fieldErrors.geboortejaar ? 'bb-error-field' : 'border-gray-300'}`}
+                      placeholder="1990"
                     />
                   </div>
                 </div>
