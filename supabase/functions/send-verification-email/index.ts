@@ -48,28 +48,32 @@ serve(async (req) => {
             <h1>🚀 Welkom bij BitBeheer!</h1>
           </div>
           <div class="content">
-            <h2>Beste ${name || 'gebruiker'}!</h2>
+            <h2>Hallo ${name || 'Bitcoin investeerder'}!</h2>
             
-            <p>Welkom bij BitBeheer! Je account is bijna klaar.</p>
+            <p>Geweldig dat je je hebt aangemeld voor persoonlijke Bitcoin begeleiding! 🎯</p>
             
-            <div style="background-color: #fef3c7; padding: 15px; border-radius: 5px; border-left: 4px solid #f59e0b; margin: 20px 0;">
-              <p style="margin: 0;"><strong>⚠️ Belangrijk:</strong> Je hebt <strong>5 dagen</strong> de tijd om je account te activeren.</p>
-            </div>
-            
-            <p>Klik op de onderstaande knop om je account te activeren:</p>
+            <p>Om je account te activeren en toegang te krijgen tot alle functies, klik op de onderstaande knop:</p>
             
             <div style="text-align: center;">
-              <a href="${verificationUrl}" class="button">Activeer Account</a>
+              <a href="${verificationUrl}" class="button">✅ Bevestig je account</a>
             </div>
             
-            <p>Of kopieer en plak deze link in je browser:</p>
-            <p style="word-break: break-all; background: #eee; padding: 10px; border-radius: 4px;"><a href="${verificationUrl}" style="color: #f97316;">${verificationUrl}</a></p>
+            <p><strong>Let op:</strong> Je hebt <strong>5 dagen</strong> om je account te bevestigen. Na deze periode wordt je account automatisch verwijderd.</p>
             
-            <div style="background-color: #fee2e2; padding: 15px; border-radius: 5px; border-left: 4px solid #ef4444; margin: 20px 0;">
-              <p style="margin: 0;">Let op: Als je deze link niet binnen 5 dagen gebruikt, zal je account automatisch worden verwijderd.</p>
-            </div>
-            
-            <p style="margin-top: 30px;">Met vriendelijke groet,<br>BitBeheer</p>
+            <h3>Wat kun je verwachten na bevestiging:</h3>
+            <ul>
+              <li>🎯 Persoonlijke 1-op-1 begeleiding voor Bitcoin investeren</li>
+              <li>📚 Leer veilig Bitcoin kopen en bewaren</li>
+              <li>🔐 Eigen beheer van je Bitcoin opzetten</li>
+              <li>📊 Toegang tot alle tools en resources</li>
+              <li>💬 Direct contact met ons voor vragen</li>
+            </ul>
+
+            <p>Als de knop niet werkt, kopieer dan deze link naar je browser:</p>
+            <p style="word-break: break-all; background: #eee; padding: 10px; border-radius: 4px;">${verificationUrl}</p>
+
+            <p>Met vriendelijke groet,<br>
+            <strong>BitBeheer</strong></p>
           </div>
           <div class="footer">
             <p>BitBeheer.nl | Persoonlijke begeleiding bij het investeren in Bitcoin</p>
@@ -80,18 +84,23 @@ serve(async (req) => {
     `
 
     const textContent = `
-Bevestig je BitBeheer account
+Welkom bij BitBeheer!
 
-Beste ${name || 'gebruiker'},
+Hallo ${name || 'Bitcoin investeerder'}!
 
-Welkom bij BitBeheer! Je account is bijna klaar.
-
-BELANGRIJK: Je hebt 5 dagen de tijd om je account te activeren.
+Geweldig dat je je hebt aangemeld voor persoonlijke Bitcoin begeleiding!
 
 Om je account te activeren, ga naar deze link:
 ${verificationUrl}
 
-Let op: Als je deze link niet binnen 5 dagen gebruikt, zal je account automatisch worden verwijderd.
+Let op: Je hebt 5 dagen om je account te bevestigen. Na deze periode wordt je account automatisch verwijderd.
+
+Wat kun je verwachten na bevestiging:
+- Persoonlijke 1-op-1 begeleiding voor Bitcoin investeren
+- Leer veilig Bitcoin kopen en bewaren
+- Eigen beheer van je Bitcoin opzetten
+- Toegang tot alle tools en resources
+- Direct contact met ons voor vragen
 
 Met vriendelijke groet,
 BitBeheer
