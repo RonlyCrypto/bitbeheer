@@ -563,30 +563,72 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess, ac
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                   Selecteer een datum
                 </label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {uniqueDates.map((date) => {
-                    const dateObj = new Date(date);
-                    const dayName = dateObj.toLocaleDateString('nl-NL', { weekday: 'short' });
-                    const dayNum = dateObj.getDate();
-                    const month = dateObj.toLocaleDateString('nl-NL', { month: 'short' });
-                    const isSelected = selectedDate === date;
-                    
-                    return (
-                      <button
-                        key={date}
-                        onClick={() => handleDateSelect(date)}
-                        className={`p-4 rounded-lg border-2 transition-all ${
-                          isSelected
-                            ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
-                            : 'border-gray-200 dark:border-gray-700 hover:border-orange-300'
-                        }`}
-                      >
-                        <div className="text-sm font-medium text-gray-500 dark:text-gray-400">{dayName}</div>
-                        <div className="text-xl font-bold text-gray-900 dark:text-white">{dayNum}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{month}</div>
-                      </button>
-                    );
-                  })}
+                <div className="space-y-4">
+                  {(() => {
+                    // Monday-start week, so dates land under a clear
+                    // "week van ..." heading instead of one long flat grid
+                    // spanning many months.
+                    const getWeekStart = (dateStr: string) => {
+                      const d = new Date(dateStr + 'T00:00:00');
+                      const day = d.getDay();
+                      d.setDate(d.getDate() + (day === 0 ? -6 : 1) - day);
+                      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                    };
+                    const todayWeekStart = getWeekStart(`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`);
+
+                    const weekMap = new Map<string, string[]>();
+                    uniqueDates.forEach((date) => {
+                      const weekStart = getWeekStart(date);
+                      if (!weekMap.has(weekStart)) weekMap.set(weekStart, []);
+                      weekMap.get(weekStart)!.push(date);
+                    });
+
+                    return Array.from(weekMap.keys()).sort().map((weekStart) => {
+                      const datesInWeek = weekMap.get(weekStart)!;
+                      const weekStartDate = new Date(weekStart + 'T00:00:00');
+                      const weekEndDate = new Date(weekStartDate);
+                      weekEndDate.setDate(weekEndDate.getDate() + 6);
+                      const isCurrentWeek = weekStart === todayWeekStart;
+
+                      return (
+                        <div key={weekStart}>
+                          <div className="flex items-baseline gap-2 mb-2">
+                            {isCurrentWeek && (
+                              <span className="text-[10px] font-bold uppercase tracking-wide bg-orange-600 text-white px-2 py-0.5 rounded-full">Deze week</span>
+                            )}
+                            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                              {weekStartDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })} – {weekEndDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-3">
+                            {datesInWeek.map((date) => {
+                              const dateObj = new Date(date + 'T00:00:00');
+                              const dayName = dateObj.toLocaleDateString('nl-NL', { weekday: 'short' });
+                              const dayNum = dateObj.getDate();
+                              const month = dateObj.toLocaleDateString('nl-NL', { month: 'short' });
+                              const isSelected = selectedDate === date;
+
+                              return (
+                                <button
+                                  key={date}
+                                  onClick={() => handleDateSelect(date)}
+                                  className={`w-20 p-3 rounded-lg border-2 transition-all ${
+                                    isSelected
+                                      ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
+                                      : 'border-gray-200 dark:border-gray-700 hover:border-orange-300'
+                                  }`}
+                                >
+                                  <div className="text-sm font-medium text-gray-500 dark:text-gray-400">{dayName}</div>
+                                  <div className="text-xl font-bold text-gray-900 dark:text-white">{dayNum}</div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400">{month}</div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               </div>
 
