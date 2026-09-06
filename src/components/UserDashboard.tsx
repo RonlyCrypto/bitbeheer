@@ -2139,6 +2139,18 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
     : !hasWallet && !hasBitcoin ? 1
     : hasWallet && !hasBitcoin ? 2
     : 3;
+  // Step 3 (wallet + bitcoin present) means the bitcoin already sits in the user's
+  // own hardware wallet, i.e. "Eigen beheer" is reached too — all 4 steps done.
+  const journeyComplete = journeyStep >= 3;
+  const journeyDismissKey = walletCacheEmail ? `btc_journey_dismissed_${walletCacheEmail}` : null;
+  const [journeyDismissed, setJourneyDismissed] = useState(() => {
+    if (!journeyDismissKey) return false;
+    try { return localStorage.getItem(journeyDismissKey) === 'true'; } catch { return false; }
+  });
+  const dismissJourney = () => {
+    setJourneyDismissed(true);
+    if (journeyDismissKey) { try { localStorage.setItem(journeyDismissKey, 'true'); } catch {} }
+  };
 
   const journeySteps = [
     { label: 'Kennismaking', icon: '🤝', description: 'Eerste gesprek met ons team' },
@@ -2176,12 +2188,28 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
       )}
 
       {/* Jouw Bitcoin Reis - Journey Progress (alleen voor goedgekeurde gebruikers) */}
-      {(accountApproved || hasApprovedOneOnOne) && (
+      {(accountApproved || hasApprovedOneOnOne) && !journeyDismissed && (
+        journeyComplete ? (
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 flex items-center gap-3">
+            <span className="text-lg">🏆</span>
+            <p className="flex-1 text-sm text-gray-700">
+              <span className="font-semibold text-gray-900">Onboarding voltooid</span> — je Bitcoin staat veilig in eigen beheer.
+            </p>
+            <button
+              type="button"
+              onClick={dismissJourney}
+              className="text-gray-400 hover:text-gray-600 text-sm px-1"
+              title="Verbergen"
+            >
+              ✕
+            </button>
+          </div>
+        ) : (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-lg">🗺️</span>
             <h3 className="text-base font-semibold text-gray-900">Jouw Bitcoin Reis</h3>
-            <span className="ml-auto text-xs text-gray-500">Stap {Math.min(journeyStep + 1, 4)} van 4</span>
+            <span className="ml-auto text-xs text-gray-500">Stap {journeyStep + 1} van 4</span>
           </div>
           <div className="flex items-start gap-0">
             {journeySteps.map((step, index) => {
@@ -2212,15 +2240,13 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
             })}
           </div>
           {/* Huidige stap uitleg */}
-          {journeyStep < 4 && (
-            <div className="mt-4 bg-orange-50 rounded-lg px-4 py-3 text-sm text-orange-800">
-              <strong>Nu aan de beurt:</strong> {journeySteps[Math.min(journeyStep, 3)].description}
-              {journeyStep === 1 && ' — Bestel een Ledger hardware wallet om je Bitcoin veilig op te slaan.'}
-              {journeyStep === 2 && ' — Koop je eerste Bitcoin via een exchange zoals Coinbase.'}
-              {journeyStep === 3 && ' — Zet je Bitcoin over naar je eigen Ledger wallet.'}
-            </div>
-          )}
+          <div className="mt-4 bg-orange-50 rounded-lg px-4 py-3 text-sm text-orange-800">
+            <strong>Nu aan de beurt:</strong> {journeySteps[journeyStep].description}
+            {journeyStep === 1 && ' — Bestel een Ledger hardware wallet om je Bitcoin veilig op te slaan.'}
+            {journeyStep === 2 && ' — Koop je eerste Bitcoin via een exchange zoals Coinbase.'}
+          </div>
         </div>
+        )
       )}
 
       {/* Appointment Status Block */}
