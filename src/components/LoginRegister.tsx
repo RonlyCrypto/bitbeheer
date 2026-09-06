@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { User, LogIn, UserPlus, Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle, Phone, DollarSign, MessageSquare, X } from 'lucide-react';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import CityInput from './CityInput';
@@ -26,6 +26,17 @@ export default function LoginRegister() {
     motivatie: '',
     verwachtingen: ''
   });
+
+  // Lock page scroll behind the modal while it's open, so the popup is the
+  // only thing the user can interact with until they close it.
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     if (mode === 'register') {
@@ -174,8 +185,18 @@ export default function LoginRegister() {
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[95vh] overflow-y-auto">
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          style={{ animation: 'bb-overlay-fade-in 0.2s ease-out' }}
+        >
+          <style>{`
+            @keyframes bb-overlay-fade-in { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes bb-modal-fade-in { from { opacity: 0; transform: scale(0.96) translateY(4px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+          `}</style>
+          <div
+            className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[95vh] overflow-y-auto"
+            style={{ animation: 'bb-modal-fade-in 0.2s ease-out' }}
+          >
             {/* Header */}
             <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-t-lg">
               <div className="flex justify-between items-center">
