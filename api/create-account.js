@@ -20,15 +20,16 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { 
-      email, 
-      voornaam,
-      achternaam,
-      telefoon, 
+    const {
+      email,
+      voornaam: voornaamRaw,
+      achternaam: achternaamRaw,
+      naam,
+      telefoon,
       locatie,
-      spaargeld, 
-      ervaring, 
-      motivatie, 
+      spaargeld,
+      ervaring,
+      motivatie,
       verwachtingen,
       bedrijf,
       investeringsdoel,
@@ -39,15 +40,23 @@ module.exports = async (req, res) => {
 
     console.log('Create account request body:', req.body);
 
-    if (!email || !voornaam || !achternaam || !telefoon || !locatie) {
-      console.log('Missing required fields:', { 
-        email: !!email, 
-        voornaam: !!voornaam, 
-        achternaam: !!achternaam,
-        telefoon: !!telefoon,
-        locatie: !!locatie
+    // The full Aanmelden-page form sends voornaam + achternaam separately;
+    // the quick signup modal only collects a single "naam" field. Support both.
+    let voornaam = voornaamRaw;
+    let achternaam = achternaamRaw;
+    if ((!voornaam || !achternaam) && naam) {
+      const parts = naam.trim().split(/\s+/);
+      voornaam = voornaam || parts[0] || '';
+      achternaam = achternaam || (parts.length > 1 ? parts.slice(1).join(' ') : parts[0]) || '';
+    }
+
+    if (!email || !voornaam || !achternaam) {
+      console.log('Missing required fields:', {
+        email: !!email,
+        voornaam: !!voornaam,
+        achternaam: !!achternaam
       });
-      return res.status(400).json({ error: 'Email, voornaam, achternaam, telefoon en locatie zijn verplicht' });
+      return res.status(400).json({ error: 'Email en naam zijn verplicht' });
     }
 
     console.log('Creating account for:', email);
@@ -165,7 +174,7 @@ module.exports = async (req, res) => {
     // Create user in users table with all form data (renamed from accounts)
     const userData = {
       email: email.toLowerCase().trim(),
-      name: naam.trim(),
+      name: fullName,
       message: 'Aanmelding voor persoonlijke begeleiding',
       category: 'nieuwe_gebruiker',
       phone: telefoon?.trim() || null,
