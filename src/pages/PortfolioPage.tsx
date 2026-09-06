@@ -28,6 +28,7 @@ import { walletDataService, WalletSyncProgress } from '../services/walletDataSer
 import { supabase } from '../lib/supabase';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
+import { computeFifoMatches, txKey } from '../utils/fifoMatching';
 
 interface WalletData {
   id: string;
@@ -79,54 +80,20 @@ export default function PortfolioPage() {
     setTimeout(() => setToast(null), 4000);
   };
   
-  // Calculate which buys are fully sold (FIFO)
+  // Single shared FIFO cost-basis match (which buy lots each sell drew from, and
+  // how much of each buy is sold vs. still held) — see src/utils/fifoMatching.ts.
+  const fifoMatches = useMemo(() => computeFifoMatches(allTransactions), [allTransactions]);
+
+  // Backwards-compatible view used by the "active" filter: original tx index -> isFullySold.
   const calculateBuySoldStatus = useMemo(() => {
-    const sortedTxs = [...allTransactions].sort((a, b) => a.time - b.time);
-    const buyStatus: Map<number, { remaining: number; soldTo: any[] }> = new Map();
-    
-    sortedTxs.forEach((tx, index) => {
-      if (tx.value > 0) { // Buy
-        const btcAmount = Math.abs(tx.value) / 100000000;
-        buyStatus.set(index, { remaining: btcAmount, soldTo: [] });
-      } else { // Sell
-        const sellAmount = Math.abs(tx.value) / 100000000;
-        let remainingToSell = sellAmount;
-        
-        // Match with buys in FIFO order
-        for (let i = 0; i < index && remainingToSell > 0; i++) {
-          if (sortedTxs[i].value > 0) { // Only buys
-            const buyStatusInfo = buyStatus.get(i);
-            if (buyStatusInfo && buyStatusInfo.remaining > 0) {
-              const soldAmount = Math.min(buyStatusInfo.remaining, remainingToSell);
-              buyStatusInfo.remaining -= soldAmount;
-              buyStatusInfo.soldTo.push({
-                sellIndex: index,
-                sellTx: sortedTxs[index],
-                amount: soldAmount
-              });
-              remainingToSell -= soldAmount;
-            }
-          }
-        }
-      }
-    });
-    
-    // Create a map of original transaction indices to sold status
     const soldStatusMap = new Map<number, boolean>();
-    sortedTxs.forEach((tx, sortedIndex) => {
-      if (tx.value > 0) { // Buy
-        const originalIndex = allTransactions.findIndex(t => 
-          t.hash === tx.hash && t.time === tx.time
-        );
-        if (originalIndex !== -1) {
-          const status = buyStatus.get(sortedIndex);
-          soldStatusMap.set(originalIndex, status ? status.remaining <= 0.00000001 : false);
-        }
+    allTransactions.forEach((tx, index) => {
+      if (tx.value > 0) {
+        soldStatusMap.set(index, fifoMatches.buys.get(txKey(tx))?.isFullySold ?? false);
       }
     });
-    
     return soldStatusMap;
-  }, [allTransactions]);
+  }, [allTransactions, fifoMatches]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [showEditWallet, setShowEditWallet] = useState(false);
   const [walletToEdit, setWalletToEdit] = useState<WalletData | null>(null);
@@ -1651,42 +1618,10 @@ export default function PortfolioPage() {
                       const key = `${transaction.hash || ''}-${transaction.time || 0}`;
                       const transactionNumber = transactionNumberMap.get(key) || (index + 1);
                       
-                      const txIndex = allTransactions.findIndex(t => 
-                        t.hash === transaction.hash && t.time === transaction.time
-                      );
-                      const isFullySold = transaction.value > 0 && txIndex !== -1 
-                        ? calculateBuySoldStatus.get(txIndex) === true
-                        : false;
-                      
-                      // Find which sell transactions this buy was sold to
-                      const sortedTxs = [...allTransactions].sort((a, b) => a.time - b.time);
-                      const sortedIndex = sortedTxs.findIndex(t => 
-                        t.hash === transaction.hash && t.time === transaction.time
-                      );
-                      let soldToTransactions: BitcoinTransaction[] = [];
-                      
-                      if (isFullySold && sortedIndex !== -1 && transaction.value > 0) {
-                        // Calculate which sells matched this buy (FIFO)
-                        const buyAmount = Math.abs(transaction.value) / 100000000;
-                        let remainingToMatch = buyAmount;
-                        
-                        for (let i = sortedIndex + 1; i < sortedTxs.length && remainingToMatch > 0; i++) {
-                          if (sortedTxs[i].value < 0) { // Sell
-                            const sellAmount = Math.abs(sortedTxs[i].value) / 100000000;
-                            const matchedAmount = Math.min(sellAmount, remainingToMatch);
-                            if (matchedAmount > 0) {
-                              const originalSellIndex = allTransactions.findIndex(t => 
-                                t.hash === sortedTxs[i].hash && t.time === sortedTxs[i].time
-                              );
-                              if (originalSellIndex !== -1) {
-                                soldToTransactions.push(allTransactions[originalSellIndex]);
-                              }
-                              remainingToMatch -= matchedAmount;
-                            }
-                          }
-                        }
-                      }
-                      
+                      const isBuyTx = transaction.value > 0;
+                      const buyFifo = isBuyTx ? fifoMatches.buys.get(txKey(transaction)) : undefined;
+                      const sellFifo = !isBuyTx ? fifoMatches.sells.get(txKey(transaction)) : undefined;
+
                       return (
                     <TransactionBlock
                       key={`${transaction.hash}-${transaction.time}-${transactionNumber}`}
@@ -1694,8 +1629,8 @@ export default function PortfolioPage() {
                         index={transactionNumber}
                       onTransactionClick={setSelectedTransaction}
                       allTransactions={allTransactions}
-                          isFullySold={isFullySold}
-                          soldToTransactions={soldToTransactions}
+                          buyFifo={buyFifo}
+                          sellFifo={sellFifo}
                     />
                       );
                     });
@@ -1874,6 +1809,8 @@ export default function PortfolioPage() {
             transaction={selectedTransaction}
             onClose={() => setSelectedTransaction(null)}
             allTransactions={allTransactions}
+            buyFifo={fifoMatches.buys.get(txKey(selectedTransaction))}
+            sellFifo={fifoMatches.sells.get(txKey(selectedTransaction))}
           />
           )}
         </div>

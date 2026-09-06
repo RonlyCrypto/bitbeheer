@@ -1,14 +1,17 @@
 import React from 'react';
 import { X, ExternalLink, Copy, Check } from 'lucide-react';
 import { BitcoinTransaction } from '../services/bitcoinApiService';
+import { BuyFifoSummary, SellFifoSummary } from '../utils/fifoMatching';
 
 interface TransactionDetailsPopupProps {
   transaction: BitcoinTransaction;
   onClose: () => void;
-  allTransactions?: BitcoinTransaction[]; // Voor FIFO winst berekening bij sells
+  allTransactions?: BitcoinTransaction[];
+  buyFifo?: BuyFifoSummary; // FIFO-matched sold/held breakdown, only set when this is a buy
+  sellFifo?: SellFifoSummary; // FIFO-matched cost basis, only set when this is a sell
 }
 
-export default function TransactionDetailsPopup({ transaction, onClose, allTransactions = [] }: TransactionDetailsPopupProps) {
+export default function TransactionDetailsPopup({ transaction, onClose, buyFifo, sellFifo }: TransactionDetailsPopupProps) {
   const [copiedField, setCopiedField] = React.useState<string | null>(null);
 
   const copyToClipboard = (text: string, field: string) => {
@@ -37,57 +40,15 @@ export default function TransactionDetailsPopup({ transaction, onClose, allTrans
   const isBuy = transaction.value > 0;
   const isSell = transaction.value < 0;
   const btcAmount = Math.abs(transaction.value) / 100000000;
-  
-  // Calculate profit for sell based on FIFO (first buy price)
-  const calculateSellProfit = () => {
-    if (!isSell || !allTransactions || allTransactions.length === 0) {
-      return { profit: transaction.profit, profitPercent: transaction.profitPercent, buyPrice: null };
-    }
-    
-    // Sort transactions by time
-    const sortedTxs = [...allTransactions].sort((a, b) => a.time - b.time);
-    const currentIndex = sortedTxs.findIndex(tx => tx.hash === transaction.hash && tx.time === transaction.time);
-    
-    if (currentIndex === -1) {
-      return { profit: transaction.profit, profitPercent: transaction.profitPercent, buyPrice: null };
-    }
-    
-    // Find previous buys (FIFO)
-    const sellAmount = btcAmount;
-    let remainingToMatch = sellAmount;
-    let totalBuyCost = 0;
-    let averageBuyPrice = 0;
-    
-    for (let i = 0; i < currentIndex; i++) {
-      if (sortedTxs[i].value > 0) { // Only buys
-        const buyAmount = sortedTxs[i].value / 100000000;
-        const buyPrice = sortedTxs[i].price;
-        
-        if (remainingToMatch > 0) {
-          const matchedAmount = Math.min(buyAmount, remainingToMatch);
-          totalBuyCost += matchedAmount * buyPrice;
-          remainingToMatch -= matchedAmount;
-        }
-      }
-    }
-    
-    if (totalBuyCost > 0 && sellAmount > 0) {
-      averageBuyPrice = totalBuyCost / sellAmount;
-      const sellValue = sellAmount * transaction.price;
-      const profit = sellValue - totalBuyCost;
-      const profitPercent = averageBuyPrice > 0 ? ((transaction.price - averageBuyPrice) / averageBuyPrice) * 100 : 0;
-      
-      return { profit, profitPercent, buyPrice: averageBuyPrice };
-    }
-    
-    return { profit: transaction.profit, profitPercent: transaction.profitPercent, buyPrice: null };
-  };
-  
-  const sellProfitInfo = calculateSellProfit();
-  const actualProfit = isSell ? sellProfitInfo.profit : transaction.profit;
-  const actualProfitPercent = isSell ? sellProfitInfo.profitPercent : transaction.profitPercent;
+
+  const soldBtc = buyFifo?.soldBtc ?? 0;
+  const isFullySold = buyFifo?.isFullySold ?? false;
+  const isPartiallySold = soldBtc > 1e-8 && !isFullySold;
+
+  const actualProfit = isSell ? (sellFifo?.profit ?? transaction.profit) : transaction.profit;
+  const actualProfitPercent = isSell ? (sellFifo?.profitPercent ?? transaction.profitPercent) : transaction.profitPercent;
   const isProfit = actualProfit >= 0;
-  
+
   const purchaseValue = btcAmount * transaction.price;
   const currentValue = Math.abs(transaction.currentValue);
 
@@ -172,9 +133,9 @@ export default function TransactionDetailsPopup({ transaction, onClose, allTrans
                 <div className="bg-red-50 rounded-lg p-3 border border-red-200">
                   <label className="text-xs font-semibold text-red-700 mb-1 block">VERKOOPPRIJS / BTC</label>
                   <p className="text-xl font-bold text-red-900">${transaction.price.toLocaleString('en-US', { maximumFractionDigits: 2 })}</p>
-                  {sellProfitInfo.buyPrice && (
+                  {!!sellFifo?.averageBuyPrice && (
                     <p className="text-xs text-red-600 mt-1">
-                      Ingekocht bij: ${sellProfitInfo.buyPrice.toLocaleString('en-US', { maximumFractionDigits: 2 })} / BTC
+                      Ingekocht bij: ${sellFifo.averageBuyPrice.toLocaleString('en-US', { maximumFractionDigits: 2 })} / BTC
                     </p>
                   )}
                 </div>
@@ -193,6 +154,31 @@ export default function TransactionDetailsPopup({ transaction, onClose, allTrans
 
           {/* Current Value & Profit */}
           {isBuy ? (
+            soldBtc > 1e-8 ? (
+              <div className="grid md:grid-cols-2 gap-3">
+                <div className="bg-gray-100 rounded-lg p-3 border border-gray-300">
+                  <label className="text-xs font-semibold text-gray-700 mb-1 block">VERKOCHT VOOR</label>
+                  <p className="text-xl font-bold text-gray-900">${(buyFifo?.soldValue ?? 0).toLocaleString('en-US', { maximumFractionDigits: 2 })}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {soldBtc.toFixed(8)} BTC {isFullySold ? '(volledig)' : `van ${(buyFifo?.totalBtc ?? 0).toFixed(8)} BTC`}
+                  </p>
+                </div>
+                <div className={`rounded-lg p-3 border-2 ${(buyFifo?.realizedProfit ?? 0) >= 0 ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`}>
+                  <label className={`text-xs font-semibold mb-1 block ${(buyFifo?.realizedProfit ?? 0) >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                    WINST (GEREALISEERD)
+                  </label>
+                  <p className={`text-xl font-bold ${(buyFifo?.realizedProfit ?? 0) >= 0 ? 'text-green-900' : 'text-red-900'}`}>
+                    {(buyFifo?.realizedProfit ?? 0) >= 0 ? '+' : ''}${(buyFifo?.realizedProfit ?? 0).toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                  </p>
+                  <p className={`text-xs mt-1 ${(buyFifo?.realizedProfit ?? 0) >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                    {(buyFifo?.realizedProfit ?? 0) >= 0 ? '+' : ''}{(buyFifo?.realizedProfitPercent ?? 0).toFixed(2)}%
+                  </p>
+                  {isPartiallySold && (
+                    <p className="text-xs text-gray-500 mt-1">Nog in bezit: {(buyFifo?.remainingBtc ?? 0).toFixed(8)} BTC</p>
+                  )}
+                </div>
+              </div>
+            ) : (
             <div className="grid md:grid-cols-2 gap-3">
               <div className="bg-gray-100 rounded-lg p-3 border border-gray-300">
                 <label className="text-xs font-semibold text-gray-700 mb-1 block">HUIDIGE WAARDE</label>
@@ -210,6 +196,7 @@ export default function TransactionDetailsPopup({ transaction, onClose, allTrans
                 </p>
               </div>
             </div>
+            )
           ) : (
             <div className="grid md:grid-cols-2 gap-3">
               <div className="bg-gray-100 rounded-lg p-3 border border-gray-300">
@@ -231,8 +218,8 @@ export default function TransactionDetailsPopup({ transaction, onClose, allTrans
             </div>
           )}
 
-          {/* Performance Bar - Only for buys */}
-          {isBuy && (() => {
+          {/* Performance Bar - Only for buys that aren't fully sold (realized profit is shown above instead) */}
+          {isBuy && !isFullySold && (() => {
             const profitPercent = transaction.profitPercent;
             const isProfit = profitPercent >= 0;
             const absPercent = Math.abs(profitPercent);

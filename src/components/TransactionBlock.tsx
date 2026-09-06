@@ -1,92 +1,52 @@
 import React, { useState } from 'react';
 import { TrendingUp, TrendingDown, Calendar, Hash, Coins, DollarSign, CheckCircle, Copy, Check, ExternalLink } from 'lucide-react';
 import { BitcoinTransaction } from '../services/bitcoinApiService';
+import { BuyFifoSummary, SellFifoSummary } from '../utils/fifoMatching';
 
 interface TransactionBlockProps {
   transaction: BitcoinTransaction;
   index: number;
   onTransactionClick?: (transaction: BitcoinTransaction) => void;
   allTransactions?: BitcoinTransaction[]; // Alle transacties voor balance tracking
-  isFullySold?: boolean; // Whether this buy is fully sold
-  soldToTransactions?: BitcoinTransaction[]; // Which sell transactions this buy was sold to
+  buyFifo?: BuyFifoSummary; // FIFO-matched sold/held breakdown, only set when this is a buy
+  sellFifo?: SellFifoSummary; // FIFO-matched cost basis, only set when this is a sell
 }
 
-export default function TransactionBlock({ transaction, index, onTransactionClick, allTransactions = [], isFullySold = false, soldToTransactions = [] }: TransactionBlockProps) {
+export default function TransactionBlock({ transaction, index, onTransactionClick, allTransactions = [], buyFifo, sellFifo }: TransactionBlockProps) {
   const [copiedHash, setCopiedHash] = useState(false);
-  
+
   // Determine if this is a buy or sell
   const isBuy = transaction.value > 0;
   const isSell = transaction.value < 0;
-  
+
   // Calculate running balance after this transaction
   const calculateBalanceAfter = () => {
     if (!allTransactions || allTransactions.length === 0) return 0;
-    
+
     // Sort transactions by time
     const sortedTxs = [...allTransactions].sort((a, b) => a.time - b.time);
-    
+
     // Find index of current transaction
     const currentIndex = sortedTxs.findIndex(tx => tx.hash === transaction.hash && tx.time === transaction.time);
     if (currentIndex === -1) return 0;
-    
+
     // Calculate balance up to and including this transaction
     let balance = 0;
     for (let i = 0; i <= currentIndex; i++) {
       balance += sortedTxs[i].value / 100000000; // Convert satoshis to BTC
     }
-    
+
     return balance;
   };
-  
-  // Calculate profit for sell based on FIFO (first buy price)
-  const calculateSellProfit = () => {
-    if (!isSell || !allTransactions || allTransactions.length === 0) {
-      return { profit: transaction.profit, profitPercent: transaction.profitPercent, buyPrice: null };
-    }
-    
-    // Sort transactions by time
-    const sortedTxs = [...allTransactions].sort((a, b) => a.time - b.time);
-    const currentIndex = sortedTxs.findIndex(tx => tx.hash === transaction.hash && tx.time === transaction.time);
-    
-    if (currentIndex === -1) {
-      return { profit: transaction.profit, profitPercent: transaction.profitPercent, buyPrice: null };
-    }
-    
-    // Find previous buys (FIFO)
-    const sellAmount = Math.abs(transaction.value) / 100000000;
-    let remainingToMatch = sellAmount;
-    let totalBuyCost = 0;
-    let averageBuyPrice = 0;
-    
-    for (let i = 0; i < currentIndex; i++) {
-      if (sortedTxs[i].value > 0) { // Only buys
-        const buyAmount = sortedTxs[i].value / 100000000;
-        const buyPrice = sortedTxs[i].price;
-        
-        if (remainingToMatch > 0) {
-          const matchedAmount = Math.min(buyAmount, remainingToMatch);
-          totalBuyCost += matchedAmount * buyPrice;
-          remainingToMatch -= matchedAmount;
-        }
-      }
-    }
-    
-    if (totalBuyCost > 0 && sellAmount > 0) {
-      averageBuyPrice = totalBuyCost / sellAmount;
-      const sellValue = sellAmount * transaction.price;
-      const profit = sellValue - totalBuyCost;
-      const profitPercent = averageBuyPrice > 0 ? ((transaction.price - averageBuyPrice) / averageBuyPrice) * 100 : 0;
-      
-      return { profit, profitPercent, buyPrice: averageBuyPrice };
-    }
-    
-    return { profit: transaction.profit, profitPercent: transaction.profitPercent, buyPrice: null };
-  };
-  
+
   const balanceAfter = calculateBalanceAfter();
-  const sellProfitInfo = calculateSellProfit();
-  const actualProfit = isSell ? sellProfitInfo.profit : transaction.profit;
-  const actualProfitPercent = isSell ? sellProfitInfo.profitPercent : transaction.profitPercent;
+  const isFullySold = buyFifo?.isFullySold ?? false;
+  const soldBtc = buyFifo?.soldBtc ?? 0;
+  const isPartiallySold = soldBtc > 1e-8 && !isFullySold;
+  const soldToTransactions = buyFifo?.matchedSells.map(m => m.sellTx) ?? [];
+
+  const actualProfit = isSell ? (sellFifo?.profit ?? transaction.profit) : transaction.profit;
+  const actualProfitPercent = isSell ? (sellFifo?.profitPercent ?? transaction.profitPercent) : transaction.profitPercent;
   const isProfit = actualProfit >= 0;
 
   const copyHash = () => {
@@ -168,10 +128,10 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
         </div>
       )}
       
-      {/* Grijs lintje voor volledig verkochte buys */}
-      {isBuy && isFullySold && (
+      {/* Grijs lintje voor (deels) verkochte buys */}
+      {isBuy && (isFullySold || isPartiallySold) && (
         <div className="absolute top-0 right-0 bg-gray-600 text-white px-4 py-2 text-sm font-bold rounded-bl-lg rounded-tr-xl shadow-lg z-10 uppercase tracking-wide">
-          Verkocht
+          {isFullySold ? 'Verkocht' : 'Deels verkocht'}
         </div>
       )}
       
@@ -357,9 +317,9 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
             <p className="text-[10px] text-red-600 mt-0.5">
               BTC prijs op blockchain op moment van transactie
             </p>
-            {sellProfitInfo.buyPrice && (
+            {!!sellFifo?.averageBuyPrice && (
               <p className="text-[10px] text-red-500 mt-1">
-                Ingekocht bij: ${sellProfitInfo.buyPrice.toLocaleString('en-US', { maximumFractionDigits: 0 })} / BTC
+                Ingekocht bij: ${sellFifo.averageBuyPrice.toLocaleString('en-US', { maximumFractionDigits: 0 })} / BTC
               </p>
             )}
           </div>
@@ -382,6 +342,90 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
 
       {/* Performance Details - Second Row */}
       {isBuy ? (
+        soldBtc > 1e-8 ? (
+          <div className="grid md:grid-cols-3 gap-3 mb-3">
+            {/* Verkocht voor */}
+            <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+              <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-1">
+                <TrendingUp className="w-3 h-3" />
+                <span>Verkocht voor</span>
+              </div>
+              <p className="text-base font-semibold text-gray-900">
+                ${(buyFifo?.soldValue ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+              </p>
+              <p className="text-[10px] text-gray-500 mt-0.5">
+                {soldBtc.toFixed(8)} BTC {isFullySold ? '(volledig)' : `van ${(buyFifo?.totalBtc ?? 0).toFixed(8)} BTC`}
+              </p>
+            </div>
+
+            {/* Realized Profit/Loss */}
+            <div className={`rounded-lg p-3 border-2 ${
+              isProfit ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+            }`}>
+              <div className="flex items-center gap-1.5 text-xs mb-1">
+                {isProfit ? (
+                  <TrendingUp className="w-3 h-3 text-green-600" />
+                ) : (
+                  <TrendingDown className="w-3 h-3 text-red-600" />
+                )}
+                <span className={isProfit ? 'text-green-700 font-semibold' : 'text-red-700 font-semibold'}>
+                  Winst (gerealiseerd)
+                </span>
+              </div>
+              <p className={`text-base font-bold ${
+                isProfit ? 'text-green-700' : 'text-red-700'
+              }`}>
+                {isProfit ? '+' : ''}${(buyFifo?.realizedProfit ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+              </p>
+              <p className={`text-xs font-semibold ${
+                isProfit ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {isProfit ? '+' : ''}{(buyFifo?.realizedProfitPercent ?? 0).toFixed(2)}%
+              </p>
+            </div>
+
+            {/* Buy Status Indicator */}
+            <div className={`rounded-lg p-3 border ${
+              isFullySold ? 'bg-gray-100 border-gray-300' : 'bg-gray-50 border-gray-200'
+            }`}>
+              <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-1">
+                <CheckCircle className="w-3 h-3 text-gray-500" />
+                <span className="font-semibold">Status</span>
+              </div>
+              <p className="text-base font-semibold text-gray-600">
+                {isFullySold ? 'Verkocht' : 'Deels verkocht'}
+              </p>
+              {soldToTransactions.length > 0 && (
+                <div className="mt-1 space-y-1">
+                  {soldToTransactions.map((sellTx, idx) => {
+                    const sellIndex = allTransactions.findIndex(t =>
+                      t.hash === sellTx.hash && t.time === sellTx.time
+                    ) + 1;
+                    return (
+                      <button
+                        key={idx}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onTransactionClick) {
+                            onTransactionClick(sellTx);
+                          }
+                        }}
+                        className="text-[10px] text-blue-600 hover:text-blue-700 hover:underline w-full text-left"
+                      >
+                        → Verkoop #{sellIndex}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {!isFullySold && (
+                <p className="text-[10px] text-gray-500 mt-1">
+                  Nog in bezit: {(buyFifo?.remainingBtc ?? 0).toFixed(8)} BTC
+                </p>
+              )}
+            </div>
+          </div>
+        ) : (
       <div className="grid md:grid-cols-3 gap-3 mb-3">
         {/* Huidige Waarde */}
         <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
@@ -424,51 +468,20 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
         </div>
 
         {/* Buy Status Indicator */}
-        <div className={`rounded-lg p-3 border ${
-          isFullySold ? 'bg-gray-100 border-gray-300' : 'bg-gray-50 border-gray-200'
-        }`}>
+        <div className="rounded-lg p-3 border bg-gray-50 border-gray-200">
           <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-1">
-            {isFullySold ? (
-              <CheckCircle className="w-3 h-3 text-gray-500" />
-            ) : (
-              <CheckCircle className="w-3 h-3 text-green-600" />
-            )}
+            <CheckCircle className="w-3 h-3 text-green-600" />
             <span className="font-semibold">Status</span>
           </div>
-          <p className={`text-base font-semibold ${
-            isFullySold ? 'text-gray-600' : 'text-gray-900'
-          }`}>
-            {isFullySold ? 'Verkocht' : 'Gekocht'}
+          <p className="text-base font-semibold text-gray-900">
+            Gekocht
           </p>
-          {isFullySold && soldToTransactions.length > 0 ? (
-            <div className="mt-1 space-y-1">
-              {soldToTransactions.map((sellTx, idx) => {
-                const sellIndex = allTransactions.findIndex(t => 
-                  t.hash === sellTx.hash && t.time === sellTx.time
-                ) + 1;
-                return (
-                  <button
-                    key={idx}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (onTransactionClick) {
-                        onTransactionClick(sellTx);
-                      }
-                    }}
-                    className="text-[10px] text-blue-600 hover:text-blue-700 hover:underline w-full text-left"
-                  >
-                    → Verkoop #{sellIndex}
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
             <p className="text-[10px] text-gray-500 mt-0.5">
               {transaction.valueInBTC?.toFixed(4) || (transaction.value / 100000000).toFixed(4)} BTC
             </p>
-          )}
         </div>
       </div>
+        )
       ) : (
         <div className="grid md:grid-cols-3 gap-3 mb-3">
           {/* Huidige Waarde (wat het nu waard zou zijn) */}
@@ -527,8 +540,8 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
         </div>
       )}
 
-      {/* Performance Bar - Only for buys */}
-      {isBuy && (() => {
+      {/* Performance Bar - Only for buys that aren't fully sold (realized profit is shown above instead) */}
+      {isBuy && !isFullySold && (() => {
         const profitPercent = transaction.profitPercent;
         const isProfit = profitPercent >= 0;
         const absPercent = Math.abs(profitPercent);
