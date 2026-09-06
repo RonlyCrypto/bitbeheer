@@ -968,54 +968,83 @@ export default function AdminAppointmentManagement() {
         ) : availableSlots.length === 0 ? (
           <p className="text-gray-500 text-center py-8">Nog geen beschikbare tijden. Voeg er een toe hierboven.</p>
         ) : (
-          <div className="space-y-4">
-            {Array.from(new Set(availableSlots.map(s => s.date))).map((date) => {
-              const slotsForDate = availableSlots.filter(s => s.date === date);
-              const dateObj = new Date(date);
-              return (
-                <div key={date} className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0">
-                  <div className="font-semibold text-gray-900 dark:text-white mb-3">
-                    {dateObj.toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                    {slotsForDate.map((slot) => {
-                      const appointment = getSlotAppointmentForSlot(slot);
-                      const isBooked = isSlotBooked(slot);
-                      
-                      return (
-                        <div
-                          key={slot.id}
-                          className={`p-3 rounded-lg border-2 ${
-                            isBooked
-                              ? 'border-green-300 bg-green-50 dark:bg-green-900/20'
-                              : 'border-gray-200 dark:border-gray-700'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-medium text-gray-900 dark:text-white">{slot.start_time}</span>
-                            {isBooked && (
-                              <CheckCircle className="w-4 h-4 text-green-600" />
-                            )}
-                          </div>
-                          {appointment && (
-                            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                              <div className="font-medium">{appointment.user_name || appointment.user_email}</div>
-                              <div className="text-xs">{appointment.status === 'pending' ? '⏳ In afwachting' : '✅ Bevestigd'}</div>
+          <div className="space-y-2">
+            {(() => {
+              // Monday-start week key, so each card covers one calendar week.
+              const getWeekStart = (dateStr: string) => {
+                const d = new Date(dateStr + 'T00:00:00');
+                const day = d.getDay();
+                const diff = (day === 0 ? -6 : 1) - day;
+                d.setDate(d.getDate() + diff);
+                return d.toISOString().split('T')[0];
+              };
+
+              const weekMap = new Map<string, AvailableSlot[]>();
+              for (const slot of availableSlots) {
+                const weekStart = getWeekStart(slot.date);
+                if (!weekMap.has(weekStart)) weekMap.set(weekStart, []);
+                weekMap.get(weekStart)!.push(slot);
+              }
+              const sortedWeekStarts = Array.from(weekMap.keys()).sort();
+
+              return sortedWeekStarts.map((weekStart) => {
+                const weekSlots = weekMap.get(weekStart)!;
+                const weekStartDate = new Date(weekStart + 'T00:00:00');
+                const weekEndDate = new Date(weekStartDate);
+                weekEndDate.setDate(weekEndDate.getDate() + 6);
+                const datesInWeek = Array.from(new Set(weekSlots.map(s => s.date))).sort();
+
+                return (
+                  <div key={weekStart} className="border border-gray-200 dark:border-gray-700 rounded-lg p-2.5">
+                    <div className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5">
+                      {weekStartDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })} – {weekEndDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {datesInWeek.map((date) => {
+                        const dateObj = new Date(date + 'T00:00:00');
+                        const slotsForDate = weekSlots
+                          .filter(s => s.date === date)
+                          .sort((a, b) => a.start_time.localeCompare(b.start_time));
+
+                        return (
+                          <div key={date} className="min-w-[100px] bg-gray-50 dark:bg-gray-900/40 rounded-md px-2 py-1.5">
+                            <div className="text-[11px] font-medium text-gray-600 dark:text-gray-400 mb-1">
+                              {dayNames[dateObj.getDay()]} {dateObj.getDate()}/{dateObj.getMonth() + 1}
                             </div>
-                          )}
-                          <button
-                            onClick={() => deleteSlot(slot.id)}
-                            className="text-xs text-red-600 hover:text-red-700 flex items-center gap-1"
-                          >
-                            <Trash2 className="w-3 h-3" /> Verwijderen
-                          </button>
-                        </div>
-                      );
-                    })}
+                            <div className="flex flex-wrap gap-1">
+                              {slotsForDate.map((slot) => {
+                                const appointment = getSlotAppointmentForSlot(slot);
+                                const isBooked = isSlotBooked(slot);
+
+                                return (
+                                  <button
+                                    key={slot.id}
+                                    onClick={() => deleteSlot(slot.id)}
+                                    title={
+                                      appointment
+                                        ? `${appointment.user_name || appointment.user_email} — ${appointment.status === 'pending' ? 'In afwachting' : 'Bevestigd'} (klik om te verwijderen)`
+                                        : 'Klik om te verwijderen'
+                                    }
+                                    className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-medium border transition-colors ${
+                                      isBooked
+                                        ? 'border-green-300 bg-green-100 text-green-800 hover:border-red-300 hover:bg-red-50 hover:text-red-700 dark:bg-green-900/30 dark:text-green-300'
+                                        : 'border-gray-200 bg-white text-gray-700 hover:border-red-300 hover:bg-red-50 hover:text-red-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300'
+                                    }`}
+                                  >
+                                    {isBooked && <CheckCircle className="w-2.5 h-2.5" />}
+                                    {slot.start_time.slice(0, 5)}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              });
+            })()}
           </div>
         )}
       </div>
