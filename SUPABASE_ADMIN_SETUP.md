@@ -14,7 +14,7 @@
 ### 3. Maak Admin Account Aan
 - Klik op "Add user" of "Invite user"
 - **Email:** `admin@bitbeheer.nl`
-- **Password:** `admin123`
+- **Password:** `admin20xx`
 - **Email Confirm:** ✅ (vink aan)
 - **User Metadata:**
   ```json
@@ -45,7 +45,7 @@
 
 | Account | Email | Password | Role |
 |---------|-------|----------|------|
-| Admin | admin@bitbeheer.nl | admin123 | admin |
+| Admin | admin@bitbeheer.nl | admin20xx | admin |
 | Test | test@bitbeheer.nl | test123 | test |
 
 ## 🚀 Test de Login
@@ -54,7 +54,7 @@
 2. Hover over het grijze cirkeltje rechtsonder
 3. Klik op het "ezelsoortje"
 4. Voer een van de wachtwoorden in:
-   - `admin123` voor admin toegang
+   - `admin20xx` voor admin toegang
    - `test123` voor test toegang
 5. Je wordt doorgestuurd naar https://www.bitbeheer.nl/admin
 
@@ -70,7 +70,7 @@
 ### Probleem: "Invalid credentials"
 - Controleer of accounts bestaan in Supabase
 - Controleer of accounts "Confirmed" status hebben
-- Controleer wachtwoorden: admin123 / test123
+- Controleer wachtwoorden: admin20xx / test123
 
 ### Probleem: "Network error"
 - Controleer Supabase URL in .env

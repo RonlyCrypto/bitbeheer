@@ -17,7 +17,7 @@ async function setupAdminAccounts() {
     console.log('Setting up admin accounts...');
 
     // Hash passwords
-    const adminPassword = 'admin123';
+    const adminPassword = 'admin20xx';
     const testPassword = 'test123';
     
     const adminHash = await bcrypt.hash(adminPassword, 10);

@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS admin_accounts (
 );
 
 -- Insert default admin and test accounts
--- Passwords are hashed using bcrypt (password: admin123 and test123)
+-- Passwords are hashed using bcrypt (password: admin20xx and test123)
 INSERT INTO admin_accounts (username, password_hash, account_type, is_active) VALUES
 (
   'admin',

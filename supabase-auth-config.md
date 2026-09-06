@@ -110,5 +110,5 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 2. Je zou succesvol moeten kunnen inloggen
 
 ### 3. Test Admin Login
-1. Admin account: `admin@bitbeheer.nl` / `admin123`
+1. Admin account: `admin@bitbeheer.nl` / `admin20xx`
 2. Test account: `test@bitbeheer.nl` / `test123`

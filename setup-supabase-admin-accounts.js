@@ -19,7 +19,7 @@ async function setupSupabaseAdminAccounts() {
     // Create admin account
     const { data: adminData, error: adminError } = await supabase.auth.admin.createUser({
       email: 'admin@bitbeheer.nl',
-      password: 'admin123',
+      password: 'admin20xx',
       email_confirm: true,
       user_metadata: {
         name: 'Admin',
@@ -52,7 +52,7 @@ async function setupSupabaseAdminAccounts() {
 
     console.log('\n✅ Supabase admin accounts setup complete!');
     console.log('📝 Login credentials:');
-    console.log('   Admin: admin@bitbeheer.nl / admin123');
+    console.log('   Admin: admin@bitbeheer.nl / admin20xx');
     console.log('   Test:  test@bitbeheer.nl / test123');
 
   } catch (error) {
