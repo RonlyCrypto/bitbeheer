@@ -5607,7 +5607,7 @@ const BeginnersGoals = ({ walletData, walletTransactions, onBookAppointment, onN
                 onClick={async () => {
                   try {
                     localStorage.setItem(`bitbeheer_strategy_${user?.email}`, JSON.stringify(strategy));
-                    await supabase.from('accounts').update({ strategy: strategy }).eq('email', user?.email);
+                    await supabase.rpc('update_own_account_setting', { p_field: 'strategy', p_json_value: strategy });
                   } catch {}
                   showInfo('Strategie succesvol opgeslagen!');
                   setShowStrategyEditPopup(false);

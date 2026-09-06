@@ -94,7 +94,11 @@ export default function GoalsTab({ goals: initialGoals, setGoals: setInitialGoal
     if (!effectiveUserEmail) return;
     if (field === 'milestones_opt_in') setMilestonesOptIn(value);
     else setRitmeDisciplineOptIn(value);
-    await supabase.from('accounts').update({ [field]: value }).eq('email', effectiveUserEmail);
+    await supabase.rpc('update_own_account_setting', {
+      p_field: field,
+      p_bool_value: value,
+      p_target_email: isImpersonating ? effectiveUserEmail : null
+    });
     // Laat het dashboard (UserDashboard) weten dat de opt-in flags veranderd zijn
     window.dispatchEvent(new Event('refreshAccountStatus'));
   };
