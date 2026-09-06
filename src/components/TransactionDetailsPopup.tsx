@@ -105,7 +105,10 @@ export default function TransactionDetailsPopup({ transaction, onClose, buyFifo,
             <>
               <div className="grid md:grid-cols-2 gap-3">
                 <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                  <label className="text-xs font-semibold text-blue-700 mb-1 block">BITCOIN BEDRAG</label>
+                  <label className="text-xs font-semibold text-blue-700 mb-1 flex items-center gap-1.5">
+                    BITCOIN BEDRAG
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-green-100 text-green-700">↓ Ontvangen</span>
+                  </label>
                   <p className="text-xl font-bold text-blue-900">{btcAmount.toFixed(8)} BTC</p>
                 </div>
                 <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
@@ -127,7 +130,10 @@ export default function TransactionDetailsPopup({ transaction, onClose, buyFifo,
             <>
               <div className="grid md:grid-cols-2 gap-3">
                 <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                  <label className="text-xs font-semibold text-blue-700 mb-1 block">BITCOIN BEDRAG</label>
+                  <label className="text-xs font-semibold text-blue-700 mb-1 flex items-center gap-1.5">
+                    BITCOIN BEDRAG
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700">↑ Verstuurd</span>
+                  </label>
                   <p className="text-xl font-bold text-blue-900">-{btcAmount.toFixed(8)} BTC</p>
                 </div>
                 <div className="bg-red-50 rounded-lg p-3 border border-red-200">
@@ -151,6 +157,26 @@ export default function TransactionDetailsPopup({ transaction, onClose, buyFifo,
               </div>
             </>
           )}
+
+          {/* Tegenpartij adres(sen) */}
+          {(() => {
+            const counterpartyAddresses = isBuy ? transaction.fromAddresses : transaction.toAddresses;
+            if (!counterpartyAddresses || counterpartyAddresses.length === 0) return null;
+            return (
+              <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                <label className="text-xs font-semibold text-gray-700 mb-1.5 block">
+                  {isBuy ? 'ONTVANGEN VAN' : 'VERSTUURD NAAR'}
+                </label>
+                <div className="space-y-1">
+                  {counterpartyAddresses.map((addr, i) => (
+                    <p key={i} className="text-sm font-mono text-gray-900 break-all bg-white rounded px-2 py-1 border border-gray-200">
+                      {addr}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Current Value & Profit */}
           {isBuy ? (

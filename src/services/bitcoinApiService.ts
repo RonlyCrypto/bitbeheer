@@ -13,6 +13,8 @@ export interface BitcoinTransaction {
   valueInBTC?: number; // Value in BTC for reference
   status?: 'pending' | 'confirmed'; // Transaction status
   confirmations?: number; // Number of confirmations
+  toAddresses?: string[]; // Outgoing (sent) tx only: external addresses the BTC went to
+  fromAddresses?: string[]; // Incoming (received) tx only: external addresses the BTC came from
 }
 
 export interface BitcoinWallet {
@@ -328,6 +330,17 @@ class BitcoinApiService {
             const profitUSD = isSend ? -(currentValueUSD - priceAtTimeUSD) : (currentValueUSD - priceAtTimeUSD);
             const profitPercent = priceAtTime > 0 ? ((currentPrice - priceAtTime) / priceAtTime) * 100 : 0;
             
+            const externalOutputs = Array.from(new Set<string>(
+              (txData.vout || [])
+                .filter((vout: any) => vout.scriptpubkey_address && vout.scriptpubkey_address !== address)
+                .map((vout: any) => vout.scriptpubkey_address)
+            ));
+            const externalInputs = Array.from(new Set<string>(
+              (txData.vin || [])
+                .filter((vin: any) => vin.prevout?.scriptpubkey_address && vin.prevout.scriptpubkey_address !== address)
+                .map((vin: any) => vin.prevout.scriptpubkey_address)
+            ));
+
             processedTransactions.push({
               hash: tx.txid,
               time: blockTime,
@@ -338,7 +351,9 @@ class BitcoinApiService {
               profitPercent: profitPercent,
               valueInBTC: valueInBTC,
               status: isPending ? 'pending' : 'confirmed',
-              confirmations: confirmations
+              confirmations: confirmations,
+              toAddresses: isSend ? externalOutputs : undefined,
+              fromAddresses: !isSend ? externalInputs : undefined
             });
           } else {
             skippedCount++;
@@ -508,6 +523,17 @@ class BitcoinApiService {
             const profitUSD = isSend ? -(currentValueUSD - priceAtTimeUSD) : (currentValueUSD - priceAtTimeUSD);
             const profitPercent = priceAtTime > 0 ? ((currentPrice - priceAtTime) / priceAtTime) * 100 : 0;
             
+            const externalOutputs = Array.from(new Set<string>(
+              (txData.vout || [])
+                .filter((vout: any) => vout.scriptpubkey_address && vout.scriptpubkey_address !== address)
+                .map((vout: any) => vout.scriptpubkey_address)
+            ));
+            const externalInputs = Array.from(new Set<string>(
+              (txData.vin || [])
+                .filter((vin: any) => vin.prevout?.scriptpubkey_address && vin.prevout.scriptpubkey_address !== address)
+                .map((vin: any) => vin.prevout.scriptpubkey_address)
+            ));
+
             processedTransactions.push({
               hash: tx.txid,
               time: blockTime,
@@ -518,7 +544,9 @@ class BitcoinApiService {
               profitPercent: profitPercent,
               valueInBTC: valueInBTC,
               status: isPending ? 'pending' : 'confirmed',
-              confirmations: confirmations
+              confirmations: confirmations,
+              toAddresses: isSend ? externalOutputs : undefined,
+              fromAddresses: !isSend ? externalInputs : undefined
             });
           } else {
             skippedCount++;

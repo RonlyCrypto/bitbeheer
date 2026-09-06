@@ -499,6 +499,17 @@ class WalletDataService {
           : currentValueUSD - valueInBTC * priceAtTime;
         const profitPercent = priceAtTime > 0 ? ((currentPrice - priceAtTime) / priceAtTime) * 100 : 0;
 
+        const externalOutputs = Array.from(new Set<string>(
+          (tx.vout || [])
+            .filter((vout: any) => vout.scriptpubkey_address && vout.scriptpubkey_address !== address)
+            .map((vout: any) => vout.scriptpubkey_address)
+        ));
+        const externalInputs = Array.from(new Set<string>(
+          (tx.vin || [])
+            .filter((vin: any) => vin.prevout?.scriptpubkey_address && vin.prevout.scriptpubkey_address !== address)
+            .map((vin: any) => vin.prevout.scriptpubkey_address)
+        ));
+
         processed.push({
           hash: tx.txid,
           time: blockTime,
@@ -509,7 +520,9 @@ class WalletDataService {
           profitPercent,
           valueInBTC,
           status: isPending ? 'pending' : 'confirmed',
-          confirmations: 0
+          confirmations: 0,
+          toAddresses: isSend ? externalOutputs : undefined,
+          fromAddresses: !isSend ? externalInputs : undefined
         });
       } catch (error) {
         logger.debug(`Error processing transaction ${tx.txid}:`, error);

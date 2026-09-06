@@ -222,6 +222,9 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
           <div className="flex items-center gap-1.5 text-xs text-gray-600">
             <Coins className="w-3 h-3" />
             <span>Bitcoin Bedrag</span>
+            <span className={`ml-1 px-1.5 py-0.5 rounded text-[10px] font-semibold ${isBuy ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+              {isBuy ? '↓ Ontvangen' : '↑ Verstuurd'}
+            </span>
           </div>
           <p className="text-lg font-bold text-gray-900">
             {formatValue(transaction.value)} BTC
@@ -267,6 +270,27 @@ export default function TransactionBlock({ transaction, index, onTransactionClic
           </div>
         </div>
       </div>
+
+      {/* Tegenpartij adres(sen) */}
+      {(() => {
+        const counterpartyAddresses = isBuy ? transaction.fromAddresses : transaction.toAddresses;
+        if (!counterpartyAddresses || counterpartyAddresses.length === 0) return null;
+        return (
+          <div className="mb-3">
+            <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-1">
+              <Hash className="w-3 h-3" />
+              <span>{isBuy ? 'Ontvangen van' : 'Verstuurd naar'}</span>
+            </div>
+            <div className="space-y-1">
+              {counterpartyAddresses.map((addr, i) => (
+                <p key={i} className="text-xs font-mono text-gray-700 break-all bg-gray-50 rounded-lg px-2 py-1.5 border border-gray-200">
+                  {addr}
+                </p>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Pricing Details - First Row */}
       {isBuy ? (

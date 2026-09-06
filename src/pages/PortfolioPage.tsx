@@ -73,7 +73,7 @@ export default function PortfolioPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [transactionFilter, setTransactionFilter] = useState<'all' | 'buy' | 'sell' | 'active'>('all');
+  const [transactionFilter, setTransactionFilter] = useState<'all' | 'buy' | 'sell' | 'active' | 'sold'>('all');
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
     setToast({ message, type });
@@ -84,16 +84,16 @@ export default function PortfolioPage() {
   // how much of each buy is sold vs. still held) — see src/utils/fifoMatching.ts.
   const fifoMatches = useMemo(() => computeFifoMatches(allTransactions), [allTransactions]);
 
-  // Backwards-compatible view used by the "active" filter: original tx index -> isFullySold.
-  const calculateBuySoldStatus = useMemo(() => {
-    const soldStatusMap = new Map<number, boolean>();
-    allTransactions.forEach((tx, index) => {
-      if (tx.value > 0) {
-        soldStatusMap.set(index, fifoMatches.buys.get(txKey(tx))?.isFullySold ?? false);
-      }
-    });
-    return soldStatusMap;
-  }, [allTransactions, fifoMatches]);
+  // Single predicate for the transaction filter tabs, backed by the shared FIFO
+  // match above instead of each caller recomputing sold-status independently.
+  const matchesTransactionFilter = (tx: BitcoinTransaction, filter: typeof transactionFilter): boolean => {
+    if (filter === 'all') return true;
+    if (filter === 'buy') return tx.value > 0;
+    if (filter === 'sell') return tx.value < 0;
+    if (filter === 'active') return tx.value > 0 && !(fifoMatches.buys.get(txKey(tx))?.isFullySold);
+    if (filter === 'sold') return tx.value > 0 && !!(fifoMatches.buys.get(txKey(tx))?.isFullySold);
+    return true;
+  };
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [showEditWallet, setShowEditWallet] = useState(false);
   const [walletToEdit, setWalletToEdit] = useState<WalletData | null>(null);
@@ -1301,21 +1301,7 @@ export default function PortfolioPage() {
               <PortfolioChart 
                 transactions={(() => {
                   // Filter transacties op basis van transactionFilter voor de chart
-                  const filtered = allTransactions.filter(tx => {
-                    if (transactionFilter === 'all') return true;
-                    if (transactionFilter === 'buy') return tx.value > 0;
-                    if (transactionFilter === 'sell') return tx.value < 0;
-                    if (transactionFilter === 'active') {
-                      if (tx.value > 0) {
-                        const txIndex = allTransactions.findIndex(t => 
-                          t.hash === tx.hash && t.time === tx.time
-                        );
-                        return txIndex !== -1 && !calculateBuySoldStatus.get(txIndex);
-                      }
-                      return false;
-                    }
-                    return true;
-                  });
+                  const filtered = allTransactions.filter(tx => matchesTransactionFilter(tx, transactionFilter));
                   
                   // Debug: log aantal transacties
                   console.log(`📊 Chart transacties: ${filtered.length} van ${allTransactions.length} totaal`);
@@ -1340,21 +1326,7 @@ export default function PortfolioPage() {
                 <div className="flex items-center gap-4 flex-wrap">
                   <span className="text-sm text-gray-600">
                     {(() => {
-                      const filteredCount = allTransactions.filter(tx => {
-                        if (transactionFilter === 'all') return true;
-                        if (transactionFilter === 'buy') return tx.value > 0;
-                        if (transactionFilter === 'sell') return tx.value < 0;
-                        if (transactionFilter === 'active') {
-                          if (tx.value > 0) {
-                            const txIndex = allTransactions.findIndex(t => 
-                              t.hash === tx.hash && t.time === tx.time
-                            );
-                            return txIndex !== -1 && !calculateBuySoldStatus.get(txIndex);
-                          }
-                          return false;
-                        }
-                        return true;
-                      }).length;
+                      const filteredCount = allTransactions.filter(tx => matchesTransactionFilter(tx, transactionFilter)).length;
                       return `${filteredCount} transacties`;
                     })()}
                   </span>
@@ -1369,22 +1341,7 @@ export default function PortfolioPage() {
               </div>
 
               {(() => {
-                const filteredTransactions = allTransactions.filter(tx => {
-                  if (transactionFilter === 'all') return true;
-                  if (transactionFilter === 'buy') return tx.value > 0;
-                  if (transactionFilter === 'sell') return tx.value < 0;
-                  if (transactionFilter === 'active') {
-                    // Only show buys that are not fully sold
-                    if (tx.value > 0) {
-                      const txIndex = allTransactions.findIndex(t => 
-                        t.hash === tx.hash && t.time === tx.time
-                      );
-                      return txIndex !== -1 && !calculateBuySoldStatus.get(txIndex);
-                    }
-                    return false;
-                  }
-                  return true;
-                });
+                const filteredTransactions = allTransactions.filter(tx => matchesTransactionFilter(tx, transactionFilter));
                 const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
                 const showPerPage = filteredTransactions.length > 25;
                 
@@ -1449,6 +1406,19 @@ export default function PortfolioPage() {
                     >
                       Actieve trades
                     </button>
+                    <button
+                      onClick={() => {
+                        setTransactionFilter('sold');
+                        setCurrentPage(1);
+                      }}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        transactionFilter === 'sold'
+                          ? 'bg-gray-600 text-white shadow-md'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      Verkocht
+                    </button>
                   </div>
                 </div>
                         
@@ -1461,7 +1431,8 @@ export default function PortfolioPage() {
                             Filter: {
                               transactionFilter === 'all' ? 'Alle' :
                               transactionFilter === 'buy' ? 'Koop' :
-                              transactionFilter === 'sell' ? 'Verkoop' : 'Actieve trades'
+                              transactionFilter === 'sell' ? 'Verkoop' :
+                              transactionFilter === 'sold' ? 'Verkocht' : 'Actieve trades'
                             }
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -1516,6 +1487,18 @@ export default function PortfolioPage() {
                                 }`}
                               >
                                 Actieve trades
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setTransactionFilter('sold');
+                                  setCurrentPage(1);
+                                  setShowFilterDropdown(false);
+                                }}
+                                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg ${
+                                  transactionFilter === 'sold' ? 'bg-gray-100 text-gray-700 font-medium' : 'text-gray-700'
+                                }`}
+                              >
+                                Verkocht
                               </button>
                             </div>
                           )}
@@ -1595,19 +1578,7 @@ export default function PortfolioPage() {
                   // Filter en sorteer voor weergave (nieuwste eerst)
                   const filteredAndSorted = allTransactions
                   .filter(tx => {
-                    if (transactionFilter === 'all') return true;
-                    if (transactionFilter === 'buy') return tx.value > 0;
-                    if (transactionFilter === 'sell') return tx.value < 0;
-                      if (transactionFilter === 'active') {
-                        if (tx.value > 0) {
-                          const txIndex = allTransactions.findIndex(t => 
-                            t.hash === tx.hash && t.time === tx.time
-                          );
-                          return txIndex !== -1 && !calculateBuySoldStatus.get(txIndex);
-                        }
-                        return false;
-                      }
-                    return true;
+                    return matchesTransactionFilter(tx, transactionFilter);
                   })
                     .sort((a, b) => b.time - a.time); // Nieuwste eerst voor weergave
                   
@@ -1639,21 +1610,7 @@ export default function PortfolioPage() {
 
               {/* Bottom Pagination */}
                   {(() => {
-                    const filteredTransactions = allTransactions.filter(tx => {
-                      if (transactionFilter === 'all') return true;
-                      if (transactionFilter === 'buy') return tx.value > 0;
-                      if (transactionFilter === 'sell') return tx.value < 0;
-                      if (transactionFilter === 'active') {
-                        if (tx.value > 0) {
-                          const txIndex = allTransactions.findIndex(t => 
-                            t.hash === tx.hash && t.time === tx.time
-                          );
-                          return txIndex !== -1 && !calculateBuySoldStatus.get(txIndex);
-                        }
-                        return false;
-                      }
-                      return true;
-                    });
+                    const filteredTransactions = allTransactions.filter(tx => matchesTransactionFilter(tx, transactionFilter));
                 const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
                 
                 return (
