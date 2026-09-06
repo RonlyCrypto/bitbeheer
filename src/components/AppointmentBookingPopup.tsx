@@ -28,6 +28,14 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess, ac
   const effectiveUserEmail = isImpersonating && impersonatedUser ? impersonatedUser : user?.email;
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
   const [bookedSlots, setBookedSlots] = useState<Set<string>>(new Set());
+  const [exactSlotStatus, setExactSlotStatus] = useState<Map<string, string>>(new Map());
+  const [viewWeekStart, setViewWeekStart] = useState<Date>(() => {
+    const d = new Date();
+    const day = d.getDay();
+    d.setDate(d.getDate() + (day === 0 ? -6 : 1) - day);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -114,23 +122,25 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess, ac
     try {
       const { data, error } = await supabase
         .from('appointments')
-        .select('date, start_time, end_time')
+        .select('date, start_time, end_time, status')
         .in('status', ['pending', 'confirmed']);
-      
+
       if (error) throw error;
-      
+
       // Create set of blocked slots
       // Rule: Minimum 30 minutes between start of appointments
       const blocked = new Set<string>();
+      const statusByExactSlot = new Map<string, string>();
       (data || []).forEach((apt: any) => {
         // Parse start time
         const [startHours, startMinutes] = apt.start_time.split(':').map(Number);
         const startTimeMinutes = startHours * 60 + startMinutes;
-        
+
         // Block the actual appointment slot
         const startKey = `${apt.date}_${apt.start_time}`;
         blocked.add(startKey);
-        
+        statusByExactSlot.set(startKey, apt.status);
+
         // Block all times within 30 minutes after the start time
         // This ensures minimum 30 minutes between appointment starts
         for (let mins = startTimeMinutes + 1; mins < startTimeMinutes + 30; mins += 1) {
@@ -140,8 +150,9 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess, ac
           blocked.add(`${apt.date}_${timeKey}`);
         }
       });
-      
+
       setBookedSlots(blocked);
+      setExactSlotStatus(statusByExactSlot);
     } catch (error) {
       console.error('Error loading booked slots:', error);
     }
@@ -558,70 +569,137 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess, ac
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Date Selection */}
+              {/* Date + Time Selection: 2 weeks, every day, click a slot to select it */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                  Selecteer een datum
-                </label>
-                <div className="space-y-4">
+                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Selecteer een datum en tijd
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setViewWeekStart(d => { const n = new Date(d); n.setDate(n.getDate() - 14); return n; })}
+                      className="flex items-center gap-1 px-2.5 py-1 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:border-orange-400 hover:text-orange-600 transition-colors"
+                    >
+                      Vorige
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewWeekStart(d => { const n = new Date(d); n.setDate(n.getDate() + 14); return n; })}
+                      className="flex items-center gap-1 px-2.5 py-1 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:border-orange-400 hover:text-orange-600 transition-colors"
+                    >
+                      Volgende
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mb-4">
+                  <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-blue-50 border-[1.5px] border-blue-300 inline-block" /> Beschikbaar</span>
+                  <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-green-50 border-[1.5px] border-green-300 inline-block" /> Afspraak bevestigd</span>
+                  <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-orange-50 border-[1.5px] border-orange-300 inline-block" /> Aanvraag in afwachting</span>
+                </div>
+
+                <div className="space-y-5">
                   {(() => {
-                    // Monday-start week, so dates land under a clear
-                    // "week van ..." heading instead of one long flat grid
-                    // spanning many months.
-                    const getWeekStart = (dateStr: string) => {
-                      const d = new Date(dateStr + 'T00:00:00');
+                    const dayNames = ['Zo', 'Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za'];
+                    const toLocalDateStr = (d: Date) =>
+                      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+                    const todayWeekStart = (() => {
+                      const d = new Date();
                       const day = d.getDay();
                       d.setDate(d.getDate() + (day === 0 ? -6 : 1) - day);
-                      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                    };
-                    const todayWeekStart = getWeekStart(`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`);
+                      d.setHours(0, 0, 0, 0);
+                      return d;
+                    })();
 
-                    const weekMap = new Map<string, string[]>();
-                    uniqueDates.forEach((date) => {
-                      const weekStart = getWeekStart(date);
-                      if (!weekMap.has(weekStart)) weekMap.set(weekStart, []);
-                      weekMap.get(weekStart)!.push(date);
-                    });
+                    return [0, 1].map((weekIndex) => {
+                      const weekStart = new Date(viewWeekStart);
+                      weekStart.setDate(weekStart.getDate() + weekIndex * 7);
+                      const weekEnd = new Date(weekStart);
+                      weekEnd.setDate(weekEnd.getDate() + 6);
+                      const isCurrentWeek = weekStart.getTime() === todayWeekStart.getTime();
 
-                    return Array.from(weekMap.keys()).sort().map((weekStart) => {
-                      const datesInWeek = weekMap.get(weekStart)!;
-                      const weekStartDate = new Date(weekStart + 'T00:00:00');
-                      const weekEndDate = new Date(weekStartDate);
-                      weekEndDate.setDate(weekEndDate.getDate() + 6);
-                      const isCurrentWeek = weekStart === todayWeekStart;
+                      const days = Array.from({ length: 7 }, (_, i) => {
+                        const d = new Date(weekStart);
+                        d.setDate(d.getDate() + i);
+                        return d;
+                      });
 
                       return (
-                        <div key={weekStart}>
+                        <div key={weekIndex}>
                           <div className="flex items-baseline gap-2 mb-2">
-                            {isCurrentWeek && (
+                            {isCurrentWeek ? (
                               <span className="text-[10px] font-bold uppercase tracking-wide bg-orange-600 text-white px-2 py-0.5 rounded-full">Deze week</span>
+                            ) : (
+                              <span className="text-xs font-medium text-gray-400 dark:text-gray-500">Volgende week</span>
                             )}
-                            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                              {weekStartDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })} – {weekEndDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            <span className="text-sm font-bold text-gray-900 dark:text-white">
+                              {weekStart.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })} – {weekEnd.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}
                             </span>
                           </div>
-                          <div className="flex flex-wrap gap-3">
-                            {datesInWeek.map((date) => {
-                              const dateObj = new Date(date + 'T00:00:00');
-                              const dayName = dateObj.toLocaleDateString('nl-NL', { weekday: 'short' });
-                              const dayNum = dateObj.getDate();
-                              const month = dateObj.toLocaleDateString('nl-NL', { month: 'short' });
-                              const isSelected = selectedDate === date;
+                          <div className="grid grid-cols-7 gap-1.5">
+                            {days.map((dateObj) => {
+                              const dateStr = toLocalDateStr(dateObj);
+                              const slotsForDate = getSlotsForDate(dateStr).sort((a, b) => a.start_time.localeCompare(b.start_time));
+                              const hasSlots = slotsForDate.length > 0;
 
                               return (
-                                <button
-                                  key={date}
-                                  onClick={() => handleDateSelect(date)}
-                                  className={`w-20 p-3 rounded-lg border-2 transition-all ${
-                                    isSelected
-                                      ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
-                                      : 'border-gray-200 dark:border-gray-700 hover:border-orange-300'
+                                <div
+                                  key={dateStr}
+                                  className={`rounded-lg border p-1.5 min-h-[76px] border-gray-200 dark:border-gray-700 ${
+                                    hasSlots ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900/30'
                                   }`}
                                 >
-                                  <div className="text-sm font-medium text-gray-500 dark:text-gray-400">{dayName}</div>
-                                  <div className="text-xl font-bold text-gray-900 dark:text-white">{dayNum}</div>
-                                  <div className="text-xs text-gray-500 dark:text-gray-400">{month}</div>
-                                </button>
+                                  <div className="text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-1">
+                                    {dayNames[dateObj.getDay()]} <span className="font-normal text-gray-400 dark:text-gray-600">{dateObj.getDate()}</span>
+                                  </div>
+                                  {hasSlots ? (
+                                    <div className="flex flex-col gap-1">
+                                      {slotsForDate.map((slot) => {
+                                        const exactKey = `${slot.date}_${slot.start_time}`;
+                                        const status = exactSlotStatus.get(exactKey);
+                                        const isBlocked = isSlotBlocked(slot);
+                                        const isSelected = selectedSlot === slot.id;
+                                        const isClickable = !isBlocked;
+
+                                        let colorClasses: string;
+                                        if (status === 'confirmed') {
+                                          colorClasses = 'border-green-300 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300 cursor-not-allowed';
+                                        } else if (status === 'pending') {
+                                          colorClasses = 'border-orange-300 bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300 cursor-not-allowed';
+                                        } else if (isBlocked) {
+                                          colorClasses = 'border-gray-200 bg-gray-100 text-gray-400 dark:bg-gray-700 dark:border-gray-600 cursor-not-allowed';
+                                        } else if (isSelected) {
+                                          colorClasses = 'border-orange-500 bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200';
+                                        } else {
+                                          colorClasses = 'border-blue-300 bg-blue-50 text-blue-700 hover:border-orange-400 hover:bg-orange-50 dark:bg-blue-900/20 dark:text-blue-300';
+                                        }
+
+                                        return (
+                                          <button
+                                            key={slot.id}
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.preventDefault();
+                                              e.stopPropagation();
+                                              if (isClickable) {
+                                                handleDateSelect(slot.date);
+                                                handleSlotSelect(slot.id);
+                                              }
+                                            }}
+                                            disabled={!isClickable}
+                                            className={`px-1 py-0.5 rounded text-[11px] font-semibold border-[1.5px] transition-colors ${colorClasses}`}
+                                          >
+                                            {slot.start_time.slice(0, 5)}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  ) : (
+                                    <div className="text-[11px] text-gray-300 dark:text-gray-600">—</div>
+                                  )}
+                                </div>
                               );
                             })}
                           </div>
@@ -631,51 +709,6 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess, ac
                   })()}
                 </div>
               </div>
-
-              {/* Time Slots */}
-              {selectedDate && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                    Selecteer een tijd
-                  </label>
-                  <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
-                    {getSlotsForDate(selectedDate).map((slot) => {
-                      const isBlocked = isSlotBlocked(slot);
-                      const isSelected = selectedSlot === slot.id;
-                      
-                      return (
-                        <button
-                          key={slot.id}
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (!isBlocked) {
-                              console.log('🟡 Clicking slot:', slot.id, 'blocked:', isBlocked);
-                              handleSlotSelect(slot.id);
-                            }
-                          }}
-                          disabled={isBlocked}
-                          className={`p-3 rounded-lg border-2 transition-all flex items-center justify-center gap-2 ${
-                            isBlocked
-                              ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600'
-                              : isSelected
-                              ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300'
-                              : 'border-gray-200 dark:border-gray-700 hover:border-orange-300 hover:bg-orange-50/50 dark:hover:bg-orange-900/10'
-                          }`}
-                        >
-                          <Clock className="w-4 h-4" />
-                          <span className="font-medium">{slot.start_time.slice(0, 5)}</span>
-                          {isBlocked && <span className="text-xs">Geblokkeerd</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {getSlotsForDate(selectedDate).filter(s => !isSlotBlocked(s)).length === 0 && (
-                    <p className="text-sm text-gray-500 mt-2">Geen beschikbare tijden voor deze datum</p>
-                  )}
-                </div>
-              )}
 
               {/* Notes */}
               {selectedSlot && (
