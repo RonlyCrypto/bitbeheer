@@ -174,29 +174,29 @@ export default function LoginRegister() {
 
       {isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[95vh] overflow-y-auto">
             {/* Header */}
-            <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-t-lg">
+            <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-t-lg">
               <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold">
+                <h2 className="text-lg font-bold">
                   {mode === 'login' ? 'Inloggen' : mode === 'register' ? 'Account Aanmaken' : 'Wachtwoord Reset'}
                 </h2>
                 <button
                   onClick={() => setIsOpen(false)}
                   className="text-white hover:text-gray-200 transition-colors"
                 >
-                  <X size={24} />
+                  <X size={20} />
                 </button>
               </div>
             </div>
 
             {/* Content */}
-            <div className="p-6">
+            <div className="p-5">
               {/* Mode Tabs */}
-              <div className="flex space-x-1 mb-6 bg-gray-100 rounded-lg p-1">
+              <div className="flex space-x-1 mb-4 bg-gray-100 rounded-lg p-1">
                 <button
                   onClick={() => setMode('login')}
-                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex-1 py-1.5 px-4 rounded-md text-sm font-medium transition-colors ${
                     mode === 'login'
                       ? 'bg-white text-orange-600 shadow-sm'
                       : 'text-gray-600 hover:text-gray-800'
@@ -206,7 +206,7 @@ export default function LoginRegister() {
                 </button>
                 <button
                   onClick={() => setMode('register')}
-                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex-1 py-1.5 px-4 rounded-md text-sm font-medium transition-colors ${
                     mode === 'register'
                       ? 'bg-white text-orange-600 shadow-sm'
                       : 'text-gray-600 hover:text-gray-800'
@@ -228,12 +228,12 @@ export default function LoginRegister() {
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-3">
                 {mode === 'login' ? (
                   // Login Form
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         E-mailadres
                       </label>
                       <div className="relative">
@@ -243,7 +243,7 @@ export default function LoginRegister() {
                           name="email"
                           value={email}
                           onChange={handleChange}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
+                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
                           placeholder="je@email.com"
                           required
                         />
@@ -251,7 +251,7 @@ export default function LoginRegister() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Wachtwoord
                       </label>
                       <div className="relative">
@@ -261,7 +261,7 @@ export default function LoginRegister() {
                           name="password"
                           value={password}
                           onChange={handleChange}
-                          className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
+                          className="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
                           placeholder="Je wachtwoord"
                           required
                         />
@@ -285,9 +285,9 @@ export default function LoginRegister() {
                 ) : mode === 'register' ? (
                   // Registration Form (same as aanmeldformulier)
                   <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                           Naam *
                         </label>
                         <div className="relative">
@@ -297,7 +297,7 @@ export default function LoginRegister() {
                             name="naam"
                             value={formData.naam}
                             onChange={handleChange}
-                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
                             placeholder="Je volledige naam"
                             required
                           />
@@ -305,7 +305,7 @@ export default function LoginRegister() {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                           E-mailadres *
                         </label>
                         <div className="relative">
@@ -315,7 +315,7 @@ export default function LoginRegister() {
                             name="email"
                             value={formData.email}
                             onChange={handleChange}
-                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
                             placeholder="je@email.com"
                             required
                           />
@@ -323,9 +323,9 @@ export default function LoginRegister() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                           Telefoonnummer
                         </label>
                         <div className="relative">
@@ -335,14 +335,14 @@ export default function LoginRegister() {
                             name="telefoon"
                             value={formData.telefoon}
                             onChange={handleChange}
-                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
                             placeholder="06-12345678"
                           />
                         </div>
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                           Geboortedatum *
                         </label>
                         <input
@@ -351,13 +351,13 @@ export default function LoginRegister() {
                           value={formData.geboortedatum}
                           onChange={handleChange}
                           max={new Date().toISOString().split('T')[0]}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
                           required
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                           Stad <span className="text-gray-400 font-normal">(optioneel)</span>
                         </label>
                         <input
@@ -366,7 +366,7 @@ export default function LoginRegister() {
                           list="nl-cities-modal"
                           value={formData.locatie}
                           onChange={handleChange}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
                           placeholder="Amsterdam"
                         />
                         <datalist id="nl-cities-modal">
@@ -402,7 +402,7 @@ export default function LoginRegister() {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                           Van plan om te investeren
                         </label>
                         <div className="relative">
@@ -411,7 +411,7 @@ export default function LoginRegister() {
                             name="spaargeld"
                             value={formData.spaargeld}
                             onChange={handleChange}
-                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
                           >
                             <option value="">Selecteer bedrag</option>
                             <option value="0-1000">€0 - €1.000</option>
@@ -425,14 +425,14 @@ export default function LoginRegister() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Bitcoin ervaring
                       </label>
                       <select
                         name="ervaring"
                         value={formData.ervaring}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
                       >
                         <option value="">Selecteer je ervaring</option>
                         <option value="beginner">Beginner - Nog nooit Bitcoin gekocht</option>
@@ -444,29 +444,29 @@ export default function LoginRegister() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Motivatie voor Bitcoin investeren
                       </label>
                       <textarea
                         name="motivatie"
                         value={formData.motivatie}
                         onChange={handleChange}
-                        rows={3}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
+                        rows={2}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
                         placeholder="Vertel ons waarom je wilt investeren in Bitcoin..."
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Verwachtingen van de begeleiding
                       </label>
                       <textarea
                         name="verwachtingen"
                         value={formData.verwachtingen}
                         onChange={handleChange}
-                        rows={3}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
+                        rows={2}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
                         placeholder="Wat hoop je te leren en bereiken met onze begeleiding?"
                       />
                     </div>
@@ -478,7 +478,7 @@ export default function LoginRegister() {
                       Vul je e-mailadres in. Als er een account bestaat, sturen we een link om je wachtwoord opnieuw in te stellen.
                     </p>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         E-mailadres
                       </label>
                       <div className="relative">
@@ -488,7 +488,7 @@ export default function LoginRegister() {
                           name="email"
                           value={email}
                           onChange={handleChange}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
+                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
                           placeholder="je@email.com"
                           required
                         />
