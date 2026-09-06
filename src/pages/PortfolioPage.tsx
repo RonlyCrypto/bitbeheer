@@ -4,9 +4,8 @@ import {
   TrendingUp, 
   Eye, 
   EyeOff, 
-  Plus, 
-  Trash2, 
-  ExternalLink,
+  Plus,
+  Trash2,
   Copy,
   Check,
   AlertCircle,
@@ -892,7 +891,7 @@ export default function PortfolioPage() {
       <div className="container mx-auto px-4 py-0 md:py-0 pb-20 md:pb-12">
         <div className="max-w-7xl mx-auto">
           {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
             {/* BTC Saldo */}
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
               <div className="flex items-center gap-2 mb-3">
@@ -904,7 +903,14 @@ export default function PortfolioPage() {
               <p className="text-2xl font-bold text-gray-900 leading-none">
                 {showBalances ? totalBalance.toFixed(4) : '••••'}
               </p>
-              <p className="text-xs text-gray-400 mt-1">Bitcoin saldo</p>
+              <p className="text-xs text-gray-400 mt-1">
+                Bitcoin saldo
+                {showBalances && (
+                  <span className="ml-1 font-semibold text-gray-600">
+                    · ${totalValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                  </span>
+                )}
+              </p>
             </div>
 
             {/* Transacties */}
@@ -951,20 +957,6 @@ export default function PortfolioPage() {
               {!(showBalances && profitPercentage !== 0) && (
                 <p className="text-xs text-gray-400 mt-1">Totale inleg</p>
               )}
-            </div>
-
-            {/* Huidige waarde */}
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="bg-purple-100 p-2 rounded-xl">
-                  <ExternalLink className="w-4 h-4 text-purple-600" />
-                </div>
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Waarde</span>
-              </div>
-              <p className="text-2xl font-bold text-gray-900 leading-none">
-                {showBalances ? `$${totalValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '••••'}
-              </p>
-              <p className="text-xs text-gray-400 mt-1">Huidige waarde</p>
             </div>
           </div>
 
