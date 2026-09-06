@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Bitcoin, TrendingUp, BarChart3, Shield, Wallet, LogOut, User, ArrowLeft, Settings, Sun, Moon, UserCircle } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePermissions } from '../contexts/PermissionsContext';
@@ -13,8 +12,7 @@ import LoginRegister from './LoginRegister';
 
 export default function Header() {
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
-  const { user, signOut } = useSupabaseAuth();
+  const { user, signOut, isAuthenticated } = useSupabaseAuth();
   const { theme, toggleTheme } = useTheme();
   const { isImpersonating, impersonatedUser, canAccessAdmin } = usePermissions();
   const { isMenuVisible } = useSettings(); // Get settings for menu visibility
