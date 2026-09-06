@@ -905,9 +905,13 @@ export default function PortfolioPage() {
   const totalInvestment = totalInvestmentFromDb > 0 ? totalInvestmentFromDb : totalInvestmentCalculated;
   
   // Calculate profit percentage
-  const profitPercentage = totalInvestment > 0 
-    ? ((totalValue - totalInvestment) / totalInvestment) * 100 
+  const profitPercentage = totalInvestment > 0
+    ? ((totalValue - totalInvestment) / totalInvestment) * 100
     : 0;
+
+  // Totaal verkocht (alle sells), voor de Inleg-kaart
+  const totalSoldBtc = Array.from(fifoMatches.sells.values()).reduce((sum, s) => sum + s.soldBtc, 0);
+  const totalSoldValue = Array.from(fifoMatches.sells.values()).reduce((sum, s) => sum + s.proceeds, 0);
 
   return (
     <div className="min-h-screen pb-20 md:pb-0">
@@ -978,27 +982,35 @@ export default function PortfolioPage() {
               </p>
             </div>
 
-            {/* Inleg */}
+            {/* Inleg & Verkocht */}
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
               <div className="flex items-center gap-2 mb-3">
                 <div className="bg-yellow-100 p-2 rounded-xl">
                   <TrendingUp className="w-4 h-4 text-yellow-600" />
                 </div>
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Inleg</span>
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Inleg &amp; Verkocht</span>
               </div>
-              <div className="flex items-baseline gap-1">
-                <p className="text-2xl font-bold text-gray-900 leading-none">
-                  {showBalances ? `$${totalInvestment.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '••••'}
-                </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-lg font-bold text-gray-900 leading-none">
+                    {showBalances ? `$${totalInvestment.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '••••'}
+                  </p>
+                  <p className="text-[10px] text-gray-400 mt-1">Inleg</p>
+                  {showBalances && profitPercentage !== 0 && (
+                    <p className={`text-[10px] font-semibold mt-0.5 ${profitPercentage >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {profitPercentage >= 0 ? '+' : ''}{profitPercentage.toFixed(1)}%
+                    </p>
+                  )}
+                </div>
+                <div className="border-l border-gray-100 pl-3">
+                  <p className="text-lg font-bold text-gray-900 leading-none">
+                    {showBalances ? `$${totalSoldValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '••••'}
+                  </p>
+                  <p className="text-[10px] text-gray-400 mt-1">
+                    Verkocht{totalSoldBtc > 0 ? ` · ${totalSoldBtc.toFixed(4)} BTC` : ''}
+                  </p>
+                </div>
               </div>
-              {showBalances && profitPercentage !== 0 && (
-                <p className={`text-xs font-semibold mt-1 ${profitPercentage >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {profitPercentage >= 0 ? '+' : ''}{profitPercentage.toFixed(1)}%
-                </p>
-              )}
-              {!(showBalances && profitPercentage !== 0) && (
-                <p className="text-xs text-gray-400 mt-1">Totale inleg</p>
-              )}
             </div>
           </div>
 
