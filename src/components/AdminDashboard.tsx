@@ -37,6 +37,7 @@ import AdminCycleAdvisor from './AdminCycleAdvisor';
 import ProfilePopup from './ProfilePopup';
 import { useProfilePopup } from '../contexts/ProfilePopupContext';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import AdminSidebar from './AdminSidebar';
 import AdminMobileTabBar from './AdminMobileTabBar';
@@ -46,8 +47,8 @@ export default function AdminDashboard() {
   const { user } = useSupabaseAuth();
   const { isImpersonating, impersonatedUser } = usePermissions();
   const { isOpen: isProfilePopupOpen, closeProfilePopup } = useProfilePopup();
+  const { isSoonOnlineMode, setSoonOnlineMode } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
-  const [isSoonOnlineMode, setIsSoonOnlineMode] = useState(true);
   const [userProfile, setUserProfile] = useState<any>({
     id: user?.id || '',
     email: user?.email || '',
@@ -69,10 +70,6 @@ export default function AdminDashboard() {
   });
 
   useEffect(() => {
-    // Check current soon online mode status
-    const soonOnlineMode = localStorage.getItem('soon_online_mode');
-    setIsSoonOnlineMode(soonOnlineMode !== 'false');
-
     // Load users for recent activity
     const loadUsers = async () => {
       try {
@@ -277,11 +274,15 @@ export default function AdminDashboard() {
     }
   };
 
-  const toggleSoonOnlineMode = () => {
+  const toggleSoonOnlineMode = async () => {
     const newMode = !isSoonOnlineMode;
-    setIsSoonOnlineMode(newMode);
-    localStorage.setItem('soon_online_mode', String(newMode));
-    
+    const ok = await setSoonOnlineMode(newMode);
+
+    if (!ok) {
+      alert('Kon de site-status niet bijwerken. Probeer het opnieuw.');
+      return;
+    }
+
     if (!newMode) {
       // Site is now live
       alert('Website is nu live! Alle bezoekers kunnen de site zien.');

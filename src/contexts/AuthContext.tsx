@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -6,6 +7,8 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   isSiteAccessible: () => boolean;
+  isSoonOnlineMode: boolean;
+  setSoonOnlineMode: (enabled: boolean) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,6 +39,11 @@ const authenticateAdmin = async (username: string, password: string) => {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userType, setUserType] = useState<'admin' | 'test' | null>(null);
+  // Soon-online flag lives in the database (site_settings) so every visitor
+  // sees the same value -- not just the admin's own browser. Defaults to
+  // true (soon online) until the real value has loaded, which is the safe
+  // direction to default in.
+  const [isSoonOnlineMode, setIsSoonOnlineModeState] = useState(true);
 
   useEffect(() => {
     // Check if user is already authenticated (from localStorage)
@@ -45,6 +53,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsAuthenticated(true);
       setUserType(storedUserType);
     }
+
+    supabase
+      .from('site_settings')
+      .select('value')
+      .eq('key', 'soon_online_mode')
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setIsSoonOnlineModeState(data.value !== false);
+        }
+      });
   }, []);
 
   const login = async (username: string, password: string): Promise<boolean> => {
@@ -74,25 +93,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const isSiteAccessible = (): boolean => {
-    // Check if site is in "soon online" mode
-    const isSoonOnlineMode = localStorage.getItem('soon_online_mode') !== 'false';
-    
     if (!isSoonOnlineMode) {
       // Site is live, everyone can access
       return true;
     }
-    
+
     // If admin is logged in, they can see the full site (not SoonOnlinePage)
     if (isAuthenticated && (userType === 'admin' || userType === 'test')) {
       return true;
     }
-    
+
     // Non-authenticated users see SoonOnlinePage
     return false;
   };
 
+  const setSoonOnlineMode = async (enabled: boolean): Promise<boolean> => {
+    const { error } = await supabase
+      .from('site_settings')
+      .update({ value: enabled, updated_at: new Date().toISOString() })
+      .eq('key', 'soon_online_mode');
+
+    if (error) {
+      console.error('Error updating soon_online_mode:', error);
+      return false;
+    }
+
+    setIsSoonOnlineModeState(enabled);
+    return true;
+  };
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, userType, login, logout, isSiteAccessible }}>
+    <AuthContext.Provider value={{ isAuthenticated, userType, login, logout, isSiteAccessible, isSoonOnlineMode, setSoonOnlineMode }}>
       {children}
     </AuthContext.Provider>
   );
