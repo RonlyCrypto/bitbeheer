@@ -9,6 +9,7 @@ export default function AanmeldenPage() {
     achternaam: '',
     email: '',
     telefoon: '',
+    leeftijd: '',
     locatie: '',
     spaargeld: '',
     ervaring: '',
@@ -51,6 +52,8 @@ export default function AanmeldenPage() {
       if (!formData.locatie?.trim()) newErrors.locatie = true;
       if (!formData.email?.trim() || !emailRegex.test(formData.email)) newErrors.email = true;
       if (!formData.telefoon?.trim()) newErrors.telefoon = true;
+      const leeftijdNum = Number(formData.leeftijd);
+      if (!formData.leeftijd?.trim() || !Number.isInteger(leeftijdNum) || leeftijdNum < 1 || leeftijdNum > 120) newErrors.leeftijd = true;
 
       if (Object.keys(newErrors).length > 0) {
         setFieldErrors(newErrors);
@@ -75,6 +78,7 @@ export default function AanmeldenPage() {
           voornaam: formData.voornaam,
           achternaam: formData.achternaam,
           telefoon: formData.telefoon,
+          leeftijd: formData.leeftijd,
           locatie: formData.locatie,
           spaargeld: formData.spaargeld,
           ervaring: formData.ervaring,
@@ -306,6 +310,22 @@ export default function AanmeldenPage() {
                       required
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${fieldErrors.telefoon ? 'bb-error-field' : 'border-gray-300'}`}
                       placeholder="06-12345678"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Leeftijd *
+                    </label>
+                    <input
+                      type="number"
+                      name="leeftijd"
+                      value={formData.leeftijd}
+                      onChange={handleChange}
+                      required
+                      min={1}
+                      max={120}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${fieldErrors.leeftijd ? 'bb-error-field' : 'border-gray-300'}`}
+                      placeholder="30"
                     />
                   </div>
                 </div>
