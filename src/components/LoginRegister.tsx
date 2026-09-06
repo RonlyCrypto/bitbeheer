@@ -102,10 +102,10 @@ export default function LoginRegister() {
           });
         }
       } else if (mode === 'reset') {
-        const resetResponse = await fetch('/api/request-password-reset', {
+        const resetResponse = await fetch('/api/password-reset', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({ action: 'request', email }),
         });
         const result = await resetResponse.json();
         setMessage({

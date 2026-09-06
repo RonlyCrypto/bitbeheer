@@ -30,10 +30,10 @@ export default function ResetPasswordPage() {
     setStatus('submitting');
 
     try {
-      const response = await fetch('/api/reset-password', {
+      const response = await fetch('/api/password-reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, password }),
+        body: JSON.stringify({ action: 'reset', token, password }),
       });
       const result = await response.json();
 
