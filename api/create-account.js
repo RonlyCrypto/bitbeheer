@@ -41,22 +41,23 @@ module.exports = async (req, res) => {
     console.log('Create account request body:', req.body);
 
     // The full Aanmelden-page form sends voornaam + achternaam separately;
-    // the quick signup modal only collects a single "naam" field. Support both.
+    // the quick signup modal only collects a single "naam" field; the
+    // homepage form marks achternaam as optional. Support all three.
     let voornaam = voornaamRaw;
     let achternaam = achternaamRaw;
-    if ((!voornaam || !achternaam) && naam) {
+    if (!voornaam && naam) {
       const parts = naam.trim().split(/\s+/);
-      voornaam = voornaam || parts[0] || '';
-      achternaam = achternaam || (parts.length > 1 ? parts.slice(1).join(' ') : parts[0]) || '';
+      voornaam = parts[0] || '';
+      achternaam = achternaam || (parts.length > 1 ? parts.slice(1).join(' ') : '');
     }
+    achternaam = achternaam || '';
 
-    if (!email || !voornaam || !achternaam) {
+    if (!email || !voornaam) {
       console.log('Missing required fields:', {
         email: !!email,
-        voornaam: !!voornaam,
-        achternaam: !!achternaam
+        voornaam: !!voornaam
       });
-      return res.status(400).json({ error: 'Email en naam zijn verplicht' });
+      return res.status(400).json({ error: 'Email en voornaam zijn verplicht' });
     }
 
     console.log('Creating account for:', email);
