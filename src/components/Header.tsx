@@ -153,24 +153,24 @@ export default function Header() {
             {isAuthenticated || isImpersonating ? (
               <div className="flex items-center gap-3">
                 {/* Combined Dashboard + Settings pill */}
-                <div className="flex items-center bg-white bg-opacity-20 rounded-xl backdrop-blur-sm overflow-hidden">
-                  {(isImpersonating || (isAuthenticated && !canAccessAdmin)) && (
-                    <>
-                      <Link
-                        to="/user-dashboard"
-                        className={`flex items-center gap-2 px-3 md:px-4 py-2 md:py-3 border-b-2 transition-all duration-300 ${
-                          location.pathname === '/user-dashboard'
-                            ? 'border-white'
-                            : 'border-transparent hover:bg-white hover:bg-opacity-10'
-                        }`}
-                      >
-                        <BarChart3 className="w-4 h-4 md:w-5 md:h-5" />
-                        <span className="font-medium text-sm md:text-base hidden sm:inline">Dashboard</span>
-                      </Link>
-                      <div className="w-px self-stretch my-2 bg-white bg-opacity-30" />
-                    </>
-                  )}
-                  <div className="relative settings-dropdown">
+                <div className="relative settings-dropdown">
+                  <div className="flex items-center bg-white bg-opacity-20 rounded-xl backdrop-blur-sm overflow-hidden">
+                    {(isImpersonating || (isAuthenticated && !canAccessAdmin)) && (
+                      <>
+                        <Link
+                          to="/user-dashboard"
+                          className={`flex items-center gap-2 px-3 md:px-4 py-2 md:py-3 border-b-2 transition-all duration-300 ${
+                            location.pathname === '/user-dashboard'
+                              ? 'border-white'
+                              : 'border-transparent hover:bg-white hover:bg-opacity-10'
+                          }`}
+                        >
+                          <BarChart3 className="w-4 h-4 md:w-5 md:h-5" />
+                          <span className="font-medium text-sm md:text-base hidden sm:inline">Dashboard</span>
+                        </Link>
+                        <div className="w-px self-stretch my-2 bg-white bg-opacity-30" />
+                      </>
+                    )}
                     <button
                       onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
                       className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 hover:bg-white hover:bg-opacity-10 transition-all duration-300"
@@ -182,6 +182,7 @@ export default function Header() {
                         {getDisplayName(user, isImpersonating, impersonatedUser, null)}
                       </span>
                     </button>
+                  </div>
 
                     {/* Dropdown Menu */}
                   {showSettingsDropdown && (
@@ -298,7 +299,6 @@ export default function Header() {
                       </div>
                     </div>
                   )}
-                  </div>
                 </div>
               </div>
             ) : (
