@@ -1331,13 +1331,31 @@ function OverviewTab({ userProfile, goals, appointments, portfolio, onBookAppoin
         }
       ];
   
-  const [hasWallet, setHasWallet] = useState(false);
+  // Cache journey progress (wallet + transactions) per user, so switching tabs
+  // doesn't flash the journey dots back to "not done yet" while data reloads.
+  const walletCacheEmail = (isImpersonating && impersonatedUser) ? impersonatedUser : user?.email;
+  const walletCacheKey = walletCacheEmail ? `btc_wallet_cache_${walletCacheEmail}` : null;
+  const readWalletCache = () => {
+    if (!walletCacheKey) return null;
+    try { return JSON.parse(localStorage.getItem(walletCacheKey) || 'null'); } catch { return null; }
+  };
+
+  const [hasWallet, setHasWallet] = useState(() => readWalletCache()?.hasWallet ?? false);
   const [userAppointments, setUserAppointments] = useState<any[]>([]);
-  const [walletTransactions, setWalletTransactions] = useState<BitcoinTransaction[]>([]);
+  const [walletTransactions, setWalletTransactions] = useState<BitcoinTransaction[]>(() => readWalletCache()?.walletTransactions ?? []);
   const [currentBitcoinPrice, setCurrentBitcoinPrice] = useState<number>(() => {
     try { const c = JSON.parse(localStorage.getItem('btc_market_cache') || 'null'); return c?.price || 96640; } catch { return 96640; }
   });
   const [selectedTransaction, setSelectedTransaction] = useState<BitcoinTransaction | null>(null);
+
+  // Keep the journey-progress cache in sync so a remount (e.g. switching tabs)
+  // starts from the last known state instead of flashing back to "no wallet/no bitcoin".
+  useEffect(() => {
+    if (!walletCacheKey) return;
+    try {
+      localStorage.setItem(walletCacheKey, JSON.stringify({ hasWallet, walletTransactions }));
+    } catch {}
+  }, [walletCacheKey, hasWallet, walletTransactions]);
   
   const activeGoals = displayGoals.filter((goal) => (goal.status as string) === 'active').length;
   const [appointmentsLoading, setAppointmentsLoading] = useState(true);
