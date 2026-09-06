@@ -97,7 +97,7 @@ module.exports = async (req, res) => {
     // Check for existing account with same email to avoid unique constraint violation
     const { data: existingAccount, error: existingError } = await supabase
       .from('accounts')
-      .select('id, email, category, verified, active, deactivated_at')
+      .select('id, email, category, deactivated_at')
       .eq('email', email.toLowerCase().trim())
       .maybeSingle();
 
