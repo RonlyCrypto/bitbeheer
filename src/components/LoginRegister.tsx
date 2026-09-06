@@ -18,7 +18,8 @@ export default function LoginRegister() {
     naam: '',
     email: '',
     telefoon: '',
-    geboortejaar: '',
+    geboortedatum: '',
+    locatie: '',
     spaargeld: '',
     ervaring: '',
     motivatie: '',
@@ -59,10 +60,11 @@ export default function LoginRegister() {
           setMessage({ type: 'error', text: result.error || 'Onjuiste e-mail of wachtwoord' });
         }
       } else if (mode === 'register') {
-        const geboortejaarNum = Number(formData.geboortejaar);
-        const currentYear = new Date().getFullYear();
-        if (!formData.geboortejaar || !Number.isInteger(geboortejaarNum) || geboortejaarNum < 1900 || geboortejaarNum > currentYear) {
-          setMessage({ type: 'error', text: 'Vul een geldig geboortejaar in.' });
+        const geboortedatumDate = formData.geboortedatum ? new Date(formData.geboortedatum) : null;
+        const earliestBirthDate = new Date();
+        earliestBirthDate.setFullYear(earliestBirthDate.getFullYear() - 120);
+        if (!formData.geboortedatum || !geboortedatumDate || Number.isNaN(geboortedatumDate.getTime()) || geboortedatumDate > new Date() || geboortedatumDate < earliestBirthDate) {
+          setMessage({ type: 'error', text: 'Vul een geldige geboortedatum in.' });
           setIsLoading(false);
           return;
         }
@@ -77,7 +79,8 @@ export default function LoginRegister() {
             email: formData.email,
             naam: formData.naam,
             telefoon: formData.telefoon,
-            geboortejaar: formData.geboortejaar,
+            geboortedatum: formData.geboortedatum,
+            locatie: formData.locatie,
             spaargeld: formData.spaargeld,
             ervaring: formData.ervaring,
             motivatie: formData.motivatie,
@@ -97,7 +100,8 @@ export default function LoginRegister() {
               naam: '',
               email: '',
               telefoon: '',
-              geboortejaar: '',
+              geboortedatum: '',
+              locatie: '',
               spaargeld: '',
               ervaring: '',
               motivatie: '',
@@ -339,19 +343,62 @@ export default function LoginRegister() {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Geboortejaar *
+                          Geboortedatum *
                         </label>
                         <input
-                          type="number"
-                          name="geboortejaar"
-                          value={formData.geboortejaar}
+                          type="date"
+                          name="geboortedatum"
+                          value={formData.geboortedatum}
                           onChange={handleChange}
-                          min={1900}
-                          max={new Date().getFullYear()}
+                          max={new Date().toISOString().split('T')[0]}
                           className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
-                          placeholder="1990"
                           required
                         />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Stad <span className="text-gray-400 font-normal">(optioneel)</span>
+                        </label>
+                        <input
+                          type="text"
+                          name="locatie"
+                          list="nl-cities-modal"
+                          value={formData.locatie}
+                          onChange={handleChange}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
+                          placeholder="Amsterdam"
+                        />
+                        <datalist id="nl-cities-modal">
+                          <option value="Amsterdam" />
+                          <option value="Rotterdam" />
+                          <option value="Den Haag" />
+                          <option value="Utrecht" />
+                          <option value="Groningen" />
+                          <option value="Eindhoven" />
+                          <option value="Tilburg" />
+                          <option value="Almere" />
+                          <option value="Breda" />
+                          <option value="Nijmegen" />
+                          <option value="Apeldoorn" />
+                          <option value="Haarlem" />
+                          <option value="Enschede" />
+                          <option value="Amersfoort" />
+                          <option value="Zaanstad" />
+                          <option value="'s-Hertogenbosch" />
+                          <option value="Zwolle" />
+                          <option value="Zoetermeer" />
+                          <option value="Leiden" />
+                          <option value="Dordrecht" />
+                          <option value="Ede" />
+                          <option value="Leeuwarden" />
+                          <option value="Maastricht" />
+                          <option value="Arnhem" />
+                          <option value="Gouda" />
+                          <option value="Goes" />
+                          <option value="Gorinchem" />
+                          <option value="Geleen" />
+                        </datalist>
                       </div>
 
                       <div>

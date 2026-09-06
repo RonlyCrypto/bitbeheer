@@ -597,7 +597,8 @@ function SignupForm() {
     achternaam: '',
     email: '',
     telefoon: '',
-    geboortejaar: '',
+    geboortedatum: '',
+    locatie: '',
     ervaring: '',
   });
   const [loading, setLoading] = useState(false);
@@ -615,10 +616,11 @@ function SignupForm() {
       setError('Vul minimaal je voornaam en e-mailadres in.');
       return;
     }
-    const geboortejaarNum = Number(formData.geboortejaar);
-    const currentYear = new Date().getFullYear();
-    if (!formData.geboortejaar || !Number.isInteger(geboortejaarNum) || geboortejaarNum < 1900 || geboortejaarNum > currentYear) {
-      setError('Vul een geldig geboortejaar in.');
+    const geboortedatumDate = formData.geboortedatum ? new Date(formData.geboortedatum) : null;
+    const earliestBirthDate = new Date();
+    earliestBirthDate.setFullYear(earliestBirthDate.getFullYear() - 120);
+    if (!formData.geboortedatum || !geboortedatumDate || Number.isNaN(geboortedatumDate.getTime()) || geboortedatumDate > new Date() || geboortedatumDate < earliestBirthDate) {
+      setError('Vul een geldige geboortedatum in.');
       return;
     }
     setLoading(true);
@@ -675,9 +677,44 @@ function SignupForm() {
           className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-sm transition" />
       </div>
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Geboortejaar *</label>
-        <input name="geboortejaar" type="number" min={1900} max={new Date().getFullYear()} placeholder="1990" value={formData.geboortejaar} onChange={handleChange}
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Geboortedatum *</label>
+        <input name="geboortedatum" type="date" max={new Date().toISOString().split('T')[0]} value={formData.geboortedatum} onChange={handleChange}
           className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-sm transition" />
+      </div>
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Stad <span className="text-gray-400 font-normal">(optioneel)</span></label>
+        <input name="locatie" type="text" list="nl-cities-frontpage" placeholder="Amsterdam" value={formData.locatie} onChange={handleChange}
+          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-sm transition" />
+        <datalist id="nl-cities-frontpage">
+          <option value="Amsterdam" />
+          <option value="Rotterdam" />
+          <option value="Den Haag" />
+          <option value="Utrecht" />
+          <option value="Groningen" />
+          <option value="Eindhoven" />
+          <option value="Tilburg" />
+          <option value="Almere" />
+          <option value="Breda" />
+          <option value="Nijmegen" />
+          <option value="Apeldoorn" />
+          <option value="Haarlem" />
+          <option value="Enschede" />
+          <option value="Amersfoort" />
+          <option value="Zaanstad" />
+          <option value="'s-Hertogenbosch" />
+          <option value="Zwolle" />
+          <option value="Zoetermeer" />
+          <option value="Leiden" />
+          <option value="Dordrecht" />
+          <option value="Ede" />
+          <option value="Leeuwarden" />
+          <option value="Maastricht" />
+          <option value="Arnhem" />
+          <option value="Gouda" />
+          <option value="Goes" />
+          <option value="Gorinchem" />
+          <option value="Geleen" />
+        </datalist>
       </div>
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-1.5">Ervaring met Bitcoin</label>

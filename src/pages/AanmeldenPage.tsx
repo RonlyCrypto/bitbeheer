@@ -9,7 +9,7 @@ export default function AanmeldenPage() {
     achternaam: '',
     email: '',
     telefoon: '',
-    geboortejaar: '',
+    geboortedatum: '',
     locatie: '',
     spaargeld: '',
     ervaring: '',
@@ -51,9 +51,12 @@ export default function AanmeldenPage() {
       if (!formData.achternaam?.trim()) newErrors.achternaam = true;
       if (!formData.email?.trim() || !emailRegex.test(formData.email)) newErrors.email = true;
       if (!formData.telefoon?.trim()) newErrors.telefoon = true;
-      const geboortejaarNum = Number(formData.geboortejaar);
-      const currentYear = new Date().getFullYear();
-      if (!formData.geboortejaar?.trim() || !Number.isInteger(geboortejaarNum) || geboortejaarNum < 1900 || geboortejaarNum > currentYear) newErrors.geboortejaar = true;
+      const geboortedatumDate = formData.geboortedatum ? new Date(formData.geboortedatum) : null;
+      const earliestBirthDate = new Date();
+      earliestBirthDate.setFullYear(earliestBirthDate.getFullYear() - 120);
+      if (!formData.geboortedatum || !geboortedatumDate || Number.isNaN(geboortedatumDate.getTime()) || geboortedatumDate > new Date() || geboortedatumDate < earliestBirthDate) {
+        newErrors.geboortedatum = true;
+      }
 
       if (Object.keys(newErrors).length > 0) {
         setFieldErrors(newErrors);
@@ -78,7 +81,7 @@ export default function AanmeldenPage() {
           voornaam: formData.voornaam,
           achternaam: formData.achternaam,
           telefoon: formData.telefoon,
-          geboortejaar: formData.geboortejaar,
+          geboortedatum: formData.geboortedatum,
           locatie: formData.locatie,
           spaargeld: formData.spaargeld,
           ervaring: formData.ervaring,
@@ -313,18 +316,16 @@ export default function AanmeldenPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Geboortejaar *
+                      Geboortedatum *
                     </label>
                     <input
-                      type="number"
-                      name="geboortejaar"
-                      value={formData.geboortejaar}
+                      type="date"
+                      name="geboortedatum"
+                      value={formData.geboortedatum}
                       onChange={handleChange}
                       required
-                      min={1900}
-                      max={new Date().getFullYear()}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${fieldErrors.geboortejaar ? 'bb-error-field' : 'border-gray-300'}`}
-                      placeholder="1990"
+                      max={new Date().toISOString().split('T')[0]}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${fieldErrors.geboortedatum ? 'bb-error-field' : 'border-gray-300'}`}
                     />
                   </div>
                 </div>

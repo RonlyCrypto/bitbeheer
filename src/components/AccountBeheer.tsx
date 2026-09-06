@@ -29,12 +29,28 @@ interface UserAccount {
   account_approved?: boolean;
   first_appointment_completed?: boolean;
   deactivated_at?: string | null;
-  birth_year?: number | null;
+  birth_date?: string | null;
+  location?: string | null;
 }
 
-const calculateAge = (birthYear?: number | null): number | null => {
-  if (birthYear == null) return null;
-  return new Date().getFullYear() - birthYear;
+const calculateAge = (birthDate?: string | null): number | null => {
+  if (!birthDate) return null;
+  const dob = new Date(birthDate);
+  if (Number.isNaN(dob.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - dob.getFullYear();
+  const hasHadBirthdayThisYear =
+    now.getMonth() > dob.getMonth() ||
+    (now.getMonth() === dob.getMonth() && now.getDate() >= dob.getDate());
+  if (!hasHadBirthdayThisYear) age -= 1;
+  return age;
+};
+
+const formatBirthDate = (birthDate?: string | null): string => {
+  if (!birthDate) return '';
+  const dob = new Date(birthDate);
+  if (Number.isNaN(dob.getTime())) return '';
+  return dob.toLocaleDateString('nl-NL');
 };
 
 export default function AccountBeheer() {
@@ -734,7 +750,8 @@ export default function AccountBeheer() {
                           )}
                           <div className="flex items-center gap-2 md:gap-4 text-[10px] md:text-xs text-gray-400 flex-wrap">
                             <span>Aangemeld: {user.registrationDate || user.date}</span>
-                            {user.birth_year != null && <span>Leeftijd: {calculateAge(user.birth_year)} ({user.birth_year})</span>}
+                            {user.birth_date != null && <span>Leeftijd: {calculateAge(user.birth_date)} ({formatBirthDate(user.birth_date)})</span>}
+                            {user.location && <span>Woonplaats: {user.location}</span>}
                             {user.lastLogin && (
                               <span>Laatste login: {user.lastLogin}</span>
                             )}
@@ -891,7 +908,8 @@ export default function AccountBeheer() {
                             )}
                             <div className="flex items-center gap-4 text-xs text-gray-400">
                               <span>Aangemeld: {user.registrationDate || user.date}</span>
-                            {user.birth_year != null && <span>Leeftijd: {calculateAge(user.birth_year)} ({user.birth_year})</span>}
+                            {user.birth_date != null && <span>Leeftijd: {calculateAge(user.birth_date)} ({formatBirthDate(user.birth_date)})</span>}
+                            {user.location && <span>Woonplaats: {user.location}</span>}
                               {user.lastLogin && (
                                 <span>Laatste login: {user.lastLogin}</span>
                               )}
@@ -999,7 +1017,8 @@ export default function AccountBeheer() {
                             )}
                             <div className="flex items-center gap-4 text-xs text-gray-400">
                               <span>Aangemeld: {user.registrationDate || user.date}</span>
-                            {user.birth_year != null && <span>Leeftijd: {calculateAge(user.birth_year)} ({user.birth_year})</span>}
+                            {user.birth_date != null && <span>Leeftijd: {calculateAge(user.birth_date)} ({formatBirthDate(user.birth_date)})</span>}
+                            {user.location && <span>Woonplaats: {user.location}</span>}
                               {user.lastLogin && (
                                 <span>Laatste login: {user.lastLogin}</span>
                               )}
@@ -1139,7 +1158,8 @@ export default function AccountBeheer() {
                             )}
                             <div className="flex items-center gap-4 text-xs text-gray-400">
                               <span>Aangemeld: {user.registrationDate || user.date}</span>
-                            {user.birth_year != null && <span>Leeftijd: {calculateAge(user.birth_year)} ({user.birth_year})</span>}
+                            {user.birth_date != null && <span>Leeftijd: {calculateAge(user.birth_date)} ({formatBirthDate(user.birth_date)})</span>}
+                            {user.location && <span>Woonplaats: {user.location}</span>}
                               <span className="text-red-500 font-medium">Verlopen op: {new Date(new Date(user.created_at || user.timestamp || user.registrationDate || Date.now()).getTime() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('nl-NL')}</span>
                             </div>
                             <div className="mt-2 flex items-center gap-2">
@@ -1233,7 +1253,8 @@ export default function AccountBeheer() {
                             )}
                             <div className="flex items-center gap-4 text-xs text-gray-400">
                               <span>Aangemeld: {user.registrationDate || user.date}</span>
-                            {user.birth_year != null && <span>Leeftijd: {calculateAge(user.birth_year)} ({user.birth_year})</span>}
+                            {user.birth_date != null && <span>Leeftijd: {calculateAge(user.birth_date)} ({formatBirthDate(user.birth_date)})</span>}
+                            {user.location && <span>Woonplaats: {user.location}</span>}
                               <span className="text-gray-500 font-medium">
                                 Verwijderd op: {user.deactivated_at ? new Date(user.deactivated_at).toLocaleDateString('nl-NL') : '-'}
                               </span>
@@ -1420,8 +1441,12 @@ export default function AccountBeheer() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Leeftijd</label>
                       <p className="text-gray-900">
-                        {selectedUser.birth_year != null ? `${calculateAge(selectedUser.birth_year)} (${selectedUser.birth_year})` : '-'}
+                        {selectedUser.birth_date != null ? `${calculateAge(selectedUser.birth_date)} (${formatBirthDate(selectedUser.birth_date)})` : '-'}
                       </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Woonplaats</label>
+                      <p className="text-gray-900">{selectedUser.location || '-'}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Categorie</label>
