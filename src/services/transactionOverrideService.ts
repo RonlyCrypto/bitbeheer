@@ -46,7 +46,11 @@ export async function saveTransactionOverride(
   txHash: string,
   txTime: number,
   override: TransactionOverride
-): Promise<boolean> {
+): Promise<{ success: boolean; error?: string }> {
+  if (!email || !walletAddress || !txHash || !txTime) {
+    return { success: false, error: 'Ontbrekende gegevens (email/wallet/transactie) om op te slaan.' };
+  }
+
   const { error } = await supabase
     .from('transaction_overrides')
     .upsert(
@@ -63,7 +67,11 @@ export async function saveTransactionOverride(
       { onConflict: 'email,wallet_address,tx_hash,tx_time' }
     );
 
-  return !error;
+  if (error) {
+    console.error('❌ Error saving transaction override:', error);
+    return { success: false, error: error.message };
+  }
+  return { success: true };
 }
 
 export async function deleteTransactionOverride(
@@ -71,7 +79,7 @@ export async function deleteTransactionOverride(
   walletAddress: string,
   txHash: string,
   txTime: number
-): Promise<boolean> {
+): Promise<{ success: boolean; error?: string }> {
   const { error } = await supabase
     .from('transaction_overrides')
     .delete()
@@ -80,5 +88,9 @@ export async function deleteTransactionOverride(
     .eq('tx_hash', txHash)
     .eq('tx_time', txTime);
 
-  return !error;
+  if (error) {
+    console.error('❌ Error deleting transaction override:', error);
+    return { success: false, error: error.message };
+  }
+  return { success: true };
 }

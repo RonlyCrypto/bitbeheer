@@ -8,15 +8,18 @@ interface TransactionOverrideModalProps {
   transaction: BitcoinTransaction;
   onClose: () => void;
   onSave: (data: { exchangeLabel?: string; priceOverride?: number; note?: string }) => Promise<void>;
+  onReset?: () => Promise<void>;
 }
 
-export default function TransactionOverrideModal({ transaction, onClose, onSave }: TransactionOverrideModalProps) {
+export default function TransactionOverrideModal({ transaction, onClose, onSave, onReset }: TransactionOverrideModalProps) {
   const [exchangeLabel, setExchangeLabel] = useState(transaction.exchangeLabel || '');
   const [priceInput, setPriceInput] = useState(transaction.priceOverridden ? String(transaction.price) : '');
   const [note, setNote] = useState(transaction.note || '');
   const [saving, setSaving] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   const isBuy = transaction.value > 0;
+  const hasOverride = !!(transaction.exchangeLabel || transaction.priceOverridden || transaction.note);
 
   const handleSave = async () => {
     setSaving(true);
@@ -30,6 +33,17 @@ export default function TransactionOverrideModal({ transaction, onClose, onSave 
       onClose();
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleReset = async () => {
+    if (!onReset) return;
+    setResetting(true);
+    try {
+      await onReset();
+      onClose();
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -98,7 +112,18 @@ export default function TransactionOverrideModal({ transaction, onClose, onSave 
           </div>
         </div>
 
-        <div className="bg-gray-50 px-4 py-3 rounded-b-xl border-t border-gray-200 flex justify-end gap-3">
+        <div className="bg-gray-50 px-4 py-3 rounded-b-xl border-t border-gray-200 flex items-center justify-between gap-3">
+          {hasOverride && onReset ? (
+            <button
+              onClick={handleReset}
+              disabled={resetting || saving}
+              className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium text-sm disabled:opacity-50"
+              title="Terug naar de automatisch berekende prijs, geen label/notitie meer"
+            >
+              {resetting ? 'Resetten...' : 'Reset naar berekende prijs'}
+            </button>
+          ) : <span />}
+          <div className="flex gap-3">
           <button
             onClick={onClose}
             className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium text-sm"
@@ -107,11 +132,12 @@ export default function TransactionOverrideModal({ transaction, onClose, onSave 
           </button>
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || resetting}
             className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium text-sm disabled:opacity-50"
           >
             {saving ? 'Opslaan...' : 'Opslaan'}
           </button>
+          </div>
         </div>
       </div>
     </div>

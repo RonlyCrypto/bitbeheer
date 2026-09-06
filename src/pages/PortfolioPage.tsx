@@ -30,7 +30,7 @@ import { supabase } from '../lib/supabase';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import { computeFifoMatches, txKey } from '../utils/fifoMatching';
-import { getOverridesForWallet, saveTransactionOverride, TransactionOverride } from '../services/transactionOverrideService';
+import { getOverridesForWallet, saveTransactionOverride, deleteTransactionOverride, TransactionOverride } from '../services/transactionOverrideService';
 
 interface WalletData {
   id: string;
@@ -57,7 +57,70 @@ export default function PortfolioPage() {
   const [currentPrice, setCurrentPrice] = useState<number>(() => {
     try { const c = JSON.parse(localStorage.getItem('btc_market_cache') || 'null'); return c?.price || 96640; } catch { return 96640; }
   });
-  const [allTransactions, setAllTransactions] = useState<BitcoinTransaction[]>([]);
+  // Raw = exactly what the blockchain/cache gave us. `allTransactions` (derived
+  // below) layers manual overrides on top, so resetting an override can always
+  // fall back to this untouched value instead of a lost original.
+  const [rawTransactions, setRawTransactions] = useState<BitcoinTransaction[]>([]);
+
+  // Get effective user email (considering impersonation)
+  const effectiveUserEmail = (isImpersonating && impersonatedUser)
+    ? impersonatedUser
+    : user?.email;
+
+  // Manual per-transaction overrides (exchange label / price / note), see
+  // src/services/transactionOverrideService.ts.
+  const [overridesMap, setOverridesMap] = useState<Map<string, TransactionOverride>>(new Map());
+
+  // Load (or reload) overrides whenever the wallet list changes.
+  useEffect(() => {
+    const loadOverrides = async () => {
+      if (!effectiveUserEmail || wallets.length === 0) {
+        setOverridesMap(new Map());
+        return;
+      }
+      const map = new Map<string, TransactionOverride>();
+      for (const wallet of wallets) {
+        if (!wallet.address) continue;
+        const walletOverrides = await getOverridesForWallet(effectiveUserEmail, wallet.address);
+        walletOverrides.forEach((value, key) => map.set(key, value));
+      }
+      setOverridesMap(map);
+    };
+    loadOverrides();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveUserEmail, wallets.map(w => w.address).join(',')]);
+
+  // The transactions actually shown/used everywhere: raw data with any manual
+  // overrides layered on top. Recomputed from `rawTransactions` (never mutated
+  // in place), so removing an override always cleanly falls back to the
+  // original computed price/profit -- nothing is permanently lost.
+  const allTransactions = useMemo(() => {
+    if (overridesMap.size === 0) return rawTransactions;
+    return rawTransactions.map(tx => {
+      const override = overridesMap.get(txKey(tx));
+      if (!override) return tx;
+
+      const valueInBTC = Math.abs(tx.value) / 100000000;
+      const isSend = tx.value < 0;
+      const price = override.priceOverride ?? tx.price;
+      const currentValueUSD = valueInBTC * currentPrice;
+      const profit = isSend
+        ? -(currentValueUSD - valueInBTC * price)
+        : currentValueUSD - valueInBTC * price;
+      const profitPercent = price > 0 ? ((currentPrice - price) / price) * 100 : 0;
+
+      return {
+        ...tx,
+        price,
+        currentValue: isSend ? -currentValueUSD : currentValueUSD,
+        profit,
+        profitPercent,
+        priceOverridden: override.priceOverride != null,
+        exchangeLabel: override.exchangeLabel,
+        note: override.note,
+      };
+    });
+  }, [rawTransactions, overridesMap, currentPrice]);
 
   // Helper function to remove duplicate transactions based on hash + time
   const removeDuplicateTransactions = (transactions: BitcoinTransaction[]): BitcoinTransaction[] => {
@@ -108,80 +171,60 @@ export default function PortfolioPage() {
   const [walletChartIntegration, setWalletChartIntegration] = useState<Map<string, boolean>>(new Map());
   const [walletRefreshing, setWalletRefreshing] = useState<Map<string, boolean>>(new Map());
 
-  // Get effective user email (considering impersonation)
-  const effectiveUserEmail = (isImpersonating && impersonatedUser)
-    ? impersonatedUser
-    : user?.email;
-
-  // Manual per-transaction overrides (exchange label / price / note), see
-  // src/services/transactionOverrideService.ts. Kept in a ref so the merge
-  // helper below can be called from stale closures (background sync, "load
-  // more") without becoming a dependency of every effect that touches it.
-  const overridesMapRef = useRef<Map<string, TransactionOverride>>(new Map());
-
-  const applyTransactionOverrides = (transactions: BitcoinTransaction[]): BitcoinTransaction[] => {
-    if (overridesMapRef.current.size === 0) return transactions;
-    return transactions.map(tx => {
-      const override = overridesMapRef.current.get(txKey(tx));
-      if (!override) return tx;
-
-      const valueInBTC = Math.abs(tx.value) / 100000000;
-      const isSend = tx.value < 0;
-      const price = override.priceOverride ?? tx.price;
-      const currentValueUSD = valueInBTC * currentPrice;
-      const profit = isSend
-        ? -(currentValueUSD - valueInBTC * price)
-        : currentValueUSD - valueInBTC * price;
-      const profitPercent = price > 0 ? ((currentPrice - price) / price) * 100 : 0;
-
-      return {
-        ...tx,
-        price,
-        currentValue: isSend ? -currentValueUSD : currentValueUSD,
-        profit,
-        profitPercent,
-        priceOverridden: override.priceOverride != null,
-        exchangeLabel: override.exchangeLabel,
-        note: override.note,
-      };
-    });
+  // Welke wallet een transactie toebehoort aan: probeer eerst een exacte match op
+  // hash+time in de per-wallet transactielijst, val terug op de enige wallet als
+  // die lijst (nog) niet in sync is met wat er op het scherm staat.
+  const findWalletForTx = (tx: BitcoinTransaction) => {
+    const match = wallets.find(w =>
+      w.realData?.transactions?.some(t => t.hash === tx.hash && t.time === tx.time)
+    );
+    if (match?.address) return match;
+    if (wallets.length === 1 && wallets[0]?.address) return wallets[0];
+    return undefined;
   };
 
-  // Load overrides whenever the wallet list changes, then re-apply them to
-  // whatever transactions are already loaded.
-  useEffect(() => {
-    const loadOverrides = async () => {
-      if (!effectiveUserEmail || wallets.length === 0) {
-        overridesMapRef.current = new Map();
-        return;
-      }
-      const map = new Map<string, TransactionOverride>();
-      for (const wallet of wallets) {
-        if (!wallet.address) continue;
-        const walletOverrides = await getOverridesForWallet(effectiveUserEmail, wallet.address);
-        walletOverrides.forEach((value, key) => map.set(key, value));
-      }
-      overridesMapRef.current = map;
-      setAllTransactions(prev => applyTransactionOverrides(prev));
-    };
-    loadOverrides();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [effectiveUserEmail, wallets.map(w => w.address).join(',')]);
-
   const handleSaveOverride = async (data: { exchangeLabel?: string; priceOverride?: number; note?: string }) => {
-    if (!editingOverrideTx || !effectiveUserEmail) return;
-    const wallet = wallets.find(w =>
-      w.realData?.transactions?.some(t => t.hash === editingOverrideTx.hash && t.time === editingOverrideTx.time)
-    );
-    if (!wallet?.address) return;
+    if (!editingOverrideTx || !effectiveUserEmail) {
+      showToast('Niet ingelogd of geen transactie geselecteerd', 'error');
+      return;
+    }
+    const wallet = findWalletForTx(editingOverrideTx);
+    if (!wallet?.address) {
+      showToast('Kon de bijbehorende wallet niet vinden', 'error');
+      return;
+    }
 
-    const ok = await saveTransactionOverride(effectiveUserEmail, wallet.address, editingOverrideTx.hash, editingOverrideTx.time, data);
-    if (ok) {
-      overridesMapRef.current.set(txKey(editingOverrideTx), data);
-      setAllTransactions(prev => applyTransactionOverrides(prev));
+    const result = await saveTransactionOverride(effectiveUserEmail, wallet.address, editingOverrideTx.hash, editingOverrideTx.time, data);
+    if (result.success) {
+      setOverridesMap(prev => {
+        const next = new Map(prev);
+        next.set(txKey(editingOverrideTx), data);
+        return next;
+      });
       showToast('Transactie bijgewerkt', 'success');
     } else {
-      showToast('Opslaan mislukt, probeer het opnieuw', 'error');
+      showToast(result.error ? `Opslaan mislukt: ${result.error}` : 'Opslaan mislukt, probeer het opnieuw', 'error');
+    }
+  };
+
+  const handleResetOverride = async () => {
+    if (!editingOverrideTx || !effectiveUserEmail) return;
+    const wallet = findWalletForTx(editingOverrideTx);
+    if (!wallet?.address) {
+      showToast('Kon de bijbehorende wallet niet vinden', 'error');
+      return;
+    }
+
+    const result = await deleteTransactionOverride(effectiveUserEmail, wallet.address, editingOverrideTx.hash, editingOverrideTx.time);
+    if (result.success) {
+      setOverridesMap(prev => {
+        const next = new Map(prev);
+        next.delete(txKey(editingOverrideTx));
+        return next;
+      });
+      showToast('Teruggezet naar berekende prijs', 'success');
+    } else {
+      showToast(result.error ? `Resetten mislukt: ${result.error}` : 'Resetten mislukt, probeer het opnieuw', 'error');
     }
   };
 
@@ -401,7 +444,7 @@ export default function PortfolioPage() {
       }
       const unique = removeDuplicateTransactions(allTx);
       console.log(`📊 Totaal unieke transacties: ${unique.length} van ${allTx.length} totaal`);
-      setAllTransactions(applyTransactionOverrides(unique));
+      setRawTransactions(unique);
     };
 
     updateTransactions();
@@ -560,7 +603,7 @@ export default function PortfolioPage() {
                 confirmations: tx.confirmations
               })) as BitcoinTransaction[]);
             });
-            setAllTransactions(applyTransactionOverrides(removeDuplicateTransactions(allTx)));
+            setRawTransactions(removeDuplicateTransactions(allTx));
 
             console.log(`✅ Sync compleet: ${allTx.length} transacties geladen en getoond`);
           }
@@ -588,7 +631,7 @@ export default function PortfolioPage() {
               const moreData = await bitcoinApiService.getTransactionsPage(wallet.realData.address, nextPage, itemsPerPage);
               
               if (moreData.length > 0) {
-                setAllTransactions(prev => applyTransactionOverrides(removeDuplicateTransactions([...prev, ...moreData])));
+                setRawTransactions(prev => removeDuplicateTransactions([...prev, ...moreData]));
                 console.log(`✅ Loaded ${moreData.length} more transactions`);
               } else {
                 console.log('✓ No more transactions to load');
@@ -1864,6 +1907,7 @@ export default function PortfolioPage() {
               transaction={editingOverrideTx}
               onClose={() => setEditingOverrideTx(null)}
               onSave={handleSaveOverride}
+              onReset={handleResetOverride}
             />
           )}
         </div>
