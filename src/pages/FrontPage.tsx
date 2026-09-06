@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { bitcoinApiService } from '../services/bitcoinApiService'; // fallback voor prijs
+import CityInput from '../components/CityInput';
 
 const PREV_ATH = 69000; // Nov 2021 — historische referentie, blijft vast
 
@@ -683,38 +684,13 @@ function SignupForm() {
       </div>
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-1.5">Stad <span className="text-gray-400 font-normal">(optioneel)</span></label>
-        <input name="locatie" type="text" list="nl-cities-frontpage" placeholder="Amsterdam" value={formData.locatie} onChange={handleChange}
-          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-sm transition" />
-        <datalist id="nl-cities-frontpage">
-          <option value="Amsterdam" />
-          <option value="Rotterdam" />
-          <option value="Den Haag" />
-          <option value="Utrecht" />
-          <option value="Groningen" />
-          <option value="Eindhoven" />
-          <option value="Tilburg" />
-          <option value="Almere" />
-          <option value="Breda" />
-          <option value="Nijmegen" />
-          <option value="Apeldoorn" />
-          <option value="Haarlem" />
-          <option value="Enschede" />
-          <option value="Amersfoort" />
-          <option value="Zaanstad" />
-          <option value="'s-Hertogenbosch" />
-          <option value="Zwolle" />
-          <option value="Zoetermeer" />
-          <option value="Leiden" />
-          <option value="Dordrecht" />
-          <option value="Ede" />
-          <option value="Leeuwarden" />
-          <option value="Maastricht" />
-          <option value="Arnhem" />
-          <option value="Gouda" />
-          <option value="Goes" />
-          <option value="Gorinchem" />
-          <option value="Geleen" />
-        </datalist>
+        <CityInput
+          name="locatie"
+          value={formData.locatie}
+          onChange={(city) => setFormData({ ...formData, locatie: city })}
+          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-sm transition"
+          placeholder="Amsterdam"
+        />
       </div>
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-1.5">Ervaring met Bitcoin</label>

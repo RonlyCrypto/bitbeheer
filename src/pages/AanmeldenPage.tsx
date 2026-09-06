@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { User, Mail, Phone, DollarSign, MessageSquare, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { signUpUser } from '../lib/supabase';
+import CityInput from '../components/CityInput';
 
 export default function AanmeldenPage() {
   const [formData, setFormData] = useState({
@@ -276,12 +277,10 @@ export default function AanmeldenPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Locatie <span className="text-gray-400 font-normal">(optioneel)</span>
                     </label>
-                    <input
-                      type="text"
+                    <CityInput
                       name="locatie"
                       value={formData.locatie}
-                      onChange={handleChange}
-                      list="nl-cities"
+                      onChange={(city) => setFormData({ ...formData, locatie: city })}
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${fieldErrors.locatie ? 'bb-error-field' : 'border-gray-300'}`}
                       placeholder="Stad, Land"
                     />
@@ -523,37 +522,6 @@ export default function AanmeldenPage() {
                   Door je aan te melden ga je akkoord dat we contact met je opnemen voor een kennismakingsgesprek.
                 </p>
               </div>
-            {/* NL cities datalist for location autocomplete */}
-            <datalist id="nl-cities">
-              <option value="Amsterdam" />
-              <option value="Rotterdam" />
-              <option value="Den Haag" />
-              <option value="Utrecht" />
-              <option value="Groningen" />
-              <option value="Eindhoven" />
-              <option value="Tilburg" />
-              <option value="Almere" />
-              <option value="Breda" />
-              <option value="Nijmegen" />
-              <option value="Apeldoorn" />
-              <option value="Haarlem" />
-              <option value="Enschede" />
-              <option value="Amersfoort" />
-              <option value="Zaanstad" />
-              <option value="'s-Hertogenbosch" />
-              <option value="Zwolle" />
-              <option value="Zoetermeer" />
-              <option value="Leiden" />
-              <option value="Dordrecht" />
-              <option value="Ede" />
-              <option value="Leeuwarden" />
-              <option value="Maastricht" />
-              <option value="Arnhem" />
-              <option value="Gouda" />
-              <option value="Goes" />
-              <option value="Gorinchem" />
-              <option value="Geleen" />
-            </datalist>
             </form>
           </div>
         </div>
