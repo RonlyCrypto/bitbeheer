@@ -82,27 +82,6 @@ export default function Header() {
               </Link>
             )}
             
-            {/* User Dashboard - Visible when impersonating or for regular users */}
-            {(isImpersonating || (isAuthenticated && !canAccessAdmin)) && (
-              <Link 
-                to="/user-dashboard" 
-                className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
-                  location.pathname === '/user-dashboard' 
-                    ? 'bg-white bg-opacity-30 shadow-lg' 
-                    : 'hover:bg-white hover:bg-opacity-20 hover:shadow-md'
-                }`}
-              >
-                <div className={`p-2 rounded-lg transition-all duration-300 ${
-                  location.pathname === '/user-dashboard' 
-                    ? 'bg-white bg-opacity-20' 
-                    : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'
-                }`}>
-                  <BarChart3 className="w-5 h-5" />
-          </div>
-                <span className="text-sm font-medium">Dashboard</span>
-              </Link>
-            )}
-            
             {/* Admin-only menu items - Only visible when not impersonating and has admin access */}
             {!isImpersonating && canAccessAdmin && (
               <div className="flex items-center gap-3">
@@ -175,21 +154,38 @@ export default function Header() {
             {/* Settings Menu or Login/Register */}
             {isAuthenticated || isImpersonating ? (
               <div className="flex items-center gap-3">
-                {/* Settings Dropdown */}
-                <div className="relative settings-dropdown">
-                  <button 
-                    onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
-                    className="flex items-center gap-2 md:gap-3 bg-white bg-opacity-20 px-3 md:px-4 py-2 md:py-3 rounded-xl backdrop-blur-sm hover:bg-opacity-30 transition-all duration-300"
-                  >
-                    <div className="w-7 h-7 md:w-8 md:h-8 bg-white bg-opacity-30 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Settings className="w-4 h-4 md:w-5 md:h-5" />
-                    </div>
-                    <span className="font-medium text-sm md:text-base hidden sm:inline truncate">
-                      {getDisplayName(user, isImpersonating, impersonatedUser, null)}
-                    </span>
-                  </button>
-                  
-                  {/* Dropdown Menu */}
+                {/* Combined Dashboard + Settings pill */}
+                <div className="flex items-center bg-white bg-opacity-20 rounded-xl backdrop-blur-sm overflow-hidden">
+                  {(isImpersonating || (isAuthenticated && !canAccessAdmin)) && (
+                    <>
+                      <Link
+                        to="/user-dashboard"
+                        className={`flex items-center gap-2 px-3 md:px-4 py-2 md:py-3 transition-all duration-300 ${
+                          location.pathname === '/user-dashboard'
+                            ? 'bg-white bg-opacity-20'
+                            : 'hover:bg-white hover:bg-opacity-10'
+                        }`}
+                      >
+                        <BarChart3 className="w-4 h-4 md:w-5 md:h-5" />
+                        <span className="font-medium text-sm md:text-base hidden sm:inline">Dashboard</span>
+                      </Link>
+                      <div className="w-px self-stretch my-2 bg-white bg-opacity-30" />
+                    </>
+                  )}
+                  <div className="relative settings-dropdown">
+                    <button
+                      onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
+                      className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 hover:bg-white hover:bg-opacity-10 transition-all duration-300"
+                    >
+                      <div className="w-7 h-7 md:w-8 md:h-8 bg-white bg-opacity-30 rounded-full flex items-center justify-center flex-shrink-0">
+                        <Settings className="w-4 h-4 md:w-5 md:h-5" />
+                      </div>
+                      <span className="font-medium text-sm md:text-base hidden sm:inline truncate">
+                        {getDisplayName(user, isImpersonating, impersonatedUser, null)}
+                      </span>
+                    </button>
+
+                    {/* Dropdown Menu */}
                   {showSettingsDropdown && (
                     <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-lg z-50 border border-gray-200 dark:border-gray-700">
                       <div className="py-2">
@@ -304,8 +300,9 @@ export default function Header() {
                       </div>
                     </div>
                   )}
-            </div>
-          </div>
+                  </div>
+                </div>
+              </div>
             ) : (
               <LoginRegister 
                 onLogin={async (email, password) => {
