@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bitcoin, TrendingUp, BarChart3, Shield, Wallet, LogOut, User, ArrowLeft, Settings, Sun, Moon, UserCircle } from 'lucide-react';
+import { Bitcoin, BarChart3, Shield, LogOut, User, ArrowLeft, Settings, Sun, Moon, UserCircle } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -80,71 +80,6 @@ export default function Header() {
               </Link>
             )}
             
-            {/* Admin-only menu items - Only visible when not impersonating and has admin access */}
-            {!isImpersonating && canAccessAdmin && (
-              <div className="flex items-center gap-3">
-
-                {isMenuVisible('bitcoin_history', 'everyone') && (
-                  <Link 
-                    to="/admin/bitcoin-history" 
-                    className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
-                      location.pathname === '/admin/bitcoin-history' 
-                        ? 'bg-white bg-opacity-30 shadow-lg' 
-                        : 'hover:bg-white hover:bg-opacity-20 hover:shadow-md'
-                    }`}
-                  >
-                    <div className={`p-2 rounded-lg transition-all duration-300 ${
-                      location.pathname === '/admin/bitcoin-history' 
-                        ? 'bg-white bg-opacity-20' 
-                        : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'
-                    }`}>
-            <TrendingUp className="w-5 h-5" />
-                    </div>
-                    <span className="text-sm font-medium">Bitcoin</span>
-                  </Link>
-                )}
-
-                {isMenuVisible('portfolio_menu', 'everyone') && (
-                  <Link 
-                    to="/admin/portfolio" 
-                    className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
-                      location.pathname === '/admin/portfolio' 
-                        ? 'bg-white bg-opacity-30 shadow-lg' 
-                        : 'hover:bg-white hover:bg-opacity-20 hover:shadow-md'
-                    }`}
-                  >
-                    <div className={`p-2 rounded-lg transition-all duration-300 ${
-                      location.pathname === '/admin/portfolio' 
-                        ? 'bg-white bg-opacity-20' 
-                        : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'
-                    }`}>
-                      <Wallet className="w-5 h-5" />
-                    </div>
-                    <span className="text-sm font-medium">Portfolio</span>
-                  </Link>
-                )}
-
-                {isMenuVisible('market_cap_comparer', 'everyone') && (
-                  <Link 
-                    to="/admin/market-cap-comparer" 
-                    className={`group relative flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 ${
-                      location.pathname === '/admin/market-cap-comparer' 
-                        ? 'bg-white bg-opacity-30 shadow-lg' 
-                        : 'hover:bg-white hover:bg-opacity-20 hover:shadow-md'
-                    }`}
-                  >
-                    <div className={`p-2 rounded-lg transition-all duration-300 ${
-                      location.pathname === '/admin/market-cap-comparer' 
-                        ? 'bg-white bg-opacity-20' 
-                        : 'bg-white bg-opacity-10 group-hover:bg-opacity-20'
-                    }`}>
-                      <BarChart3 className="w-5 h-5" />
-                    </div>
-                    <span className="text-sm font-medium">Vergelijker</span>
-                  </Link>
-                )}
-              </div>
-            )}
           </nav>
           
           {/* Right Side - Settings/Login - Right */}

@@ -11,7 +11,6 @@ import PortfolioPage from './pages/PortfolioPage';
 import EmailManagement from './pages/EmailManagement';
 import AdminDashboard from './components/AdminDashboard';
 import UserDashboard from './components/UserDashboard';
-import DatabaseTest from './components/DatabaseTest';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import WelcomePopup from './components/WelcomePopup';
@@ -106,10 +105,6 @@ function AppContent() {
                           path="/user-dashboard" 
                           element={<UserDashboard />}
                         />
-                        <Route 
-                          path="/database-test" 
-                          element={<DatabaseTest />}
-                        />
                         <Route
                           path="/verify-email"
                           element={<VerifyEmailPage />}
@@ -146,7 +141,7 @@ function AppContent() {
       </SiteAccessControl>
       
       {/* Welcome Popup */}
-      {showWelcomePopup && user && (
+      {showWelcomePopup && user && user.email !== 'admin@bitbeheer.nl' && (
         <WelcomePopup
           userName={user.user_metadata?.name || user.email || 'Gebruiker'}
           onClose={() => setShowWelcomePopup(false)}

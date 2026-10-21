@@ -4,11 +4,7 @@ import {
   MessageSquare, 
   Calendar, 
   Users, 
-  Mail, 
-  Link as LinkIcon, 
-  Bell, 
-  TrendingUp, 
-  Zap, 
+  Mail,
   Settings,
   Menu,
   ChevronRight
@@ -33,10 +29,6 @@ const getMenuItems = (unreadChatCount: number = 0): MenuItem[] => [
   { id: 'appointments', label: 'Afspraken', icon: Calendar },
   { id: 'accounts', label: 'Accounts', icon: Users },
   { id: 'email-management', label: 'E-mail Beheer', icon: Mail },
-  { id: 'referral-links', label: 'Referral Links', icon: LinkIcon },
-  { id: 'notification-management', label: 'Notificaties', icon: Bell, badge: 4 },
-  { id: 'seo-analytics', label: 'SEO & Analytics', icon: TrendingUp },
-  { id: 'cycle-advisor', label: '🚀 Cycle Advisor', icon: Zap },
   { id: 'settings', label: 'Instellingen', icon: Settings },
   { id: 'controls', label: 'Beheer', icon: Menu },
 ];

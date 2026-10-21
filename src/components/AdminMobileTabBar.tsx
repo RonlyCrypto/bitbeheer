@@ -1,6 +1,5 @@
 import {
-  BarChart3, MessageSquare, Calendar, Users, Mail,
-  Link as LinkIcon, Bell, TrendingUp, Zap, Settings, Menu
+  BarChart3, MessageSquare, Calendar, Users, Mail, Settings, Menu
 } from 'lucide-react';
 
 interface Props {
@@ -15,10 +14,6 @@ const TABS = [
   { id: 'appointments',           label: 'Afspraken',   icon: Calendar },
   { id: 'accounts',               label: 'Accounts',    icon: Users },
   { id: 'email-management',       label: 'E-mail',      icon: Mail },
-  { id: 'referral-links',         label: 'Referral',    icon: LinkIcon },
-  { id: 'notification-management',label: 'Notificaties',icon: Bell },
-  { id: 'seo-analytics',          label: 'SEO',         icon: TrendingUp },
-  { id: 'cycle-advisor',          label: 'Cycle',       icon: Zap },
   { id: 'settings',               label: 'Instellingen',icon: Settings },
   { id: 'controls',               label: 'Beheer',      icon: Menu },
 ];

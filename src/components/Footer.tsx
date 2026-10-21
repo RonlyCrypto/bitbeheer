@@ -1,6 +1,5 @@
 import { Shield, Heart } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import AdminLogin from './AdminLogin';
 
@@ -59,55 +58,20 @@ export default function Footer() {
 
     window.addEventListener('referralLinksUpdated', handleReferralLinksUpdate);
 
-    // Also poll every 5 seconds to catch external updates
-    const interval = setInterval(loadReferralLinks, 5000);
-
     return () => {
       window.removeEventListener('referralLinksUpdated', handleReferralLinksUpdate);
-      clearInterval(interval);
     };
   }, []);
   return (
     <footer className="bg-gray-900 text-gray-300 mt-0 hidden md:block">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           <div>
             <h3 className="text-white font-bold text-lg mb-4">Over Dit Platform</h3>
             <p className="text-sm leading-relaxed">
               Een educatief platform dat beginners helpt begrijpen hoe cryptocurrency en DCA investeren werkt,
               zonder hype en met focus op lange termijn denken.
             </p>
-          </div>
-
-          <div>
-            <h3 className="text-white font-bold text-lg mb-4">Gerelateerde Pagina's</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link to="/" className="text-orange-400 hover:text-orange-300 transition-colors underline">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link to="/bitcoin-history" className="text-orange-400 hover:text-orange-300 transition-colors underline">
-                  Bitcoin Geschiedenis
-                </Link>
-              </li>
-              <li>
-                <Link to="/portfolio" className="text-orange-400 hover:text-orange-300 transition-colors underline">
-                  Portfolio
-                </Link>
-              </li>
-              <li>
-                <Link to="/user-dashboard" className="text-orange-400 hover:text-orange-300 transition-colors underline">
-                  Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link to="/aanmelden" className="text-orange-400 hover:text-orange-300 transition-colors underline">
-                  Aanmelden
-                </Link>
-              </li>
-            </ul>
           </div>
 
           <div>

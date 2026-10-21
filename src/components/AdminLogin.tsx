@@ -3,7 +3,7 @@ import { Lock, Eye, EyeOff, LogOut, User, Mail } from 'lucide-react';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 
 export default function AdminLogin() {
-  const [email, setEmail] = useState('admin@bitbeheer.nl');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -52,6 +52,8 @@ export default function AdminLogin() {
       </div>
     );
   }
+
+  if (isAuthenticated) return null;
 
   return (
     <div className="relative">
