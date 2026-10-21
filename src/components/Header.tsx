@@ -4,7 +4,6 @@ import { Link, useLocation } from 'react-router-dom';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePermissions } from '../contexts/PermissionsContext';
-import { useSettings } from '../contexts/SettingsContext';
 import { useProfilePopup } from '../contexts/ProfilePopupContext';
 import { impersonationUtils } from '../utils/impersonation';
 import { getDisplayName, getDisplayEmail } from '../utils/emailUtils';
@@ -15,7 +14,6 @@ export default function Header() {
   const { user, signOut, isAuthenticated } = useSupabaseAuth();
   const { theme, toggleTheme } = useTheme();
   const { isImpersonating, impersonatedUser, canAccessAdmin } = usePermissions();
-  const { isMenuVisible } = useSettings(); // Get settings for menu visibility
   const { openProfilePopup } = useProfilePopup();
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
 
@@ -284,20 +282,6 @@ export default function Header() {
                 }}
               />
             )}
-            
-
-                {isMenuVisible('available_pages', 'everyone') && (
-                  <Link 
-                    to="/admin" 
-                    className="hidden lg:flex items-center gap-3 bg-white bg-opacity-20 px-5 py-3 rounded-xl backdrop-blur-sm hover:bg-opacity-30 transition-all"
-                  >
-                    <BarChart3 className="w-5 h-5" />
-                    <div>
-                      <div className="text-xs text-orange-100">Beschikbare pagina's</div>
-                      <div className="font-semibold">Beheer</div>
-                    </div>
-                  </Link>
-                )}
           </div>
         </div>
       </div>

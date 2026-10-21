@@ -27,7 +27,6 @@ import {
 import { supabase } from '../lib/supabase';
 import AccountBeheer from './AccountBeheer';
 import AdminChat from './AdminChat';
-import AdminSettings from './AdminSettings';
 import OnboardingSettings from './beginner/OnboardingSettings';
 import AdminAppointmentManagement from './AdminAppointmentManagement';
 import ReferralLinksBeheer from './ReferralLinksBeheer';
@@ -702,7 +701,6 @@ export default function AdminDashboard() {
           {activeTab === 'settings' && (
             <div className="space-y-6">
               <OnboardingSettings />
-              <AdminSettings />
             </div>
           )}
 

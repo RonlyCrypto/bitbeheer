@@ -15,7 +15,6 @@ import { AuthProvider } from './contexts/AuthContext';
 import { SupabaseAuthProvider, useSupabaseAuth } from './contexts/SupabaseAuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { PermissionsProvider } from './contexts/PermissionsContext';
-import { SettingsProvider } from './contexts/SettingsContext';
 import { ProfilePopupProvider } from './contexts/ProfilePopupContext';
 import ImpersonationBanner from './components/ImpersonationBanner';
 import MobileBottomNav from './components/MobileBottomNav';
@@ -154,15 +153,13 @@ function App() {
       <SupabaseAuthProvider>
         <AuthProvider>
           <PermissionsProvider>
-            <SettingsProvider>
-              <ProfilePopupProvider>
-                <CurrencyProvider>
-                  <Router>
-                    <AppContent />
-                  </Router>
-                </CurrencyProvider>
-              </ProfilePopupProvider>
-            </SettingsProvider>
+            <ProfilePopupProvider>
+              <CurrencyProvider>
+                <Router>
+                  <AppContent />
+                </Router>
+              </CurrencyProvider>
+            </ProfilePopupProvider>
           </PermissionsProvider>
         </AuthProvider>
       </SupabaseAuthProvider>
