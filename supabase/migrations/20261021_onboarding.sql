@@ -259,3 +259,31 @@ begin
 end $$;
 update public.accounts set plan = plan || '{"set_by":"admin"}'::jsonb
 where plan is not null and plan ->> 'set_by' is null and (plan ? 'goal_btc' or plan ? 'years' or plan ? 'strategy');
+
+-- 16. Beveiliging: admin alleen via e-mailadres (user_metadata is door gebruikers aan te passen),
+-- gebruikers lezen alleen eigen chatberichten, en de gebruikers-RPC's zijn niet voor anon.
+drop policy if exists "Admin can insert replies" on public.support_messages;
+create policy "Admin can insert replies" on public.support_messages for insert
+  with check (from_admin = true and (auth.jwt() ->> 'email') = 'admin@bitbeheer.nl');
+drop policy if exists "Admin can read all messages" on public.support_messages;
+create policy "Admin can read all messages" on public.support_messages for select
+  using ((auth.jwt() ->> 'email') = 'admin@bitbeheer.nl');
+drop policy if exists "Admin can update messages" on public.support_messages;
+create policy "Admin can update messages" on public.support_messages for update
+  using ((auth.jwt() ->> 'email') = 'admin@bitbeheer.nl');
+drop policy if exists "Admin can insert appointment questions" on public.appointment_questions;
+create policy "Admin can insert appointment questions" on public.appointment_questions for insert
+  with check ((auth.jwt() ->> 'email') = 'admin@bitbeheer.nl');
+drop policy if exists "Admin can read all appointment questions" on public.appointment_questions;
+create policy "Admin can read all appointment questions" on public.appointment_questions for select
+  using ((auth.jwt() ->> 'email') = 'admin@bitbeheer.nl');
+drop policy if exists "Admin can update appointment questions" on public.appointment_questions;
+create policy "Admin can update appointment questions" on public.appointment_questions for update
+  using ((auth.jwt() ->> 'email') = 'admin@bitbeheer.nl');
+drop policy if exists "Users can read own messages" on public.support_messages;
+create policy "Users can read own messages" on public.support_messages for select
+  using ((email)::text = auth.email());
+revoke execute on function public.activate_monthly(numeric, int, boolean, boolean), public.confirm_wallet_receipt(date, boolean, text),
+  public.pause_monthly(), public.submit_wallet_order(text, date), public.update_my_plan(numeric, int, numeric), public.use_joker() from anon, public;
+grant execute on function public.activate_monthly(numeric, int, boolean, boolean), public.confirm_wallet_receipt(date, boolean, text),
+  public.pause_monthly(), public.submit_wallet_order(text, date), public.update_my_plan(numeric, int, numeric), public.use_joker() to authenticated;
