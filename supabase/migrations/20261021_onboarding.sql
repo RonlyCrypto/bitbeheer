@@ -245,3 +245,17 @@ begin
   insert into public.monthly_deposits (email, month, source) values (a.email, m, 'joker');
 end $$;
 -- activate_monthly() kent daarnaast de jaarlijkse joker toe (zelfde functie als hierboven plus: perform public.grant_joker(...)).
+
+-- 15. Plan van de admin (plan.set_by = 'admin') is voor de gebruiker vergrendeld; een eigen plan blijft aanpasbaar.
+create or replace function public.update_my_plan(p_monthly_amount numeric, p_years int, p_goal_btc numeric) returns void
+language plpgsql security definer set search_path = public as $$
+declare a public.accounts;
+begin
+  a := public._my_account();
+  if a.id is null or a.onboarding_stage not in ('eerste_bitcoin','reeks_actief') then raise exception 'Nog niet beschikbaar'; end if;
+  if a.plan ->> 'set_by' = 'admin' then raise exception 'Je plan is samen met ons opgesteld. Wil je iets aanpassen? Stuur ons een bericht in de chat.'; end if;
+  update public.accounts set plan = coalesce(plan, '{}'::jsonb) || jsonb_strip_nulls(jsonb_build_object(
+      'monthly_amount', p_monthly_amount, 'years', p_years, 'goal_btc', p_goal_btc, 'set_by', 'user')), updated_at = now() where id = a.id;
+end $$;
+update public.accounts set plan = plan || '{"set_by":"admin"}'::jsonb
+where plan is not null and plan ->> 'set_by' is null and (plan ? 'goal_btc' or plan ? 'years' or plan ? 'strategy');

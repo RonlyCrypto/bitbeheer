@@ -74,6 +74,7 @@ export default function AdminOnboardingPanel({ email }: { email: string }) {
           monthly_amount: amount ? Number(amount) : undefined,
           years: years ? Number(years) : undefined,
           goal_btc: goal ? Number(goal.replace(',', '.')) : undefined,
+          set_by: strategy.trim() || amount || years || goal ? 'admin' : undefined,
         },
       },
       'Plan opgeslagen. De gebruiker ziet het zodra de eerste satoshi binnen is.'

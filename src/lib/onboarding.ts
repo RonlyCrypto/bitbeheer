@@ -24,6 +24,8 @@ export interface Plan {
   monthly_amount?: number;
   years?: number;
   goal_btc?: number;
+  /** Wie het plan heeft ingesteld; een plan van de admin kan de gebruiker niet aanpassen. */
+  set_by?: 'admin' | 'user';
 }
 
 export interface OnboardingAccount {

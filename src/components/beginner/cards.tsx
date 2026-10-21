@@ -132,6 +132,7 @@ export function PlanCard({
   const [goal, setGoal] = useState(String(plan.goal_btc ?? ''));
   const [error, setError] = useState('');
   const balance = Number(wallet?.balance ?? 0);
+  const locked = plan.set_by === 'admin';
   const pct = plan.goal_btc ? Math.min(100, Math.round((balance / plan.goal_btc) * 100)) : null;
 
   const save = async () => {
@@ -154,7 +155,7 @@ export function PlanCard({
   return (
     <section className={cardCls}>
       <h3 className={h4Cls}>
-        Mijn plan <span className="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] normal-case tracking-normal text-gray-500">Ingevuld in je kennismakingsgesprek</span>
+        Mijn plan <span className="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] normal-case tracking-normal text-gray-500">{locked ? 'Samen met ons opgesteld' : plan.set_by === 'user' ? 'Door jou ingesteld' : 'Stel je eigen plan in'}</span>
       </h3>
       {pct !== null && (
         <>
@@ -175,8 +176,14 @@ export function PlanCard({
               </div>
             ))}
           </dl>
-          {!readOnly && (
-            <button className={`${linkCls} mt-4`} onClick={() => setEditing(true)}>Mijn plan aanpassen</button>
+          {locked ? (
+            <p className="mt-4 text-xs text-gray-500">Dit plan is samen met ons opgesteld. Wil je iets aanpassen? Stuur ons een bericht in de chat.</p>
+          ) : (
+            !readOnly && (
+              <button className={`${linkCls} mt-4`} onClick={() => setEditing(true)}>
+                {plan.monthly_amount || plan.years || plan.goal_btc ? 'Mijn plan aanpassen' : 'Mijn plan instellen'}
+              </button>
+            )
           )}
         </>
       ) : (
