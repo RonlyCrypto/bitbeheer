@@ -120,10 +120,18 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess, ac
 
   const loadBookedSlots = async () => {
     try {
-      const { data, error } = await supabase
-        .from('appointments')
-        .select('date, start_time, end_time, status')
-        .in('status', ['pending', 'confirmed']);
+      // appointment_slot_status exposes every user's pending/confirmed slots (no personal data);
+      // the appointments table itself only returns the current user's own rows.
+      let { data, error } = await supabase
+        .from('appointment_slot_status')
+        .select('date, start_time, end_time, status');
+
+      if (error) {
+        ({ data, error } = await supabase
+          .from('appointments')
+          .select('date, start_time, end_time, status')
+          .in('status', ['pending', 'confirmed']));
+      }
 
       if (error) throw error;
 
