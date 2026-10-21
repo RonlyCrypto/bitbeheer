@@ -1,9 +1,10 @@
-const CACHE_NAME = 'bitbeheer-v1';
+const CACHE_NAME = 'bitbeheer-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/icons/icon.svg',
+  '/icons/icon-192.png',
 ];
 
 // Installeer: cache statische bestanden
@@ -22,6 +23,36 @@ self.addEventListener('activate', (event) => {
     )
   );
   self.clients.claim();
+});
+
+// Pushmeldingen: tonen ook als de app dicht is
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (e) { data = { body: event.data ? event.data.text() : '' }; }
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'BitBeheer', {
+      body: data.body || '',
+      icon: '/icons/icon-192.png',
+      tag: data.tag || 'bitbeheer',
+      data: { url: data.url || '/' },
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || '/';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const client of list) {
+        if ('focus' in client) {
+          if ('navigate' in client) client.navigate(url);
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(url);
+    })
+  );
 });
 
 // Fetch: network-first voor API calls, cache-first voor assets

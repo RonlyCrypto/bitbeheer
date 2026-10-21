@@ -3,6 +3,7 @@ import { Users, Eye, LogIn, Mail, Calendar, MessageSquare, Tag, Search, Filter, 
 import { impersonationUtils } from '../utils/impersonation';
 import { supabase } from '../lib/supabase';
 import SignupProcessFlow from './SignupProcessFlow';
+import AdminOnboardingPanel from './beginner/AdminOnboardingPanel';
 
 interface UserAccount {
   id: string;
@@ -67,6 +68,7 @@ export default function AccountBeheer() {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
   const [isDeletingAccount, setIsDeletingAccount] = useState<string | null>(null);
   const [showStatusTab, setShowStatusTab] = useState(false);
+  const [showOnboardingTab, setShowOnboardingTab] = useState(false);
 
   // Calculate remaining time for verification
   const getRemainingTime = (user: UserAccount): number | null => {
@@ -327,6 +329,7 @@ export default function AccountBeheer() {
   const handleViewUser = (user: UserAccount) => {
     setSelectedUser(user);
     setShowStatusTab(false); // Always start with Profiel tab
+    setShowOnboardingTab(false);
     setShowUserModal(true);
   };
 
@@ -1385,6 +1388,7 @@ export default function AccountBeheer() {
                 onClick={() => {
                   setShowUserModal(false);
                   setShowStatusTab(false);
+                  setShowOnboardingTab(false);
                 }}
                 className="text-gray-400 hover:text-gray-600"
               >
@@ -1396,9 +1400,9 @@ export default function AccountBeheer() {
             <div className="border-b border-gray-200 mb-6">
               <nav className="flex -mb-px">
                 <button
-                  onClick={() => setShowStatusTab(false)}
+                  onClick={() => { setShowStatusTab(false); setShowOnboardingTab(false); }}
                   className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors ${
-                    !showStatusTab
+                    !showStatusTab && !showOnboardingTab
                       ? 'border-orange-500 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
@@ -1406,7 +1410,7 @@ export default function AccountBeheer() {
                   Profiel
                 </button>
                 <button
-                  onClick={() => setShowStatusTab(true)}
+                  onClick={() => { setShowOnboardingTab(false); setShowStatusTab(true); }}
                   className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors relative flex items-center gap-2 ${
                     selectedUser.account_approved && selectedUser.first_appointment_completed && selectedUser.email_verified
                       ? showStatusTab
@@ -1422,11 +1426,23 @@ export default function AccountBeheer() {
                     <CheckCircle className="w-4 h-4 text-green-500" />
                   )}
                 </button>
+                <button
+                  onClick={() => { setShowStatusTab(false); setShowOnboardingTab(true); }}
+                  className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors ${
+                    showOnboardingTab
+                      ? 'border-orange-500 text-orange-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Begeleiding
+                </button>
               </nav>
             </div>
-            
+
             <div className="space-y-6">
-              {!showStatusTab ? (
+              {showOnboardingTab ? (
+                <AdminOnboardingPanel email={selectedUser.email} />
+              ) : !showStatusTab ? (
                 /* Profiel Info */
                 <div className="bg-gray-50 rounded-lg p-4">
                   <div className="grid grid-cols-2 gap-4">

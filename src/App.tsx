@@ -10,10 +10,9 @@ import AanmeldenPage from './pages/AanmeldenPage';
 import PortfolioPage from './pages/PortfolioPage';
 import EmailManagement from './pages/EmailManagement';
 import AdminDashboard from './components/AdminDashboard';
-import UserDashboard from './components/UserDashboard';
+import BeginnerDashboard from './components/beginner/BeginnerDashboard';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
-import WelcomePopup from './components/WelcomePopup';
 import ProtectedRoute from './components/ProtectedRoute';
 import SiteAccessControl from './components/SiteAccessControl';
 import { CurrencyProvider } from './contexts/CurrencyContext';
@@ -29,7 +28,7 @@ import { initVisitorTracking } from './utils/visitorTracking';
 import { initBitcoinPriceTracking } from './lib/initPriceTracking';
 
 function AppContent() {
-  const { showWelcomePopup, setShowWelcomePopup, user } = useSupabaseAuth();
+  const { user } = useSupabaseAuth();
 
   // Initialize visitor tracking and Bitcoin price tracking
   useEffect(() => {
@@ -54,7 +53,7 @@ function AppContent() {
                     user
                       ? user.email === 'admin@bitbeheer.nl'
                         ? <Navigate to="/admin" replace />
-                        : <UserDashboard />
+                        : <BeginnerDashboard />
                       : <FrontPage />
                   }
                 />
@@ -103,7 +102,7 @@ function AppContent() {
                         />
                         <Route 
                           path="/user-dashboard" 
-                          element={<UserDashboard />}
+                          element={<BeginnerDashboard />}
                         />
                         <Route
                           path="/verify-email"
@@ -139,14 +138,6 @@ function AppContent() {
         </div>
       <Footer />
       </SiteAccessControl>
-      
-      {/* Welcome Popup */}
-      {showWelcomePopup && user && user.email !== 'admin@bitbeheer.nl' && (
-        <WelcomePopup
-          userName={user.user_metadata?.name || user.email || 'Gebruiker'}
-          onClose={() => setShowWelcomePopup(false)}
-        />
-      )}
     </>
   );
 }
