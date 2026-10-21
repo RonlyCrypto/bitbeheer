@@ -219,7 +219,7 @@ export default function LoginRegister() {
               <div className="flex space-x-1 mb-4 bg-gray-100 rounded-lg p-1">
                 <button
                   onClick={() => setMode('login')}
-                  className={`flex-1 py-1.5 px-4 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex-1 py-1.5 px-2 sm:px-4 rounded-md text-sm whitespace-nowrap font-medium transition-colors ${
                     mode === 'login'
                       ? 'bg-white text-orange-600 shadow-sm'
                       : 'text-gray-600 hover:text-gray-800'
@@ -229,7 +229,7 @@ export default function LoginRegister() {
                 </button>
                 <button
                   onClick={() => setMode('register')}
-                  className={`flex-1 py-1.5 px-4 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex-1 py-1.5 px-2 sm:px-4 rounded-md text-sm whitespace-nowrap font-medium transition-colors ${
                     mode === 'register'
                       ? 'bg-white text-orange-600 shadow-sm'
                       : 'text-gray-600 hover:text-gray-800'

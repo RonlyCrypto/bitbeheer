@@ -202,7 +202,7 @@ export default function BeginnerDashboard() {
   );
 
   return (
-    <div className="min-h-[75vh] bg-gray-50 pb-28 md:pb-10">
+    <div className="min-h-[75vh] overflow-x-hidden bg-gray-50 pb-28 md:pb-10">
       <h1 className="sr-only">BitBeheer dashboard</h1>
 
       {portfolioOpen && (
@@ -216,7 +216,7 @@ export default function BeginnerDashboard() {
       )}
 
       {tab === 'portfolio' && portfolioOpen ? (
-        <div className="mx-auto max-w-6xl px-4 py-5">
+        <div className="mx-auto min-w-0 max-w-6xl px-3 py-4 sm:px-4 sm:py-5">
           <Suspense fallback={<p className="py-10 text-center text-sm text-gray-500">Portfolio laden…</p>}><PortfolioPage variant="user" /></Suspense>
         </div>
       ) : (

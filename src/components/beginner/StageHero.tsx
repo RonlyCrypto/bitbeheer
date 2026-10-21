@@ -222,9 +222,9 @@ function HowToDeposit({ address, amount, symbol }: { address?: string; amount?: 
   };
   return (
     <ol className="mt-3 grid gap-2 text-sm text-gray-700 sm:grid-cols-3">
-      <li className="rounded-xl border border-gray-200 bg-white p-3"><b className="text-orange-600">1</b> Open je beurs-app, bijvoorbeeld Coinbase.</li>
-      <li className="rounded-xl border border-gray-200 bg-white p-3"><b className="text-orange-600">2</b> Koop voor {amount ? `${symbol}${amount}` : 'je maandbedrag'} aan Bitcoin.</li>
-      <li className="rounded-xl border border-gray-200 bg-white p-3">
+      <li className="rounded-xl border border-gray-200 bg-white p-2.5 text-[13px] sm:p-3 sm:text-sm"><b className="text-orange-600">1</b> Open je beurs-app, bijvoorbeeld Coinbase.</li>
+      <li className="rounded-xl border border-gray-200 bg-white p-2.5 text-[13px] sm:p-3 sm:text-sm"><b className="text-orange-600">2</b> Koop voor {amount ? `${symbol}${amount}` : 'je maandbedrag'} aan Bitcoin.</li>
+      <li className="rounded-xl border border-gray-200 bg-white p-2.5 text-[13px] sm:p-3 sm:text-sm">
         <b className="text-orange-600">3</b> Stuur hem naar je eigen wallet-adres.
         {address && (
           <button onClick={copy} className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-orange-600">
@@ -278,9 +278,9 @@ export default function StageHero({ ob, readOnly, currencySymbol, onPlanAppointm
           Een hardware wallet bewaart je Bitcoin offline en onder jouw eigen beheer. Wij raden alleen Ledger aan.
         </p>
         <ol className="mt-4 grid gap-2 text-sm text-gray-700 sm:grid-cols-3">
-          <li className="rounded-xl border border-gray-200 bg-white p-3"><b className="text-orange-600">1</b> Ga naar Ledger.com via onze knop hieronder.</li>
-          <li className="rounded-xl border border-gray-200 bg-white p-3"><b className="text-orange-600">2</b> Kies een model en bestel.</li>
-          <li className="rounded-xl border border-gray-200 bg-white p-3"><b className="text-orange-600">3</b> Geef hier door welk model en wanneer je hebt besteld.</li>
+          <li className="rounded-xl border border-gray-200 bg-white p-2.5 text-[13px] sm:p-3 sm:text-sm"><b className="text-orange-600">1</b> Ga naar Ledger.com via onze knop hieronder.</li>
+          <li className="rounded-xl border border-gray-200 bg-white p-2.5 text-[13px] sm:p-3 sm:text-sm"><b className="text-orange-600">2</b> Kies een model en bestel.</li>
+          <li className="rounded-xl border border-gray-200 bg-white p-2.5 text-[13px] sm:p-3 sm:text-sm"><b className="text-orange-600">3</b> Geef hier door welk model en wanneer je hebt besteld.</li>
         </ol>
         <Warning>
           <b>Bestel alleen via Ledger.com, met onze link.</b> Een wallet van een andere site of tweedehands kan gemanipuleerd zijn en je Bitcoin kosten.

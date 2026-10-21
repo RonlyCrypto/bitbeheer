@@ -245,8 +245,8 @@ export default function ProfilePopup({
               <User className="w-6 h-6 text-orange-600 dark:text-orange-400" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Mijn Profiel</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Beheer je persoonlijke informatie</p>
+              <h2 className="text-lg sm:text-xl whitespace-nowrap font-bold text-gray-900 dark:text-white">Mijn Profiel</h2>
+              <p className="hidden sm:block text-sm text-gray-600 dark:text-gray-400">Beheer je persoonlijke informatie</p>
             </div>
           </div>
           <div className="flex items-center gap-3">

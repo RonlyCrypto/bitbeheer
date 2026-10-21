@@ -187,10 +187,10 @@ export default function AanmeldenPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="container mx-auto px-4 py-20">
+      <div className="container mx-auto px-3 sm:px-4 py-8 sm:py-20">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-12">
+          <div className="text-center mb-6 sm:mb-12">
             <Link
               to="/"
               className="inline-flex items-center gap-2 text-orange-600 hover:text-orange-700 mb-6"
@@ -198,7 +198,7 @@ export default function AanmeldenPage() {
               <ArrowLeft className="w-5 h-5" />
               Terug naar Home
             </Link>
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4 sm:mb-6">
               Aanmelden voor Persoonlijke Begeleiding
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
@@ -208,7 +208,7 @@ export default function AanmeldenPage() {
           </div>
 
           {/* Form */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
+          <div className="bg-white rounded-2xl shadow-xl p-5 sm:p-8 md:p-12">
             {message && (
               <div className={`mb-6 p-4 rounded-lg flex items-center gap-3 ${
                 message.type === 'success' 
@@ -240,7 +240,7 @@ export default function AanmeldenPage() {
               </style>
               {/* Persoonlijke Gegevens */}
               <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
                   <User className="w-6 h-6 text-orange-600" />
                   Persoonlijke Gegevens
                 </h3>
@@ -332,7 +332,7 @@ export default function AanmeldenPage() {
 
               {/* Investeringsplannen */}
               <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
                   <DollarSign className="w-6 h-6 text-orange-600" />
                   Investeringsplannen
                 </h3>
@@ -362,7 +362,7 @@ export default function AanmeldenPage() {
 
               {/* Ervaring */}
               <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
                   <MessageSquare className="w-6 h-6 text-orange-600" />
                   Jouw Situatie
                 </h3>
