@@ -39,6 +39,7 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess, ac
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [slotsLoaded, setSlotsLoaded] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [notes, setNotes] = useState('');
   const [hasExistingAppointment, setHasExistingAppointment] = useState(false);
@@ -68,7 +69,10 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess, ac
   useEffect(() => {
     if (isOpen && effectiveUserEmail) {
       setLoading(true);
-      Promise.all([loadAvailableSlots(), loadBookedSlots(), checkExistingAppointment()]).finally(() => setLoading(false));
+      Promise.all([loadAvailableSlots(), loadBookedSlots(), checkExistingAppointment()]).finally(() => {
+        setLoading(false);
+        setSlotsLoaded(true);
+      });
     } else if (isOpen && !effectiveUserEmail) {
       // If popup is open but no user email, show error
       setErrorPopup({
@@ -565,7 +569,7 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess, ac
 
         {/* Content */}
         <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
-          {loading ? (
+          {loading || !slotsLoaded ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
               <p className="text-gray-600">Beschikbare tijden laden...</p>

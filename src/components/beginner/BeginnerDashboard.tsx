@@ -136,11 +136,13 @@ export default function BeginnerDashboard() {
     }
     if (streak > Number(seen)) {
       write(key, String(streak));
+      // Een ingezette joker is geen storting: geen feestpopup, de herinneringspopup toont "bevroren".
+      if (ob.deposits[0]?.source === 'joker') return;
       fireConfetti();
       const badge = streak === 3 ? 'Je hebt de badge 3 op rij behaald en bent nu Stacker.' : streak === 6 ? 'Je hebt de badge 6 op rij behaald en bent nu Volhouder.' : streak === 12 ? 'Je hebt de badge 12 op rij behaald en bent nu Hodler.' : 'Mooi volgehouden.';
-      setCelebration({ emoji: '🎉', title: 'Storting gezien!', body: <>Je reeks staat op <b>{streak} {streak === 1 ? 'maand' : 'maanden'}</b>. {badge}</> });
+      setCelebration({ emoji: '🎉', title: 'Storting gezien!', body: <>Je reeks staat op <b>{streak} {streak === 1 ? 'maand' : 'maanden'}</b>. {badge}{streak % 6 === 0 && ' Je verdient er een joker bij 🃏'}</> });
     }
-  }, [email, stage, streak]);
+  }, [email, stage, streak, ob.deposits]);
 
   // Een hele Bitcoin: alleen vieren bij de overgang, niet bij het eerste bezoek.
   const balance = ob.wallet?.balance ?? 0;
