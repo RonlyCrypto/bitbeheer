@@ -167,8 +167,16 @@ Deno.serve(async (req) => {
   const sec: Record<string, string> = Object.fromEntries((data ?? []).map((r: any) => [r.key, r.value]))
   if (!sec.cron_secret || req.headers.get('x-cron-secret') !== sec.cron_secret) return json({ error: 'forbidden' }, 403)
   webpush.setVapidDetails(sec.vapid_subject, sec.vapid_public, sec.vapid_private)
-  const task = new URL(req.url).searchParams.get('task') ?? 'all'
+  const params = new URL(req.url).searchParams
+  const task = params.get('task') ?? 'all'
   const out: Record<string, unknown> = {}
+  if (task === 'testpush') {
+    const email = params.get('email')
+    if (!email) return json({ error: 'email ontbreekt' }, 400)
+    const { count } = await db.from('push_subscriptions').select('id', { count: 'exact', head: true }).ilike('email', email)
+    const sent = await pushTo(email, { title: 'Testmelding van BitBeheer 🔔', body: 'Werkt! Zo komen je herinneringen binnen, ook als de app dicht is.', url: '/', tag: 'test-push' })
+    return json({ subscriptions: count ?? 0, sent })
+  }
   if (task === 'wallets' || task === 'all') out.wallets = await checkWallets()
   if (task === 'reminders' || task === 'all') out.reminders = await sendReminders()
   return json(out)
