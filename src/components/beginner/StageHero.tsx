@@ -21,7 +21,7 @@ interface Props {
   onOpenChat: () => void;
 }
 
-const STEPS = ['Gesprek', 'Wallet', 'Eerste Bitcoin'];
+const STEPS = ['Gesprek', 'Wallet', 'Eerste satoshi'];
 const STEP_OF_STAGE: Record<Stage, number> = {
   aangemeld: 0,
   gesprek_gehad: 1,
@@ -303,7 +303,7 @@ export default function StageHero({ ob, readOnly, currencySymbol, onPlanAppointm
           ✓ <b className="text-gray-900">{account.wallet_model}</b> besteld op <b className="text-gray-900">{formatDateNl(account.wallet_ordered_at)}</b> bij Ledger.com
         </div>
         <p className="mt-3 max-w-prose text-sm text-gray-600">
-          Zodra hij is bezorgd, bevestig je hieronder de ontvangst en plak je je ontvangstadres. Daarna gaan we samen verder met je eerste Bitcoin.
+          Zodra hij is bezorgd, bevestig je hieronder de ontvangst en plak je je ontvangstadres. Daarna gaan we samen verder met je eerste aankoop.
         </p>
         <ReceiptForm ob={ob} readOnly={readOnly} />
       </>
@@ -311,8 +311,8 @@ export default function StageHero({ ob, readOnly, currencySymbol, onPlanAppointm
   } else if (stage === 'wallet_gekoppeld') {
     body = (
       <>
-        <div className="text-xs font-bold uppercase tracking-wider text-orange-600">Stap 3 van 3 · Eerste Bitcoin</div>
-        <h3 className="mt-1 text-lg font-bold text-gray-900 sm:text-xl">Koop je eerste Bitcoin, met onze hulp</h3>
+        <div className="text-xs font-bold uppercase tracking-wider text-orange-600">Stap 3 van 3 · Eerste satoshi</div>
+        <h3 className="mt-1 text-lg font-bold text-gray-900 sm:text-xl">Koop je eerste stukje Bitcoin, met onze hulp</h3>
         <p className="mt-1.5 text-sm text-gray-600">Begin klein. We lopen deze drie dingen samen met je door, in jouw tempo.</p>
         <ul className="mt-4 grid gap-2 text-sm">
           {[
@@ -331,14 +331,14 @@ export default function StageHero({ ob, readOnly, currencySymbol, onPlanAppointm
           <button className={ctaCls} onClick={onPlanAppointment} disabled={readOnly}>Plan een begeleid koopmoment</button>
           <button className={linkCls} onClick={onOpenChat}>Vragen? Chat met ons</button>
         </div>
-        <p className="mt-3 text-xs text-gray-500">Zodra je eerste Bitcoin op je wallet staat, zien we dat vanzelf. Dan speel je de rest van je dashboard vrij.</p>
+        <p className="mt-3 text-xs text-gray-500">Zodra je eerste satoshi's op je wallet staan, zien we dat vanzelf. Dan speel je de rest van je dashboard vrij.</p>
       </>
     );
   } else if (stage === 'eerste_bitcoin') {
     body = (
       <>
         <div className="text-xs font-bold uppercase tracking-wider text-green-700">Gefeliciteerd</div>
-        <h3 className="mt-1 text-lg font-bold text-gray-900 sm:text-xl">Je eerste Bitcoin is binnen 🎉</h3>
+        <h3 className="mt-1 text-lg font-bold text-gray-900 sm:text-xl">Je eerste satoshi's zijn binnen 🎉</h3>
         <p className="mt-1.5 max-w-prose text-sm text-gray-600">We zagen je aankoop op je wallet verschijnen. Je Bitcoin staat veilig in eigen beheer, en dit is vrijgespeeld:</p>
         <div className="mt-3 flex flex-wrap gap-2">
           {['📈 Jouw resultaat', '🧭 Mijn plan', '🔥 Maandelijkse storting', '🌡 Markt vandaag'].map((t) => (

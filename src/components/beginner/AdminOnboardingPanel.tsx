@@ -76,7 +76,7 @@ export default function AdminOnboardingPanel({ email }: { email: string }) {
           goal_btc: goal ? Number(goal.replace(',', '.')) : undefined,
         },
       },
-      'Plan opgeslagen. De gebruiker ziet het zodra de eerste Bitcoin binnen is.'
+      'Plan opgeslagen. De gebruiker ziet het zodra de eerste satoshi binnen is.'
     );
 
   if (!row) return <p className="text-sm text-gray-500">Account laden…</p>;
@@ -109,7 +109,7 @@ export default function AdminOnboardingPanel({ email }: { email: string }) {
           <div className="flex justify-between gap-3"><dt className="text-gray-500">Wallet-model</dt><dd className="font-semibold">{row.wallet_model || '–'}</dd></div>
           <div className="flex justify-between gap-3"><dt className="text-gray-500">Besteld op</dt><dd className="font-semibold">{formatDateNl(row.wallet_ordered_at) || '–'}</dd></div>
           <div className="flex justify-between gap-3"><dt className="text-gray-500">Ontvangen op</dt><dd className="font-semibold">{formatDateNl(row.wallet_received_at) || '–'}</dd></div>
-          <div className="flex justify-between gap-3"><dt className="text-gray-500">Eerste Bitcoin</dt><dd className="font-semibold">{formatDateNl(row.first_bitcoin_at) || '–'}</dd></div>
+          <div className="flex justify-between gap-3"><dt className="text-gray-500">Eerste satoshi</dt><dd className="font-semibold">{formatDateNl(row.first_bitcoin_at) || '–'}</dd></div>
           <div className="flex justify-between gap-3"><dt className="text-gray-500">Maandelijkse storting</dt><dd className="font-semibold">{row.monthly_active ? `Aan, op de ${row.monthly_day}e` : 'Uit'}</dd></div>
           <div className="flex justify-between gap-3"><dt className="text-gray-500">Reeks</dt><dd className="font-semibold">{computeStreak(deposits)} maanden ({deposits.length} stortingen)</dd></div>
         </dl>
@@ -117,7 +117,7 @@ export default function AdminOnboardingPanel({ email }: { email: string }) {
 
       <section className="rounded-lg border border-gray-200 bg-white p-5">
         <h4 className="text-lg font-bold text-gray-900">Plan van de klant</h4>
-        <p className="mt-1 text-sm text-gray-500">Vul dit in tijdens het eerste gesprek. De gebruiker ziet het pas zodra de eerste Bitcoin binnen is.</p>
+        <p className="mt-1 text-sm text-gray-500">Vul dit in tijdens het eerste gesprek. De gebruiker ziet het pas zodra de eerste satoshi binnen is.</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div>
             <label htmlFor="adm-strategy" className="mb-1 block text-xs font-bold text-gray-700">Strategie</label>

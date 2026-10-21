@@ -15,7 +15,7 @@ export const STAGE_LABELS: Record<Stage, string> = {
   gesprek_gehad: 'Gesprek gehad',
   pending: 'Wallet besteld (onderweg)',
   wallet_gekoppeld: 'Wallet gekoppeld',
-  eerste_bitcoin: 'Eerste Bitcoin binnen',
+  eerste_bitcoin: 'Eerste satoshi binnen',
   reeks_actief: 'Maandelijkse storting actief',
 };
 
@@ -147,10 +147,11 @@ export function levelFor(streak: number): Level {
 }
 
 export const BADGES = [
-  { id: 'first', emoji: '🪙', label: 'Eerste Bitcoin', need: 0 },
+  { id: 'first', emoji: '🪙', label: 'Eerste satoshi', need: 0 },
   { id: 's3', emoji: '🔥', label: '3 op rij', need: 3 },
   { id: 's6', emoji: '💪', label: '6 op rij', need: 6 },
   { id: 's12', emoji: '🏆', label: '12 op rij', need: 12 },
+  { id: 'whole', emoji: '👑', label: '1 hele Bitcoin', need: 0 },
 ];
 
 const MONTHS_NL = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];

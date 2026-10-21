@@ -99,8 +99,8 @@ async function checkWallets() {
 
       if (acc.onboarding_stage === 'wallet_gekoppeld' && funded >= MIN_DEPOSIT_SATS) {
         await db.from('accounts').update({ onboarding_stage: 'eerste_bitcoin', first_bitcoin_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', acc.id)
-        await adminNote(acc.email, label, `🎉 ${label}: eerste Bitcoin staat op de wallet. Het dashboard is vrijgespeeld.`)
-        row.pushed = await pushTo(acc.email, { title: 'Je eerste Bitcoin is binnen 🎉', body: 'Er is nieuws vrijgespeeld op je dashboard.', url: '/', tag: 'first-bitcoin' })
+        await adminNote(acc.email, label, `🎉 ${label}: eerste satoshi's staan op de wallet. Het dashboard is vrijgespeeld.`)
+        row.pushed = await pushTo(acc.email, { title: "Je eerste satoshi's zijn binnen 🎉", body: 'Er is nieuws vrijgespeeld op je dashboard.', url: '/', tag: 'first-bitcoin' })
         row.stage = 'eerste_bitcoin'
       }
 

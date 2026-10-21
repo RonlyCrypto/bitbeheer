@@ -282,6 +282,7 @@ export function StreakCard({
   account,
   deposits,
   jokers,
+  balance,
   readOnly,
   onJoker,
   onPause,
@@ -290,6 +291,7 @@ export function StreakCard({
   account: OnboardingAccount;
   deposits: Deposit[];
   jokers: JokerStats;
+  balance: number;
   readOnly: boolean;
   onJoker: () => Promise<void>;
   onPause: () => Promise<void>;
@@ -354,9 +356,9 @@ export function StreakCard({
         ))}
       </div>
 
-      <div className="mt-3 grid grid-cols-4 gap-1.5 sm:mt-4 sm:gap-2">
+      <div className="mt-3 grid grid-cols-3 gap-1.5 sm:mt-4 sm:grid-cols-5 sm:gap-2">
         {BADGES.map((b) => {
-          const on = b.id === 'first' ? true : streak >= b.need;
+          const on = b.id === 'first' ? true : b.id === 'whole' ? balance >= 1 : streak >= b.need;
           return (
             <div key={b.id} className={`rounded-xl border p-2 text-center text-xs sm:p-2.5 ${on ? 'border-amber-300 bg-amber-50 text-amber-700' : 'border-gray-200 bg-gray-50 text-gray-400'}`}>
               <b className={`block text-xl sm:text-2xl ${on ? '' : 'opacity-40 grayscale'}`}>{b.emoji}</b>

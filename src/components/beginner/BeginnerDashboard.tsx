@@ -121,7 +121,7 @@ export default function BeginnerDashboard() {
       write(key, String(si));
       if (stage === 'eerste_bitcoin') {
         fireConfetti();
-        setCelebration({ emoji: '🎉', title: 'Je eerste Bitcoin is binnen!', body: <>We zagen je aankoop op je wallet. Er is nieuws vrijgespeeld op je dashboard.</> });
+        setCelebration({ emoji: '🎉', title: "Je eerste satoshi's zijn binnen!", body: <>We zagen je aankoop op je wallet. Er is nieuws vrijgespeeld op je dashboard.</> });
       }
     }
   }, [email, account, si, stage]);
@@ -141,6 +141,24 @@ export default function BeginnerDashboard() {
       setCelebration({ emoji: '🎉', title: 'Storting gezien!', body: <>Je reeks staat op <b>{streak} {streak === 1 ? 'maand' : 'maanden'}</b>. {badge}</> });
     }
   }, [email, stage, streak]);
+
+  // Een hele Bitcoin: alleen vieren bij de overgang, niet bij het eerste bezoek.
+  const balance = ob.wallet?.balance ?? 0;
+  useEffect(() => {
+    if (!email || !account || readOnly) return;
+    const key = `bb_seen_whole:${email}`;
+    const seen = read(key);
+    const whole = balance >= 1;
+    if (seen === null || seen === '1') {
+      write(key, whole ? '1' : '0');
+      return;
+    }
+    if (whole) {
+      write(key, '1');
+      fireConfetti();
+      setCelebration({ emoji: '👑', title: 'Je hebt een hele Bitcoin!', body: <>Je wallet staat op <b>1 BTC</b> of meer. Dat doen maar weinig mensen. Badge behaald: 1 hele Bitcoin.</> });
+    }
+  }, [email, account, readOnly, balance]);
 
   // Herinnering: één keer per dag, vanaf de gekozen dag van de maand.
   useEffect(() => {
@@ -232,7 +250,7 @@ export default function BeginnerDashboard() {
           {si >= stageIndex('eerste_bitcoin') && (
             <>
               {stage === 'reeks_actief' && account.monthly_active && (
-                <StreakCard account={account} deposits={ob.deposits} jokers={ob.jokers} readOnly={readOnly} onJoker={ob.spendJoker} onPause={ob.pauseMonthly} pushSlot={<PushSetup email={email} readOnly={readOnly} />} />
+                <StreakCard account={account} deposits={ob.deposits} balance={ob.wallet?.balance ?? 0} jokers={ob.jokers} readOnly={readOnly} onJoker={ob.spendJoker} onPause={ob.pauseMonthly} pushSlot={<PushSetup email={email} readOnly={readOnly} />} />
               )}
               <div className="grid gap-4 md:grid-cols-2">
                 <BitcoinCard wallet={ob.wallet} price={ob.price} />
