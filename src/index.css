@@ -60,3 +60,11 @@ html, body {
     display: block;
   }
 }
+
+
+/* Portfolio op de telefoon: kleinere tekst (keuze van de gebruiker) */
+@media (max-width: 767px) {
+  .pf-compact {
+    zoom: 0.82;
+  }
+}

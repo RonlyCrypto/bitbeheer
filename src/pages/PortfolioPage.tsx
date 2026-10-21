@@ -46,6 +46,14 @@ interface WalletData {
 export default function PortfolioPage({ variant = 'admin' }: { variant?: 'admin' | 'user' } = {}) {
   const { user } = useSupabaseAuth();
   const { isImpersonating, impersonatedUser } = usePermissions();
+  // Tekstgrootte op de telefoon: standaard klein, keuze wordt onthouden
+  const [compact, setCompact] = useState(() => {
+    try { return localStorage.getItem('bb_portfolio_size') !== 'normal'; } catch { return true; }
+  });
+  const chooseSize = (c: boolean) => {
+    setCompact(c);
+    try { localStorage.setItem('bb_portfolio_size', c ? 'small' : 'normal'); } catch { /* geen opslag beschikbaar */ }
+  };
   const [wallets, setWallets] = useState<WalletData[]>([]);
   const [showAddWallet, setShowAddWallet] = useState(false);
   const [newWalletAddress, setNewWalletAddress] = useState('');
@@ -957,7 +965,7 @@ export default function PortfolioPage({ variant = 'admin' }: { variant?: 'admin'
   const totalSoldValue = Array.from(fifoMatches.sells.values()).reduce((sum, s) => sum + s.proceeds, 0);
 
   return (
-    <div className="min-h-screen pb-20 md:pb-0">
+    <div className={`min-h-screen pb-20 md:pb-0 ${compact ? 'pf-compact' : ''}`}>
       {/* H1 Tag for SEO */}
       <h1 className="sr-only">Bitcoin Portfolio Beheer - Bewaar en Monitor Je Bitcoin Wallets</h1>
 
@@ -979,6 +987,19 @@ export default function PortfolioPage({ variant = 'admin' }: { variant?: 'admin'
       )}
       <div className="container mx-auto px-4 py-0 md:py-0 pb-20 md:pb-12">
         <div className="max-w-7xl mx-auto">
+          <div className="mb-3 flex items-center justify-end gap-2 md:hidden" role="group" aria-label="Tekstgrootte">
+            <span className="text-xs text-gray-500">Tekst</span>
+            {([['Klein', true], ['Normaal', false]] as const).map(([label, value]) => (
+              <button
+                key={label}
+                onClick={() => chooseSize(value)}
+                aria-pressed={compact === value}
+                className={`rounded-full border px-3 py-1 text-xs font-semibold ${compact === value ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-gray-200 bg-white text-gray-600'}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
             {/* BTC Saldo */}
