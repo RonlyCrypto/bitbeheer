@@ -135,11 +135,12 @@ export default function LoginRegister() {
           body: JSON.stringify({ action: 'request', email }),
         });
         const result = await resetResponse.json();
-        setMessage({
-          type: 'success',
-          text: result.message || 'Als dit e-mailadres bekend is, ontvang je een e-mail met instructies.'
-        });
-        setEmail('');
+        if (result.success) {
+          setMessage({ type: 'success', text: result.message || 'Er is een e-mail onderweg met instructies.' });
+          setEmail('');
+        } else {
+          setMessage({ type: 'error', text: result.error || 'Het versturen lukte niet. Probeer het later opnieuw.' });
+        }
       }
     } catch (error) {
       console.error('Form submission error:', error);

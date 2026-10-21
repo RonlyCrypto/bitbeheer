@@ -3,7 +3,8 @@
 // of 12 serverless functions per deployment.
 //
 // POST /api/password-reset  { action: 'request', email }
-//   -> generates a reset token and emails it (generic response either way)
+//   -> generates a reset token and emails it; unknown or not-yet-activated
+//      addresses get an explicit message
 // POST /api/password-reset  { action: 'reset', token, password }
 //   -> validates the token and sets the new password on the real
 //      Supabase Auth user
@@ -44,11 +45,9 @@ module.exports = async (req, res) => {
 };
 
 async function handleRequest(req, res, supabase) {
-  // Always return the same generic response, whether or not the email is
-  // known -- avoids leaking which addresses have an account.
   const genericResponse = {
     success: true,
-    message: 'Als dit e-mailadres bekend is, ontvang je een e-mail met instructies om je wachtwoord te resetten.'
+    message: 'Er is een e-mail onderweg met instructies om je wachtwoord te resetten. Check ook je spam.'
   };
 
   try {
@@ -63,10 +62,21 @@ async function handleRequest(req, res, supabase) {
       .eq('email', email.toLowerCase().trim())
       .maybeSingle();
 
-    // No account, or the account never finished activation (no real login
-    // identity yet) -- nothing to reset. Respond the same either way.
-    if (!account || !account.auth_user_id) {
-      return res.status(200).json(genericResponse);
+    // Bewust duidelijk voor de gebruiker (productkeuze): onbekend adres of een
+    // account dat nog niet geactiveerd is krijgt een eigen melding.
+    if (!account) {
+      return res.status(200).json({
+        success: false,
+        notFound: true,
+        error: 'Dit e-mailadres is niet bekend bij ons. Controleer het adres, of maak een account aan.'
+      });
+    }
+    if (!account.auth_user_id) {
+      return res.status(200).json({
+        success: false,
+        notActivated: true,
+        error: 'Dit account is nog niet geactiveerd. Bevestig eerst je e-mailadres via de mail die je van ons kreeg.'
+      });
     }
 
     const resetToken = crypto.randomBytes(32).toString('hex');
@@ -111,7 +121,6 @@ async function handleRequest(req, res, supabase) {
     return res.status(200).json(genericResponse);
   } catch (error) {
     console.error('Request password reset error:', error);
-    // Still return the generic response so we never confirm/deny account existence
     return res.status(200).json(genericResponse);
   }
 }
