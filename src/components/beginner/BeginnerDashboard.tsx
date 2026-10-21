@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { BarChart3, MessageSquare, PieChart, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -13,11 +13,12 @@ import {
 } from '../../lib/onboarding';
 import AppointmentBookingPopup from '../AppointmentBookingPopup';
 import Helpdesk from '../Helpdesk';
-import PortfolioPage from '../../pages/PortfolioPage';
 import StageHero from './StageHero';
 import PushSetup from './PushSetup';
 import { ActivateMonthlyCard, BitcoinCard, MarketCard, PlanCard, StreakCard } from './cards';
 import { CelebrationModal, HelpMenu, Modal, ReminderModal, fireConfetti } from './Modals';
+
+const PortfolioPage = lazy(() => import('../../pages/PortfolioPage'));
 
 const ADMIN_EMAIL = 'admin@bitbeheer.nl';
 
@@ -202,7 +203,9 @@ export default function BeginnerDashboard() {
       )}
 
       {tab === 'portfolio' && portfolioOpen ? (
-        <div className="mx-auto max-w-6xl px-4 py-5"><PortfolioPage /></div>
+        <div className="mx-auto max-w-6xl px-4 py-5">
+          <Suspense fallback={<p className="py-10 text-center text-sm text-gray-500">Portfolio laden…</p>}><PortfolioPage /></Suspense>
+        </div>
       ) : (
         <main className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-6">
           <div>

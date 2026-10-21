@@ -1,15 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import FrontPage from './pages/FrontPage';
 import SoonOnlinePage from './pages/SoonOnlinePage';
-import HomePage from './pages/HomePage';
-import MarketCapComparerPage from './pages/MarketCapComparerPage';
 import AanmeldenPage from './pages/AanmeldenPage';
-import PortfolioPage from './pages/PortfolioPage';
-import EmailManagement from './pages/EmailManagement';
-import AdminDashboard from './components/AdminDashboard';
 import BeginnerDashboard from './components/beginner/BeginnerDashboard';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
@@ -26,6 +21,14 @@ import ImpersonationBanner from './components/ImpersonationBanner';
 import MobileBottomNav from './components/MobileBottomNav';
 import { initVisitorTracking } from './utils/visitorTracking';
 import { initBitcoinPriceTracking } from './lib/initPriceTracking';
+
+// Admin-onderdelen worden pas geladen als ze nodig zijn, zodat gewone bezoekers
+// niet ook de zware Bitcoin-geschiedenis en beheercode binnenhalen.
+const HomePage = lazy(() => import('./pages/HomePage'));
+const MarketCapComparerPage = lazy(() => import('./pages/MarketCapComparerPage'));
+const PortfolioPage = lazy(() => import('./pages/PortfolioPage'));
+const EmailManagement = lazy(() => import('./pages/EmailManagement'));
+const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 
 function AppContent() {
   const { user } = useSupabaseAuth();
@@ -45,6 +48,7 @@ function AppContent() {
           {/* Global Impersonation Banner - Show on all routes when impersonating */}
           <ImpersonationBanner />
 
+          <Suspense fallback={<div className="flex min-h-[60vh] items-center justify-center text-sm text-gray-500">Laden…</div>}>
           <Routes>
                 {/* Root route: show dashboard if logged in, otherwise show front page */}
                 <Route
@@ -132,6 +136,7 @@ function AppContent() {
                           }
                         />
           </Routes>
+          </Suspense>
 
           {/* Mobile Bottom Navigation - Only for logged in users */}
           <MobileBottomNav />
