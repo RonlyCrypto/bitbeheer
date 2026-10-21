@@ -12,6 +12,8 @@ import {
   stageIndex,
 } from '../../lib/onboarding';
 import AppointmentBookingPopup from '../AppointmentBookingPopup';
+import ProfilePopup from '../ProfilePopup';
+import { useProfilePopup } from '../../contexts/ProfilePopupContext';
 import Helpdesk from '../Helpdesk';
 import StageHero from './StageHero';
 import PushSetup from './PushSetup';
@@ -88,6 +90,17 @@ export default function BeginnerDashboard() {
   const [apptOpen, setApptOpen] = useState(false);
   const [celebration, setCelebration] = useState<Celebration>(null);
   const [reminderOpen, setReminderOpen] = useState(false);
+  const { isOpen: profileOpen, closeProfilePopup } = useProfilePopup();
+  const [userProfile, setUserProfile] = useState<any>({
+    id: user?.id || '',
+    email: email || '',
+    name: user?.user_metadata?.name || (email ?? '').split('@')[0],
+    first_name: user?.user_metadata?.first_name || '',
+    last_name: user?.user_metadata?.last_name || '',
+    phone: user?.user_metadata?.phone || '',
+    location: user?.user_metadata?.location || '',
+    company: user?.user_metadata?.company || '',
+  });
 
   const account = ob.account;
   const stage = account?.onboarding_stage ?? 'aangemeld';
@@ -204,12 +217,12 @@ export default function BeginnerDashboard() {
 
       {tab === 'portfolio' && portfolioOpen ? (
         <div className="mx-auto max-w-6xl px-4 py-5">
-          <Suspense fallback={<p className="py-10 text-center text-sm text-gray-500">Portfolio laden…</p>}><PortfolioPage /></Suspense>
+          <Suspense fallback={<p className="py-10 text-center text-sm text-gray-500">Portfolio laden…</p>}><PortfolioPage variant="user" /></Suspense>
         </div>
       ) : (
-        <main className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-6">
+        <main className="mx-auto flex max-w-3xl flex-col gap-3 px-3 py-4 sm:gap-4 sm:px-4 sm:py-6">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-gray-900">Hoi {name}</h2>
+            <h2 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">Hoi {name}</h2>
             <p className="mt-0.5 text-sm text-gray-600">{greeting}</p>
           </div>
 
@@ -290,6 +303,16 @@ export default function BeginnerDashboard() {
         }}
         accountApproved={!!account.account_approved}
         firstAppointmentCompleted={!!account.first_appointment_completed}
+      />
+
+      <ProfilePopup
+        isOpen={profileOpen}
+        onClose={closeProfilePopup}
+        userProfile={userProfile}
+        setUserProfile={setUserProfile}
+        user={user}
+        isImpersonating={!!isImpersonating}
+        impersonatedUser={impersonatedUser ?? null}
       />
 
       {reminderOpen && !celebration && (

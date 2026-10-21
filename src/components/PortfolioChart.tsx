@@ -452,14 +452,14 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
   const walletBalanceData = calculateWalletBalanceData();
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-lg">
+    <div className="bg-white rounded-xl p-4 sm:p-6 shadow-lg">
       {/* Chart Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <h3 className="text-xl font-bold text-gray-900">📊 Live Bitcoin Chart</h3>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900">📊 Live Bitcoin Chart</h3>
           {latestChartPrice && (
             <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-gray-900">
+              <span className="text-xl sm:text-2xl font-bold text-gray-900">
                 {formatPrice(latestChartPrice)}
               </span>
               {change24h && (
@@ -480,12 +480,12 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
           )}
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           {/* Time Range Buttons */}
-          <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+          <div className="flex items-center gap-1 sm:gap-2 bg-gray-100 p-1 rounded-lg">
             <button
               onClick={() => setTimeRange('1m')}
-              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+              className={`px-2.5 sm:px-3 py-1 rounded text-sm font-medium transition-colors ${
                 timeRange === '1m' 
                   ? 'bg-orange-500 text-white' 
                   : 'text-gray-600 hover:bg-gray-200'
@@ -495,7 +495,7 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
             </button>
             <button
               onClick={() => setTimeRange('6m')}
-              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+              className={`px-2.5 sm:px-3 py-1 rounded text-sm font-medium transition-colors ${
                 timeRange === '6m' 
                   ? 'bg-orange-500 text-white' 
                   : 'text-gray-600 hover:bg-gray-200'
@@ -505,7 +505,7 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
             </button>
             <button
               onClick={() => setTimeRange('1y')}
-              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+              className={`px-2.5 sm:px-3 py-1 rounded text-sm font-medium transition-colors ${
                 timeRange === '1y' 
                   ? 'bg-orange-500 text-white' 
                   : 'text-gray-600 hover:bg-gray-200'
@@ -515,7 +515,7 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
             </button>
             <button
               onClick={() => setTimeRange('all')}
-              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+              className={`px-2.5 sm:px-3 py-1 rounded text-sm font-medium transition-colors ${
                 timeRange === 'all' 
                   ? 'bg-orange-500 text-white' 
                   : 'text-gray-600 hover:bg-gray-200'
@@ -527,14 +527,14 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
 
           <button
             onClick={() => setShowTransactions(!showTransactions)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-              showTransactions 
-                ? 'bg-orange-100 text-orange-700' 
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-colors ${
+              showTransactions
+                ? 'bg-orange-100 text-orange-700'
                 : 'bg-gray-100 text-gray-600'
             }`}
           >
             {showTransactions ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-            <span className="text-sm font-medium">
+            <span className="text-xs sm:text-sm font-medium">
               {showTransactions ? 'Verberg' : 'Toon'} Transacties
             </span>
           </button>
@@ -551,11 +551,11 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
       </div>
 
       {/* Chart */}
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         {filteredData.length > 0 ? (
           <PriceChart
             data={filteredData}
-            height={450}
+            height={typeof window !== 'undefined' && window.innerWidth < 640 ? 280 : 450}
             color="#f97316"
             showGrid={true}
             purchasePoints={purchasePoints}
@@ -573,18 +573,18 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
       <div className="mt-4 text-sm text-gray-600">
         {transactions.length > 0 ? (
           <div className="flex flex-col gap-3">
-            <p className="text-blue-600 font-medium">💡 Hover over de punten op de chart voor transactie details.</p>
-            <div className="flex items-center gap-6 text-xs">
+            <p className="text-blue-600 font-medium"><span className="hidden sm:inline">💡 Hover over de punten op de chart voor transactie details.</span><span className="sm:hidden">💡 Tik op een punt voor details.</span></p>
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-green-500 border-2 border-white shadow-md"></div>
-                <span className="text-gray-700"><strong>Groen</strong> = Winstgevend</span>
+                <div className="w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-white shadow-md"></div>
+                <span className="text-gray-700"><strong>Groen</strong> = winst</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-red-500 border-2 border-white shadow-md"></div>
-                <span className="text-gray-700"><strong>Rood</strong> = Verliesgevend</span>
+                <div className="w-3.5 h-3.5 rounded-full bg-red-500 border-2 border-white shadow-md"></div>
+                <span className="text-gray-700"><strong>Rood</strong> = verlies</span>
               </div>
-              <div className="text-gray-500 ml-auto">
-                ✅ <strong>{purchasePoints.length}</strong> transactie{purchasePoints.length !== 1 ? 's' : ''} zichtbaar op chart
+              <div className="text-gray-500 sm:ml-auto">
+                ✅ <strong>{purchasePoints.length}</strong> transactie{purchasePoints.length !== 1 ? 's' : ''} op chart
               </div>
             </div>
           </div>
@@ -598,9 +598,9 @@ export default function PortfolioChart({ transactions, currentPrice, onTransacti
         <div className="mt-6 border-t pt-6">
           <button
             onClick={() => setShowWalletBalanceChart(!showWalletBalanceChart)}
-            className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+            className="w-full flex items-center justify-between gap-2 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-x-2 text-left">
               <span className="text-sm font-medium text-gray-700">💰 Wallet Balance Chart</span>
               <span className="text-xs text-gray-500">
                 {walletBalanceData.length > 0 && (() => {

@@ -165,9 +165,9 @@ export default function Header() {
                             </button>
                           )}
                           
-                          {!isImpersonating && (
-                            <Link 
-                              to="/admin" 
+                          {!isImpersonating && canAccessAdmin && (
+                            <Link
+                              to="/admin"
                               className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                               onClick={() => setShowSettingsDropdown(false)}
                             >
@@ -175,22 +175,6 @@ export default function Header() {
                               Instellingen
                             </Link>
                           )}
-
-                        {/* Toggle rechterkolom — alleen voor gewone gebruikers (niet admin) */}
-                        {!isImpersonating && !canAccessAdmin && (
-                          <button
-                            className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                            onClick={() => {
-                              window.dispatchEvent(new CustomEvent('toggleRightColumn'));
-                              setShowSettingsDropdown(false);
-                            }}
-                          >
-                            <BarChart3 className="w-4 h-4" />
-                            {(() => {
-                              try { return localStorage.getItem('hide_right_column') === 'true' ? 'Toon info paneel' : 'Verberg info paneel'; } catch { return 'Info paneel'; }
-                            })()}
-                          </button>
-                        )}
 
                         <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
 

@@ -43,7 +43,7 @@ interface WalletData {
   total_investment?: number; // Total investment uit database
 }
 
-export default function PortfolioPage() {
+export default function PortfolioPage({ variant = 'admin' }: { variant?: 'admin' | 'user' } = {}) {
   const { user } = useSupabaseAuth();
   const { isImpersonating, impersonatedUser } = usePermissions();
   const [wallets, setWallets] = useState<WalletData[]>([]);
@@ -989,7 +989,7 @@ export default function PortfolioPage() {
                 </div>
                 <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">BTC Saldo</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900 leading-none">
+              <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">
                 {showBalances ? totalBalance.toFixed(8) : '••••'}
               </p>
               <p className="text-xs text-gray-400 mt-1">
@@ -1026,7 +1026,7 @@ export default function PortfolioPage() {
             </div>
 
             {/* Inleg & Verkocht */}
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+            <div className="col-span-2 md:col-span-1 bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
               <div className="flex items-center gap-2 mb-3">
                 <div className="bg-yellow-100 p-2 rounded-xl">
                   <TrendingUp className="w-4 h-4 text-yellow-600" />
@@ -1058,7 +1058,7 @@ export default function PortfolioPage() {
           </div>
 
           {/* Cycle Advisor Widget */}
-          {wallets.length > 0 && currentPrice > 0 && (
+          {variant === 'admin' && wallets.length > 0 && currentPrice > 0 && (
             <div className="mb-8">
               <CycleAdvisorWidget 
                 currentPrice={currentPrice}
@@ -1363,7 +1363,7 @@ export default function PortfolioPage() {
                       {/* Chart Integratie Block - onder wallet info */}
                       {wallet.id && (
                         isChartIntegrationVisible ? (
-                          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mt-4">
+                          <div className="hidden md:block bg-orange-50 border border-orange-200 rounded-lg p-4 mt-4">
                             <div className="flex items-start gap-3">
                               <div className="bg-orange-100 p-1.5 rounded-lg flex-shrink-0">
                                 <AlertCircle className="w-4 h-4 text-orange-600" />
@@ -1407,7 +1407,7 @@ export default function PortfolioPage() {
                             </div>
                           </div>
                         ) : (
-                          <div className="mt-4">
+                          <div className="hidden md:block mt-4">
                             <button
                               onClick={() => handleWalletToggle(true)}
                               className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-1.5"

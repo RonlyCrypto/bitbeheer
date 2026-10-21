@@ -14,7 +14,7 @@ import {
 } from '../../lib/onboarding';
 import type { PriceRow } from '../../hooks/useOnboarding';
 
-const cardCls = 'rounded-2xl border border-gray-200 bg-white p-5';
+const cardCls = 'rounded-2xl border border-gray-200 bg-white p-4 sm:p-5';
 const h4Cls = 'mb-3 flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-500';
 const inputCls =
   'w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200';
@@ -41,7 +41,7 @@ export function BitcoinCard({ wallet, price, waiting }: { wallet: WalletRow | nu
   return (
     <section className={cardCls}>
       <h3 className={h4Cls}>Jouw Bitcoin</h3>
-      <div className="text-3xl font-extrabold tabular-nums tracking-tight text-gray-900">{value !== null ? eur(value) : '–'}</div>
+      <div className="text-2xl sm:text-3xl font-extrabold tabular-nums tracking-tight text-gray-900">{value !== null ? eur(value) : '–'}</div>
       <p className="mt-1 text-sm text-gray-600">
         {waiting ? 'Je wallet is gekoppeld. Er staat nog geen Bitcoin op.' : `${btc(balance)} BTC in je eigen wallet`}
       </p>
@@ -316,26 +316,26 @@ export function StreakCard({
   return (
     <section className={cardCls}>
       <h3 className={h4Cls}>Jouw reeks</h3>
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="grid h-20 w-20 place-items-center rounded-full border-2 border-orange-300 bg-gradient-to-b from-amber-50 to-orange-50 text-center leading-none">
+      <div className="flex items-center gap-3 sm:gap-4">
+        <div className="grid h-16 w-16 flex-shrink-0 place-items-center rounded-full border-2 border-orange-300 bg-gradient-to-b from-amber-50 to-orange-50 text-center leading-none sm:h-20 sm:w-20">
           <div>
-            <b className="block text-3xl tabular-nums">{streak}</b>
+            <b className="block text-2xl tabular-nums sm:text-3xl">{streak}</b>
             <small className="text-[10px] text-gray-500">maanden</small>
           </div>
         </div>
-        <div className="min-w-[200px] flex-1">
-          <div className="text-lg font-extrabold">Niveau: {level.name}</div>
+        <div className="min-w-0 flex-1">
+          <div className="text-base font-extrabold sm:text-lg">Niveau: {level.name}</div>
           <p className="mb-2 text-sm text-gray-600">{level.next ? `Nog ${toNext} ${toNext === 1 ? 'maand' : 'maanden'} tot ${level.next}` : 'Hoogste niveau bereikt'}</p>
           <Progress pct={pct} label="Voortgang naar het volgende niveau" />
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-6 gap-1.5 sm:grid-cols-12" aria-label="Jouw eerste twaalf maanden">
+      <div className="mt-3 grid grid-cols-6 gap-1 sm:mt-4 sm:grid-cols-12 sm:gap-1.5" aria-label="Jouw eerste twaalf maanden">
         {tiles.map((t, i) => (
           <div
             key={i}
             title={t.joker ? 'Joker ingezet' : undefined}
-            className={`grid aspect-square place-items-center rounded-lg border text-[11px] leading-tight ${
+            className={`grid aspect-[5/4] place-items-center rounded-lg border text-[10px] leading-tight sm:aspect-square sm:text-[11px] ${
               t.state === 'done'
                 ? 'border-green-300 bg-green-50 font-bold text-green-700'
                 : t.state === 'now'
@@ -348,22 +348,22 @@ export function StreakCard({
         ))}
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="mt-3 grid grid-cols-4 gap-1.5 sm:mt-4 sm:gap-2">
         {BADGES.map((b) => {
           const on = b.id === 'first' ? true : streak >= b.need;
           return (
-            <div key={b.id} className={`rounded-xl border p-2.5 text-center text-xs ${on ? 'border-amber-300 bg-amber-50 text-amber-700' : 'border-gray-200 bg-gray-50 text-gray-400'}`}>
-              <b className={`block text-2xl ${on ? '' : 'opacity-40 grayscale'}`}>{b.emoji}</b>
-              <span className={`block text-[12.5px] font-bold ${on ? 'text-gray-900' : 'text-gray-500'}`}>{b.label}</span>
-              {on ? 'Behaald' : 'Nog niet'}
+            <div key={b.id} className={`rounded-xl border p-2 text-center text-xs sm:p-2.5 ${on ? 'border-amber-300 bg-amber-50 text-amber-700' : 'border-gray-200 bg-gray-50 text-gray-400'}`}>
+              <b className={`block text-xl sm:text-2xl ${on ? '' : 'opacity-40 grayscale'}`}>{b.emoji}</b>
+              <span className={`block text-[10.5px] font-bold leading-tight sm:text-[12.5px] ${on ? 'text-gray-900' : 'text-gray-500'}`}>{b.label}</span>
+              <span className="hidden sm:block">{on ? 'Behaald' : 'Nog niet'}</span>
             </div>
           );
         })}
       </div>
 
-      <div className="mt-4 rounded-xl bg-gray-50 px-3 py-2.5 text-[13px] text-gray-600">
+      <div className="mt-3 rounded-xl bg-gray-50 px-3 py-2 text-xs text-gray-600 sm:mt-4 sm:py-2.5 sm:text-[13px]">
         🃏 <b>{jokerUsed ? 'Joker voor dit jaar gebruikt.' : 'Joker beschikbaar.'}</b>{' '}
-        {jokerUsed ? 'Volgend jaar krijg je er weer één.' : 'Sla één maand per jaar over zonder je reeks te verliezen. Geen reden om jezelf onder druk te zetten.'}
+        {jokerUsed ? 'Volgend jaar krijg je er weer één.' : <><span className="sm:hidden">Sla één maand per jaar over zonder je reeks te verliezen.</span><span className="hidden sm:inline">Sla één maand per jaar over zonder je reeks te verliezen. Geen reden om jezelf onder druk te zetten.</span></>}
         {!jokerUsed && !doneThisMonth && !readOnly && (
           <button className={`${linkCls} ml-2`} onClick={joker} disabled={busy}>Nu inzetten</button>
         )}

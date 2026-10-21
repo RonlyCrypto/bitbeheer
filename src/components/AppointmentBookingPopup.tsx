@@ -545,14 +545,14 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess, ac
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
             <div className="bg-orange-100 dark:bg-orange-900 p-2 rounded-lg">
               <Calendar className="w-6 h-6 text-orange-600 dark:text-orange-400" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Plan je afspraak in</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Kies een beschikbare datum en tijd</p>
+              <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">Plan je afspraak in</h2>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Kies een beschikbare datum en tijd</p>
             </div>
           </div>
           <button
@@ -564,7 +564,7 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess, ac
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+        <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
           {loading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
@@ -646,7 +646,7 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess, ac
                               {weekStart.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })} – {weekEnd.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}
                             </span>
                           </div>
-                          <div className="grid grid-cols-7 gap-1.5">
+                          <div className="flex flex-col gap-1.5 sm:grid sm:grid-cols-7">
                             {days.map((dateObj) => {
                               const dateStr = toLocalDateStr(dateObj);
                               const slotsForDate = getSlotsForDate(dateStr).sort((a, b) => a.start_time.localeCompare(b.start_time));
@@ -655,15 +655,15 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess, ac
                               return (
                                 <div
                                   key={dateStr}
-                                  className={`rounded-lg border p-1.5 min-h-[76px] border-gray-200 dark:border-gray-700 ${
-                                    hasSlots ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900/30'
+                                  className={`rounded-lg border flex items-center gap-3 px-3 py-1.5 sm:block sm:p-1.5 sm:min-h-[76px] border-gray-200 dark:border-gray-700 ${
+                                    hasSlots ? 'bg-white dark:bg-gray-800 py-2' : 'bg-gray-50 dark:bg-gray-900/30'
                                   }`}
                                 >
-                                  <div className="text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-1">
+                                  <div className="w-14 flex-shrink-0 sm:w-auto text-xs sm:text-[10px] font-bold text-gray-500 dark:text-gray-400 sm:mb-1">
                                     {dayNames[dateObj.getDay()]} <span className="font-normal text-gray-400 dark:text-gray-600">{dateObj.getDate()}</span>
                                   </div>
                                   {hasSlots ? (
-                                    <div className="flex flex-col gap-1">
+                                    <div className="flex flex-row flex-wrap gap-1.5 sm:flex-col sm:gap-1">
                                       {slotsForDate.map((slot) => {
                                         const exactKey = `${slot.date}_${slot.start_time}`;
                                         const status = exactSlotStatus.get(exactKey);
@@ -697,7 +697,7 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess, ac
                                               }
                                             }}
                                             disabled={!isClickable}
-                                            className={`px-1 py-0.5 rounded text-[11px] font-semibold border-[1.5px] transition-colors ${colorClasses}`}
+                                            className={`px-3 py-1.5 text-sm sm:px-1 sm:py-0.5 sm:text-[11px] rounded font-semibold border-[1.5px] transition-colors ${colorClasses}`}
                                           >
                                             {slot.start_time.slice(0, 5)}
                                           </button>
@@ -705,7 +705,7 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess, ac
                                       })}
                                     </div>
                                   ) : (
-                                    <div className="text-[11px] text-gray-300 dark:text-gray-600">—</div>
+                                    <div className="text-[11px] text-gray-300 dark:text-gray-600"><span className="sm:hidden">Geen tijden</span><span className="hidden sm:inline">—</span></div>
                                   )}
                                 </div>
                               );
@@ -738,7 +738,7 @@ export default function AppointmentBookingPopup({ isOpen, onClose, onSuccess, ac
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+        <div className="flex items-center justify-end gap-3 p-4 sm:p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
           <button
             onClick={onClose}
             className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"

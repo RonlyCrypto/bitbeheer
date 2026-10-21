@@ -350,11 +350,11 @@ export default function Helpdesk({ onMessageRead }: HelpdeskProps) {
           onChange={(e) => { setNewMessage(e.target.value); if (sendError) setSendError(null); }}
           onKeyDown={(e) => { if (e.key === 'Enter' && !loading && newMessage.trim()) sendMessage(); }}
           placeholder="Schrijf je bericht..."
-          className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          className="min-w-0 flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
         />
-        <button onClick={sendMessage} disabled={loading} className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-60 flex items-center gap-2">
+        <button onClick={sendMessage} disabled={loading} aria-label="Verstuur" className="shrink-0 px-3 sm:px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-60 flex items-center gap-2">
           <Send className="w-4 h-4" />
-          Verstuur
+          <span className="hidden sm:inline">Verstuur</span>
         </button>
       </div>
     </div>

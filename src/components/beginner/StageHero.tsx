@@ -255,7 +255,7 @@ export default function StageHero({ ob, readOnly, currencySymbol, onPlanAppointm
     body = (
       <>
         <div className="text-xs font-bold uppercase tracking-wider text-orange-600">Stap 1 van 3 · Kennismaken</div>
-        <h3 className="mt-1 text-xl font-bold text-gray-900">{pending ? 'Je aanvraag is verstuurd' : 'Plan je kennismakingsgesprek'}</h3>
+        <h3 className="mt-1 text-lg font-bold text-gray-900 sm:text-xl">{pending ? 'Je aanvraag is verstuurd' : 'Plan je kennismakingsgesprek'}</h3>
         <p className="mt-1.5 max-w-prose text-sm text-gray-600">
           {pending
             ? `We bevestigen je gesprek van ${aptText} zo snel mogelijk.`
@@ -272,7 +272,7 @@ export default function StageHero({ ob, readOnly, currencySymbol, onPlanAppointm
     body = (
       <>
         <div className="text-xs font-bold uppercase tracking-wider text-orange-600">Stap 2 van 3 · Wallet bestellen</div>
-        <h3 className="mt-1 text-xl font-bold text-gray-900">Schaf je Ledger aan</h3>
+        <h3 className="mt-1 text-lg font-bold text-gray-900 sm:text-xl">Schaf je Ledger aan</h3>
         <p className="mt-1.5 max-w-prose text-sm text-gray-600">
           {apt ? <>Je gesprek is bevestigd voor <b>{aptText}</b>. </> : null}
           Een hardware wallet bewaart je Bitcoin offline en onder jouw eigen beheer. Wij raden alleen Ledger aan.
@@ -298,7 +298,7 @@ export default function StageHero({ ob, readOnly, currencySymbol, onPlanAppointm
     body = (
       <>
         <div className="text-xs font-bold uppercase tracking-wider text-orange-600">Stap 2 van 3 · Onderweg</div>
-        <h3 className="mt-1 text-xl font-bold text-gray-900">Je wallet is onderweg</h3>
+        <h3 className="mt-1 text-lg font-bold text-gray-900 sm:text-xl">Je wallet is onderweg</h3>
         <div className="mt-3 rounded-xl border border-green-300 bg-white px-3 py-2 text-sm text-gray-600">
           ✓ <b className="text-gray-900">{account.wallet_model}</b> besteld op <b className="text-gray-900">{formatDateNl(account.wallet_ordered_at)}</b> bij Ledger.com
         </div>
@@ -312,7 +312,7 @@ export default function StageHero({ ob, readOnly, currencySymbol, onPlanAppointm
     body = (
       <>
         <div className="text-xs font-bold uppercase tracking-wider text-orange-600">Stap 3 van 3 · Eerste Bitcoin</div>
-        <h3 className="mt-1 text-xl font-bold text-gray-900">Koop je eerste Bitcoin, met onze hulp</h3>
+        <h3 className="mt-1 text-lg font-bold text-gray-900 sm:text-xl">Koop je eerste Bitcoin, met onze hulp</h3>
         <p className="mt-1.5 text-sm text-gray-600">Begin klein. We lopen deze drie dingen samen met je door, in jouw tempo.</p>
         <ul className="mt-4 grid gap-2 text-sm">
           {[
@@ -338,7 +338,7 @@ export default function StageHero({ ob, readOnly, currencySymbol, onPlanAppointm
     body = (
       <>
         <div className="text-xs font-bold uppercase tracking-wider text-green-700">Gefeliciteerd</div>
-        <h3 className="mt-1 text-xl font-bold text-gray-900">Je eerste Bitcoin is binnen 🎉</h3>
+        <h3 className="mt-1 text-lg font-bold text-gray-900 sm:text-xl">Je eerste Bitcoin is binnen 🎉</h3>
         <p className="mt-1.5 max-w-prose text-sm text-gray-600">We zagen je aankoop op je wallet verschijnen. Je Bitcoin staat veilig in eigen beheer, en dit is vrijgespeeld:</p>
         <div className="mt-3 flex flex-wrap gap-2">
           {['📈 Jouw resultaat', '🧭 Mijn plan', '🔥 Maandelijkse storting', '🌡 Markt vandaag'].map((t) => (
@@ -351,7 +351,7 @@ export default function StageHero({ ob, readOnly, currencySymbol, onPlanAppointm
     body = (
       <>
         <div className="text-xs font-bold uppercase tracking-wider text-orange-600">Maandelijkse storting</div>
-        <h3 className="mt-1 text-xl font-bold text-gray-900">Je herinneringen staan uit</h3>
+        <h3 className="mt-1 text-lg font-bold text-gray-900 sm:text-xl">Je herinneringen staan uit</h3>
         <p className="mt-1.5 text-sm text-gray-600">Je reeks wacht op je. Zet de maandelijkse storting weer aan wanneer je klaar bent.</p>
         <div className="mt-4">
           <button
@@ -368,7 +368,7 @@ export default function StageHero({ ob, readOnly, currencySymbol, onPlanAppointm
     body = (
       <>
         <div className="text-xs font-bold uppercase tracking-wider text-green-700">Deze maand</div>
-        <h3 className="mt-1 text-xl font-bold text-gray-900">Gelukt, je storting van deze maand is binnen 🎉</h3>
+        <h3 className="mt-1 text-lg font-bold text-gray-900 sm:text-xl">Gelukt, je storting van deze maand is binnen 🎉</h3>
         <p className="mt-1.5 text-sm text-gray-600">Mooi volgehouden. Volgende maand zijn we er weer om je eraan te herinneren.</p>
       </>
     );
@@ -377,7 +377,7 @@ export default function StageHero({ ob, readOnly, currencySymbol, onPlanAppointm
     body = (
       <>
         <div className="text-xs font-bold uppercase tracking-wider text-orange-600">Deze maand</div>
-        <h3 className="mt-1 text-xl font-bold text-gray-900">Stort {currencySymbol}{amount} en houd je reeks vast</h3>
+        <h3 className="mt-1 text-lg font-bold text-gray-900 sm:text-xl">Stort {currencySymbol}{amount} en houd je reeks vast</h3>
         <p className="mt-1.5 max-w-prose text-sm text-gray-600">
           {left === 0 ? 'Vandaag is de laatste dag van de maand. ' : `Nog ${left} ${left === 1 ? 'dag' : 'dagen'}. `}
           Zodra we je storting op je wallet zien, tellen we hem vanzelf mee.
@@ -392,7 +392,7 @@ export default function StageHero({ ob, readOnly, currencySymbol, onPlanAppointm
   }
 
   return (
-    <section className={`rounded-2xl border p-5 ${done || depositDone ? 'border-green-300 bg-gradient-to-b from-green-50 to-white' : 'border-orange-200 bg-gradient-to-b from-orange-50 to-white'}`}>
+    <section className={`rounded-2xl border p-4 sm:p-5 ${done || depositDone ? 'border-green-300 bg-gradient-to-b from-green-50 to-white' : 'border-orange-200 bg-gradient-to-b from-orange-50 to-white'}`}>
       {showStepper && <Stepper stage={stage} />}
       {body}
     </section>

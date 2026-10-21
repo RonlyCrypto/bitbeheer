@@ -126,7 +126,7 @@ export function HelpMenu({ open, onClose, onChat, onPlan, unread, readOnly }: { 
           {unread > 0 && <span className="rounded-full bg-white px-1.5 text-xs font-bold text-orange-600">{unread}</span>}
         </button>
         <button className={`${secondaryBtn} mt-2 flex items-center justify-center gap-2`} onClick={onPlan} disabled={readOnly}>
-          <Calendar className="h-4 w-4" /> Plan een gesprek van 20 min
+          <Calendar className="h-4 w-4" /> Plan een gesprek
         </button>
       </div>
     </>

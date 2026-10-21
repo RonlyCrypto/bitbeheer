@@ -18,6 +18,12 @@ interface MajorEvent {
   details?: string;
 }
 
+// Op smalle schermen (telefoon) minder marge en compactere as-labels, anders valt alles buiten beeld.
+const NARROW_CHART = 520;
+const chartPadding = (width: number) =>
+  width < NARROW_CHART ? { top: 16, right: 12, bottom: 36, left: 46 } : { top: 20, right: 20, bottom: 40, left: 60 };
+const compactAxis = new Intl.NumberFormat('nl-NL', { notation: 'compact', maximumFractionDigits: 1 });
+
 interface PriceChartProps {
   data: PriceData[];
   title?: string;
@@ -254,6 +260,10 @@ export default function PriceChart({
       labelType = 'day';
     }
     
+    // Nooit meer labels dan er passen (±64px per label), anders overlappen ze op een telefoon.
+    const maxLabels = Math.max(2, Math.floor(chartWidth / 64));
+    labelInterval = Math.max(labelInterval, Math.ceil(data.length / maxLabels));
+
     for (let i = 0; i < data.length; i += labelInterval) {
       const date = new Date(data[i].date);
       const x = (i / (data.length - 1)) * chartWidth;
@@ -302,7 +312,7 @@ export default function PriceChart({
     canvas.height = height * dpr;
     ctx.scale(dpr, dpr);
 
-    const padding = { top: 20, right: 20, bottom: 40, left: 60 };
+    const padding = chartPadding(rect.width);
     const chartWidth = rect.width - padding.left - padding.right;
     const chartHeight = height - padding.top - padding.bottom;
 
@@ -332,11 +342,12 @@ export default function PriceChart({
         ctx.stroke();
 
         const price = maxPrice - (priceRange / 5) * i;
+        const narrow = rect.width < NARROW_CHART;
         ctx.fillStyle = '#6b7280';
-        ctx.font = '11px sans-serif';
+        ctx.font = narrow ? '10px sans-serif' : '11px sans-serif';
         ctx.textAlign = 'right';
-        const formattedPrice = formatPrice(price);
-        ctx.fillText(formattedPrice, padding.left - 10, y + 4);
+        const formattedPrice = narrow ? compactAxis.format(price) : formatPrice(price);
+        ctx.fillText(formattedPrice, padding.left - (narrow ? 6 : 10), y + 4);
       }
 
       // X-axis grid lines and labels
@@ -355,7 +366,7 @@ export default function PriceChart({
         
         // Draw label
         ctx.fillStyle = '#6b7280';
-        ctx.font = '11px sans-serif';
+        ctx.font = rect.width < NARROW_CHART ? '10px sans-serif' : '11px sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(label.text, x, padding.top + chartHeight + 20);
       });
@@ -852,7 +863,7 @@ export default function PriceChart({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    const padding = { top: 20, right: 20, bottom: 40, left: 60 };
+    const padding = chartPadding(rect.width);
     const chartWidth = rect.width - padding.left - padding.right;
     const chartHeight = height - padding.top - padding.bottom;
 
