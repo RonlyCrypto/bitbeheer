@@ -194,3 +194,54 @@ select cron.schedule('onboarding-reminders', '0 16 * * *', $$
     url := 'https://clqbnkvnydlxtimiazqf.supabase.co/functions/v1/onboarding-cron?task=reminders',
     headers := jsonb_build_object('Content-Type', 'application/json', 'x-cron-secret', (select value from public.app_secrets where key = 'cron_secret')),
     body := '{}'::jsonb, timeout_milliseconds := 60000) $$);
+
+
+-- 14. Jokers verdienen: 1 per jaar, +1 bij storting op 25/31 dec of 1 jan, +1 per 6 maanden reeks (max 3 verdiend per jaar).
+-- Een gebruikte joker is een monthly_deposits-rij met source='joker'. Saldo = verdiend - gebruikt.
+-- De edge function onboarding-cron kent holiday/streak/yearly jokers toe; use_joker() controleert het saldo.
+create table if not exists public.joker_events (
+  id uuid primary key default gen_random_uuid(),
+  email varchar not null,
+  kind text not null check (kind in ('yearly','holiday','streak')),
+  ref text not null,
+  year int not null,
+  created_at timestamptz not null default now(),
+  unique (email, kind, ref)
+);
+alter table public.joker_events enable row level security;
+create policy "Users read own jokers" on public.joker_events for select
+  using (lower(email) = lower(auth.jwt() ->> 'email') or (auth.jwt() ->> 'email') = 'admin@bitbeheer.nl');
+
+create or replace function public.grant_joker(p_email text, p_kind text, p_ref text, p_year int) returns boolean
+language plpgsql security definer set search_path = public as $$
+begin
+  if (select count(*) from public.joker_events where lower(email) = lower(p_email) and year = p_year) >= 3 then
+    return false;
+  end if;
+  insert into public.joker_events (email, kind, ref, year) values (p_email, p_kind, p_ref, p_year)
+    on conflict (email, kind, ref) do nothing;
+  return found;
+end $$;
+revoke execute on function public.grant_joker(text, text, text, int) from public, anon, authenticated;
+
+create or replace function public._joker_balance(p_email text) returns int
+language sql stable security definer set search_path = public as $$
+  select (select count(*) from public.joker_events where lower(email) = lower(p_email))::int
+       - (select count(*) from public.monthly_deposits where lower(email) = lower(p_email) and source = 'joker')::int
+$$;
+revoke execute on function public._joker_balance(text) from public, anon, authenticated;
+
+create or replace function public.use_joker() returns void
+language plpgsql security definer set search_path = public as $$
+declare a public.accounts; m date := date_trunc('month', current_date)::date;
+begin
+  a := public._my_account();
+  if a.id is null or a.onboarding_stage <> 'reeks_actief' then raise exception 'Nog niet beschikbaar'; end if;
+  perform public.grant_joker(a.email, 'yearly', extract(year from current_date)::int::text, extract(year from current_date)::int);
+  if exists (select 1 from public.monthly_deposits where lower(email) = lower(a.email) and month = m) then
+    raise exception 'Deze maand is al gedekt';
+  end if;
+  if public._joker_balance(a.email) <= 0 then raise exception 'Je hebt geen jokers meer'; end if;
+  insert into public.monthly_deposits (email, month, source) values (a.email, m, 'joker');
+end $$;
+-- activate_monthly() kent daarnaast de jaarlijkse joker toe (zelfde functie als hierboven plus: perform public.grant_joker(...)).

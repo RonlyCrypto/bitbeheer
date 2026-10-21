@@ -3,6 +3,8 @@ import { Lock } from 'lucide-react';
 import {
   BADGES,
   Deposit,
+  JokerStats,
+  MAX_JOKERS_PER_YEAR,
   OnboardingAccount,
   Plan,
   WalletRow,
@@ -11,6 +13,7 @@ import {
   fearGreedLabel,
   hasDepositThisMonth,
   levelFor,
+  monthKey,
 } from '../../lib/onboarding';
 import type { PriceRow } from '../../hooks/useOnboarding';
 
@@ -258,7 +261,7 @@ export function ActivateMonthlyCard({
       <label className="mt-2 flex cursor-pointer items-center gap-2.5 text-sm"><input type="checkbox" className="h-4 w-4 accent-orange-600" checked={mail} onChange={(e) => setMail(e.target.checked)} /> Stuur ook een e-mail</label>
       {pushSlot}
       <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {[['🔥', 'Reeks'], ['🏅', 'Badges'], ['🆙', 'Niveaus'], ['🃏', '1 joker per jaar']].map(([e, t]) => (
+        {[['🔥', 'Reeks'], ['🏅', 'Badges'], ['🆙', 'Niveaus'], ['🃏', 'Jokers om te verdienen']].map(([e, t]) => (
           <div key={t} className="rounded-xl bg-gray-50 p-2.5 text-center text-xs text-gray-600">
             <b className="block text-xl">{e}</b>
             {t}
@@ -278,6 +281,7 @@ export function ActivateMonthlyCard({
 export function StreakCard({
   account,
   deposits,
+  jokers,
   readOnly,
   onJoker,
   onPause,
@@ -285,6 +289,7 @@ export function StreakCard({
 }: {
   account: OnboardingAccount;
   deposits: Deposit[];
+  jokers: JokerStats;
   readOnly: boolean;
   onJoker: () => Promise<void>;
   onPause: () => Promise<void>;
@@ -293,8 +298,7 @@ export function StreakCard({
   const streak = computeStreak(deposits);
   const level = levelFor(streak);
   const tiles = buildTiles(deposits, account.monthly_started_on);
-  const thisYear = new Date().getFullYear();
-  const jokerUsed = deposits.some((d) => d.source === 'joker' && d.month.startsWith(String(thisYear)));
+  const frozenNow = deposits.some((d) => d.source === 'joker' && d.month.startsWith(monthKey(new Date())));
   const doneThisMonth = hasDepositThisMonth(deposits);
   const pct = level.to ? Math.round(((streak - level.from) / (level.to - level.from)) * 100) : 100;
   const toNext = level.to ? level.to - streak : 0;
@@ -334,16 +338,18 @@ export function StreakCard({
         {tiles.map((t, i) => (
           <div
             key={i}
-            title={t.joker ? 'Joker ingezet' : undefined}
+            title={t.joker ? 'Bevroren maand (joker ingezet)' : undefined}
             className={`grid aspect-[5/4] place-items-center rounded-lg border text-[10px] leading-tight sm:aspect-square sm:text-[11px] ${
               t.state === 'done'
-                ? 'border-green-300 bg-green-50 font-bold text-green-700'
+                ? t.joker
+                  ? 'border-sky-300 bg-sky-50 font-bold text-sky-700'
+                  : 'border-green-300 bg-green-50 font-bold text-green-700'
                 : t.state === 'now'
                 ? 'border-2 border-orange-500 font-bold text-orange-600'
                 : 'border-gray-200 bg-gray-50 text-gray-400'
             }`}
           >
-            {t.state === 'done' ? (t.joker ? '🃏' : '✓') : t.label}
+            {t.state === 'done' ? (t.joker ? '❄️' : '✓') : t.label}
           </div>
         ))}
       </div>
@@ -361,13 +367,31 @@ export function StreakCard({
         })}
       </div>
 
-      <div className="mt-3 rounded-xl bg-gray-50 px-3 py-2 text-xs text-gray-600 sm:mt-4 sm:py-2.5 sm:text-[13px]">
-        🃏 <b>{jokerUsed ? 'Joker voor dit jaar gebruikt.' : 'Joker beschikbaar.'}</b>{' '}
-        {jokerUsed ? 'Volgend jaar krijg je er weer één.' : <><span className="sm:hidden">Sla één maand per jaar over zonder je reeks te verliezen.</span><span className="hidden sm:inline">Sla één maand per jaar over zonder je reeks te verliezen. Geen reden om jezelf onder druk te zetten.</span></>}
-        {!jokerUsed && !doneThisMonth && !readOnly && (
-          <button className={`${linkCls} ml-2`} onClick={joker} disabled={busy}>Nu inzetten</button>
+      <div className="mt-3 rounded-xl bg-gray-50 px-3 py-2.5 text-xs text-gray-600 sm:mt-4 sm:text-[13px]">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="font-bold text-gray-900">🃏 {jokers.available} {jokers.available === 1 ? 'joker' : 'jokers'} over</span>
+          <span className="text-gray-500">{jokers.earnedThisYear} van {MAX_JOKERS_PER_YEAR} verdiend dit jaar{jokers.used > 0 ? ` · ${jokers.used} ingezet` : ''}</span>
+        </div>
+        {frozenNow ? (
+          <p className="mt-1">❄️ <b>Deze maand is bevroren.</b> Je reeks loopt gewoon door.</p>
+        ) : (
+          <p className="mt-1">
+            Sla een maand over zonder je reeks te verliezen.
+            {jokers.available > 0 && !doneThisMonth && !readOnly && (
+              <button className={`${linkCls} ml-2`} onClick={joker} disabled={busy}>Maand bevriezen</button>
+            )}
+          </p>
         )}
-        {error && <span role="alert" className="ml-2 font-medium text-red-600">{error}</span>}
+        <details className="mt-1.5">
+          <summary className="cursor-pointer text-gray-500 hover:text-gray-700">Zo verdien je jokers</summary>
+          <ul className="mt-1 space-y-0.5 pl-1">
+            <li>🎁 Elk jaar krijg je er één.</li>
+            <li>🎄 Stort op 25 december, 31 december of 1 januari: +1.</li>
+            <li>🔥 Elke 6 maanden op rij: +1.</li>
+            <li className="text-gray-500">Je verdient er maximaal {MAX_JOKERS_PER_YEAR} per jaar. Wat je niet gebruikt, blijft staan.</li>
+          </ul>
+        </details>
+        {error && <span role="alert" className="mt-1 block font-medium text-red-600">{error}</span>}
       </div>
       {pushSlot}
       {account.monthly_active && !readOnly && (

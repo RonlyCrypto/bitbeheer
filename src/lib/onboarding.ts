@@ -60,6 +60,33 @@ export interface Deposit {
   source: 'auto' | 'joker';
 }
 
+export interface JokerEvent {
+  kind: 'yearly' | 'holiday' | 'streak';
+  ref: string;
+  year: number;
+}
+
+export const MAX_JOKERS_PER_YEAR = 3;
+
+export interface JokerStats {
+  /** Verdiend dit jaar (max 3) */
+  earnedThisYear: number;
+  /** Nog in te zetten (verdiend minus ingezet, ook van eerdere jaren) */
+  available: number;
+  /** Al ingezet, in totaal */
+  used: number;
+}
+
+/** Saldo van jokers. De jaarlijkse joker telt direct mee, ook als de server hem nog moet vastleggen. */
+export function jokerStats(events: JokerEvent[], deposits: Deposit[], active: boolean, now: Date = new Date()): JokerStats {
+  const year = now.getFullYear();
+  const hasYearly = events.some((e) => e.kind === 'yearly' && e.year === year);
+  const thisYear = events.filter((e) => e.year === year).length;
+  const virtual = active && !hasYearly && thisYear < MAX_JOKERS_PER_YEAR ? 1 : 0;
+  const used = deposits.filter((d) => d.source === 'joker').length;
+  return { earnedThisYear: thisYear + virtual, available: Math.max(0, events.length + virtual - used), used };
+}
+
 export interface ModelOption {
   id: string;
   note?: string;
@@ -87,7 +114,7 @@ export const toDateInput = (d: Date = new Date()) => {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 };
 
-const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+export const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 
 export const hasDepositThisMonth = (deposits: Deposit[], now: Date = new Date()) =>
   deposits.some((d) => d.month.slice(0, 7) === monthKey(now));

@@ -3,6 +3,8 @@ import { supabase } from '../lib/supabase';
 import {
   DEFAULT_CONFIG,
   Deposit,
+  JokerEvent,
+  jokerStats,
   OnboardingAccount,
   OnboardingConfig,
   WalletRow,
@@ -24,6 +26,7 @@ interface State {
   account: OnboardingAccount | null;
   wallet: WalletRow | null;
   deposits: Deposit[];
+  jokerEvents: JokerEvent[];
   config: OnboardingConfig;
   price: PriceRow | null;
   appointment: AppointmentRow | null;
@@ -38,6 +41,7 @@ export function useOnboarding(email: string | undefined) {
     account: null,
     wallet: null,
     deposits: [],
+    jokerEvents: [],
     config: DEFAULT_CONFIG,
     price: null,
     appointment: null,
@@ -49,10 +53,11 @@ export function useOnboarding(email: string | undefined) {
       setState((s) => ({ ...s, loading: false }));
       return;
     }
-    const [acc, wal, dep, cfg, prc, apt] = await Promise.all([
+    const [acc, wal, dep, jok, cfg, prc, apt] = await Promise.all([
       supabase.from('accounts').select(ACCOUNT_COLUMNS).eq('email', email).maybeSingle(),
       supabase.from('wallets').select('address,name,balance,total_received,total_investment,transaction_count').eq('email', email).maybeSingle(),
       supabase.from('monthly_deposits').select('month,source').eq('email', email).order('month', { ascending: false }),
+      supabase.from('joker_events').select('kind,ref,year').eq('email', email),
       supabase.from('site_settings').select('value').eq('key', 'onboarding_config').maybeSingle(),
       supabase.from('bitcoin_price_data').select('price_eur,price_usd').not('price_eur', 'is', null).order('date', { ascending: false }).limit(1),
       supabase.from('appointments').select('date,start_time,status').eq('user_email', email).in('status', ['pending', 'confirmed']).order('date', { ascending: false }).limit(1),
@@ -63,6 +68,7 @@ export function useOnboarding(email: string | undefined) {
       account: (acc.data as OnboardingAccount) ?? null,
       wallet: (wal.data as WalletRow) ?? null,
       deposits: ((dep.data as Deposit[]) ?? []).map((d) => ({ month: d.month, source: d.source })),
+      jokerEvents: (jok.data as JokerEvent[]) ?? [],
       config: { ...DEFAULT_CONFIG, ...((cfg.data?.value as Partial<OnboardingConfig>) ?? {}) },
       price: ((prc.data as PriceRow[]) ?? [])[0] ?? null,
       appointment: ((apt.data as AppointmentRow[]) ?? [])[0] ?? null,
@@ -91,8 +97,11 @@ export function useOnboarding(email: string | undefined) {
     [load]
   );
 
+  const jokers = jokerStats(state.jokerEvents, state.deposits, !!state.account?.monthly_active);
+
   return {
     ...state,
+    jokers,
     refresh: load,
     submitOrder: (model: string, orderedAt: string) => rpc('submit_wallet_order', { p_model: model, p_ordered_at: orderedAt }),
     confirmReceipt: (receivedAt: string, sealOk: boolean, address: string) =>

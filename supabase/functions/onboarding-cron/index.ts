@@ -28,6 +28,18 @@ function streakOf(months: Set<string>, nowMonth: string) {
   return n
 }
 
+const MAX_JOKERS_PER_YEAR = 3
+const dayOf = (ms: number) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Amsterdam', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms))
+const HOLIDAYS: Record<string, string> = { '12-25': 'Kerst', '12-31': 'Oudjaarsdag', '01-01': 'Nieuwjaarsdag' }
+
+// Verdiende joker vastleggen (max 3 per jaar, dubbele ref wordt genegeerd). Geeft true terug bij een nieuwe joker.
+async function grantJoker(email: string, kind: 'yearly' | 'holiday' | 'streak', ref: string, year: number) {
+  const { count } = await db.from('joker_events').select('id', { count: 'exact', head: true }).ilike('email', email).eq('year', year)
+  if ((count ?? 0) >= MAX_JOKERS_PER_YEAR) return false
+  const { error } = await db.from('joker_events').insert({ email, kind, ref, year })
+  return !error
+}
+
 async function getJson(url: string) {
   const r = await fetch(url, { signal: AbortSignal.timeout(12000) })
   if (!r.ok) throw new Error(`${url} -> ${r.status}`)
@@ -92,27 +104,41 @@ async function checkWallets() {
         row.stage = 'eerste_bitcoin'
       }
 
+      if (acc.onboarding_stage === 'reeks_actief' && acc.monthly_active) await grantJoker(acc.email, 'yearly', String(now.y), now.y)
+
       if (acc.onboarding_stage === 'reeks_actief' && acc.monthly_active && acc.monthly_started_on) {
         const txs = await getJson(`https://blockstream.info/api/address/${addr}/txs`)
         const { data: have } = await db.from('monthly_deposits').select('month').ilike('email', acc.email)
         const months = new Set<string>((have ?? []).map((d: any) => String(d.month).slice(0, 7)))
         const startMonth = String(acc.monthly_started_on).slice(0, 7)
         const added: string[] = []
+        const earned: string[] = []
         for (const tx of txs) {
           if ((tx.vin ?? []).some((v: any) => v.prevout?.scriptpubkey_address === addr)) continue
           const incoming = (tx.vout ?? []).filter((v: any) => v.scriptpubkey_address === addr).reduce((s: number, v: any) => s + v.value, 0)
           if (incoming < MIN_DEPOSIT_SATS) continue
           const when = tx.status?.confirmed ? tx.status.block_time * 1000 : Date.now()
           const month = monthOf(when)
-          if (month < startMonth || months.has(month)) continue
+          if (month < startMonth) continue
+          const day = dayOf(when)
+          const holiday = HOLIDAYS[day.slice(5)]
+          if (holiday && tx.status?.confirmed && await grantJoker(acc.email, 'holiday', day, Number(day.slice(0, 4)))) earned.push(`${holiday}-joker`)
+          if (months.has(month)) continue
           const { error } = await db.from('monthly_deposits').insert({ email: acc.email, month: `${month}-01`, source: 'auto', txid: tx.txid, amount_btc: incoming / 1e8 })
           if (!error) { months.add(month); added.push(month) }
         }
         if (added.length) {
           const streak = streakOf(months, now.month)
+          for (let n = 6; n <= streak; n += 6) {
+            if (await grantJoker(acc.email, 'streak', `streak-${n}`, now.y)) earned.push(`reeks-joker (${n} maanden)`)
+          }
           row.deposits = added
-          row.pushed = await pushTo(acc.email, { title: 'Storting gezien! 🔥', body: `Je reeks staat op ${streak} ${streak === 1 ? 'maand' : 'maanden'}. Mooi volgehouden.`, url: '/', tag: 'deposit-seen' })
+          const extra = earned.length ? ' Je hebt er een joker bij verdiend 🃏' : ''
+          row.pushed = await pushTo(acc.email, { title: 'Storting gezien! 🔥', body: `Je reeks staat op ${streak} ${streak === 1 ? 'maand' : 'maanden'}. Mooi volgehouden.${extra}`, url: '/', tag: 'deposit-seen' })
+        } else if (earned.length) {
+          row.pushed = await pushTo(acc.email, { title: 'Joker verdiend 🃏', body: 'Een storting op een feestdag levert je een extra joker op.', url: '/', tag: 'joker-earned' })
         }
+        if (earned.length) row.jokers = earned
       }
       summary.push(row)
     } catch (e: any) {

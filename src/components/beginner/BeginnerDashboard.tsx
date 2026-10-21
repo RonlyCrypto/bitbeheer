@@ -106,7 +106,6 @@ export default function BeginnerDashboard() {
   const stage = account?.onboarding_stage ?? 'aangemeld';
   const si = stageIndex(stage);
   const streak = useMemo(() => computeStreak(ob.deposits), [ob.deposits]);
-  const jokerUsed = ob.deposits.some((d) => d.source === 'joker' && d.month.startsWith(String(new Date().getFullYear())));
   const depositDone = hasDepositThisMonth(ob.deposits);
 
   // Feestelijke momenten: alleen bij een echte verandering sinds het laatste bezoek.
@@ -233,7 +232,7 @@ export default function BeginnerDashboard() {
           {si >= stageIndex('eerste_bitcoin') && (
             <>
               {stage === 'reeks_actief' && account.monthly_active && (
-                <StreakCard account={account} deposits={ob.deposits} readOnly={readOnly} onJoker={ob.spendJoker} onPause={ob.pauseMonthly} pushSlot={<PushSetup email={email} readOnly={readOnly} />} />
+                <StreakCard account={account} deposits={ob.deposits} jokers={ob.jokers} readOnly={readOnly} onJoker={ob.spendJoker} onPause={ob.pauseMonthly} pushSlot={<PushSetup email={email} readOnly={readOnly} />} />
               )}
               <div className="grid gap-4 md:grid-cols-2">
                 <BitcoinCard wallet={ob.wallet} price={ob.price} />
@@ -320,11 +319,9 @@ export default function BeginnerDashboard() {
           streak={streak}
           amount={amount}
           daysLeft={daysLeftInMonth()}
-          canJoker={!jokerUsed}
+          jokersLeft={ob.jokers.available}
           onClose={closeReminder}
-          onJoker={async () => {
-            try { await ob.spendJoker(); } finally { closeReminder(); }
-          }}
+          onJoker={ob.spendJoker}
         />
       )}
 

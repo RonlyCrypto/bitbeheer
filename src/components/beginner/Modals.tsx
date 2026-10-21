@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Calendar, MessageSquare, X } from 'lucide-react';
 
 export function fireConfetti() {
@@ -79,17 +79,52 @@ export function ReminderModal({
   streak,
   amount,
   daysLeft,
-  canJoker,
+  jokersLeft,
   onClose,
   onJoker,
 }: {
   streak: number;
   amount: number;
   daysLeft: number;
-  canJoker: boolean;
+  jokersLeft: number;
   onClose: () => void;
-  onJoker: () => void;
+  onJoker: () => Promise<void>;
 }) {
+  const [frozen, setFrozen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const freeze = async () => {
+    setBusy(true);
+    setError('');
+    try {
+      await onJoker();
+      setFrozen(true);
+    } catch (e: any) {
+      setError(e.message || 'Joker inzetten lukte niet.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (frozen) {
+    return (
+      <Modal onClose={onClose} label="Maand bevroren">
+        <div className="p-6 text-center">
+          <div className="text-5xl leading-none">❄️</div>
+          <h3 className="mt-3 text-xl font-bold text-gray-900">Deze maand is bevroren</h3>
+          <p className="mt-2 text-sm text-gray-600">
+            Je joker houdt je reeks van <b>{streak} {streak === 1 ? 'maand' : 'maanden'}</b> veilig. Volgende maand ga je gewoon verder.
+          </p>
+          <p className="mt-2 text-xs text-gray-500">Je hebt nog {Math.max(0, jokersLeft - 1)} {jokersLeft - 1 === 1 ? 'joker' : 'jokers'} over.</p>
+          <div className="mt-5">
+            <button className={primaryBtn} onClick={onClose}>Begrepen</button>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
   return (
     <Modal onClose={onClose} label="Maandelijkse storting">
       <div className="p-6 text-center">
@@ -103,8 +138,13 @@ export function ReminderModal({
         <div className="mt-5 grid gap-2">
           <button className={primaryBtn} onClick={onClose}>Ik ga het nu doen</button>
           <button className={secondaryBtn} onClick={onClose}>Herinner me morgen</button>
-          {canJoker && <button className={`${quietBtn} mt-1`} onClick={onJoker}>Deze maand overslaan met mijn joker</button>}
+          {jokersLeft > 0 && (
+            <button className={`${quietBtn} mt-1`} onClick={freeze} disabled={busy}>
+              ❄️ Maand bevriezen met een joker ({jokersLeft} over)
+            </button>
+          )}
         </div>
+        {error && <p role="alert" className="mt-3 text-sm font-medium text-red-600">{error}</p>}
         <p className="mt-4 text-xs text-gray-400">We zien je storting vanzelf op je wallet.</p>
       </div>
     </Modal>
