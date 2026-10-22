@@ -1,6 +1,7 @@
 import { Shield, Heart } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { Link } from 'react-router-dom';
 import AdminLogin from './AdminLogin';
 
 interface ReferralLink {
@@ -107,7 +108,11 @@ export default function Footer() {
           <p className="text-sm text-gray-400">
             © {new Date().getFullYear()} BitBeheer. Persoonlijke begeleiding bij het investeren in Bitcoin.
           </p>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <nav className="flex items-center gap-4 text-sm" aria-label="Juridisch">
+              <Link to="/privacy" className="hover:text-orange-400 transition-colors">Privacy</Link>
+              <Link to="/voorwaarden" className="hover:text-orange-400 transition-colors">Voorwaarden</Link>
+            </nav>
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <span>Gemaakt met</span>
               <Heart className="w-4 h-4 text-red-500 fill-current" />

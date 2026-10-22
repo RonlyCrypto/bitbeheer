@@ -499,6 +499,22 @@ export default function AanmeldenPage() {
                       Ik geef toestemming voor marketing communicatie over Bitcoin gerelateerde diensten
                     </label>
                   </div>
+                  <div className="flex items-start">
+                    <input
+                      id="akkoord-voorwaarden"
+                      type="checkbox"
+                      name="akkoordVoorwaarden"
+                      required
+                      className="mt-0.5 h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="akkoord-voorwaarden" className="ml-2 text-sm text-gray-700">
+                      Ik ga akkoord met de{' '}
+                      <a href="/voorwaarden" target="_blank" rel="noopener noreferrer" className="font-semibold text-orange-600 underline">algemene voorwaarden</a>{' '}
+                      en heb de{' '}
+                      <a href="/privacy" target="_blank" rel="noopener noreferrer" className="font-semibold text-orange-600 underline">privacyverklaring</a>{' '}
+                      gelezen. <span className="text-gray-500">(verplicht)</span>
+                    </label>
+                  </div>
                 </div>
               </div>
 

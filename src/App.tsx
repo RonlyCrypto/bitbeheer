@@ -8,6 +8,8 @@ import AanmeldenPage from './pages/AanmeldenPage';
 import BeginnerDashboard from './components/beginner/BeginnerDashboard';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import SiteAccessControl from './components/SiteAccessControl';
 import { CurrencyProvider } from './contexts/CurrencyContext';
@@ -111,6 +113,8 @@ function AppContent() {
                           path="/verify-email"
                           element={<VerifyEmailPage />}
                         />
+                        <Route path="/privacy" element={<PrivacyPage />} />
+                        <Route path="/voorwaarden" element={<TermsPage />} />
                         <Route
                           path="/reset-password"
                           element={<ResetPasswordPage />}

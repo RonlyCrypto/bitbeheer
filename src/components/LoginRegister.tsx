@@ -516,6 +516,14 @@ export default function LoginRegister() {
                   )}
                 </button>
 
+                {mode === 'register' && (
+                  <p className="text-xs text-gray-500 text-center">
+                    Door een account aan te maken ga je akkoord met de{' '}
+                    <a href="/voorwaarden" target="_blank" rel="noopener noreferrer" className="underline">voorwaarden</a> en de{' '}
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline">privacyverklaring</a>.
+                  </p>
+                )}
+
                 {/* Mode Switch */}
                 <div className="text-center">
                   {mode === 'login' ? (

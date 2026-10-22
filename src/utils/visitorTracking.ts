@@ -120,42 +120,8 @@ class VisitorTracker {
     }
   }
 
-  private async getLocationData(): Promise<{ country?: string; country_code?: string; city?: string; region?: string; timezone?: string }> {
-    try {
-      // Try to get location from IP using a free geolocation API
-      // Using ipapi.co (free tier: 1000 requests/day)
-      const response = await fetch('https://ipapi.co/json/', {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        return {
-          country: data.country_name || undefined,
-          country_code: data.country_code || undefined,
-          city: data.city || undefined,
-          region: data.region || undefined,
-          timezone: data.timezone || undefined
-        };
-      }
-    } catch (error) {
-      // Silently fail - location is optional
-      console.error('Error fetching location:', error);
-    }
-    return {};
-  }
-
   private async sendPageView(path: string, timeSpent: number, isLeaving: boolean) {
     try {
-      // Get location data (only on first page view to avoid rate limits)
-      let locationData = {};
-      if (!isLeaving && path === window.location.pathname) {
-        locationData = await this.getLocationData();
-      }
-
       const visitorData: VisitorData = {
         visitor_id: this.visitorId!,
         session_id: this.sessionId!,
@@ -166,39 +132,10 @@ class VisitorTracker {
         device_type: this.getDeviceType(),
         os: this.getOS(),
         language: navigator.language || navigator.languages?.[0] || undefined,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        ...locationData
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
       };
 
-      // Get IP address via Edge Function (more secure)
-      // CORS errors worden opgevangen en we vallen terug op alternatieve methode
-      let ipAddress: string | undefined;
-      try {
-        const { supabase } = await import('../lib/supabase');
-        const { data, error } = await supabase.functions.invoke('get-visitor-ip', {
-          // Add headers to help with CORS if needed
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
-        if (error) {
-          console.debug('get-visitor-ip function error (non-critical):', error);
-        } else if (data?.ip) {
-          ipAddress = data.ip;
-        }
-      } catch (error: any) {
-        // CORS of andere errors - fallback naar alternatieve methode
-        console.debug('get-visitor-ip function failed (non-critical), using fallback:', error?.message || error);
-        try {
-          const ipResponse = await fetch('https://api.ipify.org?format=json');
-          if (ipResponse.ok) {
-            const ipData = await ipResponse.json();
-            ipAddress = ipData.ip;
-          }
-        } catch (e) {
-          // IP is optional - geen probleem als dit faalt
-        }
-      }
+      // Privacy: geen IP-adres of locatie opslaan en geen externe locatiediensten aanroepen.
 
       // Send to Supabase
       const { supabase } = await import('../lib/supabase');
@@ -211,11 +148,6 @@ class VisitorTracker {
         browser: visitorData.browser,
         device_type: visitorData.device_type,
         os: visitorData.os,
-        ip_address: ipAddress,
-        country: visitorData.country,
-        country_code: visitorData.country_code,
-        city: visitorData.city,
-        region: visitorData.region,
         timezone: visitorData.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
         language: visitorData.language,
         session_duration: timeSpent > 0 ? timeSpent : null

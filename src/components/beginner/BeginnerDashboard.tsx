@@ -267,6 +267,10 @@ export default function BeginnerDashboard() {
         </main>
       )}
 
+      <p className="px-4 pb-24 pt-2 text-center text-xs text-gray-400 md:hidden">
+        <a href="/privacy" className="underline">Privacy</a> · <a href="/voorwaarden" className="underline">Voorwaarden</a>
+      </p>
+
       {/* Hulp: zwevende knop op desktop, in de onderbalk op mobiel */}
       <HelpMenu
         open={helpOpen}
